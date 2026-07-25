@@ -87,7 +87,7 @@ These commands are Claude plugin-local entry points. Codex can consume the gener
 ### Truth Plane
 - `analyze-project`: Read-only project explanation and drift detection with selective terse output by default and a comprehensive truth-audit shape only when explicitly requested.
 - `organize-docs`: Stable-doc maintenance, docs truth boundary policy, and audience separation between `README.md` and `AGENTS.md`.
-- `skill-miner`: Read-only mining of Codex/Claude sessions, memory files, and project context docs to recommend generic or repo-local skill improvements; its OpenAI agent policy disables implicit invocation.
+- `skill-miner`: Read-only mining of Codex/Claude/Grok sessions, memory files, and project context docs to recommend generic or repo-local skill improvements; its OpenAI agent policy disables implicit invocation.
 
 ### Evaluation Plane
 - `review-design`: Bounded design review against approved goals, architecture boundaries, and implementation surface.

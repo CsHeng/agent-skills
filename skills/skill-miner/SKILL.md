@@ -1,6 +1,6 @@
 ---
 name: skill-miner
-description: "Mine Codex/Claude sessions, memory files, and project context docs for repeated failures, workflow patterns, concrete skill improvement candidates, and memory cleanup after durable repo truth extraction."
+description: "Mine Codex/Claude/Grok sessions, memory files, and project context docs for repeated failures, workflow patterns, concrete skill improvement candidates, and memory cleanup after durable repo truth extraction."
 ---
 
 # Skill Miner
@@ -11,7 +11,7 @@ Agent memory files are staging evidence, not long-term truth. Prefer extracting 
 
 ## Scope
 
-Default scope is the current Git repository. If no Git root exists, use the current working directory. Use all-history scope only when the user explicitly asks to search all `~/.codex` and `~/.claude`.
+Default scope is the current Git repository. If no Git root exists, use the current working directory. Use all-history scope only when the user explicitly asks to search all local agent homes.
 When the user names additional agent homes, include those homes explicitly instead of assuming only the current host home.
 
 Read these sources when available:
@@ -19,15 +19,16 @@ Read these sources when available:
 - Codex memory: `~/.codex/memories/MEMORY.md`
 - Claude sessions: `~/.claude/projects/**/*.jsonl`
 - Claude memory: `~/.claude/projects/**/memory/*.md` and other `~/.claude/**/memory/*.md`
+- Grok sessions: `~/.grok/sessions/<urlencoded-workspace>/prompt_history.jsonl` and per-session `events.jsonl`
 - Project context docs: tracked `AGENTS.md`, `CLAUDE.md`, and `README.md` files under the target repo
 
-Additional homes use the same directory shapes under their own Codex or Claude home roots.
+Additional homes use the same directory shapes under their own Codex, Claude, or Grok home roots.
 
 Do not decide what future agents should write into memory. Mine existing memory only to identify missing repo truth, missing skills, stale memory, and cleanup candidates.
 
 ## Workflow
 
-1. Confirm the requested scope: current repo, named repo, or all local Codex/Claude history.
+1. Confirm the requested scope: current repo, named repo, or all local Codex/Claude/Grok history.
 2. Stay read-only unless the user explicitly approves skill edits.
 3. Run the bundled parser for structured signals instead of raw-scanning large JSONL files.
 4. Separate evidence into:
@@ -69,7 +70,9 @@ python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py 
   --codex-home ~/.codex \
   --codex-home /path/to/another/.codex \
   --claude-home ~/.claude \
-  --claude-home /path/to/another/.claude
+  --claude-home /path/to/another/.claude \
+  --grok-home ~/.grok \
+  --grok-home /path/to/another/.grok
 ```
 
 For machine-readable aggregation:
@@ -93,7 +96,8 @@ python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py 
 ```
 
 The script is read-only and accepts only named parameters.
-`--codex-home` and `--claude-home` are repeatable; comma-separated values are also accepted.
+`--codex-home`, `--claude-home`, and `--grok-home` are repeatable; comma-separated values are also accepted.
+Default sources include `grok`. Grok workspace directories under `sessions/` are URL-encoded absolute paths; scope `current` matches those decoded paths to `--repo-root`.
 Skill usage reports count explicit user mentions, assistant references, and tool calls that name the requested prefix or read files under the requested skill root. They ignore injected long prompt, instruction, and skill inventory blocks so available-skill metadata does not masquerade as usage.
 Use `--skill-usage-include-output` only when tool output itself is the evidence being mined; it is off by default because directory listings and inventory dumps can inflate usage counts.
 
