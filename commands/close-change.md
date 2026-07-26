@@ -10,8 +10,8 @@ This command is the command-surface wrapper for `coding:close-change`.
 
 Parse the following from `$ARGUMENTS`:
 - close mode: one of `merge`, `release`, or `cleanup`. Default is `cleanup` when omitted.
-- `--review-status <pass|needs-fixes|needs-rollback|manual-decision-required>`: required review gate status.
-- `--verify-status <pass|needs-fixes|needs-rollback|manual-decision-required>`: required verification gate status.
+- `--review-status <pass|needs-fixes|guarded-rollback-required|manual-decision-required>`: required review gate status.
+- `--verify-status <pass|needs-fixes|guarded-rollback-required|manual-decision-required>`: required verification gate status.
 - `--truth-sync-required <true|false>`: required truth-sync requirement from the execute or truth-sync gate.
 - `--truth-sync-completed <true|false>`: required truth-sync completion state.
 

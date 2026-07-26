@@ -50,7 +50,11 @@ extract_markdown_list() {
       in_key = 1
       next
     }
-    in_section && in_key && $0 ~ "^[[:space:]]*-[[:space:]]*[A-Za-z0-9_-]+:[[:space:]]*$" {
+    in_section && in_key && $0 ~ "^-[[:space:]]*[A-Za-z0-9_-]+:[[:space:]]*.*$" {
+      in_key = 0
+      next
+    }
+    in_section && in_key && $0 ~ "^-[[:space:]]*\\[[ xX]\\]" {
       in_key = 0
       next
     }

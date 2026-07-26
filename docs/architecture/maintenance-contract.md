@@ -10,7 +10,7 @@ This repository keeps reusable coding-agent behavior in a structured source tree
 - `.dist/claude/` and `.dist/codex/` are ignored, reproducible target-specific flat skill surfaces generated only when needed.
 - `skills.index.json` is generated from `contracts/skills.toml`.
 - `docs/architecture/diagrams/*.puml` are generated human views of the installed implementation workflow contract.
-- `skills/_harness-libs/` is generated root-flat deterministic runtime support for lifecycle validation, artifact-DAG enforcement, task ledgers, evaluation, rollback, truth sync, and close; it is not a user-routed workflow entry.
+- `skills/_harness-libs/` is generated root-flat deterministic runtime support for lifecycle validation, artifact-DAG enforcement, task ledgers, evaluation, evidence-based recovery routing, truth sync, and close; it is not a user-routed workflow entry.
 
 Regenerate generated surfaces with:
 
@@ -66,7 +66,7 @@ Do not hand-edit generated PlantUML files. Update the controller-local workflow 
 - No unattended execution by default.
 - Human approval gates remain authoritative.
 - Fresh evidence is required for completion claims.
-- Rollback surface must be explicit for regulated changes.
+- Regulated changes must declare a recovery surface and default to fix-forward. Guarded rollback requires an explicit tested trigger, target, and verification; regulated classification alone never authorizes it.
 - Repo-owned docs, code, scripts, tests, and skills are durable truth.
 - Memories, summaries, logs, sessions, and caches are not durable truth unless explicitly promoted.
 

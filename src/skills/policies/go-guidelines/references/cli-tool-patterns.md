@@ -62,7 +62,7 @@ For Cobra tools, expose generated completion for the shells the project supports
 - Make confirmation behavior explicit with flags such as `--yes`; do not hide a blocking prompt behind automatic TTY detection.
 - Validate the complete target set before the first mutation.
 - Preserve idempotency where the domain allows it.
-- Define partial-failure, rollback, retry, and exit-code behavior before adding concurrency.
+- Define partial-failure, recovery policy, retry, and exit-code behavior before adding concurrency.
 - Use `context.Context` for cancellation of network, filesystem, and subprocess work.
 - When calling external programs, use `os/exec` with argument slices rather than constructing a Shell command string.
 
@@ -87,6 +87,6 @@ Use golden tests only for stable text such as help, completion, or generated con
 - framework types stop at the CLI adapter boundary
 - stdout, stderr, exit codes, and output formats are explicit
 - completion is side-effect free and uses shared data sources
-- state-changing commands define preview, confirmation, partial failure, and rollback behavior
+- state-changing commands define preview, confirmation, partial failure, and recovery behavior
 - tests cover core behavior and the material process contract
 - `go build` writes to an explicit artifact path

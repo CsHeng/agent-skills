@@ -11,8 +11,8 @@ source "$SCRIPT_DIR/design-runner.sh"
 source "$SCRIPT_DIR/plan-runner.sh"
 # shellcheck source=skills/_harness-libs/evaluation-gate.sh
 source "$SCRIPT_DIR/evaluation-gate.sh"
-# shellcheck source=skills/_harness-libs/rollback.sh
-source "$SCRIPT_DIR/rollback.sh"
+# shellcheck source=skills/_harness-libs/recovery-routing.sh
+source "$SCRIPT_DIR/recovery-routing.sh"
 # shellcheck source=skills/_harness-libs/task-ledger.sh
 source "$SCRIPT_DIR/task-ledger.sh"
 # shellcheck source=skills/_harness-libs/phase-engine.sh
@@ -200,11 +200,11 @@ build_execute_gate_result() {
   build_evaluation_verdict "$review_status" "$verify_status" "$truth_sync_required" "$truth_sync_completed"
 }
 
-execute_rollback_target() {
+execute_recovery_route() {
   local failure_kind="$1"
   local failure_count="$2"
 
-  resolve_rollback_target "$failure_kind" "$failure_count"
+  resolve_recovery_route "$failure_kind" "$failure_count"
 }
 
 usage() {
@@ -224,7 +224,7 @@ Usage:
   execute-runner.sh next-ready-task <ledger-json>
   execute-runner.sh execution-result <plan-path> <ledger-json> <current-phase> <active-task-id-or-empty> <stop-reason> <review-status> <verify-status> <next-entry> <next-phase> <human-input-required> [workspace-mode]
   execute-runner.sh gate-result <review-status> <verify-status> <truth-sync-required> <truth-sync-completed>
-  execute-runner.sh rollback-target <failure-kind> <failure-count>
+  execute-runner.sh recovery-route <failure-kind> <failure-count>
 EOF
 }
 
@@ -287,9 +287,9 @@ main() {
       [[ $# -eq 5 ]] || { usage >&2; return 1; }
       build_execute_gate_result "$2" "$3" "$4" "$5"
       ;;
-    rollback-target)
+    recovery-route)
       [[ $# -eq 3 ]] || { usage >&2; return 1; }
-      execute_rollback_target "$2" "$3"
+      execute_recovery_route "$2" "$3"
       ;;
     *)
       usage >&2

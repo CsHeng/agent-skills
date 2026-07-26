@@ -54,7 +54,7 @@ Common boundaries:
 | Stateful workflow or protocol | Model-based tests + TDD | Model oracle | Model costs more than the system warrants |
 | Legacy refactor safety | Characterization / golden / approval tests | Current-behavior oracle | Current behavior is known wrong and should change now |
 | Test-suite strength | Mutation testing | Meta-oracle | Suite is slow, flaky, or low risk |
-| Distributed resilience | Fault injection / chaos / synthetic probes | Runtime oracle | Rollback and blast-radius controls are weak |
+| Distributed resilience | Fault injection / chaos / synthetic probes | Runtime oracle | Recovery and blast-radius controls are weak |
 | Production-only regression | Canary / monitoring / SLO alerts | Runtime oracle | Used as a substitute for pre-merge correctness |
 | Security boundary | TDD + properties + fuzz/static analysis + review | Mixed oracle | Agent can silently weaken assertions |
 
@@ -103,7 +103,7 @@ A work package is ready only when it has:
 - a declared oracle strategy from this skill
 - concrete acceptance oracles or substitute verification evidence
 - maximum review budget
-- rollback or stop condition
+- failure policy or stop condition
 - subagent boundary: `subagent_ready: true|false`
 
 If these are missing, do not expand the plan. Stop with one of:

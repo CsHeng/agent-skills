@@ -13,14 +13,14 @@ Choose the smallest sufficient architecture justified by current demand, a const
 2. State the protected behavior, current demand evidence, constrained resource, hard requirements, and decision horizon.
 3. For a new or materially changed persisted architecture boundary, read `references/architecture-decision-economics.md` and compare the status quo, the smallest sufficient option, and a structural investment.
 4. Read `references/architecture-pattern-catalog.md` only for pattern families relevant to the proven constraint.
-5. Define dependency direction, state and data ownership, caller contracts, failure containment, operability, rollout, rollback, and executable evidence for the selected option.
+5. Define dependency direction, state and data ownership, caller contracts, failure containment, operability, rollout, recovery policy, and executable evidence for the selected option.
 6. Record the chosen option, material rejected alternatives, lifecycle-cost owner, and observable upgrade trigger.
 
 ## Selection Rules
 
 - Prefer an existing boundary or a reversible local extension when it satisfies the approved goal.
 - Require demand or constraint evidence before adding distribution, asynchronous coordination, new infrastructure, speculative seams, or independent operational surfaces.
-- Compare the next unit of benefit with its implementation, migration, coordination, cognitive, runtime, verification, and rollback costs.
+- Compare the next unit of benefit with its implementation, migration, coordination, cognitive, runtime, verification, and recovery costs.
 - Assign operational cost and decision authority to an explicit owner; call out costs shifted to callers, operators, or future maintainers.
 - Place responsibility where the repository, team, runtime, language, or provider ecosystem has the lowest relative opportunity cost while preserving clear ownership.
 - Treat security, compliance, data-loss, and externally mandated reliability requirements as hard constraints rather than optional benefits in a scorecard.

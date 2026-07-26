@@ -1,6 +1,6 @@
 ---
 description: Top-level sovereign harness entry for updating stable truth after a verified truth-affecting change
-argument-hint: "[--truth-sync <path>] [--review-status <pass|needs-fixes|needs-rollback|manual-decision-required>] [--verify-status <pass|needs-fixes|needs-rollback|manual-decision-required>] <change context|paths>"
+argument-hint: "[--truth-sync <path>] [--review-status <pass|needs-fixes|guarded-rollback-required|manual-decision-required>] [--verify-status <pass|needs-fixes|guarded-rollback-required|manual-decision-required>] <change context|paths>"
 allowed-tools: ["Read", "Glob", "Grep", "Bash", "Edit", "MultiEdit"]
 ---
 

@@ -148,7 +148,7 @@ Use retries only for classified transient failures with bounded attempts, backof
 
 ### Fault Injection And Chaos
 
-Use when rollback, blast-radius controls, hypotheses, runtime observability, and recovery owners are mature enough to learn safely. Prefer narrower conformance or failure-path tests before production chaos.
+Use when recovery, blast-radius controls, hypotheses, runtime observability, and recovery owners are mature enough to learn safely. Prefer narrower conformance or failure-path tests before production chaos.
 
 ## Evolution Patterns
 
@@ -158,11 +158,11 @@ Use when an external or legacy model is volatile enough that isolating translati
 
 ### Feature Flag
 
-Use for controlled rollout or rollback when every flag has an owner, observable success condition, safe default, and removal trigger. Unowned flags create permanent state-space cost.
+Use for controlled rollout or guarded rollback when every flag has an owner, observable success condition, safe default, and removal trigger. Unowned flags create permanent state-space cost.
 
 ### Strangler Migration
 
-Use when incremental replacement lowers cutover risk and each slice has explicit routing, compatibility, data ownership, rollback, and retirement conditions.
+Use when incremental replacement lowers cutover risk and each slice has explicit routing, compatibility, data ownership, recovery policy, and retirement conditions.
 
 ### Architecture Fitness Function
 
@@ -178,5 +178,5 @@ For each selected pattern, record only material fields:
 - lifecycle costs and cost bearer
 - state, data, dependency, and failure ownership
 - executable oracle
-- rollout and rollback boundary
+- rollout and recovery boundary
 - observable upgrade or retirement trigger

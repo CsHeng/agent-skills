@@ -18,7 +18,7 @@ state "pass" as n_exit_pass <<exit>>
 state "replan" as n_exit_replan <<exit>>
 state "redesign" as n_exit_redesign <<exit>>
 state "needs-authority" as n_exit_needs_authority <<exit>>
-state "rollback" as n_exit_rollback <<exit>>
+state "guarded-rollback" as n_exit_guarded_rollback <<exit>>
 state "non-convergent" as n_exit_non_convergent <<exit>>
 
 [*] --> n_implement
@@ -36,8 +36,8 @@ n_classify --> n_exit_redesign : typed boundary
 n_exit_redesign --> [*]
 n_classify --> n_exit_needs_authority : typed boundary
 n_exit_needs_authority --> [*]
-n_classify --> n_exit_rollback : typed boundary
-n_exit_rollback --> [*]
+n_classify --> n_exit_guarded_rollback : typed boundary
+n_exit_guarded_rollback --> [*]
 n_classify --> n_exit_non_convergent : typed boundary
 n_exit_non_convergent --> [*]
 

@@ -27,7 +27,7 @@ Out-of-scope:
    - sh: `set -eu`
 3. Quote variables by default: `"${var}"`.
 4. Keep orchestration linear and make each external mutation visible.
-5. Route back to `language-decision-tree` when the script accumulates structured multi-step parsing, persistent state, complex retry or rollback, concurrency, multi-host distribution, embedded languages, or runtime and dependency management.
+5. Route back to `language-decision-tree` when the script accumulates structured multi-step parsing, persistent state, complex retry or recovery, concurrency, multi-host distribution, embedded languages, or runtime and dependency management.
 6. Prefer Go for a long-lived operational tool when static distribution, cross-platform delivery, or reduced runtime state materially improves the contract; do not treat this preference as a mandate.
 7. Name Shell script files using hyphen style: `my-script.sh`, not `my_script.sh`.
 

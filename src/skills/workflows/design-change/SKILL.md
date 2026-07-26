@@ -26,7 +26,7 @@ Define the change boundary before planning or implementation.
 2. Run decision discovery when the goal, terminology, acceptance boundary, owner, or non-goals are unclear.
 3. Record the change class and required design strength.
 4. Run conditional architecture economics when the change creates or materially changes a persisted architecture boundary.
-5. Define scope, non-goals, approvals, and rollback surface.
+5. Define scope, non-goals, approvals, and recovery surface. Use guarded rollback only when a concrete hazard makes it safer than forward repair.
 6. Produce or update the design artifact in a stable, reviewable shape.
 7. Validate the artifact before review.
 8. Route the artifact through mandatory design review and bounded in-scope autofix when needed.
@@ -64,7 +64,7 @@ Keep the detailed theory and decision method in the architecture skill's `refere
 - the status quo, smallest sufficient option, and structural investment with material discard reasons
 - marginal lifecycle tradeoff and opportunity cost
 - owner, cost bearer, incentives, and comparative advantage
-- the chosen option, executable oracle, rollback boundary, and observable upgrade trigger
+- the chosen option, executable oracle, recovery boundary, and observable upgrade trigger
 
 Do not require this section for docs-only work, ordinary existing-boundary edits, generated-surface refreshes, or implementation choices that stay inside an already approved architecture boundary. Do not require numeric scoring; causal evidence and explicit triggers are sufficient.
 

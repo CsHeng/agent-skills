@@ -38,7 +38,7 @@ The normal path is:
 
 Focused verification is not a fresh exhaustive review. It cannot reopen repository-wide discovery, future plan phases, pre-existing debt, or general hardening.
 
-One additional same-slice repair attempt is allowed only when focused verification proves that the accepted repair is incomplete or introduced a regression. Repetition after that exits `non-convergent`. Plan, design, authority, scope, external-evidence, or rollback boundaries exit immediately with the matching typed state.
+One additional same-slice repair attempt is allowed only when focused verification proves that the accepted repair is incomplete or introduced a regression. Repetition after that exits `non-convergent`. Plan, design, authority, scope, external-evidence, or explicitly guarded rollback boundaries exit immediately with the matching typed state. Failure count alone never widens the route to plan or design.
 
 ## Typed Exits
 
@@ -46,7 +46,7 @@ One additional same-slice repair attempt is allowed only when focused verificati
 - `replan`: approved task graph or touch set is insufficient
 - `redesign`: approved architecture boundary is invalid
 - `needs-authority`: repair requires new user authority or external decision
-- `rollback`: safe forward repair is unavailable or a rollback trigger fired
+- `guarded-rollback`: safe forward repair is unavailable and the approved task's exact guarded-rollback trigger fired
 - `non-convergent`: focused same-slice repair did not converge
 
 Never convert pre-existing, unrelated, future-phase, plan-expanding, or insufficient-evidence observations into local edits.

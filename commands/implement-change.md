@@ -22,4 +22,6 @@ For every task:
 
 Do not use a semantic review shell runner. Do not let a delegated reviewer edit, delegate recursively, or control lifecycle continuation.
 
-After all tasks, combine review and verification through the deterministic evaluation gate, resolve rollback targets for failures, and return `sync-truth`, `close-change`, or the exact typed stop state. The machine-checkable gate decides continuation; do not ask whether to continue when that state is known.
+For failures, follow the task's declared `failure_policy`. Default to fix-forward diagnosis and narrow re-verification. Never synthesize rollback code, restore an old release, or widen into plan/design because a verification attempt failed or a failure count increased. Use guarded rollback only when the approved task declares its exact trigger, target, and verification and the trigger is observed.
+
+After all tasks, combine review and verification through the deterministic evaluation gate, resolve the evidence-based recovery route, and return `sync-truth`, `close-change`, or the exact typed stop state. The machine-checkable gate decides continuation; do not ask whether to continue when that state is known.

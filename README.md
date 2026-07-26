@@ -41,8 +41,8 @@ The top-level harness authority for this repository is:
 
 - `analyze-project`: Read-only project-state and truth query entry.
 - `design-change`: Top-level change-design entry for scope, truth impact, boundary impact, and conditional economics-aware selection for material persisted architecture boundaries.
-- `plan-change`: Top-level planning entry for ordered tasks, dependencies, verification, rollback triggers, conditional persisted implementation-language decisions, and reversible staging of approved architecture decisions.
-- `implement-change`: Top-level execution controller with approved-plan validation, one-plan execution-unit semantics, serial-first implementation, controller-owned repair convergence, one-time worktree preflight, and deterministic review/verify/rollback outcomes.
+- `plan-change`: Top-level planning entry for ordered tasks, dependencies, verification, explicit failure policy, conditional persisted implementation-language decisions, and reversible staging of approved architecture decisions.
+- `implement-change`: Top-level execution controller with approved-plan validation, one-plan execution-unit semantics, serial-first fix-forward implementation, controller-owned repair convergence, one-time worktree preflight, and deterministic review/verify/recovery outcomes.
 - `review-change`: Top-level agent-native review gate that builds a bounded brief, prefers subagent review when useful, adjudicates candidate findings, and returns one harness verdict.
 - `sync-truth`: Top-level truth-sync gate for stable truth updates with verified evidence.
 - `close-change`: Top-level close gate for merge, release, or cleanup judgment.
@@ -58,8 +58,9 @@ Kernel defaults:
 Harness runner coverage:
 - `design-runner.sh`: design artifact pathing, validation, classification, and approval status
 - `plan-runner.sh`: plan artifact pathing, upstream design linkage, validation, and approval status
-- `execute-runner.sh`: approved-plan validation, touch set, verification scope, truth-sync requirement, and rollback target
+- `execute-runner.sh`: approved-plan validation, touch set, verification scope, truth-sync requirement, and evidence-based recovery route
   - task-ledger helpers, workspace-mode detection, and deterministic execution-result reporting
+- `recovery-routing.sh`: evidence-class routing that never widens lifecycle phase from failure count alone
 
 Lower-plane skills stay available as components the kernel can call, not as competing top-level authorities.
 
@@ -91,7 +92,7 @@ These commands are Claude plugin-local entry points. Codex can consume the gener
 
 ### Evaluation Plane
 - `review-design`: Bounded design review against approved goals, architecture boundaries, and implementation surface.
-- `review-plan`: Bounded plan review against the approved design, executable DAG, oracle, rollback, and readiness.
+- `review-plan`: Bounded plan review against the approved design, executable DAG, oracle, recovery policy, and readiness.
 - `review-implementation`: Read-only diff review with explicit change causality; returns candidate evidence without owning adjudication or repair.
 
 ### Policy Plane
@@ -146,7 +147,7 @@ Review is agent-native. The main coding agent prefers one reviewer subagent for 
 
 Default review depth:
 - `review-design`: `boundary`, focused on architecture boundaries and downstream implementation surface
-- `review-plan`: `boundary`, focused on executable DAG, dependencies, oracle, ownership, rollback, and readiness
+- `review-plan`: `boundary`, focused on executable DAG, dependencies, oracle, ownership, recovery policy, and readiness
 - `review-implementation`: bounded to the approved task diff, task tests, declared oracles, touch set, and justified direct dependencies
 
 Repair behavior:

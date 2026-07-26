@@ -1,6 +1,6 @@
 ---
 name: plan-change
-description: "Use after approved design or scope to create execution-grade plans with task order, dependencies, verification, and rollback triggers."
+description: "Use after approved design or scope to create execution-grade plans with task order, dependencies, verification, and explicit fix-forward, stop-and-diagnose, or guarded-rollback failure policy."
 ---
 
 # Plan Change
@@ -11,7 +11,7 @@ Compile an approved change into an execution plan the harness can govern.
 
 - an approved design or explicit boundary decision needs an implementation plan
 - the harness must define task order, write sets, or verification commands
-- the change needs dependency freeze or rollback triggers before execution
+- the change needs dependency freeze or an explicit recovery policy before execution
 
 ## Do Not Use This Skill When
 
@@ -25,7 +25,7 @@ Compile an approved change into an execution plan the harness can govern.
 2. Break the work into ordered tasks with explicit dependencies and stable task IDs.
 3. Identify any human confirmation, live-risk, destructive-write, external dependency, credential, or cutover uncertainty and try to resolve it before finalizing the plan.
 4. Run work-package readiness before review.
-5. Define touched files, executable oracles, verification commands, review depth, and rollback triggers for each task.
+5. Define touched files, executable oracles, verification commands, review depth, and failure policy for each task.
 6. Mark any future parallel-safe batch explicitly; otherwise keep the plan serial.
 7. Validate the plan artifact before review.
 8. Route the artifact through mandatory plan review and bounded in-scope autofix when needed.
@@ -52,7 +52,7 @@ When the upstream design contains an approved architecture decision, plan its im
 - `architecture_decision_ref`: the upstream `architecture_decision_id` or stable design section
 - `reversible_increments`: ordered slices that buy information early and preserve a safe exit path
 - `upgrade_triggers`: observable conditions that authorize deferred architecture supply or a return to design
-- task-scoped implementation, oracle, rollout, rollback, ownership, and cleanup work for the chosen option
+- task-scoped implementation, oracle, rollout, recovery policy, ownership, and cleanup work for the chosen option
 
 Do not rescore or reopen the approved tradeoff merely because another pattern is available. If current repository or runtime evidence invalidates the approved demand, constraint, owner, hard requirement, or upgrade trigger, stop with `needs_design_decision` instead of silently changing the architecture inside the plan.
 
@@ -84,7 +84,7 @@ The goal of planning is to maximize uninterrupted execution after plan approval.
 Record a `## Execution Continuity` section with:
 - `execution_mode`: `continuous_after_plan_approval`, `pre_confirmation_required`, or `not_ready`
 - `confirmation_clearance`: stable `C*` items for known human decisions, destructive writes, live cutovers, credential needs, or external dependencies
-- `runtime_contingencies`: stable `X*` items for execution-time surprises only, such as failed probes, live-state drift, missing credentials, verification failures, or rollback triggers
+- `runtime_contingencies`: stable `X*` items only for observed conditions that block authorized or safe continuation, such as missing required authority or credentials, live state that invalidates the approved plan, loss of management connectivity, a routing or control-plane cycle, writer or quorum exclusivity risk, irreversible data-safety risk, or an explicitly declared guarded-rollback trigger; an ordinary verification failure is not itself a stop contingency
 - `planned_stop_points`: should be empty for the normal case; non-empty only when a known issue cannot be safely pre-confirmed during planning
 - `task_ordering_rationale`: explain why low-risk, no-confirmation tasks run before live, destructive, or high-risk tasks unless a risky task is a hard prerequisite
 
@@ -98,6 +98,18 @@ Each `confirmation_clearance` item should include:
 Known user decisions should be resolved during planning whenever possible. If a known decision remains `needs_confirmation_before_execution`, the plan is not fully continuous and the final planning summary must lead with that fact.
 
 Use `runtime_contingencies` only for uncertainty that cannot be settled before execution. They are not routine human checkpoints.
+
+## Failure Policy
+
+Every new plan must include a `## Recovery` section with `default_failure_policy: fix_forward`. A backup, snapshot, retained source tree, previous release, HA peer, or VRRP failover path is recovery evidence; its existence does not authorize restoring old state.
+
+Every task declares one `failure_policy`:
+
+- `fix_forward`: default; diagnose, repair inside the approved touch set, rerun the narrow oracle, and continue toward cutover.
+- `stop_and_diagnose`: preserve state and evidence, then stop mutation because continuing could compound an unresolved risk; do not restore old state automatically.
+- `guarded_rollback`: use only when the task declares exact `rollback_trigger`, `rollback_target`, and `rollback_verification`, the trigger is observed, and restoring the target is tested and safer than forward repair.
+
+Ordinary compile, test, probe, deploy-verification, or service-health failures do not justify guarded rollback by themselves. Do not add a `## Rollback` section unless at least one task uses `guarded_rollback`. When the user explicitly says no rollback or fix-forward, the plan must not contain rollback hooks, traps, restore steps, or rollback metadata.
 
 ## Planning Summary
 
@@ -124,7 +136,7 @@ Do not finish plan-change with only a generic approval request. The user must be
 - Behavior-changing tasks should declare the failing test, narrow reproducer, or substitute verification evidence expected before implementation.
 - Plan writers must not absorb every possible reviewer concern into the current milestone. Put out-of-scope concerns into `future_phase` or stop with `split_scope` / `needs_design_decision`.
 - Tasks implementing an approved architecture decision should use reversible increments and preserve its upgrade triggers instead of buying all deferred complexity immediately.
-- Each new task should declare enough metadata for task-ledger execution, including `task_id`, `depends_on`, `scope_slice`, task-scoped file refs, `verification_scope`, `executor_mode`, `task_review_depth`, `done_when`, and `rollback_on_failure`.
+- Each new task should declare enough metadata for task-ledger execution, including `task_id`, `depends_on`, `scope_slice`, task-scoped file refs, `verification_scope`, `executor_mode`, `task_review_depth`, `done_when`, and `failure_policy`.
 - Tasks that create or replace a persisted implementation boundary should also declare the conditional implementation-language decision described above.
 - Task order should put low-risk, repo-local, reversible, and no-confirmation tasks before high-risk, live, destructive, or external-dependency tasks unless the risky task is a hard prerequisite.
 - Legacy plans may remain readable in compatibility mode during transition, but new plans should not rely on that fallback.

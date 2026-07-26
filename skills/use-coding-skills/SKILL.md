@@ -38,7 +38,7 @@ When compacting or handing off long conversations, preserve in priority order:
 1. Architecture decisions and durable contracts.
 2. Modified files and key changes.
 3. Current verification status.
-4. Open TODOs, rollback notes, and next gates.
+4. Open TODOs, recovery notes, and next gates.
 5. Tool outputs only as pass/fail or the smallest required evidence.
 
 ## References

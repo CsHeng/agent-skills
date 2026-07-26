@@ -34,7 +34,11 @@ extract_task_list_field() {
       in_key = 1
       next
     }
-    in_section && in_key && $0 ~ "^[[:space:]]*-[[:space:]]*[A-Za-z0-9_-]+:[[:space:]]*.*$" {
+    in_section && in_key && $0 ~ "^-[[:space:]]*[A-Za-z0-9_-]+:[[:space:]]*.*$" {
+      in_key = 0
+      next
+    }
+    in_section && in_key && $0 ~ "^-[[:space:]]*\\[[ xX]\\]" {
       in_key = 0
       next
     }
@@ -91,12 +95,15 @@ task_catalog_json() {
   local scope_slice=""
   local executor_mode=""
   local task_review_depth=""
-  local rollback_on_failure=""
+  local failure_policy=""
+  local rollback_target=""
   local depends_on_json="[]"
   local impl_refs_json="[]"
   local test_refs_json="[]"
   local verification_json="[]"
   local done_when_json="[]"
+  local rollback_trigger_json="[]"
+  local rollback_verification_json="[]"
 
   validate_execution_grade_plan_artifact "$plan_file" >/dev/null || return 1
 
@@ -107,12 +114,15 @@ task_catalog_json() {
     scope_slice="$(extract_markdown_scalar "$plan_file" "$section" "scope_slice")"
     executor_mode="$(extract_markdown_scalar "$plan_file" "$section" "executor_mode")"
     task_review_depth="$(extract_markdown_scalar "$plan_file" "$section" "task_review_depth")"
-    rollback_on_failure="$(extract_markdown_scalar "$plan_file" "$section" "rollback_on_failure")"
+    failure_policy="$(extract_markdown_scalar "$plan_file" "$section" "failure_policy")"
+    rollback_target="$(extract_markdown_scalar "$plan_file" "$section" "rollback_target")"
     depends_on_json="$(task_depends_on_json "$plan_file" "$section")"
     impl_refs_json="$(task_list_field_json "$plan_file" "$section" "impl_file_refs")"
     test_refs_json="$(task_list_field_json "$plan_file" "$section" "test_file_refs")"
     verification_json="$(task_list_field_json "$plan_file" "$section" "verification_scope")"
     done_when_json="$(task_list_field_json "$plan_file" "$section" "done_when")"
+    rollback_trigger_json="$(task_list_field_json "$plan_file" "$section" "rollback_trigger")"
+    rollback_verification_json="$(task_list_field_json "$plan_file" "$section" "rollback_verification")"
 
     jq -n \
       --arg section "$section" \
@@ -121,12 +131,15 @@ task_catalog_json() {
       --arg scope_slice "$scope_slice" \
       --arg executor_mode "$executor_mode" \
       --arg task_review_depth "$task_review_depth" \
-      --arg rollback_on_failure "$rollback_on_failure" \
+      --arg failure_policy "$failure_policy" \
+      --arg rollback_target "$rollback_target" \
       --argjson depends_on "$depends_on_json" \
       --argjson impl_file_refs "$impl_refs_json" \
       --argjson test_file_refs "$test_refs_json" \
       --argjson verification_commands "$verification_json" \
       --argjson done_when "$done_when_json" \
+      --argjson rollback_trigger "$rollback_trigger_json" \
+      --argjson rollback_verification "$rollback_verification_json" \
       '{
         section: $section,
         title: $task_title,
@@ -139,7 +152,10 @@ task_catalog_json() {
         executor_mode: $executor_mode,
         task_review_depth: $task_review_depth,
         done_when: $done_when,
-        rollback_on_failure: $rollback_on_failure
+        failure_policy: $failure_policy,
+        rollback_trigger: $rollback_trigger,
+        rollback_target: $rollback_target,
+        rollback_verification: $rollback_verification
       }'
   done < <(list_plan_task_sections "$plan_file") | jq -s .
 }

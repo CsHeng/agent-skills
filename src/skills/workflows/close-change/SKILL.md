@@ -1,6 +1,6 @@
 ---
 name: close-change
-description: "Use after a verified change to decide merge, release, cleanup, rollback, branch closure, or final close-gate status."
+description: "Use after a verified change to decide merge, release, cleanup, an explicitly guarded recovery action, branch closure, or final close-gate status."
 ---
 
 # Close Change

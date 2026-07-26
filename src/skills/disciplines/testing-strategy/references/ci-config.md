@@ -42,7 +42,7 @@ Run load or resource checks only for named load-sensitive behavior. Record workl
 
 ### Runtime
 
-Run canaries, synthetic probes, and SLO evaluation only with explicit deployment and rollback authority. Runtime evidence does not replace pre-merge lanes.
+Run canaries, synthetic probes, and SLO evaluation only with explicit deployment and recovery authority. Guarded rollback requires separate explicit authority. Runtime evidence does not replace pre-merge lanes.
 
 ## Deterministic Environment
 

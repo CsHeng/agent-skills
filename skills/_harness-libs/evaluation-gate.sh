@@ -18,8 +18,8 @@ normalize_evaluation_verdict() {
     return
   fi
 
-  if [[ "$review_status" == "needs-rollback" || "$verify_status" == "needs-rollback" ]]; then
-    printf 'needs-rollback\n'
+  if [[ "$review_status" == "guarded-rollback-required" || "$verify_status" == "guarded-rollback-required" ]]; then
+    printf 'guarded-rollback-required\n'
     return
   fi
 

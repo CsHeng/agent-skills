@@ -8,7 +8,7 @@ Use explanatory mode only when the task requires mechanism, tradeoffs, or explic
 2. Mechanism or data/control path.
 3. Boundary and ownership model.
 4. Tradeoffs and failure modes.
-5. Verification and rollback path.
+5. Verification and recovery path.
 
 Use that sequence only when it is one coherent explanation. If the answer has multiple independent scopes, label the scopes and items globally:
 

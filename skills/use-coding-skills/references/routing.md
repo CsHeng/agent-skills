@@ -6,11 +6,11 @@ Use skills as the durable, agent-agnostic behavior surface. Keep AGENTS files as
 
 - `analyze-project`: read-only project state, terminology, truth map, search boundaries, and drift signals.
 - `design-change`: classify change scope, truth impact, boundary impact, and design depth before planning.
-- `plan-change`: produce ordered implementation tasks with dependencies, verification, rollback triggers, and conditional persisted implementation-language decisions.
+- `plan-change`: produce ordered implementation tasks with dependencies, verification, explicit recovery policy, and conditional persisted implementation-language decisions.
 - `implement-change`: execute an approved plan as one unit with verification and review gates.
 - `review-change`: normalize design, plan, or code review into one verdict.
 - `sync-truth`: update stable truth after verified behavior changes.
-- `close-change`: decide merge, release, cleanup, rollback, or close status.
+- `close-change`: decide merge, release, cleanup, guarded recovery action, or close status.
 
 ## Support Routes
 

@@ -19,7 +19,7 @@ Use this reference when a change creates, replaces, decomposes, centralizes, dis
 
 Evaluate the next architecture increment rather than comparing only completed end states.
 
-Count marginal benefit such as the next reduction in latency, failure coupling, deployment contention, or operator toil. Compare it with the next increment of implementation, migration, coordination, cognitive, runtime, observability, verification, and rollback cost.
+Count marginal benefit such as the next reduction in latency, failure coupling, deployment contention, or operator toil. Compare it with the next increment of implementation, migration, coordination, cognitive, runtime, observability, verification, and recovery cost.
 
 Prefer reversible staged investment when the first increment captures most of the benefit. Stop adding layers, services, caches, brokers, replicas, abstractions, or tests when the next unit costs more than the constraint it removes.
 
@@ -75,7 +75,7 @@ Provision enough headroom for the decision horizon and the lead time needed to a
 6. Identify owner_and_incentives, including shifted costs and cleanup responsibility.
 7. Explain comparative_advantage for the chosen responsibility placement.
 8. Select the option that meets the approved goal with the lowest justified lifecycle burden.
-9. Record an observable upgrade_trigger, rollback boundary, and executable oracle.
+9. Record an observable upgrade_trigger, recovery boundary, and executable oracle.
 
 ## Compact Decision Evidence
 
@@ -95,7 +95,7 @@ architecture_economics:
   comparative_advantage: <why this boundary or owner has the lowest relative cost>
   chosen_option: <selected boundary and pattern set>
   upgrade_trigger: <observable condition for the next increment>
-  rollback_and_oracle: <safe exit plus executable evidence>
+  recovery_and_oracle: <safe exit plus executable evidence>
 ```
 
 Do not turn uncertain inputs into a weighted score. Avoid false precision because it hides assumptions and encourages agents or reviewers to optimize the score instead of the system outcome.

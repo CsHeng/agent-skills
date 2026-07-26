@@ -51,10 +51,11 @@ Top-level harness authority in this repository is:
 - `sync-truth`
 - `close-change`
 
-This control plane owns request routing, phase transition, rollback depth, parallelization permission, policy injection timing, and completion judgment.
+This control plane owns request routing, phase transition, evidence-based recovery routing, parallelization permission, policy injection timing, and completion judgment.
 
 Kernel defaults:
 - serial-first execution
+- fix-forward recovery by default; guarded rollback requires an approved exact trigger, tested target, and verification
 - human-sovereign approvals at design, plan, truth-sync, and close
 - no unattended execution by default
 - `design-change` and `plan-change` do not complete on artifact write alone; they require validation and mandatory review before the human gate
@@ -134,7 +135,7 @@ Key properties:
 - review is evidence-based and causality-bound to the current artifact diff or task slice
 - reviewers return candidate findings; the main agent adjudicates them before any repair
 - `review-implementation` is a read-only evaluator; `implement-change` alone owns implementation repair, mutation, continuation, and typed exits
-- `review-design` and `review-plan` default to boundary-focused review: architecture/surface/DAG/oracle/ownership/rollback blockers only
+- `review-design` and `review-plan` default to boundary-focused review: architecture/surface/DAG/oracle/ownership/recovery-policy blockers only
 - `review-implementation` reviews only the exact task diff, task tests, declared oracles, and justified direct dependencies
 - moving or renaming unchanged code does not activate pre-existing defects
 - low-confidence, pre-existing, unrelated, future-phase, and plan-expanding observations cannot become automatic repair
@@ -184,6 +185,7 @@ bash skills/_harness-libs/smoke-test/test-plan-runner.sh
 bash skills/_harness-libs/smoke-test/test-design-plan-command-control.sh
 bash skills/_harness-libs/smoke-test/test-agent-native-review.sh
 bash skills/_harness-libs/smoke-test/test-artifact-dag.sh
+bash skills/_harness-libs/smoke-test/test-recovery-routing.sh
 bash skills/_harness-libs/smoke-test/test-execute-runner.sh
 bash skills/_harness-libs/smoke-test/test-review-execute-command-control.sh
 ```

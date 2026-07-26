@@ -1,6 +1,6 @@
 ---
 name: implement-change
-description: "Implement an approved plan end to end with serial tasks, executable oracles, bounded agent-native review, main-agent finding adjudication, focused repair verification, rollback, truth sync, and close routing."
+description: "Implement an approved plan end to end with serial tasks, executable oracles, bounded agent-native review, fix-forward repair by default, explicit guarded rollback only when declared, truth sync, and close routing."
 ---
 
 # Implement Change
@@ -45,6 +45,16 @@ Resolve both relative to this `SKILL.md`. The cross-skill graph stays acyclic; r
 - One initial bounded review and one focused verification review are the normal path.
 - One additional repair attempt is allowed only when focused verification proves the accepted repair is incomplete or introduced a regression in the same bounded slice.
 - A repeated finding after that, scope expansion, plan/design change, new authority, or unavailable external evidence exits with the matching typed state instead of more edits.
+
+## Recovery Policy
+
+- Read each task's `failure_policy` before mutation. The approved task policy and the user's latest explicit recovery directive outrank generic workflow-mode labels.
+- `fix_forward` is the default: preserve backups or snapshots, diagnose the observed failure, repair inside the approved touch set, rerun the narrow oracle, and continue toward cutover.
+- `stop_and_diagnose` preserves current state and evidence and stops further mutation; it does not restore old state.
+- `guarded_rollback` is allowed only when the approved task declares an exact trigger, target, and rollback verification, the trigger is observed, safe forward repair is unavailable, and rollback is tested and safer.
+- Never synthesize rollback functions, error traps, restore steps, release reversion, or automatic rollback because a change is classified as regulated or because verification failed.
+- Treat HA, VRRP, failover, retained data, and previous releases as recovery surfaces, not implicit instructions to restore the old release.
+- Failure count is diagnostic evidence only. Replan only when evidence proves the task graph or touch set is insufficient; redesign only when evidence proves the approved boundary is invalid.
 
 ## Execution Continuity
 

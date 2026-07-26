@@ -24,7 +24,7 @@ Prefer an external scratch script when logic needs loops, exception handling, mu
 
 PROHIBITED: Interpolate untrusted input into a Shell, Python, or other executable source string.
 
-PROHIBITED: Use opaque nested code for an irreversible or state-changing operation before COUNT and PREVIEW establish the exact target set, expected mutation, and rollback or recovery boundary.
+PROHIBITED: Use opaque nested code for an irreversible or state-changing operation before COUNT and PREVIEW establish the exact target set, expected mutation, and recovery boundary.
 
 AVOID splitting one mutation across nested language layers when failure in an inner layer can leave the outer layer continuing with partial or unvalidated state. If this shape is still the smallest bounded option, make failure propagation and post-mutation verification explicit.
 
@@ -37,7 +37,7 @@ For multi-file, remote, destructive, or otherwise irreversible operations:
 1. COUNT the candidate set without mutation.
 2. PREVIEW representative and boundary cases.
 3. Validate the active repository, host, and path.
-4. Identify rollback, backup, idempotency, or recovery behavior.
+4. Identify backup, idempotency, and recovery behavior; name guarded rollback only when explicitly authorized.
 5. EXECUTE with the simplest reviewable command shape.
 6. Verify the resulting state independently.
 

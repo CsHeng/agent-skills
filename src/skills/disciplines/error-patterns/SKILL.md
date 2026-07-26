@@ -46,7 +46,7 @@ REQUIRED: Reproduce or isolate the symptom before applying a fix whenever the sy
 REQUIRED: For hard bugs, performance regressions, flaky behavior, or repeated runtime failures, read `references/debugging-tight-loop.md` and establish a red-capable feedback loop before hypothesizing.
 REQUIRED: Form one root-cause hypothesis at a time, test it with the smallest useful probe, and discard it if evidence does not support it.
 PROHIBITED: Declare an install, deploy, restart, write, or recovery step complete unless the corresponding command finished successfully.
-PROHIBITED: Stack speculative fixes after repeated failures; after three failed fix attempts, stop and question the design, plan, or architecture.
+PROHIBITED: Stack speculative fixes after repeated failures. Return to the smallest reproducer and one evidence-backed hypothesis; escalate to plan only when evidence proves the task graph or touch set is insufficient, and to design only when evidence proves the approved boundary is invalid. Attempt count alone never escalates phase.
 PREFERRED: Preserve short command outputs, timestamps, and source paths that prove the current runtime state.
 
 ### Exception Management
@@ -131,7 +131,7 @@ REQUIRED: Implement automatic retry for transient failures.
 REQUIRED: Use health checks to detect service recovery.
 REQUIRED: Provide clear error messages for manual intervention.
 REQUIRED: Implement diagnostic tools for troubleshooting.
-REQUIRED: Provide rollback mechanisms for failed deployments.
+REQUIRED: Declare deployment failure policy. Default to fix-forward; use stop-and-diagnose when continued mutation is unsafe; use guarded rollback only with an explicit tested trigger, target, and verification.
 
 PREFERRED: Use cached data when real-time data is unavailable.
 PREFERRED: Implement read-only mode during maintenance.

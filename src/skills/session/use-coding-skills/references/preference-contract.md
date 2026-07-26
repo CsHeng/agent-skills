@@ -28,5 +28,5 @@ Pay special attention to:
 - permission model
 - trust boundary
 - failure surface
-- rollback path
+- recovery policy
 - verification point

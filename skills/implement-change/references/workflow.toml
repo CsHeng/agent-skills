@@ -72,4 +72,4 @@ initial_review_passes = 1
 focused_verification_passes = 1
 additional_same_slice_repair_attempts = 1
 states = ["implement", "verify", "review", "classify", "diagnose", "repair"]
-typed_exits = ["pass", "replan", "redesign", "needs-authority", "rollback", "non-convergent"]
+typed_exits = ["pass", "replan", "redesign", "needs-authority", "guarded-rollback", "non-convergent"]

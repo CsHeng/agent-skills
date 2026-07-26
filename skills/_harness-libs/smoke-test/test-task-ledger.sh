@@ -141,7 +141,7 @@ cat >"$plan_file" <<'EOF'
 - task_review_depth: quick
 - done_when:
   - `bash test.sh` succeeds
-- rollback_on_failure: plan-incompleteness
+- failure_policy: fix_forward
 - [ ] Step 1: Implement core example
 
 ## Task 2: Helper Follow-up
@@ -160,13 +160,22 @@ cat >"$plan_file" <<'EOF'
 - task_review_depth: quick
 - done_when:
   - helper verification passes
-- rollback_on_failure: plan-incompleteness
+- failure_policy: guarded_rollback
+- rollback_trigger:
+  - helper cutover loses the declared management path
+- rollback_target: tested pre-change helper state
+- rollback_verification:
+  - helper management path passes after restore
 - [ ] Step 1: Implement helper
+
+## Recovery
+
+- default_failure_policy: fix_forward
 
 ## Rollback
 
-- failure_kind: plan-incompleteness
-- rollback_entry: design-change
+- guarded_task_ids:
+  - task-2
 EOF
 
   cat >"$legacy_plan" <<'EOF'
@@ -210,7 +219,9 @@ EOF
   ledger_json="$(task_ledger_json "$plan_file")"
   assert_json "$ledger_json" 'length == 2' "task ledger should include both tasks"
   assert_json "$ledger_json" '.[0].task_id == "task-1" and .[0].status == "ready"' "first task should start ready"
+  assert_json "$ledger_json" '.[0].failure_policy == "fix_forward" and .[0].rollback_trigger == []' "fix-forward task should have no rollback metadata"
   assert_json "$ledger_json" '.[1].task_id == "task-2" and .[1].status == "pending"' "dependent task should start pending"
+  assert_json "$ledger_json" '.[1].failure_policy == "guarded_rollback" and (.[1].rollback_trigger | length) == 1 and .[1].rollback_target != "" and (.[1].rollback_verification | length) == 1' "guarded task should preserve exact rollback metadata"
 
   printf '%s\n' "$ledger_json" >"$ledger_file"
   next_ready="$(task_ledger_next_ready_task_id "$ledger_file")"

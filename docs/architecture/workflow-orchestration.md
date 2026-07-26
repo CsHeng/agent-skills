@@ -17,12 +17,12 @@ When prose, diagrams, and runtime behavior disagree, resolve drift in this order
 
 ## Lifecycle Shape
 
-Workflow mode selection precedes phase implementation. The selected mode determines which design, plan, review, truth-sync, rollback, and evidence requirements apply.
+Workflow mode selection precedes phase implementation. The selected mode determines which design, plan, review, truth-sync, recovery-policy, and evidence requirements apply.
 
 - Read-only work routes to analysis without repository mutation.
 - Micro changes use a bounded plan, execution, verification, and close path.
 - Standard changes add design, review, and truth sync.
-- Regulated changes require the full design, review, plan, implementation, truth-sync, and close gates plus rollback and fresh evidence.
+- Regulated changes require the full design, review, plan, implementation, truth-sync, and close gates plus an explicit recovery surface and fresh evidence. Classification alone never authorizes automatic rollback.
 - Emergency work minimizes up-front ceremony but requires verification, post-hoc review, truth sync, and close.
 
 Workflow skills own lifecycle transitions. Discipline, policy, tool, and review-component skills contribute methods or evidence without advancing lifecycle state.
@@ -66,8 +66,10 @@ The normal path is one initial bounded review, one batched repair of main-agent 
 - `replan`: the approved plan or work-package order is insufficient.
 - `redesign`: the architecture or boundary decision must change.
 - `needs-authority`: completion requires new user authority or expanded scope.
-- `rollback`: the verified safe path is to restore the declared rollback target.
+- `guarded-rollback`: safe forward repair is unavailable and the approved task's exact rollback trigger, target, and verification are all satisfied.
 - `non-convergent`: focused same-slice repair did not converge.
+
+The recovery router maps evidence classes to the narrow owning phase. Failure count is retained only as diagnostic evidence and never widens implementation failure into dependency freeze, replan, or redesign. A plan route requires evidence that the task graph or touch set is insufficient; a design route requires evidence that the approved boundary is invalid.
 
 Only `implement-change` mutates implementation state inside this loop. `review-implementation` never repairs, invokes a lifecycle workflow, delegates recursively, or decides continuation.
 

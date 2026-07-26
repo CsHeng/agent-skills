@@ -33,7 +33,7 @@ main() {
   local task_ledger_json=""
   local task_catalog_json=""
   local next_ready_task=""
-  local -a commands allowed_touch_set
+  local -a verification_commands allowed_touch_set
 
   [[ "$(execute_entry_phase)" == "implement-serial" ]] || fail "execute entry phase should stay implement-serial"
 
@@ -153,14 +153,15 @@ EOF
 - task_review_depth: quick
 - done_when:
   - implementation verification passes
-- rollback_on_failure: verification-failure
+- failure_policy: fix_forward
 - [ ] Update `src/example.py`
 - [ ] Run verification
 
-## Rollback
+## Recovery
 
-- failure_kind: verification-failure
-- rollback_entry: plan-change
+- default_failure_policy: fix_forward
+- backup_or_snapshot:
+  - keep the pre-change data copy without automatic restore
 EOF
 
   cat >"$pending_plan" <<'EOF'
@@ -221,13 +222,12 @@ EOF
 - task_review_depth: quick
 - done_when:
   - verification passes
-- rollback_on_failure: verification-failure
+- failure_policy: fix_forward
 - [ ] Update `src/example.py`
 
-## Rollback
+## Recovery
 
-- failure_kind: verification-failure
-- rollback_entry: plan-change
+- default_failure_policy: fix_forward
 EOF
 
   cat >"$legacy_plan" <<'EOF'
@@ -285,10 +285,10 @@ EOF
   worktree_preflight="$(execution_worktree_preflight_required "current-checkout" "false")"
   [[ "$worktree_preflight" == "true" ]] || fail "current checkout should require worktree preflight reminder before execution starts"
 
-  mapfile -t commands < <(execution_verification_commands "$approved_plan")
-  [[ "${#commands[@]}" -eq 2 ]] || fail "verification commands should be extracted"
-  [[ "${commands[0]}" == "bash test.sh" ]] || fail "verification commands should strip markdown quoting"
-  [[ "${commands[1]}" == "python -m pytest tests/test_example.py" ]] || fail "verification commands should preserve command text"
+  mapfile -t verification_commands < <(execution_verification_commands "$approved_plan")
+  [[ "${#verification_commands[@]}" -eq 2 ]] || fail "verification commands should be extracted"
+  [[ "${verification_commands[0]}" == "bash test.sh" ]] || fail "verification commands should strip markdown quoting"
+  [[ "${verification_commands[1]}" == "python -m pytest tests/test_example.py" ]] || fail "verification commands should preserve command text"
 
   mapfile -t allowed_touch_set < <(execution_allowed_touch_set "$approved_plan")
   [[ "${#allowed_touch_set[@]}" -eq 2 ]] || fail "allowed touch set should come from approved plan"
@@ -297,6 +297,7 @@ EOF
 
   task_catalog_json="$(execution_task_catalog "$approved_plan")"
   assert_json "$task_catalog_json" 'length == 1 and .[0].task_id == "task-1"' "task catalog should materialize approved task metadata"
+  assert_json "$task_catalog_json" '.[0].failure_policy == "fix_forward" and .[0].rollback_trigger == [] and .[0].rollback_target == ""' "task catalog should preserve fix-forward without rollback metadata"
 
   task_ledger_json="$(execution_task_ledger "$approved_plan")"
   assert_json "$task_ledger_json" 'length == 1 and .[0].status == "ready"' "task ledger should start ready for dependency-free root task"
@@ -317,15 +318,17 @@ EOF
   verdict="$(build_execute_gate_result "pass" "pass" "true" "true")"
   assert_json "$verdict" '.ready_for_close == true' "truth sync completion should unlock close"
 
-  [[ "$(execute_rollback_target "verification-failure" 1)" == "implement-serial" ]] || fail "first verification failure should stay in implement-serial"
-  [[ "$(execute_rollback_target "verification-failure" 2)" == "dependency-freeze" ]] || fail "repeated verification failure should escalate rollback"
+  [[ "$(execute_recovery_route "verification-failure" 1)" == "implement-serial" ]] || fail "first verification failure should stay in implementation"
+  [[ "$(execute_recovery_route "verification-failure" 5)" == "implement-serial" ]] || fail "repeated verification failures must not widen the phase"
 
   assert_contains "$ROOT_DIR/commands/implement-change.md" 'skills/_harness-libs/execute-runner.sh' "execute command should use execute runner"
   assert_contains "$ROOT_DIR/commands/implement-change.md" 'approval-status|approval_status:[[:space:]]*approved' "execute command should require approved plan"
   assert_contains "$ROOT_DIR/commands/implement-change.md" 'verification_scope|run verification' "execute command should execute verification from the plan"
   assert_contains "$ROOT_DIR/commands/implement-change.md" 'coding:review-change' "execute command should route code review through top-level review semantics"
   assert_contains "$ROOT_DIR/commands/implement-change.md" 'evaluation gate' "execute command should normalize review and verification before closure"
-  assert_contains "$ROOT_DIR/commands/implement-change.md" 'rollback targets' "execute command should define rollback behavior"
+  assert_contains "$ROOT_DIR/commands/implement-change.md" 'failure_policy' "execute command should follow the approved failure policy"
+  assert_contains "$ROOT_DIR/commands/implement-change.md" 'Never synthesize rollback code' "execute command should forbid invented rollback machinery"
+  assert_contains "$ROOT_DIR/commands/implement-change.md" 'failure count increased' "execute command should forbid count-based phase widening"
   assert_contains "$ROOT_DIR/commands/implement-change.md" 'machine-checkable' "execute command should forbid hedging when gate state is clear"
 }
 

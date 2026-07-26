@@ -37,7 +37,7 @@ assert_sequence() {
 }
 
 main() {
-  local entries phases classes design_strengths verdicts artifact_classes failure_kinds
+  local entries phases classes design_strengths verdicts artifact_classes failure_policies failure_kinds
 
   entries="$(printf '%s\n' "${HARNESS_ENTRIES[@]}")"
   phases="$(printf '%s\n' "${HARNESS_PHASES[@]}")"
@@ -45,6 +45,7 @@ main() {
   design_strengths="$(printf '%s\n' "${HARNESS_DESIGN_STRENGTHS[@]}")"
   verdicts="$(printf '%s\n' "${HARNESS_VERDICTS[@]}")"
   artifact_classes="$(printf '%s\n' "${HARNESS_ARTIFACT_CLASSES[@]}")"
+  failure_policies="$(printf '%s\n' "${HARNESS_FAILURE_POLICIES[@]}")"
   failure_kinds="$(printf '%s\n' "${HARNESS_FAILURE_KINDS[@]}")"
 
   assert_sequence "$entries" "$(cat <<'EOF'
@@ -94,7 +95,7 @@ EOF
   assert_sequence "$verdicts" "$(cat <<'EOF'
 pass
 needs-fixes
-needs-rollback
+guarded-rollback-required
 manual-decision-required
 EOF
 )" "verdicts drifted"
@@ -108,6 +109,13 @@ evaluation
 history
 EOF
 )" "artifact classes drifted"
+
+  assert_sequence "$failure_policies" "$(cat <<'EOF'
+fix_forward
+stop_and_diagnose
+guarded_rollback
+EOF
+)" "failure policies drifted"
 
   assert_sequence "$failure_kinds" "$(cat <<'EOF'
 classification-failure
@@ -141,12 +149,16 @@ EOF
   assert_invalid is_valid_design_strength "full-design"
 
   is_valid_verdict "pass" || fail "pass should be valid"
-  is_valid_verdict "needs-rollback" || fail "needs-rollback should be valid"
+  is_valid_verdict "guarded-rollback-required" || fail "guarded-rollback-required should be valid"
   assert_invalid is_valid_verdict "ok"
 
   is_valid_artifact_class "truth" || fail "truth should be valid"
   is_valid_artifact_class "evaluation" || fail "evaluation should be valid"
   assert_invalid is_valid_artifact_class "code"
+
+  is_valid_failure_policy "fix_forward" || fail "fix_forward should be valid"
+  is_valid_failure_policy "guarded_rollback" || fail "guarded_rollback should be valid"
+  assert_invalid is_valid_failure_policy "rollback_on_failure"
 
   is_valid_failure_kind "classification-failure" || fail "classification-failure should be valid"
   is_valid_failure_kind "truth-sync-failure" || fail "truth-sync-failure should be valid"

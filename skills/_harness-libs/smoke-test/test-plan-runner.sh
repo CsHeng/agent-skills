@@ -19,7 +19,7 @@ assert_contains() {
 }
 
 main() {
-  local tmp_dir legacy_plan strict_plan partial_plan design_file
+  local tmp_dir legacy_plan strict_plan guarded_plan invalid_rollback_plan partial_plan design_file
 
   [[ "$(default_plan_artifact_path "docs/plans/harness-kernel/2026-04-06-add-tier-entitlement-design.md")" == "docs/plans/harness-kernel/2026-04-06-add-tier-entitlement-plan.md" ]] \
     || fail "default plan path drifted"
@@ -28,6 +28,8 @@ main() {
   tmp_dir="$(mktemp -d)"
   legacy_plan="$tmp_dir/legacy-plan.md"
   strict_plan="$tmp_dir/strict-plan.md"
+  guarded_plan="$tmp_dir/guarded-plan.md"
+  invalid_rollback_plan="$tmp_dir/invalid-rollback-plan.md"
   partial_plan="$tmp_dir/partial-plan.md"
   design_file="$tmp_dir/design.md"
 
@@ -143,7 +145,7 @@ EOF
 - task_review_depth: quick
 - done_when:
   - `bash test.sh` succeeds
-- rollback_on_failure: plan-incompleteness
+- failure_policy: fix_forward
 - [ ] Step 1: Do work
 
 ## Task 2: Example Integration
@@ -162,13 +164,14 @@ EOF
 - task_review_depth: quick
 - done_when:
   - helper and integration verification pass
-- rollback_on_failure: plan-incompleteness
+- failure_policy: stop_and_diagnose
 - [ ] Step 1: Extend the integration
 
-## Rollback
+## Recovery
 
-- failure_kind: plan-incompleteness
-- rollback_entry: design-change
+- default_failure_policy: fix_forward
+- backup_or_snapshot:
+  - retain pre-change state as recovery evidence without automatic restore
 EOF
 
   cat >"$partial_plan" <<'EOF'
@@ -213,17 +216,97 @@ EOF
 - task_review_depth: quick
 - done_when:
   - `bash test.sh` succeeds
-- rollback_on_failure: plan-incompleteness
+- failure_policy: fix_forward
 - [ ] Step 1: Do work
+
+## Recovery
+
+- default_failure_policy: fix_forward
+EOF
+
+  cat >"$guarded_plan" <<'EOF'
+# Guarded Network Plan
+
+## Upstream Design
+
+- design_ref: design.md
+- design_version: 2026-04-06-initial
+
+## Implementation Scope
+
+- impl_file_refs:
+  - src/example
+- test_file_refs:
+  - tests/example
+- verification_scope:
+  - `bash test.sh`
+
+## Work Package Readiness
+
+- milestone_objective: change a network control-plane boundary without losing management access
+- non_goals:
+  - no unrelated network redesign
+- future_phase:
+  - no follow-up phase
+- decision_status: ready_for_review
+- oracle_strategy: pre-change reachability plus post-change management-path verification
+- acceptance_oracles:
+  - `bash test.sh`
+- max_review_batches: 2
+- subagent_ready: true
+
+## Review Gate
+
+- required_entry: review-change
+- required_mode: review-only
+
+## Human Gate
+
+- approval_required: true
+- approval_status: pending
+- next_entry: implement-change
+
+## Task 1: Guard Management Connectivity
+
+- task_id: task-network
+- depends_on:
+  - root
+- scope_slice: network control-plane change
+- impl_file_refs:
+  - src/example
+- test_file_refs:
+  - tests/example
+- verification_scope:
+  - `bash test.sh`
+- executor_mode: inline-serial
+- task_review_depth: boundary
+- done_when:
+  - management path and routing invariants pass
+- failure_policy: guarded_rollback
+- rollback_trigger:
+  - management connectivity is lost immediately after the controlled apply
+- rollback_target: tested pre-change network configuration
+- rollback_verification:
+  - management connectivity and routing invariants pass after restore
+- [ ] Apply the bounded network change
+
+## Recovery
+
+- default_failure_policy: fix_forward
 
 ## Rollback
 
-- failure_kind: plan-incompleteness
-- rollback_entry: design-change
+- guarded_task_ids:
+  - task-network
 EOF
+
+  cp "$strict_plan" "$invalid_rollback_plan"
+  printf '\n## Rollback\n\n- guarded_task_ids:\n  - none\n' >>"$invalid_rollback_plan"
 
   validate_plan_artifact "$legacy_plan"
   validate_plan_artifact "$strict_plan"
+  validate_execution_grade_plan_artifact "$strict_plan"
+  validate_execution_grade_plan_artifact "$guarded_plan"
   [[ "$(plan_approval_status "$strict_plan")" == "pending" ]] || fail "plan approval status should resolve"
 
   if validate_plan_artifact "$partial_plan" >/dev/null 2>&1; then
@@ -233,6 +316,9 @@ EOF
   if (export PLAN_RUNNER_TASK_METADATA_MODE=strict; validate_plan_artifact "$legacy_plan") >/dev/null 2>&1; then
     fail "legacy prose-only plan should fail in strict task metadata mode"
   fi
+  if validate_execution_grade_plan_artifact "$invalid_rollback_plan" >/dev/null 2>&1; then
+    fail "fix-forward plan should reject generated rollback metadata"
+  fi
 
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'skills/_harness-libs/plan-runner.sh' "plan command should use plan runner"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'approved design|design approval' "plan command should require approved design"
@@ -240,6 +326,9 @@ EOF
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'Execution Continuity' "plan command should require execution continuity"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'confirmation_clearance' "plan command should require confirmation clearance"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'continuous_after_plan_approval' "plan command should state continuous execution mode"
+  assert_contains "$ROOT_DIR/commands/plan-change.md" 'default_failure_policy:[[:space:]]*fix_forward' "plan command should default to fix-forward"
+  assert_contains "$ROOT_DIR/commands/plan-change.md" 'failure_policy:[[:space:]]*fix_forward.*stop_and_diagnose.*guarded_rollback' "plan command should define the task failure-policy enum"
+  assert_contains "$ROOT_DIR/commands/plan-change.md" 'Rollback.*only for guarded-rollback' "plan command should reject routine rollback sections"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'C0' "plan command should summarize whether approvals are cleared"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'executable-oracle-architecture-selector' "plan command should route non-trivial behavior to oracle selection"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'coding:review-change' "plan command should route through top-level review gate"

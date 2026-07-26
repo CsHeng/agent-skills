@@ -159,3 +159,22 @@ External semantic review runners selected a reviewer process, built exhaustive p
 - Only main-agent `accepted` findings enter controller-owned repair.
 - Normal implementation review uses one initial bounded review and one focused verification review, with at most one additional same-slice repair attempt.
 - `test-agent-native-review.sh` and `test-artifact-dag.sh` replace external reviewer-runner smoke coverage.
+
+## 2026-07-26 - Fix-Forward Recovery Policy
+
+### Failure Mode
+
+Regulated mode, plan metadata, infrastructure guidance, and failure-count routing collectively encouraged agents to synthesize rollback machinery for ordinary verification failures. Repeated failures could widen implementation into dependency freeze, plan, and design without evidence that those boundaries were wrong.
+
+### Change
+
+- Replace the regulated rollback requirement with an explicit recovery surface and `fix_forward` default.
+- Require every new task to select `fix_forward`, `stop_and_diagnose`, or `guarded_rollback`.
+- Permit guarded rollback only with an exact tested trigger, target, and verification.
+- Route failure classes by evidence and keep failure count observational; count alone never widens the lifecycle phase.
+
+### Operational Impact
+
+- Backups, snapshots, retained releases, HA peers, and VRRP are recovery evidence rather than rollback authorization.
+- Ordinary correctness and deploy-verification failures stay in diagnose, repair, and narrow re-verification.
+- Replan requires proof that the task graph or touch set is insufficient; redesign requires proof that the approved boundary is invalid.

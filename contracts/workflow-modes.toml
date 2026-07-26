@@ -26,14 +26,15 @@ requires_plan_artifact = true
 requires_review = true
 
 [modes.regulated]
-description = "Infra, network, GitOps, IaC, secrets, auth, security, deployment, public API, irreversible data, or high-blast-radius changes."
+description = "Potentially high-risk infra, network, GitOps, IaC, secrets, auth, security, deployment, public API, irreversible data, or high-blast-radius changes. Regulated classification requires explicit recovery and fresh evidence; it does not authorize automatic rollback."
 phases = ["analyze", "design-full", "review-design", "plan", "review-plan", "execute", "review-impl", "sync-truth", "close"]
 allows_repo_mutation = true
 requires_human_approval = true
 requires_design_artifact = true
 requires_plan_artifact = true
 requires_review = true
-requires_rollback_surface = true
+requires_recovery_surface = true
+default_failure_policy = "fix_forward"
 requires_fresh_evidence = true
 
 [modes.emergency]

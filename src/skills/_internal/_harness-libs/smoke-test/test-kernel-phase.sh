@@ -46,7 +46,7 @@ main() {
 
   [[ "$(normalize_evaluation_verdict "pass" "pass")" == "pass" ]] || fail "pass/pass should normalize to pass"
   [[ "$(normalize_evaluation_verdict "needs-fixes" "pass")" == "needs-fixes" ]] || fail "needs-fixes should hold the gate"
-  [[ "$(normalize_evaluation_verdict "pass" "needs-rollback")" == "needs-rollback" ]] || fail "needs-rollback should outrank pass"
+  [[ "$(normalize_evaluation_verdict "pass" "guarded-rollback-required")" == "guarded-rollback-required" ]] || fail "guarded rollback should outrank pass"
   [[ "$(normalize_evaluation_verdict "manual-decision-required" "pass")" == "manual-decision-required" ]] || fail "manual decision should survive normalization"
 
   verdict="$(build_evaluation_verdict "needs-fixes" "pass" "false" "false")"

@@ -77,6 +77,10 @@ task_section_has_any_metadata() {
     executor_mode \
     task_review_depth \
     done_when \
+    failure_policy \
+    rollback_trigger \
+    rollback_target \
+    rollback_verification \
     rollback_on_failure
   do
     if [[ -n "$(extract_markdown_scalar "$plan_file" "$section" "$key")" ]]; then
@@ -196,6 +200,103 @@ validate_task_list_field() {
   }
 }
 
+validate_task_failure_policy() {
+  local plan_file="$1"
+  local section="$2"
+  local mode="$3"
+  local failure_policy=""
+  local legacy_rollback=""
+  local key=""
+  local value=""
+
+  failure_policy="$(extract_markdown_scalar "$plan_file" "$section" "failure_policy")"
+  # Compatibility-only: execution-grade strict mode requires failure_policy.
+  legacy_rollback="$(extract_markdown_scalar "$plan_file" "$section" "rollback_on_failure")"
+
+  if [[ -z "$failure_policy" ]]; then
+    if [[ "$mode" == "compat" && -n "$legacy_rollback" ]]; then
+      return 0
+    fi
+    printf 'plan task missing required scalar field (failure_policy) in section: %s\n' "$section" >&2
+    return 1
+  fi
+
+  is_valid_failure_policy "$failure_policy" || {
+    printf 'plan task failure_policy must be fix_forward, stop_and_diagnose, or guarded_rollback in section: %s\n' "$section" >&2
+    return 1
+  }
+
+  case "$failure_policy" in
+    guarded_rollback)
+      validate_task_list_field "$plan_file" "$section" "rollback_trigger" || return 1
+      validate_task_scalar_field "$plan_file" "$section" "rollback_target" || return 1
+      validate_task_list_field "$plan_file" "$section" "rollback_verification" || return 1
+      ;;
+    fix_forward|stop_and_diagnose)
+      for key in rollback_trigger rollback_target rollback_verification; do
+        value="$(extract_markdown_scalar "$plan_file" "$section" "$key")"
+        if [[ -z "$value" ]]; then
+          value="$(extract_markdown_list "$plan_file" "$section" "$key" | awk 'NF > 0')"
+        fi
+        if [[ -n "$value" ]]; then
+          printf 'plan task %s must not declare %s in section: %s\n' "$failure_policy" "$key" "$section" >&2
+          return 1
+        fi
+      done
+      ;;
+  esac
+}
+
+plan_uses_guarded_rollback() {
+  local plan_file="$1"
+  local section=""
+
+  while IFS= read -r section; do
+    [[ -n "$section" ]] || continue
+    if [[ "$(extract_markdown_scalar "$plan_file" "$section" "failure_policy")" == "guarded_rollback" ]]; then
+      return 0
+    fi
+  done < <(list_plan_task_sections "$plan_file")
+
+  return 1
+}
+
+validate_plan_recovery_contract() {
+  local plan_file="$1"
+  local mode=""
+  local default_failure_policy=""
+  local has_recovery=0
+  local has_rollback=0
+
+  mode="$(plan_task_metadata_mode)"
+  rg -n '^## Recovery$' "$plan_file" >/dev/null && has_recovery=1
+  rg -n '^## Rollback$' "$plan_file" >/dev/null && has_rollback=1
+
+  if [[ "$has_recovery" -eq 0 ]]; then
+    if [[ "$mode" == "compat" && "$has_rollback" -eq 1 ]]; then
+      return 0
+    fi
+    printf 'plan artifact missing required section: ^## Recovery$\n' >&2
+    return 1
+  fi
+
+  default_failure_policy="$(extract_markdown_scalar "$plan_file" "Recovery" "default_failure_policy")"
+  [[ "$default_failure_policy" == "fix_forward" ]] || {
+    printf 'plan recovery default_failure_policy must be fix_forward\n' >&2
+    return 1
+  }
+
+  if plan_uses_guarded_rollback "$plan_file"; then
+    [[ "$has_rollback" -eq 1 ]] || {
+      printf 'plan artifact with guarded_rollback tasks must include: ^## Rollback$\n' >&2
+      return 1
+    }
+  elif [[ "$has_rollback" -eq 1 ]]; then
+    printf 'plan artifact must not include a Rollback section without a guarded_rollback task\n' >&2
+    return 1
+  fi
+}
+
 validate_plan_task_contracts() {
   local plan_file="$1"
   local mode=""
@@ -231,7 +332,7 @@ validate_plan_task_contracts() {
     validate_task_scalar_field "$plan_file" "$section" "executor_mode" || return 1
     validate_task_scalar_field "$plan_file" "$section" "task_review_depth" || return 1
     validate_task_list_field "$plan_file" "$section" "done_when" || return 1
-    validate_task_scalar_field "$plan_file" "$section" "rollback_on_failure" || return 1
+    validate_task_failure_policy "$plan_file" "$section" "$mode" || return 1
   done
 }
 
@@ -250,8 +351,7 @@ validate_plan_artifact() {
     '^## Implementation Scope$' \
     '^## Review Gate$' \
     '^## Human Gate$' \
-    '^## Task [0-9]+:' \
-    '^## Rollback$'
+    '^## Task [0-9]+:'
   do
     rg -n "$pattern" "$plan_file" >/dev/null || {
       printf 'plan artifact missing required section: %s\n' "$pattern" >&2
@@ -268,8 +368,7 @@ validate_plan_artifact() {
     'required_entry:' \
     'approval_required:' \
     'approval_status:' \
-    'next_entry:' \
-    'rollback_entry:'
+    'next_entry:'
   do
     rg -n "$pattern" "$plan_file" >/dev/null || {
       printf 'plan artifact missing required field: %s\n' "$pattern" >&2
@@ -287,8 +386,9 @@ validate_plan_artifact() {
     return 1
   }
 
-  validate_plan_task_contracts "$plan_file"
-  validate_plan_readiness_contract "$plan_file"
+  validate_plan_task_contracts "$plan_file" || return 1
+  validate_plan_readiness_contract "$plan_file" || return 1
+  validate_plan_recovery_contract "$plan_file"
 }
 
 plan_approval_status() {
