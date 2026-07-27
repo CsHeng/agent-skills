@@ -213,17 +213,6 @@ may_mutate_repo = false
 may_spawn_agent = false
 requires_explicit_user_request = true
 
-[skills.context7-registry]
-source = "src/skills/tools/context7-registry"
-public_id = "context7-registry"
-category = "tool"
-install = ["claude", "codex", "root-flat"]
-lifecycle_owner = false
-implicit_invocation = true
-may_mutate_repo = true
-may_spawn_agent = false
-requires_explicit_user_request = true
-
 [skills.docker-multiarch-build]
 source = "src/skills/tools/docker-multiarch-build"
 public_id = "docker-multiarch-build"

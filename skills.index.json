@@ -86,20 +86,6 @@
       "source": "src/skills/tools/codex-session-recovery"
     },
     {
-      "category": "tool",
-      "id": "context7-registry",
-      "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
-      "lifecycle_owner": false,
-      "may_mutate_repo": true,
-      "public_id": "context7-registry",
-      "source": "src/skills/tools/context7-registry"
-    },
-    {
       "category": "workflow",
       "id": "design-change",
       "implicit_invocation": false,

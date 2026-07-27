@@ -12,7 +12,6 @@ Canonical agent ad hoc tool selection, command composition, and progressive sear
 ## Progressive Disclosure
 
 - Ad hoc command composition and nested-interpreter boundaries: `references/adhoc-command-composition.md`
-- Local command-output proxy guidance: `references/command-output-proxies.md`
 
 ## Target Preflight
 
@@ -95,10 +94,6 @@ Prefer structured refactors (`ast-grep`) over regex when available.
 
 REQUIRED: Avoid dumping unbounded command output into the session.
 PREFERRED: Use `head`, `sed -n`, targeted globs, and directory scoping.
-
-## Command Output Proxies
-
-Prefer token-reducing command proxies when they are available and when output filtering does not change the evidence needed. See `references/command-output-proxies.md` for the local `rtk` guidance.
 
 ## Structured History Search
 
