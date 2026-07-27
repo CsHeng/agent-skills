@@ -2,8 +2,8 @@
 
 ## Input
 
-- Review target: caller-specified file path or inline command text (required)
-- Target shell: caller-declared when known; optional for inline ad hoc logic, which defaults to Bash
+- Review target: caller-specified shell file path (required)
+- Target shell: trusted shebang or caller-declared interpreter
 
 ## DEPTH Workflow
 
@@ -29,8 +29,8 @@
 
 ### T - Test Cases
 
-- Failure Case: Missing fi, unquoted variables, or missing entrypoint strict mode -> report anchored findings
-- Success Case: Proper structure, quoting, and target-appropriate entrypoint strict mode -> PASS status
+- Failure Case: Missing fi, unquoted variables, prohibited variable names, or missing entrypoint strict mode -> report anchored findings
+- Success Case: Proper structure, safe variable names, quoting, and target-appropriate entrypoint strict mode -> PASS status
 
 ### H - Heuristics
 
@@ -41,15 +41,14 @@
 
 ## Workflow
 
-1. Target Validation: Read the script file or capture the inline command as review data without executing it
-2. Interpreter Detection: For files, identify the shebang or caller-declared target and request context if neither exists; for inline ad hoc logic, use the caller-declared target or default to Bash
-3. Syntax Validation: For files, run the resolved interpreter's syntax-only check; for inline text, pass the quoted review data on stdin to `bash -n`, `sh -n`, or `zsh -n` without executing it
-4. Static Analysis: For bash/sh files, execute ShellCheck with GCC format and pass `-s <bash|sh>` when the resolved shell came from caller context rather than a trusted shebang; for bash/sh inline text, pass the quoted review data on stdin to `shellcheck -s <bash|sh> -f gcc -`; for zsh, use `zsh -n` plus the manual guidelines audit
+1. Target Validation: Read the script file without executing it
+2. Interpreter Detection: Identify the shebang or caller-declared target and request context if neither exists
+3. Syntax Validation: Run the resolved interpreter's syntax-only check
+4. Static Analysis: For bash/sh files, execute ShellCheck with GCC format and pass `-s <bash|sh>` when the resolved shell came from caller context rather than a trusted shebang; for zsh, use `zsh -n` plus the manual guidelines audit
 5. Guidelines Compliance: Check against shell scripting best practices
-6. Reserved Name Validation: Check variable declarations and assignments for the zsh special/reserved names prohibited by `shell-guidelines`
-7. Violation Analysis: Categorize findings by severity and type
-8. Report Compilation: Generate structured findings with actionable recommendations
-9. Validation: Ensure every blocking finding is evidence-backed and the reviewer has not edited the implementation
+6. Violation Analysis: Categorize findings by severity and type
+7. Report Compilation: Generate structured findings with actionable recommendations
+8. Validation: Ensure every blocking finding is evidence-backed and the reviewer has not edited the implementation
 
 ## Output
 

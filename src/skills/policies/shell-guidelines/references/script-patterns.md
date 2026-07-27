@@ -2,11 +2,11 @@
 
 ## Purpose
 
-Write safe, portable command snippets and orchestration scripts that stay linear, visible, and subordinate to the persisted implementation they invoke.
+Write safe, portable orchestration scripts that stay linear, visible, and subordinate to the persisted implementation they invoke.
 
 ## Scope
 
-- Shell choice for agent-generated ad hoc logic and persisted scripts
+- Shell choice for persisted scripts
 - Strict mode, quoting, error handling, portability, and basic logging
 - Capability signals that require a new persisted language decision
 
@@ -18,10 +18,9 @@ Out-of-scope:
 ## Deterministic Rules
 
 1. Choose Shell by target:
-   - bash: default for agent-generated ad hoc Shell logic, local automation, CI, and Linux servers
-   - zsh: only for zsh semantics, startup behavior, and configuration
+   - bash: bash-targeted local automation, CI, and Linux servers
+   - zsh: zsh-targeted automation and configuration
    - sh: POSIX or minimal container environments
-   - current executor: simple external commands that need no Shell logic
 2. Use strict mode when supported:
    - bash/zsh: `set -euo pipefail`
    - sh: `set -eu`

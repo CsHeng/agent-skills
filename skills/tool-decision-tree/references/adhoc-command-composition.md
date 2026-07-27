@@ -22,6 +22,8 @@ Prefer an external scratch script when logic needs loops, exception handling, mu
 
 ## Hard Safety Boundaries
 
+REQUIRED: Ad hoc commands containing Shell code must comply with the `shell-guidelines` language constraints.
+
 PROHIBITED: Interpolate untrusted input into a Shell, Python, or other executable source string.
 
 PROHIBITED: Use opaque nested code for an irreversible or state-changing operation before COUNT and PREVIEW establish the exact target set, expected mutation, and recovery boundary.

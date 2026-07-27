@@ -1,23 +1,24 @@
 ---
 name: shell-guidelines
-description: "Apply Shell-specific policy and standards to shell scripts, automation, ad hoc commands, or implementation reviews: Bash-first agent execution, explicit POSIX/zsh exceptions, strict mode, quoting, portability, cross-shell-safe variable names, ShellCheck, and macOS/Homebrew behavior. Use as a language/tooling overlay alongside the primary workflow; do not take lifecycle ownership."
+description: "Apply Shell language policy to any Shell code, including persisted scripts, CI and local automation, ad hoc command fragments, or implementation reviews: safe variable names, target-matched interpreters, strict mode, quoting, portability, ShellCheck, and macOS/Homebrew behavior. Use as a language/tooling overlay alongside the primary workflow; do not take lifecycle ownership."
 ---
 
 # Shell Guidelines
 
 ## Purpose
 
-Define the Shell policy overlay for safe, portable, auditable automation, including script development patterns and code review. The primary workflow owns the task lifecycle.
+Define the Shell language-policy overlay for safe, portable, auditable Shell code. The primary workflow owns the task lifecycle, and `tool-decision-tree` owns ad hoc tool selection and command composition.
 
 ## Scope
 
 In-scope:
-- Agent-generated ad hoc shell commands
+- Shell fragments inside agent ad hoc commands
 - Editing or creating shell scripts (`.sh`, bash/zsh scripts)
 - CI and local automation scripts
 - Code review and syntax audit for shell files
 
 Out-of-scope:
+- Agent ad hoc tool choice and command composition (see `tool-decision-tree` skill)
 - Language selection (see `language-decision-tree` skill)
 - Tool selection and progressive search workflow (see `tool-decision-tree` skill)
 
@@ -28,12 +29,10 @@ Out-of-scope:
 
 ## Deterministic Steps
 
-1. Choose the shell explicitly for the command or target environment
-   - Run a simple external command directly when it needs no shell variables, loops, functions, arrays, or multi-command control flow.
-   - Default agent-generated ad hoc shell logic to Bash.
+1. Choose the shell for the target environment
    - POSIX: `#!/bin/sh`
    - CI/Linux bash: `#!/usr/bin/env bash`
-   - Use `#!/usr/bin/env zsh` only when the target explicitly requires zsh semantics, startup behavior, or configuration.
+   - zsh scripts: `#!/usr/bin/env zsh`
    - macOS: `/bin/bash` is typically 3.2; if you rely on Bash 4+ features (e.g. `mapfile/readarray`, associative arrays), ensure Homebrew Bash is used via `PATH` or use the host-appropriate absolute shebang (`/opt/homebrew/bin/bash` on Apple Silicon, `/usr/local/bin/bash` on Intel) for internal scripts.
 2. Enable strict mode for shell entrypoints
    - Use `set -euo pipefail` for Bash and zsh entrypoints.
@@ -52,6 +51,9 @@ Out-of-scope:
    - Run interpreter syntax checks: `bash -n`, `sh -n`, `zsh -n`.
 
 ## Rules (Hard Constraints)
+
+### Variable Naming
+PROHIBITED: In any shell, declare or assign variables named `path`, `status`, `pipestatus`, `argv`, `commands`, `functions`, `options`, or `parameters`.
 
 ### Security
 PROHIBITED: Use `eval` or `exec` with untrusted user input.
@@ -79,19 +81,6 @@ PROHIBITED: Implement multi-step structured data parsing in shell when a higher-
 PREFERRED: Revisit the implementation language through `language-decision-tree` when a persisted Shell script accumulates multi-step structured parsing, persistent state, complex retry or recovery, concurrency, multi-host distribution, embedded languages, or runtime and dependency management.
 PREFERRED: Prefer Go for long-lived operational tooling when a single binary, cross-platform delivery, stable CLI contract, or reduced runtime state is a material benefit. This is a preference, not a mandatory replacement language; repository and ecosystem constraints still control the decision.
 PROHIBITED: Split one reusable business rule across Shell and another implementation language.
-
-### Shell Selection
-REQUIRED: Default agent-generated ad hoc shell logic to Bash unless the target explicitly requires POSIX `sh` or zsh.
-PREFERRED: When the command runner exposes a shell or interpreter option, select Bash there instead of nesting the command inside `bash -lc`.
-REQUIRED: When the runner cannot select an interpreter, invoke the resolved target shell explicitly: use `bash -c` for the default-Bash case and the matching `sh -c` or `zsh -c` only when that target is explicit; put multiline/reusable logic in a script for the resolved shell.
-REQUIRED: Pass variable data through arguments or the environment instead of interpolating untrusted values into the command string.
-REQUIRED: When passing positional data to `bash -c`, provide a `$0` placeholder before the data, for example `bash -c 'printf "%s\n" "$1"' -- "$candidate_value"`; the first argument after the command string becomes `$0`.
-PREFERRED: Use `bash -lc` only when the command explicitly requires login-shell initialization.
-PROHIBITED: Let the current login or interactive shell silently choose semantics for agent-generated shell logic.
-
-### Reserved Shell Variable Names
-PROHIBITED: Do not use names that are special or reserved in zsh in any shell code or ad hoc shell commands, regardless of the selected interpreter: `status`, `path`, `pipestatus`, `argv`, `commands`, `functions`, `options`, `parameters`.
-PREFERRED: Use explicit non-reserved names instead: `rc`, `exit_code`, `status_label`, `notification_status`, `candidate_path`, `target_path`.
 
 ### File Naming
 REQUIRED: Name shell script files using hyphen style (kebab-case): `my-script.sh`, not `my_script.sh`
@@ -122,14 +111,8 @@ Use `--path` for a synthetic or remote PATH snapshot, repeat `--system-dir` to r
 # Syntax
 bash -n path/to/script.sh
 
-# Inline Bash syntax review (does not execute the command text)
-printf '%s\n' "$command_text" | bash -n
-
 # Lint
 shellcheck path/to/script.sh
-
-# Inline Bash lint
-printf '%s\n' "$command_text" | shellcheck -s bash -f gcc -
 ```
 
 ## Checklist
@@ -137,6 +120,7 @@ printf '%s\n' "$command_text" | shellcheck -s bash -f gcc -
 - Shell script files named with hyphen style (kebab-case): `my-script.sh`
 - Correct shebang for target environment
 - Strict mode enabled for Bash/zsh (`set -euo pipefail`) or POSIX `sh` (`set -eu`) entrypoints
+- No declarations or assignments using prohibited Shell variable names
 - No `eval`/unsafe execution of user input
 - Variables quoted; inputs validated
 - `shellcheck` clean (when available)
