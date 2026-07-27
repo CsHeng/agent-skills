@@ -1,6 +1,6 @@
 ---
 name: testing-strategy
-description: "Translate an approved executable-oracle strategy into concrete unit, component, integration, contract, workflow, UI/E2E, performance, or runtime suites with owned fixtures, environments, CI/release lanes, and failure diagnosis. Use when implementing or reviewing project test placement, coverage gates, test isolation, red-green verification, or CI commands after oracle selection."
+description: "Translate an approved executable-oracle strategy into concrete unit, component, integration, contract, workflow, UI/E2E, performance, runtime, or documentation verification with owned fixtures, environments, CI/release lanes, and failure diagnosis. Use when implementing or reviewing project test placement, documentation checks, coverage gates, test isolation, red-green verification, or CI commands after oracle selection."
 ---
 
 # Testing Strategy
@@ -66,8 +66,27 @@ Critical paths may justify stronger gates than glue or generated code. Generated
 - Confirm the oracle fails for the expected reason, not a typo or environment error.
 - Implement the smallest change that makes the reproducer pass.
 - Rerun the narrow oracle and declared verification scope before claiming success.
-- For docs-only, config-only, generated, or exploratory changes, record the substitute command or manual evidence.
+- For config-only changes, prefer parser, schema, or real-consumer validation.
+- For docs-only, generated, or exploratory changes, record the fitting lint, build, generation check, or manual evidence.
 - When the user asks for TDD, test-first work, red-green-refactor, or vertical slices, read [TDD Vertical Slices](references/tdd-vertical-slices.md).
+
+## Documentation And Markdown Verification
+
+Match documentation checks to the property that can actually fail:
+
+- Human-authored prose: use review plus Markdown/prose linting, link checking, and documentation builds where applicable.
+- Frontmatter, schemas, command identifiers, paths, and other machine-readable fields embedded in Markdown: parse and validate the structured field or stable identifier.
+- Executable examples: compile or run the example through the real interface.
+- Generated documentation: regenerate it and compare the owned source and generated surface.
+- Prompt or instruction Markdown: test observable consumer behavior with an evaluation or integration scenario when that evidence is worth its cost; machine consumption alone does not make prose a unit-test interface.
+
+PROHIBITED: Add unit or contract tests that assert exact natural-language sentences, keyword collections, prose headings, or their absence in Markdown solely to freeze intended meaning.
+
+PROHIBITED: Duplicate a Markdown policy sentence or rule list in test code.
+
+REQUIRED: If a documentation rule must be machine-enforced, place the enforceable contract in a structured source of truth and generate the human-readable projection, or test the consuming behavior through its real interface.
+
+When auditing an existing suite, find tests and checkers that read Markdown and classify every assertion. Delete prose snapshots rather than weakening them to smaller keyword checks. Retain syntax, link, schema, embedded machine-identifier, executable-example, generated-surface, and consumer-behavior checks.
 
 ## Oracle Integrity
 

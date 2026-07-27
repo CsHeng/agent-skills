@@ -60,7 +60,6 @@ main() {
   assert_contains "$ROOT_DIR/commands/close-change.md" 'close-runner\.sh' "close command should use close runner"
   assert_contains "$ROOT_DIR/commands/close-change.md" 'review-status|verify-status' "close command should require review and verify status"
   assert_contains "$ROOT_DIR/commands/close-change.md" 'truth-sync-required|truth_sync_required' "close command should check truth sync requirement"
-  assert_contains "$ROOT_DIR/commands/close-change.md" 'machine-checkable gate|Do NOT ask whether to continue' "close command should report deterministic gate state"
 }
 
 main "$@"

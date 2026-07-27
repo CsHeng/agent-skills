@@ -321,19 +321,13 @@ EOF
   fi
 
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'skills/_harness-libs/plan-runner.sh' "plan command should use plan runner"
-  assert_contains "$ROOT_DIR/commands/plan-change.md" 'approved design|design approval' "plan command should require approved design"
-  assert_contains "$ROOT_DIR/commands/plan-change.md" 'Work Package Readiness' "plan command should require work package readiness"
-  assert_contains "$ROOT_DIR/commands/plan-change.md" 'Execution Continuity' "plan command should require execution continuity"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'confirmation_clearance' "plan command should require confirmation clearance"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'continuous_after_plan_approval' "plan command should state continuous execution mode"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'default_failure_policy:[[:space:]]*fix_forward' "plan command should default to fix-forward"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'failure_policy:[[:space:]]*fix_forward.*stop_and_diagnose.*guarded_rollback' "plan command should define the task failure-policy enum"
-  assert_contains "$ROOT_DIR/commands/plan-change.md" 'Rollback.*only for guarded-rollback' "plan command should reject routine rollback sections"
-  assert_contains "$ROOT_DIR/commands/plan-change.md" 'C0' "plan command should summarize whether approvals are cleared"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'executable-oracle-architecture-selector' "plan command should route non-trivial behavior to oracle selection"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'coding:review-change' "plan command should route through top-level review gate"
-  assert_contains "$ROOT_DIR/commands/plan-change.md" 'bounded plan brief|candidate findings' "plan command should define bounded review"
-  assert_contains "$ROOT_DIR/commands/plan-change.md" 'explicit human approval|human approval|approval_status:' "plan command should stop for human approval"
+  assert_contains "$ROOT_DIR/commands/plan-change.md" 'approval_status:' "plan command should expose the approval status field"
 }
 
 main "$@"

@@ -18,18 +18,14 @@ assert_contains() {
 main() {
   assert_contains "commands/design-change.md" 'design-runner\.sh' "design command should validate artifact before review"
   assert_contains "commands/design-change.md" 'coding:review-change' "design command should route through top-level review gate"
-  assert_contains "commands/design-change.md" 'reviewer subagent|review directly' "design command should support agent-native review"
   assert_contains "commands/design-change.md" 'approval_status:[[:space:]]*pending|approval_status:[[:space:]]*approved' "design command should carry approval status gate"
   assert_contains "commands/design-change.md" 'coding:plan-change|next_entry: plan-change' "design command should hand off explicitly"
-  assert_contains "commands/design-change.md" 'explicit human approval gate' "design command should report deterministic human gate state"
 
   assert_contains "commands/plan-change.md" 'plan-runner\.sh' "plan command should validate artifact before review"
   assert_contains "commands/plan-change.md" 'coding:review-change' "plan command should route through top-level review gate"
-  assert_contains "commands/plan-change.md" 'reviewer subagent|review directly' "plan command should support agent-native review"
   assert_contains "commands/plan-change.md" 'approval-status|approval_status:[[:space:]]*approved' "plan command should machine-check approved upstream design"
   assert_contains "commands/plan-change.md" 'approval_status:[[:space:]]*pending|approval_status:[[:space:]]*approved' "plan command should carry approval status gate"
   assert_contains "commands/plan-change.md" 'coding:implement-change|next_entry: implement-change' "plan command should hand off explicitly"
-  assert_contains "commands/plan-change.md" 'explicit human approval gate' "plan command should report deterministic human gate state"
 }
 
 main "$@"

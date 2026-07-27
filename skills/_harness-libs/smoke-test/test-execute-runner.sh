@@ -323,13 +323,9 @@ EOF
 
   assert_contains "$ROOT_DIR/commands/implement-change.md" 'skills/_harness-libs/execute-runner.sh' "execute command should use execute runner"
   assert_contains "$ROOT_DIR/commands/implement-change.md" 'approval-status|approval_status:[[:space:]]*approved' "execute command should require approved plan"
-  assert_contains "$ROOT_DIR/commands/implement-change.md" 'verification_scope|run verification' "execute command should execute verification from the plan"
+  assert_contains "$ROOT_DIR/commands/implement-change.md" 'verification_scope' "execute command should expose the verification scope field"
   assert_contains "$ROOT_DIR/commands/implement-change.md" 'coding:review-change' "execute command should route code review through top-level review semantics"
-  assert_contains "$ROOT_DIR/commands/implement-change.md" 'evaluation gate' "execute command should normalize review and verification before closure"
   assert_contains "$ROOT_DIR/commands/implement-change.md" 'failure_policy' "execute command should follow the approved failure policy"
-  assert_contains "$ROOT_DIR/commands/implement-change.md" 'Never synthesize rollback code' "execute command should forbid invented rollback machinery"
-  assert_contains "$ROOT_DIR/commands/implement-change.md" 'failure count increased' "execute command should forbid count-based phase widening"
-  assert_contains "$ROOT_DIR/commands/implement-change.md" 'machine-checkable' "execute command should forbid hedging when gate state is clear"
 }
 
 main "$@"

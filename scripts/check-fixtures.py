@@ -5,10 +5,10 @@ from __future__ import annotations
 
 import json
 import sys
-import tomllib
 from pathlib import Path
 from typing import Any
 
+import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures"
@@ -54,27 +54,6 @@ def check_smart_commit_fixture(skills: dict[str, Any], errors: list[str]) -> Non
         assert_equal(skill.get(key), expected, f"smart-commit.{key}", errors)
 
 
-def check_output_styles_contract(errors: list[str]) -> None:
-    skill_file = REPO_ROOT / "src" / "skills" / "session" / "output-styles" / "SKILL.md"
-    explanatory_ref = skill_file.parent / "references" / "explanatory.md"
-    review_ref = skill_file.parent / "references" / "review.md"
-
-    skill_text = skill_file.read_text(encoding="utf-8")
-    explanatory_text = explanatory_ref.read_text(encoding="utf-8")
-    review_text = review_ref.read_text(encoding="utf-8")
-
-    required_pairs = {
-        "output-styles.unique-labels": (skill_text, "Use globally unique list labels"),
-        "output-styles.no-restart": (skill_text, "Do not restart `1. 2. 3.`"),
-        "output-styles.plan-confirmation-labels": (skill_text, "`C*` for confirmation clearance"),
-        "output-styles.a-b-labels": (explanatory_text, "`A1`, `A2`"),
-        "output-styles.review-prefixes": (review_text, "findings: `F1`, `F2`"),
-    }
-    for label, (content, needle) in required_pairs.items():
-        if needle not in content:
-            errors.append(f"{label}: missing {needle!r}")
-
-
 def main() -> int:
     errors: list[str] = []
     modes = load_toml(REPO_ROOT / "contracts" / "workflow-modes.toml")["modes"]
@@ -82,7 +61,6 @@ def main() -> int:
     for name in ("read-only-request", "micro-doc-change", "regulated-infra-change"):
         check_mode_fixture(name, modes, errors)
     check_smart_commit_fixture(skills, errors)
-    check_output_styles_contract(errors)
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)

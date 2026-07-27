@@ -4,6 +4,7 @@ Use this reference when the user asks for TDD, test-first work, red-green-refact
 
 ## Rules
 
+- Apply TDD to executable behavior, not to natural-language wording in documentation. Use the documentation verification rules in `testing-strategy` for Markdown-only changes.
 - Test observable behavior through the public interface, not private implementation shape.
 - Write one failing test or reproducer for one behavior, implement the smallest change to pass it, then repeat.
 - Do not write a batch of imagined tests before code. That horizontal flow often locks in guessed structure instead of verified behavior.

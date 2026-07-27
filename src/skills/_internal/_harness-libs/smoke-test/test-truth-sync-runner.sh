@@ -96,7 +96,6 @@ EOF
   assert_contains "$ROOT_DIR/commands/sync-truth.md" 'truth-sync-runner\.sh' "sync-truth command should use truth-sync runner"
   assert_contains "$ROOT_DIR/commands/sync-truth.md" 'stable_truth_refs' "sync-truth command should preserve stable truth refs"
   assert_contains "$ROOT_DIR/commands/sync-truth.md" 'approval-status|approval_status:' "sync-truth command should expose approval gate"
-  assert_contains "$ROOT_DIR/commands/sync-truth.md" 'machine-checkable gate|Do NOT ask whether to continue' "sync-truth command should report deterministic gate state"
 }
 
 main "$@"
