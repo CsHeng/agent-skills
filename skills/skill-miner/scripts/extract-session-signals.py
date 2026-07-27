@@ -1104,7 +1104,7 @@ def candidate_recommendations(counts: Counter[str]) -> list[str]:
     if counts["failure_pytest_missing"] or counts["failure_pytest_cov_addopts"]:
         recommendations.append("python-guidelines: preflight pytest dependencies, pytest-cov addopts, and subproject uv environments.")
     if counts["failure_zsh_reserved_variable"]:
-        recommendations.append("shell-guidelines: avoid zsh reserved variables such as status and path in ad hoc probes.")
+        recommendations.append("shell-guidelines: avoid reserved variable names such as status and path in all Shell code.")
     if counts["user_analysis_only"] or counts["user_scope_rejected"]:
         recommendations.append("analyze/execute skills: honor analysis-only and rejected-scope signals before mutating files.")
     if counts["user_approval_gate"] or counts["memory_failure_pattern"]:

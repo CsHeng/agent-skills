@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract skill-improvement signals from Codex and Claude history."""
+"""Extract skill-improvement signals from Codex, Claude, and Grok history."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote
 
 
 EXIT_RE = re.compile(r"Process exited with code (\d+)")
@@ -107,9 +108,18 @@ def parse_args() -> argparse.Namespace:
         help="Claude home to scan. Repeat for multiple homes; comma-separated values are also accepted.",
     )
     parser.add_argument(
+        "--grok-home",
+        action="append",
+        default=None,
+        help="Grok home to scan (default ~/.grok). Repeat for multiple homes; comma-separated values are also accepted.",
+    )
+    parser.add_argument(
         "--sources",
-        default="codex,codex-memory,claude,claude-memory,context-docs",
-        help="Comma-separated sources: codex,codex-memory,claude,claude-memory,context-docs.",
+        default="codex,codex-memory,claude,claude-memory,grok,context-docs",
+        help=(
+            "Comma-separated sources: codex,codex-memory,claude,claude-memory,"
+            "grok,context-docs."
+        ),
     )
     parser.add_argument("--format", choices=("markdown", "json"), default="markdown")
     parser.add_argument("--limit", type=int, default=5)
@@ -618,6 +628,155 @@ def scan_claude_session(
             event_counts[f"claude_{obj_type}"] += 1
 
 
+def grok_workspace_cwd(session_entry_name: str) -> str:
+    """Decode Grok sessions/<urlencoded-workspace>/ directory names to a cwd path."""
+    return unquote(session_entry_name)
+
+
+def iter_grok_workspace_dirs(grok_home: Path) -> list[tuple[Path, str]]:
+    sessions_root = grok_home / "sessions"
+    if not sessions_root.is_dir():
+        return []
+    workspaces: list[tuple[Path, str]] = []
+    for entry in sorted(sessions_root.iterdir()):
+        if not entry.is_dir():
+            continue
+        # Skip non-workspace helpers if any plain names appear without encoding.
+        name = entry.name
+        if name in {"cache", "tmp"}:
+            continue
+        cwd = grok_workspace_cwd(name)
+        if not cwd.startswith("/"):
+            # Encoded paths always start with %2F → "/"; keep absolute only.
+            continue
+        workspaces.append((entry, cwd))
+    return workspaces
+
+
+def scan_grok_prompt_history(
+    path: Path,
+    cwd: str,
+    counts: Counter[str],
+    examples: dict[str, list[Example]],
+    event_counts: Counter[str],
+    limit: int,
+) -> set[str]:
+    """Mine Grok repo-level prompt_history.jsonl user prompts. Return session ids seen."""
+    session_ids: set[str] = set()
+    for obj in iter_jsonl(path):
+        if not isinstance(obj, dict):
+            continue
+        prompt = obj.get("prompt")
+        if not isinstance(prompt, str) or not prompt.strip():
+            continue
+        if obj.get("is_bash") is True:
+            event_counts["grok_bash_prompt"] += 1
+            continue
+        session_id = str(obj.get("session_id") or "")
+        if session_id:
+            session_ids.add(session_id)
+        text = prompt.strip()
+        if skip_injected_text(text):
+            continue
+        for name, pattern in USER_SIGNAL_PATTERNS:
+            if pattern.search(text):
+                category = f"user_{name}"
+                counts[category] += 1
+                add_example(
+                    examples,
+                    Example("grok", category, cwd, session_id, path.name, " ".join(text.split())[:300]),
+                    limit,
+                )
+        timestamp = str(obj.get("timestamp") or "")
+        if timestamp:
+            counts[f"grok_prompt_date:{timestamp[:10]}"] += 1
+    return session_ids
+
+
+def scan_grok_events(
+    path: Path,
+    cwd: str,
+    session_id: str,
+    counts: Counter[str],
+    examples: dict[str, list[Example]],
+    event_counts: Counter[str],
+    limit: int,
+) -> None:
+    """Mine Grok per-session events.jsonl tool and turn outcomes."""
+    for obj in iter_jsonl(path):
+        if not isinstance(obj, dict):
+            continue
+        obj_type = str(obj.get("type") or "")
+        if obj_type == "tool_completed":
+            outcome = str(obj.get("outcome") or "")
+            tool_name = str(obj.get("tool_name") or "")
+            if outcome == "error":
+                event_counts["grok_tool_error"] += 1
+                category = f"failure_{classify_failure(tool_name + ' ' + outcome)}"
+                counts[category] += 1
+                add_example(
+                    examples,
+                    Example(
+                        "grok",
+                        category,
+                        cwd,
+                        session_id,
+                        path.name,
+                        f"{tool_name} outcome=error duration_ms={obj.get('duration_ms')}",
+                    ),
+                    limit,
+                )
+            elif outcome == "success":
+                event_counts["grok_tool_success"] += 1
+        elif obj_type == "turn_ended":
+            outcome = str(obj.get("outcome") or "")
+            event_counts[f"grok_turn_{outcome or 'unknown'}"] += 1
+            if outcome in {"cancelled", "error", "failed"}:
+                category = "event_error"
+                counts[category] += 1
+                add_example(
+                    examples,
+                    Example("grok", category, cwd, session_id, path.name, f"turn_ended outcome={outcome}"),
+                    limit,
+                )
+        elif obj_type == "permission_resolved":
+            decision = str(obj.get("decision") or "")
+            if decision in {"deny", "denied", "reject", "rejected"}:
+                event_counts["grok_permission_denied"] += 1
+
+
+def scan_grok_home(
+    grok_home: Path,
+    repo_root: Path,
+    scope: str,
+    counts: Counter[str],
+    examples: dict[str, list[Example]],
+    event_counts: Counter[str],
+    limit: int,
+) -> None:
+    for workspace_dir, cwd in iter_grok_workspace_dirs(grok_home):
+        if not is_in_scope(cwd, repo_root, scope):
+            continue
+        seen_sessions: set[str] = set()
+        prompt_history = workspace_dir / "prompt_history.jsonl"
+        if prompt_history.is_file():
+            seen_sessions |= scan_grok_prompt_history(
+                prompt_history, cwd, counts, examples, event_counts, limit
+            )
+        for child in sorted(workspace_dir.iterdir()):
+            if not child.is_dir():
+                continue
+            session_id = child.name
+            events = child / "events.jsonl"
+            if events.is_file():
+                scan_grok_events(events, cwd, session_id, counts, examples, event_counts, limit)
+            seen_sessions.add(session_id)
+        if seen_sessions:
+            counts["sessions_grok"] += len(seen_sessions)
+        elif prompt_history.is_file():
+            counts["sessions_grok"] += 1
+
+
 def scan_memory_file(
     path: Path,
     repo_root: Path,
@@ -797,12 +956,52 @@ def scan_claude_skill_usage(
         )
 
 
+def scan_grok_skill_usage(
+    path: Path,
+    cwd: str,
+    session_id: str,
+    cutoff_date: str,
+    skill_markers: dict[str, tuple[str, ...]],
+    root_markers: tuple[str, ...],
+    records: list[SkillUsageRecord],
+) -> None:
+    """Count skill mentions in Grok prompt_history lines."""
+    for line_number, obj in iter_jsonl_with_lines(path):
+        if not isinstance(obj, dict):
+            continue
+        if cutoff_date:
+            timestamp = str(obj.get("timestamp") or "")
+            if timestamp and timestamp[:10] >= cutoff_date:
+                continue
+        prompt = obj.get("prompt")
+        if not isinstance(prompt, str) or not prompt.strip():
+            continue
+        if obj.get("is_bash") is True:
+            continue
+        text = prompt.strip()
+        if skip_injected_text(text):
+            continue
+        add_skill_usage_record(
+            records,
+            text,
+            "grok",
+            "user_message",
+            cwd,
+            session_id or str(obj.get("session_id") or ""),
+            path.name,
+            line_number,
+            skill_markers,
+            root_markers,
+        )
+
+
 def build_skill_usage_report(
     args: argparse.Namespace,
     repo_root: Path,
     sources: set[str],
     codex_homes: list[Path],
     claude_homes: list[Path],
+    grok_homes: list[Path] | None = None,
 ) -> dict[str, Any]:
     skill_roots = [Path(value) for value in args.skill_usage_root or []]
     skill_prefix = args.skill_usage_prefix.strip()
@@ -812,6 +1011,7 @@ def build_skill_usage_report(
     inventory = iter_skill_inventory(skill_roots)
     skill_markers, root_markers = build_skill_usage_markers(skill_prefix, skill_roots, inventory)
     records: list[SkillUsageRecord] = []
+    grok_homes = grok_homes or []
 
     if "codex" in sources:
         for codex_home in codex_homes:
@@ -839,6 +1039,22 @@ def build_skill_usage_report(
                     root_markers,
                     records,
                 )
+    if "grok" in sources:
+        for grok_home in grok_homes:
+            for workspace_dir, cwd in iter_grok_workspace_dirs(grok_home):
+                if not is_in_scope(cwd, repo_root, args.scope):
+                    continue
+                prompt_history = workspace_dir / "prompt_history.jsonl"
+                if prompt_history.is_file():
+                    scan_grok_skill_usage(
+                        prompt_history,
+                        cwd,
+                        "",
+                        args.skill_usage_before_date,
+                        skill_markers,
+                        root_markers,
+                        records,
+                    )
 
     by_category: Counter[str] = Counter()
     by_skill: Counter[str] = Counter()
@@ -888,7 +1104,7 @@ def candidate_recommendations(counts: Counter[str]) -> list[str]:
     if counts["failure_pytest_missing"] or counts["failure_pytest_cov_addopts"]:
         recommendations.append("python-guidelines: preflight pytest dependencies, pytest-cov addopts, and subproject uv environments.")
     if counts["failure_zsh_reserved_variable"]:
-        recommendations.append("shell-guidelines: avoid zsh reserved variables such as status and path in ad hoc probes.")
+        recommendations.append("shell-guidelines: avoid reserved variable names such as status and path in all Shell code.")
     if counts["user_analysis_only"] or counts["user_scope_rejected"]:
         recommendations.append("analyze/execute skills: honor analysis-only and rejected-scope signals before mutating files.")
     if counts["user_approval_gate"] or counts["memory_failure_pattern"]:
@@ -925,6 +1141,7 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     sources = {source.strip() for source in args.sources.split(",") if source.strip()}
     codex_homes = resolve_home_args(args.codex_home, Path.home() / ".codex")
     claude_homes = resolve_home_args(args.claude_home, Path.home() / ".claude")
+    grok_homes = resolve_home_args(args.grok_home, Path.home() / ".grok")
     counts: Counter[str] = Counter()
     event_counts: Counter[str] = Counter()
     examples: dict[str, list[Example]] = defaultdict(list)
@@ -936,11 +1153,14 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
             "sources": sorted(sources),
             "codex_homes": [str(path) for path in codex_homes],
             "claude_homes": [str(path) for path in claude_homes],
+            "grok_homes": [str(path) for path in grok_homes],
             "counts": {},
             "event_counts": {},
             "recommendations": [],
             "examples": {},
-            "skill_usage": build_skill_usage_report(args, repo_root, sources, codex_homes, claude_homes),
+            "skill_usage": build_skill_usage_report(
+                args, repo_root, sources, codex_homes, claude_homes, grok_homes
+            ),
         }
 
     if "codex" in sources:
@@ -951,6 +1171,9 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         for claude_home in claude_homes:
             for path in sorted((claude_home / "projects").rglob("*.jsonl")):
                 scan_claude_session(path, repo_root, args.scope, counts, examples, event_counts, args.limit)
+    if "grok" in sources:
+        for grok_home in grok_homes:
+            scan_grok_home(grok_home, repo_root, args.scope, counts, examples, event_counts, args.limit)
     if "codex-memory" in sources:
         for codex_home in codex_homes:
             memory_path = codex_home / "memories" / "MEMORY.md"
@@ -964,9 +1187,11 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     if "context-docs" in sources:
         scan_context_docs(repo_root, counts, examples, args.limit)
 
-    skill_usage = build_skill_usage_report(args, repo_root, sources, codex_homes, claude_homes)
+    skill_usage = build_skill_usage_report(
+        args, repo_root, sources, codex_homes, claude_homes, grok_homes
+    )
 
-    for key in ("sessions_codex", "sessions_claude", "memory_files", "context_docs"):
+    for key in ("sessions_codex", "sessions_claude", "sessions_grok", "memory_files", "context_docs"):
         counts[key] += 0
 
     serialized_examples = {
@@ -979,6 +1204,7 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         "sources": sorted(sources),
         "codex_homes": [str(path) for path in codex_homes],
         "claude_homes": [str(path) for path in claude_homes],
+        "grok_homes": [str(path) for path in grok_homes],
         "counts": dict(counts),
         "event_counts": dict(event_counts),
         "recommendations": candidate_recommendations(counts),
@@ -997,8 +1223,10 @@ def print_markdown_report(report: dict[str, Any], limit: int) -> None:
     print(f"- sources: {','.join(report['sources'])}")
     print(f"- codex_homes: {','.join(report['codex_homes'])}")
     print(f"- claude_homes: {','.join(report['claude_homes'])}")
+    print(f"- grok_homes: {','.join(report.get('grok_homes') or [])}")
     print(f"- codex_sessions: {counts['sessions_codex']}")
     print(f"- claude_sessions: {counts['sessions_claude']}")
+    print(f"- grok_sessions: {counts['sessions_grok']}")
     print(f"- memory_files: {counts['memory_files']}")
     print(f"- context_docs: {counts['context_docs']}")
 

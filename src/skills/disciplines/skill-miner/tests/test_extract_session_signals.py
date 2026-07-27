@@ -183,6 +183,83 @@ class ExtractSessionSignalsCliTest(unittest.TestCase):
             self.assertEqual(payload["codex_homes"], [str(codex_one), str(codex_two)])
             self.assertEqual(payload["claude_homes"], [str(claude_one)])
 
+    def test_grok_home_prompt_and_events(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            grok_home = root / "grok"
+            repo_root = root / "repo"
+            repo_root.mkdir()
+            from urllib.parse import quote
+
+            workspace = grok_home / "sessions" / quote(str(repo_root), safe="")
+            session_id = "019f0000-aaaa-bbbb-cccc-ddddeeeeffff"
+            session_dir = workspace / session_id
+            session_dir.mkdir(parents=True)
+
+            write_jsonl(
+                workspace / "prompt_history.jsonl",
+                [
+                    {
+                        "timestamp": "2026-07-25T11:00:00Z",
+                        "session_id": session_id,
+                        "prompt": "只分析，不要直接改 PVC",
+                        "is_bash": False,
+                    },
+                    {
+                        "timestamp": "2026-07-25T11:05:00Z",
+                        "session_id": session_id,
+                        "prompt": "不对，应该是完整改名一次切完",
+                        "is_bash": False,
+                    },
+                ],
+            )
+            write_jsonl(
+                session_dir / "events.jsonl",
+                [
+                    {
+                        "ts": "2026-07-25T11:01:00Z",
+                        "type": "tool_completed",
+                        "tool_name": "run_terminal_command",
+                        "duration_ms": 12,
+                        "outcome": "error",
+                    },
+                    {
+                        "ts": "2026-07-25T11:06:00Z",
+                        "type": "turn_ended",
+                        "outcome": "completed",
+                    },
+                ],
+            )
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--scope",
+                    "current",
+                    "--repo-root",
+                    str(repo_root),
+                    "--grok-home",
+                    str(grok_home),
+                    "--sources",
+                    "grok",
+                    "--format",
+                    "json",
+                    "--limit",
+                    "0",
+                ],
+                check=True,
+                text=True,
+                capture_output=True,
+            )
+
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["counts"]["sessions_grok"], 1)
+            self.assertEqual(payload["counts"]["user_analysis_only"], 1)
+            self.assertEqual(payload["counts"]["user_correction"], 1)
+            self.assertEqual(payload["event_counts"]["grok_tool_error"], 1)
+            self.assertEqual(payload["grok_homes"], [str(grok_home)])
+
     def test_skill_usage_report_filters_injected_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
