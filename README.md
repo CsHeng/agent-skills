@@ -98,7 +98,7 @@ These commands are Claude plugin-local entry points. Codex can consume the gener
 ### Policy Plane
 - `python-guidelines`: Python language/tooling standards (uv, ruff, typing, pytest, service/script patterns).
 - `go-guidelines`: Shared Go language/tooling standards with separate CLI-tool and API-service architecture, library, test, and delivery profiles.
-- `shell-guidelines`: Bash-first Shell and ad hoc command standards (explicit POSIX/zsh exceptions, strict mode, quoting, ShellCheck).
+- `shell-guidelines`: Language policy for all Shell code, including safe variable names, target-matched interpreters, strict mode, quoting, and ShellCheck.
 - `lua-guidelines`: Lua language standards for scripts/config + validation (luac, selene).
 - `powershell-guidelines`: PowerShell 7 scripting standards (strict mode, PSScriptAnalyzer, cross-platform).
 
@@ -113,7 +113,7 @@ These commands are Claude plugin-local entry points. Codex can consume the gener
 - `quality-standards`: Quality metrics and continuous improvement guidance.
 - `api-contract-strategy`: Structured API contract authoring, compatibility, generated projections, workflow runners, provider/consumer boundaries, and incremental legacy adoption.
 - `executable-oracle-architecture-selector`: Selects executable oracle strategy for architecture, plan readiness, agent-assisted implementation, and runtime feedback loops.
-- `testing-strategy`: Maps selected executable oracles to owned suites, fixtures, CI/release lanes, and diagnosis boundaries.
+- `testing-strategy`: Maps executable behavior and documentation properties to fitting verification, avoiding unit-test snapshots of natural-language Markdown.
 
 ### Security & Logging
 - `security-guardrails`: Security implementation guardrails (credentials, TLS/CORS, input validation).
@@ -125,7 +125,6 @@ These commands are Claude plugin-local entry points. Codex can consume the gener
 - `infrastructure-triage`: Infrastructure, network, proxy, tunnel, container, GitOps, IaC, Secrets, Auth, and automation triage.
 - `codex-session-recovery`: Audit and merge session JSONL across Codex homes without touching SQLite or other home state.
 - `docker-multiarch-build`: Multi-arch Docker build patterns (buildx, multi-stage, amd64/arm64).
-- `context7-registry`: Context7 skills registry CLI for discovering and installing external library docs.
 - `web-fetch`: Web content fetching and processing (Jina Reader, Firecrawl fallback).
 
 ### Git & Commit Workflow
