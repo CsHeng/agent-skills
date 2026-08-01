@@ -80,6 +80,7 @@ lifecycle_owner = false
 implicit_invocation = true
 may_mutate_repo = false
 may_spawn_agent = false
+routing_contract = "references/routing.toml"
 
 [skills.output-styles]
 source = "src/skills/session/output-styles"

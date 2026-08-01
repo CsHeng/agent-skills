@@ -1,4 +1,4 @@
 interface:
   display_name: "Use Coding Skills"
-  short_description: "Route ambiguous coding workflows and handoffs"
-  default_prompt: "Use $use-coding-skills to route this ambiguous coding workflow and preserve session boundaries."
+  short_description: "Route ambiguous workflows from repo-owned contracts"
+  default_prompt: "Use $use-coding-skills to route this ambiguous coding workflow from the repo-owned contract and preserve session boundaries."

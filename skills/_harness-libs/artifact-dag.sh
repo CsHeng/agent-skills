@@ -130,6 +130,94 @@ build_allowed_touch_set() {
   } | awk 'NF > 0' | sort -u
 }
 
+task_section_for_id() {
+  local plan_file="$1"
+  local wanted_task_id="$2"
+
+  awk -v wanted_task_id="$wanted_task_id" '
+    /^## Task [0-9]+:/ {
+      section = $0
+      sub(/^## /, "", section)
+      in_task = 1
+      next
+    }
+    in_task && /^##[[:space:]]+/ {
+      in_task = 0
+    }
+    in_task && /^[[:space:]]*-[[:space:]]*task_id:[[:space:]]*/ {
+      value = $0
+      sub(/^[[:space:]]*-[[:space:]]*task_id:[[:space:]]*/, "", value)
+      gsub(/^`|`$/, "", value)
+      if (value == wanted_task_id) {
+        print section
+        exit
+      }
+    }
+  ' "$plan_file"
+}
+
+build_task_allowed_touch_set() {
+  local plan_file="$1"
+  local wanted_task_id="$2"
+  local task_section=""
+  local declared_ref=""
+  local -a plan_surfaces=()
+
+  task_section="$(task_section_for_id "$plan_file" "$wanted_task_id")"
+  [[ -n "$task_section" ]] || {
+    printf 'task not found in plan: %s\n' "$wanted_task_id" >&2
+    return 1
+  }
+
+  mapfile -t plan_surfaces < <({
+    extract_markdown_list "$plan_file" "Implementation Scope" "impl_file_refs"
+    extract_markdown_list "$plan_file" "Implementation Scope" "test_file_refs"
+  } | awk 'NF > 0' | sort -u)
+  : "${plan_surfaces[*]}" # Also consumed through path_matches_any_surface's nameref.
+
+  while IFS= read -r declared_ref; do
+    [[ -n "$declared_ref" ]] || continue
+    # shellcheck disable=SC2016
+    declared_ref="$(printf '%s\n' "$declared_ref" | sed -E 's/^`(.*)`$/\1/')"
+    [[ "$declared_ref" == "none" ]] && continue
+    if ! declared_repo_path_ref_is_safe "$declared_ref"; then
+      printf 'unsafe task touch ref (%s): %s\n' "$wanted_task_id" "$declared_ref" >&2
+      return 1
+    fi
+    if ! path_matches_any_surface plan_surfaces "$declared_ref"; then
+      printf 'task touch ref not declared in implementation scope (%s): %s\n' "$wanted_task_id" "$declared_ref" >&2
+      return 1
+    fi
+    printf '%s\n' "$declared_ref"
+  done < <({
+    extract_markdown_list "$plan_file" "$task_section" "impl_file_refs"
+    extract_markdown_list "$plan_file" "$task_section" "test_file_refs"
+  } | awk 'NF > 0' | sort -u)
+}
+
+assert_task_change_boundary() {
+  local plan_file="$1"
+  local wanted_task_id="$2"
+  shift 2
+
+  local changed_ref=""
+  local -a task_surfaces=()
+
+  mapfile -t task_surfaces < <(build_task_allowed_touch_set "$plan_file" "$wanted_task_id")
+  : "${task_surfaces[*]}" # Also consumed through path_matches_any_surface's nameref.
+  for changed_ref in "$@"; do
+    [[ -n "$changed_ref" ]] || continue
+    if ! declared_repo_path_ref_is_safe "$changed_ref"; then
+      printf 'unsafe changed ref (%s): %s\n' "$wanted_task_id" "$changed_ref" >&2
+      return 1
+    fi
+    if ! path_matches_any_surface task_surfaces "$changed_ref"; then
+      printf 'changed ref outside task boundary (%s): %s\n' "$wanted_task_id" "$changed_ref" >&2
+      return 1
+    fi
+  done
+}
+
 build_review_read_surface() {
   local design_file="$1"
   local key ref
@@ -195,19 +283,19 @@ intersect_paths_from_array() {
   local -n allowed_ref="$allowed_name"
   local -A allowed_map=()
   local -A emitted=()
-  local path=""
+  local candidate_ref=""
 
-  for path in "${allowed_ref[@]}"; do
-    [[ -n "$path" ]] || continue
-    allowed_map["$path"]=1
+  for candidate_ref in "${allowed_ref[@]}"; do
+    [[ -n "$candidate_ref" ]] || continue
+    allowed_map["$candidate_ref"]=1
   done
 
-  for path in "$@"; do
-    [[ -n "$path" ]] || continue
-    [[ -n "${allowed_map[$path]:-}" ]] || continue
-    [[ -z "${emitted[$path]:-}" ]] || continue
-    emitted["$path"]=1
-    printf '%s\n' "$path"
+  for candidate_ref in "$@"; do
+    [[ -n "$candidate_ref" ]] || continue
+    [[ -n "${allowed_map[$candidate_ref]:-}" ]] || continue
+    [[ -z "${emitted[$candidate_ref]:-}" ]] || continue
+    emitted["$candidate_ref"]=1
+    printf '%s\n' "$candidate_ref"
   done
 }
 
@@ -218,19 +306,19 @@ subtract_paths_from_array() {
   local -n allowed_ref="$allowed_name"
   local -A allowed_map=()
   local -A emitted=()
-  local path=""
+  local candidate_ref=""
 
-  for path in "${allowed_ref[@]}"; do
-    [[ -n "$path" ]] || continue
-    allowed_map["$path"]=1
+  for candidate_ref in "${allowed_ref[@]}"; do
+    [[ -n "$candidate_ref" ]] || continue
+    allowed_map["$candidate_ref"]=1
   done
 
-  for path in "$@"; do
-    [[ -n "$path" ]] || continue
-    [[ -z "${allowed_map[$path]:-}" ]] || continue
-    [[ -z "${emitted[$path]:-}" ]] || continue
-    emitted["$path"]=1
-    printf '%s\n' "$path"
+  for candidate_ref in "$@"; do
+    [[ -n "$candidate_ref" ]] || continue
+    [[ -z "${allowed_map[$candidate_ref]:-}" ]] || continue
+    [[ -z "${emitted[$candidate_ref]:-}" ]] || continue
+    emitted["$candidate_ref"]=1
+    printf '%s\n' "$candidate_ref"
   done
 }
 
@@ -240,14 +328,14 @@ intersect_paths_from_surfaces() {
 
   local -n surfaces_ref="$surfaces_name"
   local -A emitted=()
-  local path=""
+  local candidate_ref=""
 
-  for path in "$@"; do
-    [[ -n "$path" ]] || continue
-    path_matches_any_surface "$surfaces_name" "$path" || continue
-    [[ -z "${emitted[$path]:-}" ]] || continue
-    emitted["$path"]=1
-    printf '%s\n' "$path"
+  for candidate_ref in "$@"; do
+    [[ -n "$candidate_ref" ]] || continue
+    path_matches_any_surface "$surfaces_name" "$candidate_ref" || continue
+    [[ -z "${emitted[$candidate_ref]:-}" ]] || continue
+    emitted["$candidate_ref"]=1
+    printf '%s\n' "$candidate_ref"
   done
 }
 
@@ -256,14 +344,14 @@ subtract_paths_from_surfaces() {
   shift || true
 
   local -A emitted=()
-  local path=""
+  local candidate_ref=""
 
-  for path in "$@"; do
-    [[ -n "$path" ]] || continue
-    path_matches_any_surface "$surfaces_name" "$path" && continue
-    [[ -z "${emitted[$path]:-}" ]] || continue
-    emitted["$path"]=1
-    printf '%s\n' "$path"
+  for candidate_ref in "$@"; do
+    [[ -n "$candidate_ref" ]] || continue
+    path_matches_any_surface "$surfaces_name" "$candidate_ref" && continue
+    [[ -z "${emitted[$candidate_ref]:-}" ]] || continue
+    emitted["$candidate_ref"]=1
+    printf '%s\n' "$candidate_ref"
   done
 }
 

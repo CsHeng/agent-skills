@@ -2,24 +2,24 @@
 
 Use skills as the durable, agent-agnostic behavior surface. Keep AGENTS files as local constraints and thin indexes, not mandatory skill routers or long-form prompt packs.
 
-## Primary Routes
+## Contract Ownership
 
-- `analyze-project`: read-only project state, terminology, truth map, search boundaries, and drift signals.
-- `design-change`: classify change scope, truth impact, boundary impact, and design depth before planning.
-- `plan-change`: produce ordered implementation tasks with dependencies, verification, explicit recovery policy, and conditional persisted implementation-language decisions.
-- `implement-change`: execute an approved plan as one unit with verification and review gates.
-- `review-change`: normalize design, plan, or code review into one verdict.
-- `sync-truth`: update stable truth after verified behavior changes.
-- `close-change`: decide merge, release, cleanup, guarded recovery action, or close status.
+`references/routing.toml` is the installed machine-readable source for discovery behavior, lifecycle phase-to-owner mapping, review evaluator selection, support routes, composition, and the host-wrapper boundary. `contracts/lifecycle.toml` and `contracts/workflow-modes.toml` remain the repository-wide source for kernel membership, mode classification, and phase sequences.
 
-## Support Routes
+The generated `docs/architecture/diagrams/harness-routing-sequence.puml` combines those contracts into the expected end-to-end route. It is a review view, not an independent source of truth.
 
-- `output-styles`: response shape, terse mode, explanatory mode, review format, and closeout format.
-- `tool-decision-tree`: agent ad hoc tool choice and command composition, target preflight, search COUNT/PREVIEW/EXECUTE, structured history search, and output control.
-- `language-decision-tree`: design and planning decisions for new persisted projects, tools, services, automation surfaces, or approved language migrations; not ad hoc command selection.
-- `infrastructure-triage`: network, proxy, tunnel, container, GitOps, IaC, Secrets, Auth, and runtime boundary diagnosis.
-- `organize-docs`: README/AGENTS/CLAUDE split, stable truth roots, stage artifacts, and docs search boundaries.
-- `skill-miner`: history and memory mining for reusable skill improvements and memory cleanup candidates.
+## Decision Rules
+
+- Native description matching is the default discovery path.
+- An explicitly named or confidently matched skill bypasses `use-coding-skills`.
+- An ambiguous multi-stage request or explicit routing question enters `use-coding-skills`, which selects the lifecycle mode before phase implementation.
+- Workflow skills alone own lifecycle transitions. Session, discipline, policy, tool, and review-component skills contribute rendering, method, policy, tooling, or evidence without advancing lifecycle state.
+- Review enters through `review-change`; `review-design`, `review-plan`, and `review-implementation` return candidate evidence only.
+- One primary skill owns the response order and conclusion. `output-styles` supplies the shared rendering baseline, while other matching skills remain semantic overlays.
+
+## Host Wrapper
+
+A user-level or host-level AGENTS file may retain personal response preferences, local runtime constraints, and a thin hint to public skill IDs when deterministic entry is necessary. It must not become a parallel routing source or copy lifecycle phases, phase ownership, repair states, review budgets, or typed exits.
 
 ## External Skill Libraries
 

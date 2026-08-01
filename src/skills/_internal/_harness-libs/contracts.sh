@@ -37,6 +37,15 @@ readonly HARNESS_DESIGN_STRENGTHS=(no-design design-lite design-full)
 readonly HARNESS_VERDICTS=(pass needs-fixes guarded-rollback-required manual-decision-required)
 readonly HARNESS_ARTIFACT_CLASSES=(truth design plan implementation evaluation history)
 readonly HARNESS_FAILURE_POLICIES=(fix_forward stop_and_diagnose guarded_rollback)
+readonly HARNESS_PLAN_CONTRACT_VERSIONS=(2)
+readonly HARNESS_PARALLEL_POLICIES=(forbidden allowed required)
+readonly HARNESS_DELEGATION_POLICIES=(forbidden allowed preferred)
+readonly HARNESS_EXECUTION_PROFILES=(deep balanced fast)
+readonly HARNESS_REASONING_PROFILES=(deep standard light)
+readonly HARNESS_ISOLATION_MODES=(controller-checkout isolated-worktree shared-read-only)
+readonly HARNESS_MODEL_POLICIES=(semantic-routing inherit-main runtime-default)
+readonly HARNESS_ACTOR_KINDS=(main subagent)
+readonly HARNESS_RUNTIME_BINDING_OUTCOMES=(bound serial-fallback capacity-stop parallel-conflict)
 readonly HARNESS_FAILURE_KINDS=(
   classification-failure
   truth-conflict
@@ -55,6 +64,7 @@ readonly HARNESS_EXECUTION_STOP_REASONS=(
   worktree_decision_required
   task_blocked_requires_human
   scope_violation_requires_replan
+  parallel_capacity_required
   guarded_rollback_required
   plan_incomplete
   final_review_failed
@@ -82,6 +92,15 @@ is_valid_design_strength() { contains_value "$1" "${HARNESS_DESIGN_STRENGTHS[@]}
 is_valid_verdict() { contains_value "$1" "${HARNESS_VERDICTS[@]}"; }
 is_valid_artifact_class() { contains_value "$1" "${HARNESS_ARTIFACT_CLASSES[@]}"; }
 is_valid_failure_policy() { contains_value "$1" "${HARNESS_FAILURE_POLICIES[@]}"; }
+is_valid_plan_contract_version() { contains_value "$1" "${HARNESS_PLAN_CONTRACT_VERSIONS[@]}"; }
+is_valid_parallel_policy() { contains_value "$1" "${HARNESS_PARALLEL_POLICIES[@]}"; }
+is_valid_delegation_policy() { contains_value "$1" "${HARNESS_DELEGATION_POLICIES[@]}"; }
+is_valid_execution_profile() { contains_value "$1" "${HARNESS_EXECUTION_PROFILES[@]}"; }
+is_valid_reasoning_profile() { contains_value "$1" "${HARNESS_REASONING_PROFILES[@]}"; }
+is_valid_isolation_mode() { contains_value "$1" "${HARNESS_ISOLATION_MODES[@]}"; }
+is_valid_model_policy() { contains_value "$1" "${HARNESS_MODEL_POLICIES[@]}"; }
+is_valid_actor_kind() { contains_value "$1" "${HARNESS_ACTOR_KINDS[@]}"; }
+is_valid_runtime_binding_outcome() { contains_value "$1" "${HARNESS_RUNTIME_BINDING_OUTCOMES[@]}"; }
 is_valid_failure_kind() { contains_value "$1" "${HARNESS_FAILURE_KINDS[@]}"; }
 is_valid_task_status() { contains_value "$1" "${HARNESS_TASK_STATUSES[@]}"; }
 is_valid_execution_stop_reason() { contains_value "$1" "${HARNESS_EXECUTION_STOP_REASONS[@]}"; }

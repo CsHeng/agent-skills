@@ -9,10 +9,10 @@ fail() {
 }
 
 assert_contains() {
-  local path="$1"
+  local file_ref="$1"
   local pattern="$2"
   local message="$3"
-  rg -n "$pattern" "$ROOT_DIR/$path" >/dev/null || fail "$message"
+  rg -n "$pattern" "$ROOT_DIR/$file_ref" >/dev/null || fail "$message"
 }
 
 main() {
@@ -26,6 +26,11 @@ main() {
   assert_contains "commands/plan-change.md" 'approval-status|approval_status:[[:space:]]*approved' "plan command should machine-check approved upstream design"
   assert_contains "commands/plan-change.md" 'approval_status:[[:space:]]*pending|approval_status:[[:space:]]*approved' "plan command should carry approval status gate"
   assert_contains "commands/plan-change.md" 'coding:implement-change|next_entry: implement-change' "plan command should hand off explicitly"
+
+  assert_contains "commands/plan-change.md" 'semantic-routing' "plan command should provide semantic routing advice"
+  assert_contains "commands/plan-change.md" 'inherit-main' "plan command should preserve topology under inherit-main"
+  assert_contains "commands/implement-change.md" 'logical topology' "implement command should leave logical topology to planning"
+  assert_contains "commands/implement-change.md" 'runtime binding' "implement command should own runtime binding"
 }
 
 main "$@"

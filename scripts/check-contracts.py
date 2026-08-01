@@ -257,6 +257,231 @@ def validate_runtime_contracts(skills: dict[str, Any], repo_root: Path = REPO_RO
     return errors
 
 
+def validate_routing_contracts(
+    skills: dict[str, Any],
+    repo_root: Path = REPO_ROOT,
+    workflow_modes: dict[str, Any] | None = None,
+) -> list[str]:
+    errors: list[str] = []
+    public_entries = {
+        entry.get("public_id"): entry
+        for entry in skills.values()
+        if isinstance(entry.get("public_id"), str)
+    }
+    routing_entries = [
+        (skill_name, entry)
+        for skill_name, entry in sorted(skills.items())
+        if entry.get("routing_contract") is not None
+    ]
+
+    if len(routing_entries) != 1:
+        errors.append(
+            "skill manifest must declare exactly one routing_contract; "
+            f"found {len(routing_entries)}"
+        )
+        return errors
+
+    if workflow_modes is None:
+        modes_path = repo_root / "contracts" / "workflow-modes.toml"
+        try:
+            with modes_path.open("rb") as handle:
+                workflow_modes = tomllib.load(handle)
+        except (OSError, tomllib.TOMLDecodeError) as exc:
+            return [f"invalid workflow mode contract: {exc}"]
+
+    modes = workflow_modes.get("modes") if isinstance(workflow_modes, dict) else None
+    if not isinstance(modes, dict) or not modes:
+        return ["workflow mode contract must contain [modes.*] entries"]
+
+    expected_phases: set[str] = set()
+    for mode_name, mode in modes.items():
+        phases = mode.get("phases") if isinstance(mode, dict) else None
+        if not isinstance(phases, list) or not all(
+            isinstance(phase, str) for phase in phases
+        ):
+            errors.append(f"workflow mode {mode_name}: phases must be a string array")
+            continue
+        expected_phases.update(phases)
+
+    skill_name, entry = routing_entries[0]
+    routing_contract = entry.get("routing_contract")
+    source = entry.get("source")
+    public_id = entry.get("public_id")
+
+    if entry.get("category") != "session" or entry.get("lifecycle_owner", False):
+        errors.append(
+            f"{skill_name}: routing contract owner must be a non-lifecycle session skill"
+        )
+    if not isinstance(routing_contract, str) or not routing_contract:
+        errors.append(
+            f"{skill_name}: routing_contract must be a non-empty relative path"
+        )
+        return errors
+    if Path(routing_contract).is_absolute() or ".." in Path(routing_contract).parts:
+        errors.append(
+            f"{skill_name}: routing_contract must stay inside the skill source"
+        )
+        return errors
+    if not isinstance(source, str):
+        errors.append(f"{skill_name}: routing contract requires a valid source")
+        return errors
+
+    contract_path = repo_root / source / routing_contract
+    if not contract_path.is_file():
+        errors.append(
+            f"{skill_name}: routing contract does not exist: {contract_path.relative_to(repo_root)}"
+        )
+        return errors
+
+    try:
+        with contract_path.open("rb") as handle:
+            contract = tomllib.load(handle)
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        return [f"{skill_name}: invalid routing contract: {exc}"]
+
+    routing = contract.get("routing")
+    host_wrapper = contract.get("host_wrapper")
+    composition = contract.get("composition")
+    gate_policy = contract.get("gate_policy")
+    phase_routes = contract.get("phase_routes")
+    review_evaluators = contract.get("review_evaluators")
+    support_routes = contract.get("support_routes")
+
+    if not isinstance(routing, dict) or routing.get("id") != public_id:
+        errors.append(f"{skill_name}: routing.id must match public_id")
+    elif (
+        routing.get("default_discovery") != "native-description-match"
+        or routing.get("direct_match_bypasses_router") is not True
+        or routing.get("ambiguous_router") != public_id
+    ):
+        errors.append(
+            f"{skill_name}: routing must keep native discovery, direct-match bypass, and self-owned ambiguity routing"
+        )
+
+    if not isinstance(host_wrapper, dict):
+        errors.append(f"{skill_name}: routing contract requires [host_wrapper]")
+    else:
+        for field in ("allowed", "forbidden"):
+            values = host_wrapper.get(field)
+            if (
+                not isinstance(values, list)
+                or not values
+                or not all(isinstance(value, str) for value in values)
+            ):
+                errors.append(
+                    f"{skill_name}: host_wrapper.{field} must be a non-empty string array"
+                )
+
+    if not isinstance(composition, dict):
+        errors.append(f"{skill_name}: routing contract requires [composition]")
+    else:
+        if composition.get("primary_owner_count") != 1:
+            errors.append(
+                f"{skill_name}: composition must declare exactly one primary owner"
+            )
+        rendering_baseline = composition.get("rendering_baseline")
+        if rendering_baseline not in public_entries:
+            errors.append(
+                f"{skill_name}: unknown rendering baseline: {rendering_baseline}"
+            )
+        if composition.get("lifecycle_owner_category") != "workflow":
+            errors.append(
+                f"{skill_name}: lifecycle owner category must remain workflow"
+            )
+
+    if not isinstance(gate_policy, dict):
+        errors.append(f"{skill_name}: routing contract requires [gate_policy]")
+        gate_policy = {}
+    design_phases = gate_policy.get("design_phases")
+    plan_phases = gate_policy.get("plan_phases")
+    for field, values in (("design_phases", design_phases), ("plan_phases", plan_phases)):
+        if not isinstance(values, list) or not values or not all(isinstance(value, str) for value in values):
+            errors.append(f"{skill_name}: gate_policy.{field} must be a non-empty string array")
+        elif unknown_gate_phases := sorted(set(values) - expected_phases):
+            errors.append(
+                f"{skill_name}: gate_policy.{field} contains unknown phases: {', '.join(unknown_gate_phases)}"
+            )
+    if gate_policy.get("implicit_review_when_missing") is not True:
+        errors.append(f"{skill_name}: gate policy must preserve implicit design and plan review")
+    for field in ("design_review_phase", "plan_review_phase", "truth_sync_phase", "close_phase"):
+        phase = gate_policy.get(field)
+        if phase not in expected_phases:
+            errors.append(f"{skill_name}: gate_policy.{field} must name a workflow phase")
+
+    if not isinstance(phase_routes, dict):
+        errors.append(f"{skill_name}: routing contract requires [phase_routes]")
+        phase_routes = {}
+    missing_phases = sorted(expected_phases - set(phase_routes))
+    extra_phases = sorted(set(phase_routes) - expected_phases)
+    if missing_phases:
+        errors.append(
+            f"{skill_name}: phase routes missing workflow phases: {', '.join(missing_phases)}"
+        )
+    if extra_phases:
+        errors.append(
+            f"{skill_name}: phase routes contain unknown workflow phases: {', '.join(extra_phases)}"
+        )
+
+    for phase, target in phase_routes.items():
+        target_entry = public_entries.get(target)
+        if target_entry is None:
+            errors.append(
+                f"{skill_name}: phase {phase} routes to unknown skill: {target}"
+            )
+        elif not target_entry.get("lifecycle_owner", False):
+            errors.append(
+                f"{skill_name}: phase {phase} must route to a lifecycle owner: {target}"
+            )
+
+    if not isinstance(review_evaluators, dict):
+        errors.append(f"{skill_name}: routing contract requires [review_evaluators]")
+        review_evaluators = {}
+    review_phases = {
+        phase for phase, target in phase_routes.items() if target == "review-change"
+    }
+    if missing_review_phases := sorted(review_phases - set(review_evaluators)):
+        errors.append(
+            f"{skill_name}: review evaluators missing review phases: {', '.join(missing_review_phases)}"
+        )
+    if extra_review_phases := sorted(set(review_evaluators) - review_phases):
+        errors.append(
+            f"{skill_name}: review evaluators contain non-review phases: {', '.join(extra_review_phases)}"
+        )
+    for phase, target in review_evaluators.items():
+        target_entry = public_entries.get(target)
+        if target_entry is None:
+            errors.append(
+                f"{skill_name}: review phase {phase} uses unknown evaluator: {target}"
+            )
+        elif target_entry.get("category") != "review-component":
+            errors.append(
+                f"{skill_name}: review phase {phase} must use a review-component: {target}"
+            )
+
+    for field in ("design_review_phase", "plan_review_phase"):
+        review_phase = gate_policy.get(field)
+        if review_phase not in review_evaluators:
+            errors.append(f"{skill_name}: gate_policy.{field} must select a review evaluator phase")
+
+    if not isinstance(support_routes, dict) or not support_routes:
+        errors.append(
+            f"{skill_name}: routing contract requires non-empty [support_routes]"
+        )
+    else:
+        for intent, target in support_routes.items():
+            target_entry = public_entries.get(target)
+            if target_entry is None:
+                errors.append(
+                    f"{skill_name}: support route {intent} targets unknown skill: {target}"
+                )
+            elif target_entry.get("lifecycle_owner", False):
+                errors.append(
+                    f"{skill_name}: support route {intent} cannot target a lifecycle owner: {target}"
+                )
+
+    return errors
+
+
 def check_index() -> list[str]:
     if not INDEX_PATH.is_file():
         return ["skills.index.json is missing"]
@@ -341,6 +566,7 @@ def validate() -> list[str]:
         errors.append("manifest sources missing from src/skills: " + ", ".join(stale_manifest))
 
     errors.extend(validate_runtime_contracts(skills))
+    errors.extend(validate_routing_contracts(skills))
     errors.extend(check_index())
     return errors
 

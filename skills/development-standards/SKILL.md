@@ -1,253 +1,82 @@
 ---
 name: development-standards
-description: "Use for project development conventions: structure, naming, formatting, review process, cross-language standards, and maintainability rules."
+description: "Use for cross-language implementation policy: the smallest durable change, request-scoped edits, compatibility and migration decisions, dependency selection, temporary mechanisms, maintainability, custom CLI conventions, and implementation review expectations."
 ---
-## Purpose
 
-Provide development standards and best practices that can be applied consistently across languages to improve maintainability, readability, and correctness in new and existing code.
+# Development Standards
 
-## IO Semantics
+Choose the smallest durable implementation that satisfies the current approved requirements, contracts, and declared decision horizon. Durable does not mean speculative; do not buy flexibility, abstraction, compatibility, or operational surface without a current owner and need.
 
-Input: Codebases, configuration files, and development workflows that require consistent standards.
+## Precedence And Composition
 
-Output: Concrete naming, structure, performance, and review expectations that can be enforced via linters, CI pipelines, and manual reviews.
+1. Follow repository-local policy and the approved design or plan first.
+2. Apply this skill as the cross-language implementation baseline.
+3. Compose the matching language, security, error-handling, architecture, testing, or domain skill only when its boundary is active.
+4. Let the lifecycle workflow own mutation, review, repair, continuation, and close decisions.
 
-Side Effects: When applied, may require refactoring existing code, updating style guides, and adjusting linters or CI configurations.
+## Scoped Implementation
 
-## Toolchain Baseline
+- Implement only requested behavior and approved supporting work.
+- Require every changed line to trace to the task slice, its executable oracle, or an orphan created by the same change.
+- Do not refactor adjacent code, reformat unrelated files, remove pre-existing dead code, or add features that were not requested.
+- Match established repository structure, naming, style, and ownership unless the approved change explicitly replaces them.
+- Avoid single-use abstractions, speculative configuration, hypothetical extension points, and defensive branches for impossible states.
+- Remove imports, variables, helpers, configuration, and documentation made obsolete by the current change.
 
-Use repository-local version and environment policy first. When no target-specific policy exists, read `references/toolchain-baseline.md` for the local cross-language baseline.
+## Durability And Temporary Mechanisms
 
-## Skill Authoring
+- Prefer the smallest solution that can be maintained for the declared decision horizon without a known rewrite.
+- A prototype or temporary mechanism is valid only when experimentation or staged migration is an approved goal.
+- Give every temporary mechanism an owner, observable outcome, exit condition, and removal trigger.
+- Do not call a known throwaway stopgap a durable implementation. Route a changed architecture boundary back to `design-change`.
 
-When maintaining local skills, descriptions, routers, or agent-agnostic workflow surfaces, read `references/skill-authoring.md`.
+## Compatibility And Migration
 
-## Deterministic Steps
+- Do not add or preserve compatibility behavior unless a current public or persisted contract, interoperability requirement, or approved migration policy requires it.
+- Distinguish internal implementation freedom from caller-visible APIs, stored data, wire formats, automation entry points, and generated compatibility surfaces.
+- When compatibility is required, name its owner, supported versions, evidence, retirement condition, and migration path.
+- Remove obsolete compatibility paths when their approved retirement condition is met; update affected producers, consumers, tests, generated surfaces, and stable docs together.
 
-### 1. Naming Convention Enforcement
+## Dependency Selection
 
-Enforce identifier naming rules consistently:
+- Prefer an established, actively maintained library for non-trivial or security-sensitive capabilities when its total lifecycle cost is lower than a custom implementation.
+- Compare correctness risk, maintenance activity, security response, transitive surface, update burden, license, runtime fit, and ecosystem ownership.
+- Do not add a dependency for small transparent local logic whose implementation and verification are cheaper than the dependency lifecycle.
+- Do not build custom cryptography, authentication protocols, parsers for complex standards, or concurrency primitives when a suitable maintained implementation exists.
 
-Variables and Functions:
-- Use camelCase for JavaScript/TypeScript variables and functions
-- Use snake_case for Python variables and functions
-- Use PascalCase for Go public functions and variables
-- Use descriptive, meaningful names that reveal intent
+## Maintainability
 
-Classes and Types:
-- Use PascalCase for class names in all languages
-- Use descriptive names that indicate purpose and behavior
-- Avoid abbreviations unless widely understood
-- Apply consistent prefixes for related concepts
+- Use names and module boundaries that reveal behavior and ownership.
+- Keep functions and modules cohesive; split by responsibility, authority, state, or failure boundary rather than arbitrary line limits.
+- Create interfaces for proven variation or caller-visible contracts, not hypothetical substitution.
+- Comment why a non-obvious constraint exists; do not narrate obvious code.
+- Validate external input at the owned boundary and handle failures that can occur under the declared runtime contract.
+- Measure before optimizing and keep performance work tied to an observed bottleneck or explicit objective.
 
-Constants and Configuration:
-- Use UPPER_SNAKE_CASE for constants
-- Use descriptive names for configuration values
-- Group related constants in logical structures
-- Replace magic numbers with named constants
-- Include units in constant names: TIMEOUT_SECONDS, BUFFER_SIZE_BYTES
-- Define related constants in dedicated files or at module top
+## Custom CLI Conventions
 
-Perform naming consistency validation:
-- Use linters with naming convention rules
-- Configure language-specific style guides
-- Apply naming convention checks in CI/CD
-- Enforce consistent naming across interfaces
+- Follow repository-local command conventions first.
+- Prefer descriptive long options for custom scripts and avoid positional write or delete behavior.
+- Keep third-party CLI invocations in their native syntax.
+- Provide actionable validation errors and stable non-zero exits for invalid input.
 
-### 2. Code Structure Principles
+## Verification And Review
 
-Apply single responsibility and modularity principles systematically:
+- Define success criteria before implementation and select the smallest realistic oracle that proves the changed boundary.
+- Reproduce bugs or establish equivalent before-state evidence when practical, then verify the narrow change and declared broader scope.
+- Do not weaken tests, schemas, compatibility checks, security checks, or other oracles merely to make implementation pass.
+- Review the approved diff, direct dependencies, and executable evidence. Pre-existing or unrelated debt does not expand the current task.
 
-Single Responsibility Principle:
-- Each function performs one clear action
-- Each class represents one concept
-- Keep functions under 20 lines when possible
-- Use composition over inheritance
+## Progressive Disclosure
 
-Open/Closed Principle:
-- Design for extension through interfaces
-- Use abstract classes for common behavior
-- Implement plugin architectures
-- Avoid modifying existing code for new features
+- Local toolchain baseline: `references/toolchain-baseline.md`
+- Skill descriptions, routers, and agent-agnostic workflow surfaces: `references/skill-authoring.md`
 
-Enforce clean module boundaries and dependency management:
-- Define clear interfaces between modules
-- Use dependency injection for loose coupling
-- Apply the dependency inversion principle
-- Organize code in logical packages/modules
+## Completion Check
 
-Module organization patterns:
-- Group related functionality together
-- Separate concerns into different layers
-- Use consistent import/export patterns
-- Implement proper abstraction levels
-
-### 3. Performance Optimization Guidelines
-
-Apply appropriate algorithmic complexity:
-- Use O(1) for constant-time operations
-- Apply O(log n) for search operations where possible
-- Use O(n) for linear operations
-- Avoid O(n²) algorithms for large datasets
-
-Memory optimization techniques:
-- Use appropriate data structures for the problem
-- Implement object pooling for frequently created objects
-- Apply streaming for large data processing
-- Use lazy loading for expensive operations
-
-### Code Performance Profiling
-
-Implement systematic performance analysis:
-- Profile critical code paths regularly
-- Measure before and after optimizations
-- Focus on actual bottlenecks, not premature optimization
-- Document performance characteristics and limits
-
-Performance monitoring integration:
-- Add performance metrics to critical functions
-- Implement benchmarking for regression detection
-- Use performance budgets for new features
-- Monitor production performance continuously
-
-# Defensive Programming Implementation
-
-## Input Validation and Error Handling
-
-### Comprehensive Input Validation
-
-Validate all external inputs at boundaries:
-- Check for null/None/undefined values
-- Validate data types and ranges
-- Sanitize string inputs for security
-- Implement schema validation for structured data
-
-Boundary condition handling:
-- Handle empty collections and edge cases
-- Validate array indices and string lengths
-- Check for numeric overflow/underflow
-- Implement proper default value handling
-
-### Robust Error Handling
-
-Implement systematic error handling:
-- Use language-specific error handling mechanisms
-- Provide meaningful error messages
-- Implement error recovery strategies
-- Log errors with appropriate context
-
-Exception management patterns:
-- Catch specific exceptions, not general ones
-- Implement custom exception types for domain errors
-- Use fail-fast principles for unrecoverable errors
-- Apply circuit breaker patterns for external dependencies
-
-## Code Maintainability Standards
-
-### Documentation and Comments
-
-Write self-documenting code:
-- Use meaningful variable and function names
-- Structure code to reveal intent
-- Add comments for complex business logic
-- Document API contracts and invariants
-
-Comment quality standards:
-- Explain why, not what
-- Keep comments current with code changes
-- Use consistent comment formatting
-- Avoid obvious or redundant comments
-
-### Code Organization and Structure
-
-Apply consistent code organization:
-- Use consistent indentation and formatting
-- Group related code together
-- Implement proper file/module organization
-- Use standard design patterns appropriately
-
-Code readability practices:
-- Keep functions focused and small
-- Use meaningful variable names
-- Avoid deep nesting and complex control flow
-- Implement proper abstraction levels
-
-# Quality Assurance Integration
-
-## Code Review Standards
-
-### Systematic Review Process
-
-Implement comprehensive code reviews:
-- Review for functionality and correctness
-- Check for security vulnerabilities
-- Validate performance characteristics
-- Ensure adherence to coding standards
-
-Review effectiveness metrics:
-- Track defect detection rates
-- Monitor review time and quality
-- Collect feedback on review process
-- Implement review checklists
-
-### CLI Parameter Style Standards
-
-Enforce consistent parameter naming in custom CLI scripts:
-- Use long parameter format (--parameter) exclusively
-- Prohibit short parameter aliases (-x, -y, -h, etc.)
-- Prohibit bare parameters (help, version, etc.); use --help, --version
-- Apply to all custom scripts (Python, Shell, Go, PowerShell)
-- Exclude third-party tool invocations from this constraint
-
-Parameter style validation in reviews:
-- Check argparse definitions for short aliases in Python
-- Check ArgumentParser for add_help=False requirement in Python
-- Check case statements for short patterns and bare parameters in Shell
-- Check flag definitions for single-letter names in Go
-- Check Alias attributes for single characters in PowerShell
-- Fail reviews when short parameters or bare parameters are detected
-- Provide specific line numbers and remediation guidance
-
-### Automated Quality Checks
-
-Integrate automated quality tools:
-- Static analysis for bug detection
-- Complexity analysis for maintainability
-- Security scanning for vulnerability detection
-- Performance testing for regression detection
-
-Quality gate implementation:
-- Define quality thresholds for code metrics
-- Implement automated quality gates in CI/CD
-- Block deployments on quality failures
-- Provide actionable feedback for fixes
-
-## Technical Debt Management
-
-### Debt Identification and Tracking
-
-Systematically identify technical debt:
-- Track code complexity metrics
-- Monitor test coverage gaps
-- Identify outdated dependencies
-- Document performance limitations
-
-Technical debt prioritization:
-- Assess impact on business value
-- Evaluate maintenance cost implications
-- Consider security and compliance requirements
-- Plan debt reduction activities
-
-### Refactoring Implementation
-
-Apply systematic refactoring:
-- Use automated refactoring tools when possible
-- Maintain test coverage during refactoring
-- Refactor in small, incremental steps
-- Document architectural decisions and changes
-
-Refactoring validation:
-- Run comprehensive test suites after refactoring
-- Validate performance characteristics
-- Ensure functionality remains unchanged
-- Update documentation as needed
+- Current approved requirements and contracts are satisfied.
+- The implementation is the smallest durable option for the declared horizon.
+- Changed lines are request-traceable and unrelated work is untouched.
+- Compatibility and dependencies have current owners and evidence where applicable.
+- Temporary mechanisms have explicit exit conditions.
+- Declared verification passes without weakening the oracle.

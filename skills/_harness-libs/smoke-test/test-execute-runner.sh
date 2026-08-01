@@ -2,9 +2,10 @@
 set -euo pipefail
 
 ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+HARNESS_LIB_ROOT="${HARNESS_TEST_SURFACE:-$ROOT_DIR/skills/_harness-libs}"
 
 # shellcheck source=skills/_harness-libs/execute-runner.sh
-source "$ROOT_DIR/skills/_harness-libs/execute-runner.sh"
+source "$HARNESS_LIB_ROOT/execute-runner.sh"
 
 fail() {
   printf 'test-execute-runner: %s\n' "$*" >&2
@@ -12,10 +13,10 @@ fail() {
 }
 
 assert_contains() {
-  local path="$1"
+  local file_ref="$1"
   local pattern="$2"
   local message="$3"
-  rg -n -- "$pattern" "$path" >/dev/null || fail "$message"
+  rg -n -- "$pattern" "$file_ref" >/dev/null || fail "$message"
 }
 
 assert_json() {
@@ -29,10 +30,13 @@ assert_json() {
 }
 
 main() {
-  local tmp_dir design_file approved_plan pending_plan legacy_plan verdict ledger_file execution_result_json workspace_mode worktree_preflight
+  local tmp_dir design_file approved_plan pending_plan legacy_plan parallel_plan verdict ledger_file execution_result_json workspace_mode worktree_preflight
   local task_ledger_json=""
   local task_catalog_json=""
   local next_ready_task=""
+  local binding_json=""
+  local inherited_binding_json=""
+  local topology_json=""
   local -a verification_commands allowed_touch_set
 
   [[ "$(execute_entry_phase)" == "implement-serial" ]] || fail "execute entry phase should stay implement-serial"
@@ -42,6 +46,7 @@ main() {
   approved_plan="$tmp_dir/approved-plan.md"
   pending_plan="$tmp_dir/pending-plan.md"
   legacy_plan="$tmp_dir/legacy-plan.md"
+  parallel_plan="$tmp_dir/parallel-plan.md"
 
   cat >"$design_file" <<'EOF'
 # Sample Design
@@ -88,8 +93,12 @@ Problem text.
 
 - impl_file_refs:
   - src/example.py
+  - src/helper.py
+  - src/third.py
 - test_file_refs:
   - tests/test_example.py
+  - tests/test_helper.py
+  - tests/test_third.py
 EOF
 
   cat >"$approved_plan" <<'EOF'
@@ -268,6 +277,160 @@ EOF
 - rollback_entry: plan-change
 EOF
 
+  cat >"$parallel_plan" <<'EOF'
+# Parallel Execution Plan
+
+## Upstream Design
+
+- design_ref: design.md
+- design_version: 2026-08-01-v1
+
+## Implementation Scope
+
+- plan_contract_version: 2
+- parallel_execution_approved: true
+- impl_file_refs:
+  - src/example.py
+  - src/helper.py
+  - src/third.py
+- test_file_refs:
+  - tests/test_example.py
+  - tests/test_helper.py
+  - tests/test_third.py
+- verification_scope:
+  - `bash test.sh`
+
+## Work Package Readiness
+
+- milestone_objective: bind a deterministic parallel batch
+- non_goals:
+  - no deployment
+- future_phase:
+  - no follow-up phase
+- decision_status: ready_for_review
+- oracle_strategy: state-transition smoke tests
+- acceptance_oracles:
+  - `bash test.sh`
+- execution_continuity: continuous_after_plan_approval
+- max_review_batches: 2
+- subagent_ready: true
+
+## Runtime Binding
+
+- default_model_policy: semantic-routing
+- allowed_model_policies:
+  - semantic-routing
+  - inherit-main
+  - runtime-default
+- effective_concurrency: minimum of the plan and runtime limits
+
+## Parallel Batches
+
+- batch_id: P1
+- tasks:
+  - task-1
+  - task-2
+  - task-3
+- max_parallelism: 2
+- convergence_task: controller
+
+## Review Gate
+
+- required_entry: review-change
+- required_mode: review-only
+
+## Human Gate
+
+- approval_required: true
+- approval_status: approved
+- next_entry: implement-change
+
+## Task 1: Example
+
+- task_id: task-1
+- depends_on:
+  - root
+- scope_slice: example implementation
+- impl_file_refs:
+  - src/example.py
+- test_file_refs:
+  - tests/test_example.py
+- verification_scope:
+  - `bash test.sh`
+- executor_mode: subagent
+- parallel_group: P1
+- parallel_policy: allowed
+- delegation_policy: preferred
+- execution_profile: deep
+- reasoning_profile: deep
+- isolation: isolated-worktree
+- resource_locks:
+  - example-state
+- task_review_depth: full
+- done_when:
+  - example verification passes
+- failure_policy: fix_forward
+- [ ] Implement example
+
+## Task 2: Helper
+
+- task_id: task-2
+- depends_on:
+  - root
+- scope_slice: helper implementation
+- impl_file_refs:
+  - src/helper.py
+- test_file_refs:
+  - tests/test_helper.py
+- verification_scope:
+  - `bash test.sh`
+- executor_mode: subagent
+- parallel_group: P1
+- parallel_policy: allowed
+- delegation_policy: preferred
+- execution_profile: fast
+- reasoning_profile: standard
+- isolation: isolated-worktree
+- resource_locks:
+  - helper-state
+- task_review_depth: full
+- done_when:
+  - helper verification passes
+- failure_policy: fix_forward
+- [ ] Implement helper
+
+## Task 3: Third Work Item
+
+- task_id: task-3
+- depends_on:
+  - root
+- scope_slice: third implementation slice
+- impl_file_refs:
+  - src/third.py
+- test_file_refs:
+  - tests/test_third.py
+- verification_scope:
+  - `bash test.sh`
+- executor_mode: subagent
+- parallel_group: P1
+- parallel_policy: allowed
+- delegation_policy: preferred
+- execution_profile: balanced
+- reasoning_profile: standard
+- isolation: isolated-worktree
+- resource_locks:
+  - third-state
+- task_review_depth: full
+- done_when:
+  - third verification passes
+- failure_policy: fix_forward
+- [ ] Implement third work item
+
+## Recovery
+
+- default_failure_policy: fix_forward
+EOF
+
   validate_execution_plan "$approved_plan"
   if validate_execution_plan "$pending_plan" >/dev/null 2>&1; then
     fail "pending plan should not pass execution validation"
@@ -275,6 +438,7 @@ EOF
   if validate_execution_plan "$legacy_plan" >/dev/null 2>&1; then
     fail "legacy prose-only plan should not pass execution validation"
   fi
+  validate_execution_plan "$parallel_plan"
 
   [[ "$(execution_plan_approval_status "$approved_plan")" == "approved" ]] || fail "approved plan status should resolve"
   [[ "$(execution_plan_mode "$approved_plan")" == "serial-first" ]] || fail "execution should default to serial-first"
@@ -307,6 +471,75 @@ EOF
   next_ready_task="$(execution_next_ready_task "$ledger_file")"
   [[ "$next_ready_task" == "task-1" ]] || fail "next ready task should resolve from the task ledger"
 
+  task_ledger_json="$(execution_task_ledger "$parallel_plan")"
+  printf '%s\n' "$task_ledger_json" >"$ledger_file"
+  assert_json "$(execution_ready_set "$ledger_file")" 'map(.task_id) == ["task-1", "task-2", "task-3"]' "ready-set API should return all ready tasks in plan order"
+
+  binding_json="$(execution_runtime_binding "$parallel_plan" "$ledger_file" "P1" 4 "semantic-routing")"
+  assert_json "$binding_json" '.outcome == "bound" and .effective_width == 2 and .selected_task_ids == ["task-1", "task-2"]' "semantic routing should bind the complete safe frontier"
+  assert_json "$binding_json" '.bindings[0].actor_kind == "subagent" and .bindings[0].model_instruction == "bind-runtime-equivalent-for-execution-profile"' "preferred delegation should use portable semantic binding instructions"
+  declare -F execution_ready_batch >/dev/null || fail "ready-batch API should be available"
+
+  inherited_binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$ledger_file" "P1" 4 "inherit-main")"
+  assert_json "$inherited_binding_json" '.bindings | all(.model_instruction == "inherit-main-model" and .reasoning_instruction == "inherit-main-reasoning")' "inherit-main should change binding instructions"
+  topology_json="$(jq -cS '.task_topology' <<<"$binding_json")"
+  [[ "$topology_json" == "$(jq -cS '.task_topology' <<<"$inherited_binding_json")" ]] || fail "inherit-main must preserve byte-stable task topology"
+
+  binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$ledger_file" "P1" 4 "runtime-default")"
+  assert_json "$binding_json" '.bindings | all(.model_instruction == "use-runtime-default-model")' "runtime-default should emit a portable runtime-default instruction"
+
+  binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$ledger_file" "P1" 1 "semantic-routing")"
+  assert_json "$binding_json" '.outcome == "serial-fallback" and .effective_width == 1 and .stop_reason == null' "allowed work should serialize with capacity evidence"
+  assert_json "$binding_json" '.evidence[0].kind == "effective-capacity" and .evidence[0].runtime_capacity == 1' "serial fallback should record explicit capacity evidence"
+
+  jq 'map(.parallel_policy = "required")' "$ledger_file" >"$tmp_dir/required-ledger.json"
+  binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$tmp_dir/required-ledger.json" "P1" 1 "semantic-routing")"
+  assert_json "$binding_json" '.outcome == "capacity-stop" and .stop_reason == "parallel_capacity_required" and .effective_width == 0 and .selected_task_ids == []' "required work should return the typed capacity stop without a partial binding"
+
+  jq 'map(.parallel_policy = "required")' "$ledger_file" >"$tmp_dir/required-three-ledger.json"
+  binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$tmp_dir/required-three-ledger.json" "P1" 2 "semantic-routing")"
+  assert_json "$binding_json" '.outcome == "capacity-stop" and .stop_reason == "parallel_capacity_required" and .effective_width == 0 and .selected_task_ids == [] and .evidence[0].available_width == 2' "required work must bind the complete remaining frontier at once"
+
+  jq '.[0].delegation_policy = "forbidden" | .[0].executor_mode = "main"' "$ledger_file" >"$tmp_dir/forbidden-ledger.json"
+  binding_json="$(execution_runtime_binding "$parallel_plan" "$tmp_dir/forbidden-ledger.json" "P1" 4 "semantic-routing")"
+  assert_json "$binding_json" '.outcome == "parallel-conflict" and .failure_kind == "parallel-conflict" and .recovery_phase == "dependency-freeze" and (.evidence | any(.kind == "plan-ledger-drift"))' "public runtime binding should reject ledger topology drift from the approved plan"
+  binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$tmp_dir/forbidden-ledger.json" "P1" 4 "semantic-routing")"
+  assert_json "$binding_json" '.bindings[0].actor_kind == "main"' "forbidden delegation must never be relaxed"
+
+  jq 'map(.delegation_policy = "forbidden" | .executor_mode = "main")' "$ledger_file" >"$tmp_dir/main-only-ledger.json"
+  binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$tmp_dir/main-only-ledger.json" "P1" 4 "semantic-routing")"
+  assert_json "$binding_json" '.outcome == "serial-fallback" and .effective_width == 1 and .selected_task_ids == ["task-1"] and (.bindings | all(.actor_kind == "main")) and .evidence[0].actor_capacity == 1' "one controller actor cannot be counted as multiple parallel workers"
+
+  jq 'map(.delegation_policy = "forbidden" | .executor_mode = "main" | .parallel_policy = "required")' "$ledger_file" >"$tmp_dir/required-main-only-ledger.json"
+  binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$tmp_dir/required-main-only-ledger.json" "P1" 4 "semantic-routing")"
+  assert_json "$binding_json" '.outcome == "capacity-stop" and .stop_reason == "parallel_capacity_required" and .effective_width == 0 and .selected_task_ids == [] and .evidence[0].actor_capacity == 1' "required parallel work must stop when compliant actor capacity is insufficient"
+
+  jq '.[1].impl_file_refs = ["src/example.py"]' "$ledger_file" >"$tmp_dir/write-conflict-ledger.json"
+  binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$tmp_dir/write-conflict-ledger.json" "P1" 4 "semantic-routing")"
+  assert_json "$binding_json" '.outcome == "parallel-conflict" and .failure_kind == "parallel-conflict" and .recovery_phase == "dependency-freeze" and (.evidence | any(.kind == "write-ref"))' "overlapping write refs should return deterministic conflict evidence"
+
+  jq '.[1].resource_locks = ["example-state"]' "$ledger_file" >"$tmp_dir/lock-conflict-ledger.json"
+  binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$tmp_dir/lock-conflict-ledger.json" "P1" 4 "semantic-routing")"
+  assert_json "$binding_json" '.outcome == "parallel-conflict" and (.evidence | any(.kind == "resource-lock"))' "overlapping resource locks should conflict"
+
+  jq '.[1].depends_on = ["task-1"]' "$ledger_file" >"$tmp_dir/dependency-conflict-ledger.json"
+  binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$tmp_dir/dependency-conflict-ledger.json" "P1" 4 "semantic-routing")"
+  assert_json "$binding_json" '.outcome == "parallel-conflict" and (.evidence | any(.kind == "dependency"))' "dependencies inside a runtime frontier should conflict"
+
+  jq '.[1].isolation = "controller-checkout"' "$ledger_file" >"$tmp_dir/isolation-conflict-ledger.json"
+  binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$tmp_dir/isolation-conflict-ledger.json" "P1" 4 "semantic-routing")"
+  assert_json "$binding_json" '.outcome == "parallel-conflict" and (.evidence | any(.kind == "isolation"))' "parallel writes without worktree isolation should conflict"
+
+  jq 'map(.impl_file_refs = ["none"] | .test_file_refs = ["none"] | .isolation = "shared-read-only")' "$ledger_file" >"$tmp_dir/read-only-ledger.json"
+  binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$tmp_dir/read-only-ledger.json" "P1" 4 "semantic-routing")"
+  assert_json "$binding_json" '.outcome == "bound" and (.evidence | all(.kind != "isolation"))' "read-only tasks may share a checkout"
+
+  jq '.[1].status = "pending"' "$ledger_file" >"$tmp_dir/incomplete-frontier-ledger.json"
+  if execution_runtime_binding_from_validated_plan "$parallel_plan" "$tmp_dir/incomplete-frontier-ledger.json" "P1" 4 "semantic-routing" >/dev/null 2>&1; then
+    fail "binding should wait without conflict until the complete frontier is ready"
+  fi
+
+  printf '%s\n' "$(execution_task_ledger "$approved_plan")" >"$ledger_file"
   execution_result_json="$(build_execution_result_json "$approved_plan" "$ledger_file" "implement-serial" "task-1" "task_blocked_requires_human" "pending" "pending" "implement-change" "implement-serial" "true" "$workspace_mode")"
   assert_json "$execution_result_json" '.stop_reason == "task_blocked_requires_human"' "execution result should preserve deterministic stop reason"
   assert_json "$execution_result_json" '.remaining_task_count == 1 and .completed_task_count == 0' "execution result should count task ledger state"

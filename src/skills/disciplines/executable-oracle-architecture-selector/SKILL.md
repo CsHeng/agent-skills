@@ -52,6 +52,7 @@ Common boundaries:
 | Public API or schema compatibility | Contract / schema conformance | Contract oracle | Prototype schema is intentionally unstable |
 | Large input space | Property-based testing / fuzzing | Property oracle | Invariant or generator is weak |
 | Stateful workflow or protocol | Model-based tests + TDD | Model oracle | Model costs more than the system warrants |
+| Dependency-aware parallel execution | Model/state-transition tests + contract tests | DAG, conflict, binding, and convergence oracle | Only happy-path completion is observable |
 | Legacy refactor safety | Characterization / golden / approval tests | Current-behavior oracle | Current behavior is known wrong and should change now |
 | Test-suite strength | Mutation testing | Meta-oracle | Suite is slow, flaky, or low risk |
 | Distributed resilience | Fault injection / chaos / synthetic probes | Runtime oracle | Recovery and blast-radius controls are weak |
@@ -105,6 +106,9 @@ A work package is ready only when it has:
 - maximum review budget
 - failure policy or stop condition
 - subagent boundary: `subagent_ready: true|false`
+- task-level delegation and parallel policy, including the serial fallback or typed capacity stop
+- semantic execution and reasoning profiles without a concrete provider model identifier
+- isolation, write-set, resource-lock, and controller-owned convergence evidence for any parallel slice
 
 If these are missing, do not expand the plan. Stop with one of:
 
@@ -112,6 +116,8 @@ If these are missing, do not expand the plan. Stop with one of:
 - `split_scope`
 - `needs_oracle_strategy`
 - `manual_checkpoint`
+
+For an agent scheduler or conditional parallel batch, prefer a small executable task-graph fixture over prose snapshots. Exercise ready-set order, dependency completion, conflict exclusion, effective capacity, actor binding, serial fallback, required-capacity stop, and convergence. Run the same approved graph under semantic routing and `inherit-main`; the oracle should compare topology and safety metadata, not provider model names.
 
 ## Agent Oracle Policy
 

@@ -558,6 +558,7 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "use-coding-skills",
+      "routing_contract": "references/routing.toml",
       "source": "src/skills/session/use-coding-skills"
     },
     {

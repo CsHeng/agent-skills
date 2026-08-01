@@ -1,0 +1,165 @@
+@startuml
+' Generated from src/skills/session/use-coding-skills/references/routing.toml, contracts/lifecycle.toml, and contracts/workflow-modes.toml; do not edit by hand.
+title Harness Request Routing And Lifecycle Sequence
+hide footbox
+autonumber
+skinparam shadowing false
+skinparam sequence {
+  ArrowColor #475569
+  LifeLineBorderColor #64748B
+  ParticipantBackgroundColor #F8FAFC
+  ParticipantBorderColor #475569
+}
+
+actor "User" as n_user
+participant "Host wrapper\n(user-specific)" as n_host_wrapper
+participant "Native skill\nmatching" as n_native_matching
+participant "use-coding-skills\n(optional router)" as n_use_coding_skills
+participant "Workflow mode\nselector" as n_mode_selector
+participant "Lower-plane\noverlays" as n_overlays
+participant "analyze-project" as n_analyze_project
+participant "design-change" as n_design_change
+participant "plan-change" as n_plan_change
+participant "implement-change" as n_implement_change
+participant "review-change" as n_review_change
+participant "sync-truth" as n_sync_truth
+participant "close-change" as n_close_change
+participant "review-design / review-plan /\nreview-implementation" as n_review_evaluators
+
+n_user -> n_host_wrapper : request
+n_host_wrapper -> n_native_matching : request + user/runtime constraints
+note right of n_host_wrapper
+  Allowed:
+  - user preferences
+  - host and runtime constraints
+  - thin intent-to-public-skill hints
+  Forbidden:
+  - workflow phase graph
+  - phase-to-owner mapping
+  - repair states
+  - review budgets
+  - typed exits
+end note
+
+alt explicit skill or confident native-description-match
+  n_native_matching -> n_native_matching : choose direct public skill
+  note right of n_native_matching : use-coding-skills bypassed
+else ambiguous multi-stage or explicit routing request
+  n_native_matching -> n_use_coding_skills : resolve primary intent
+  n_use_coding_skills --> n_native_matching : public route + mode hint
+end
+
+n_native_matching -> n_overlays : match support routes
+n_overlays --> n_native_matching : policy / method / evidence only
+note right of n_overlays
+  response-shape -> output-styles
+  search-and-tooling -> tool-decision-tree
+  implementation-policy -> development-standards
+  persisted-language-selection -> language-decision-tree
+  infrastructure -> infrastructure-triage
+  documentation -> organize-docs
+  memory-and-session-mining -> skill-miner
+end note
+
+alt support-only request
+  n_native_matching -> n_overlays : invoke matched support skill
+  n_overlays --> n_user : result or evidence
+else lifecycle request
+  n_native_matching -> n_mode_selector : workflow-mode-selection
+  alt mode: read_only
+  n_mode_selector -> n_analyze_project : analyze
+  n_analyze_project --> n_user : result / typed stop
+  else mode: micro
+  n_mode_selector -> n_plan_change : plan-lite
+  n_plan_change -> n_review_change : plan review gate
+  n_review_change -> n_review_evaluators : plan via review-plan
+  n_review_evaluators --> n_review_change : candidate findings
+  n_review_change -> n_review_change : adjudicate + verdict
+  n_review_change -> n_user : plan approval gate
+  n_user --> n_review_change : approved
+  n_review_change -> n_implement_change : execute
+  n_implement_change -> n_implement_change : verify
+  n_implement_change -> n_close_change : close
+  n_close_change --> n_user : close decision + remaining human action
+  else mode: standard
+  n_mode_selector -> n_analyze_project : analyze
+  n_analyze_project -> n_design_change : design-lite
+  n_design_change -> n_review_change : mandatory design review
+  n_review_change -> n_review_evaluators : design via review-design
+  n_review_evaluators --> n_review_change : candidate findings
+  n_review_change -> n_review_change : adjudicate + verdict
+  n_review_change -> n_user : design approval gate
+  n_user --> n_review_change : approved
+  n_review_change -> n_plan_change : plan
+  n_plan_change -> n_review_change : plan review gate
+  n_review_change -> n_review_evaluators : plan via review-plan
+  n_review_evaluators --> n_review_change : candidate findings
+  n_review_change -> n_review_change : adjudicate + verdict
+  n_review_change -> n_user : plan approval gate
+  n_user --> n_review_change : approved
+  n_review_change -> n_implement_change : execute
+  n_implement_change -> n_review_change : review
+  n_review_change -> n_review_evaluators : review via review-implementation
+  n_review_evaluators --> n_review_change : candidate findings
+  n_review_change -> n_review_change : adjudicate + verdict
+  n_review_change -> n_sync_truth : sync-truth
+  n_sync_truth -> n_user : truth-sync approval gate
+  n_user --> n_sync_truth : approved
+  n_sync_truth -> n_close_change : close
+  n_close_change --> n_user : close decision + remaining human action
+  else mode: regulated
+  n_mode_selector -> n_analyze_project : analyze
+  n_analyze_project -> n_design_change : design-full
+  n_design_change -> n_review_change : review-design
+  n_review_change -> n_review_evaluators : review-design via review-design
+  n_review_evaluators --> n_review_change : candidate findings
+  n_review_change -> n_review_change : adjudicate + verdict
+  n_review_change -> n_user : design approval gate
+  n_user --> n_review_change : approved
+  n_review_change -> n_plan_change : plan
+  n_plan_change -> n_review_change : review-plan
+  n_review_change -> n_review_evaluators : review-plan via review-plan
+  n_review_evaluators --> n_review_change : candidate findings
+  n_review_change -> n_review_change : adjudicate + verdict
+  n_review_change -> n_user : plan approval gate
+  n_user --> n_review_change : approved
+  n_review_change -> n_implement_change : execute
+  n_implement_change -> n_review_change : review-impl
+  n_review_change -> n_review_evaluators : review-impl via review-implementation
+  n_review_evaluators --> n_review_change : candidate findings
+  n_review_change -> n_review_change : adjudicate + verdict
+  n_review_change -> n_sync_truth : sync-truth
+  n_sync_truth -> n_user : truth-sync approval gate
+  n_user --> n_sync_truth : approved
+  n_sync_truth -> n_close_change : close
+  n_close_change --> n_user : close decision + remaining human action
+  else mode: emergency
+  n_mode_selector -> n_analyze_project : triage
+  n_analyze_project -> n_plan_change : minimal-plan
+  n_plan_change -> n_review_change : plan review gate
+  n_review_change -> n_review_evaluators : plan via review-plan
+  n_review_evaluators --> n_review_change : candidate findings
+  n_review_change -> n_review_change : adjudicate + verdict
+  n_review_change -> n_user : plan approval gate
+  n_user --> n_review_change : approved
+  n_review_change -> n_implement_change : execute
+  n_implement_change -> n_implement_change : verify
+  n_implement_change -> n_review_change : posthoc-review
+  n_review_change -> n_review_evaluators : posthoc-review via review-implementation
+  n_review_evaluators --> n_review_change : candidate findings
+  n_review_change -> n_review_change : adjudicate + verdict
+  n_review_change -> n_sync_truth : sync-truth
+  n_sync_truth -> n_user : truth-sync approval gate
+  n_user --> n_sync_truth : approved
+  n_sync_truth -> n_close_change : close
+  n_close_change --> n_user : close decision + remaining human action
+  end
+end
+
+legend right
+  one primary owner = 1
+  lifecycle owner category = workflow
+  shared rendering baseline = output-styles
+  lower-plane skills never advance lifecycle state
+endlegend
+@enduml

@@ -1,0 +1,72 @@
+version = 1
+
+[routing]
+id = "use-coding-skills"
+default_discovery = "native-description-match"
+direct_match_bypasses_router = true
+ambiguous_router = "use-coding-skills"
+mode_selector = "workflow-mode-selection"
+host_wrapper_role = "optional-user-specific-entry-hints"
+
+[host_wrapper]
+allowed = [
+  "user preferences",
+  "host and runtime constraints",
+  "thin intent-to-public-skill hints",
+]
+forbidden = [
+  "workflow phase graph",
+  "phase-to-owner mapping",
+  "repair states",
+  "review budgets",
+  "typed exits",
+]
+
+[composition]
+primary_owner_count = 1
+lifecycle_owner_category = "workflow"
+overlay_categories = ["session", "discipline", "policy", "tool", "review-component"]
+rendering_baseline = "output-styles"
+
+[gate_policy]
+design_phases = ["design-lite", "design-full"]
+plan_phases = ["plan-lite", "plan", "minimal-plan"]
+design_review_phase = "review-design"
+plan_review_phase = "review-plan"
+truth_sync_phase = "sync-truth"
+close_phase = "close"
+implicit_review_when_missing = true
+
+[phase_routes]
+analyze = "analyze-project"
+triage = "analyze-project"
+plan-lite = "plan-change"
+minimal-plan = "plan-change"
+design-lite = "design-change"
+design-full = "design-change"
+review-design = "review-change"
+plan = "plan-change"
+review-plan = "review-change"
+execute = "implement-change"
+verify = "implement-change"
+review = "review-change"
+review-impl = "review-change"
+posthoc-review = "review-change"
+sync-truth = "sync-truth"
+close = "close-change"
+
+[review_evaluators]
+review-design = "review-design"
+review-plan = "review-plan"
+review = "review-implementation"
+review-impl = "review-implementation"
+posthoc-review = "review-implementation"
+
+[support_routes]
+response-shape = "output-styles"
+search-and-tooling = "tool-decision-tree"
+implementation-policy = "development-standards"
+persisted-language-selection = "language-decision-tree"
+infrastructure = "infrastructure-triage"
+documentation = "organize-docs"
+memory-and-session-mining = "skill-miner"

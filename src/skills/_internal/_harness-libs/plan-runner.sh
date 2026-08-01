@@ -78,6 +78,13 @@ task_section_has_any_metadata() {
     task_review_depth \
     done_when \
     failure_policy \
+    parallel_group \
+    parallel_policy \
+    delegation_policy \
+    execution_profile \
+    reasoning_profile \
+    isolation \
+    resource_locks \
     rollback_trigger \
     rollback_target \
     rollback_verification \
@@ -198,6 +205,714 @@ validate_task_list_field() {
     printf 'plan task missing required list field (%s) in section: %s\n' "$key" "$section" >&2
     return 1
   }
+}
+
+normalize_plan_metadata_values() {
+  sed -E 's/^`(.*)`$/\1/'
+}
+
+plan_contract_version() {
+  local plan_file="$1"
+  extract_markdown_scalar "$plan_file" "Implementation Scope" "plan_contract_version" \
+    | normalize_plan_metadata_values
+}
+
+plan_uses_v2_contract() {
+  local plan_file="$1"
+  [[ "$(plan_contract_version "$plan_file")" == "2" ]]
+}
+
+plan_token_is_safe() {
+  local token="$1"
+  [[ "$token" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]
+}
+
+plan_refs_overlap() {
+  local left_ref="$1"
+  local right_ref="$2"
+
+  [[ -n "$left_ref" && -n "$right_ref" ]] || return 1
+  [[ "$left_ref" != "none" && "$right_ref" != "none" ]] || return 1
+  [[ "$left_ref" == "$right_ref" || "$left_ref" == "$right_ref"/* || "$right_ref" == "$left_ref"/* ]]
+}
+
+list_plan_parallel_batch_ids() {
+  local plan_file="$1"
+
+  awk '
+    /^## Parallel Batches$/ {
+      in_batches = 1
+      next
+    }
+    in_batches && /^##[[:space:]]+/ {
+      exit
+    }
+    in_batches && /^-[[:space:]]*batch_id:[[:space:]]*/ {
+      value = $0
+      sub(/^-[[:space:]]*batch_id:[[:space:]]*/, "", value)
+      gsub(/^`|`$/, "", value)
+      print value
+    }
+  ' "$plan_file"
+}
+
+extract_parallel_batch_scalar() {
+  local plan_file="$1"
+  local wanted_batch_id="$2"
+  local key="$3"
+
+  awk -v wanted_batch_id="$wanted_batch_id" -v key="$key" '
+    /^## Parallel Batches$/ {
+      in_batches = 1
+      next
+    }
+    in_batches && /^##[[:space:]]+/ {
+      exit
+    }
+    in_batches && /^-[[:space:]]*batch_id:[[:space:]]*/ {
+      current_batch_id = $0
+      sub(/^-[[:space:]]*batch_id:[[:space:]]*/, "", current_batch_id)
+      gsub(/^`|`$/, "", current_batch_id)
+      next
+    }
+    in_batches && current_batch_id == wanted_batch_id &&
+      $0 ~ "^-[[:space:]]*" key ":[[:space:]]*" {
+      value = $0
+      sub(/^[^:]+:[[:space:]]*/, "", value)
+      gsub(/^`|`$/, "", value)
+      print value
+      exit
+    }
+  ' "$plan_file"
+}
+
+extract_parallel_batch_list() {
+  local plan_file="$1"
+  local wanted_batch_id="$2"
+  local key="$3"
+
+  awk -v wanted_batch_id="$wanted_batch_id" -v key="$key" '
+    /^## Parallel Batches$/ {
+      in_batches = 1
+      next
+    }
+    in_batches && /^##[[:space:]]+/ {
+      exit
+    }
+    in_batches && /^-[[:space:]]*batch_id:[[:space:]]*/ {
+      current_batch_id = $0
+      sub(/^-[[:space:]]*batch_id:[[:space:]]*/, "", current_batch_id)
+      gsub(/^`|`$/, "", current_batch_id)
+      in_key = 0
+      next
+    }
+    in_batches && current_batch_id == wanted_batch_id &&
+      $0 ~ "^-[[:space:]]*" key ":[[:space:]]*$" {
+      in_key = 1
+      next
+    }
+    in_batches && in_key && /^-[[:space:]]*[A-Za-z0-9_-]+:[[:space:]]*/ {
+      in_key = 0
+    }
+    in_batches && in_key && /^[[:space:]]+-[[:space:]]+/ {
+      value = $0
+      sub(/^[[:space:]]+-[[:space:]]+/, "", value)
+      gsub(/^`|`$/, "", value)
+      print value
+    }
+  ' "$plan_file"
+}
+
+parallel_batch_max_parallelism() {
+  local plan_file="$1"
+  local batch_id="$2"
+
+  extract_parallel_batch_scalar "$plan_file" "$batch_id" "max_parallelism"
+}
+
+validate_v2_plan_header() {
+  local plan_file="$1"
+  local contract_version=""
+  local parallel_approved=""
+  local execution_continuity=""
+  local default_model_policy=""
+  local allowed_model_policy=""
+  local batch_id=""
+  local saw_default_model_policy=0
+
+  contract_version="$(plan_contract_version "$plan_file")"
+  if [[ -z "$contract_version" ]]; then
+    return 0
+  fi
+
+  is_valid_plan_contract_version "$contract_version" || {
+    printf 'plan contract version is unsupported: %s\n' "$contract_version" >&2
+    return 1
+  }
+
+  parallel_approved="$(extract_markdown_scalar "$plan_file" "Implementation Scope" "parallel_execution_approved" | normalize_plan_metadata_values)"
+  case "$parallel_approved" in
+    true|false) ;;
+    *)
+      printf 'version-2 plan parallel_execution_approved must be true or false\n' >&2
+      return 1
+      ;;
+  esac
+
+  execution_continuity="$(extract_markdown_scalar "$plan_file" "Work Package Readiness" "execution_continuity" | normalize_plan_metadata_values)"
+  case "$execution_continuity" in
+    continuous_after_plan_approval|pre_confirmation_required|not_ready) ;;
+    *)
+      printf 'version-2 plan execution_continuity must be continuous_after_plan_approval, pre_confirmation_required, or not_ready\n' >&2
+      return 1
+      ;;
+  esac
+
+  rg -n '^## Runtime Binding$' "$plan_file" >/dev/null || {
+    printf 'version-2 plan missing required section: ^## Runtime Binding$\n' >&2
+    return 1
+  }
+
+  default_model_policy="$(extract_markdown_scalar "$plan_file" "Runtime Binding" "default_model_policy" | normalize_plan_metadata_values)"
+  is_valid_model_policy "$default_model_policy" || {
+    printf 'version-2 plan has invalid default_model_policy: %s\n' "$default_model_policy" >&2
+    return 1
+  }
+
+  while IFS= read -r allowed_model_policy; do
+    [[ -n "$allowed_model_policy" ]] || continue
+    allowed_model_policy="$(printf '%s\n' "$allowed_model_policy" | normalize_plan_metadata_values)"
+    is_valid_model_policy "$allowed_model_policy" || {
+      printf 'version-2 plan has invalid allowed_model_policies entry: %s\n' "$allowed_model_policy" >&2
+      return 1
+    }
+    if [[ "$allowed_model_policy" == "$default_model_policy" ]]; then
+      saw_default_model_policy=1
+    fi
+  done < <(extract_markdown_list "$plan_file" "Runtime Binding" "allowed_model_policies")
+
+  [[ "$saw_default_model_policy" -eq 1 ]] || {
+    printf 'version-2 plan allowed_model_policies must include default_model_policy: %s\n' "$default_model_policy" >&2
+    return 1
+  }
+
+  [[ -n "$(extract_markdown_scalar "$plan_file" "Runtime Binding" "effective_concurrency")" ]] || {
+    printf 'version-2 plan Runtime Binding missing required scalar field: effective_concurrency\n' >&2
+    return 1
+  }
+
+  if [[ "$parallel_approved" == "true" ]]; then
+    rg -n '^## Parallel Batches$' "$plan_file" >/dev/null || {
+      printf 'version-2 parallel plan missing required section: ^## Parallel Batches$\n' >&2
+      return 1
+    }
+    batch_id="$(list_plan_parallel_batch_ids "$plan_file" | head -n 1)"
+    [[ -n "$batch_id" ]] || {
+      printf 'version-2 parallel plan must declare at least one batch_id\n' >&2
+      return 1
+    }
+  fi
+}
+
+validate_v2_task_contracts() {
+  local plan_file="$1"
+  local parallel_approved=""
+  local section=""
+  local task_id=""
+  local dependency_id=""
+  local parallel_group=""
+  local parallel_policy=""
+  local delegation_policy=""
+  local execution_profile=""
+  local reasoning_profile=""
+  local isolation_mode=""
+  local executor_mode=""
+  local resource_lock=""
+  local task_write_refs=""
+  local batch_id=""
+  local batch_task_id=""
+  local batch_task_key=""
+  local batch_max_parallelism=""
+  local batch_parallel_policy=""
+  local batch_delegation_policy=""
+  local batch_isolation_mode=""
+  local convergence_task_id=""
+  local convergence_member_id=""
+  local left_task_id=""
+  local right_task_id=""
+  local left_ref=""
+  local right_ref=""
+  local left_lock=""
+  local right_lock=""
+  local current_node=""
+  local ready_flag=""
+  local progress_flag=""
+  local group_name=""
+  local group_task_count=0
+  local unresolved_count=0
+  local queue_index=0
+  local left_index=0
+  local right_index=0
+  local batch_task_count=0
+  local convergence_found=false
+  local -a task_sections=()
+  local -a task_ids=()
+  local -a dependency_values=()
+  local -a queue_nodes=()
+  local -a group_names=()
+  local -a batch_ids=()
+  local -A section_by_task=()
+  local -A dependencies_by_task=()
+  local -A group_by_task=()
+  local -A policy_by_task=()
+  local -A delegation_by_task=()
+  local -A isolation_by_task=()
+  local -A writes_by_task=()
+  local -A locks_by_task=()
+  local -A group_counts=()
+  local -A group_policy=()
+  local -A seen_batch_ids=()
+  local -A seen_batch_tasks=()
+  local -A resolved_tasks=()
+  local -A visited_nodes=()
+
+  plan_uses_v2_contract "$plan_file" || return 0
+  parallel_approved="$(extract_markdown_scalar "$plan_file" "Implementation Scope" "parallel_execution_approved" | normalize_plan_metadata_values)"
+  mapfile -t task_sections < <(list_plan_task_sections "$plan_file")
+
+  for section in "${task_sections[@]}"; do
+    for task_id in parallel_group parallel_policy delegation_policy execution_profile reasoning_profile isolation; do
+      validate_task_scalar_field "$plan_file" "$section" "$task_id" || return 1
+    done
+    validate_task_list_field "$plan_file" "$section" "resource_locks" || return 1
+
+    task_id="$(extract_markdown_scalar "$plan_file" "$section" "task_id" | normalize_plan_metadata_values)"
+    plan_token_is_safe "$task_id" || {
+      printf 'version-2 plan task_id must be a portable token in section: %s\n' "$section" >&2
+      return 1
+    }
+    case "$task_id" in
+      none|root)
+        printf 'version-2 plan task_id is reserved: %s\n' "$task_id" >&2
+        return 1
+        ;;
+    esac
+    [[ -z "${section_by_task[$task_id]+present}" ]] || {
+      printf 'version-2 plan task_id must be unique: %s\n' "$task_id" >&2
+      return 1
+    }
+
+    parallel_group="$(extract_markdown_scalar "$plan_file" "$section" "parallel_group" | normalize_plan_metadata_values)"
+    parallel_policy="$(extract_markdown_scalar "$plan_file" "$section" "parallel_policy" | normalize_plan_metadata_values)"
+    delegation_policy="$(extract_markdown_scalar "$plan_file" "$section" "delegation_policy" | normalize_plan_metadata_values)"
+    execution_profile="$(extract_markdown_scalar "$plan_file" "$section" "execution_profile" | normalize_plan_metadata_values)"
+    reasoning_profile="$(extract_markdown_scalar "$plan_file" "$section" "reasoning_profile" | normalize_plan_metadata_values)"
+    isolation_mode="$(extract_markdown_scalar "$plan_file" "$section" "isolation" | normalize_plan_metadata_values)"
+    executor_mode="$(extract_markdown_scalar "$plan_file" "$section" "executor_mode" | normalize_plan_metadata_values)"
+    task_write_refs="$({
+      extract_markdown_list "$plan_file" "$section" "impl_file_refs"
+      extract_markdown_list "$plan_file" "$section" "test_file_refs"
+    } | normalize_plan_metadata_values | awk 'NF > 0 && $0 != "none"' | sort -u)"
+
+    plan_token_is_safe "$parallel_group" || {
+      printf 'version-2 plan parallel_group must be a portable token in section: %s\n' "$section" >&2
+      return 1
+    }
+    is_valid_parallel_policy "$parallel_policy" || {
+      printf 'version-2 plan has invalid parallel_policy in section %s: %s\n' "$section" "$parallel_policy" >&2
+      return 1
+    }
+    is_valid_delegation_policy "$delegation_policy" || {
+      printf 'version-2 plan has invalid delegation_policy in section %s: %s\n' "$section" "$delegation_policy" >&2
+      return 1
+    }
+    is_valid_execution_profile "$execution_profile" || {
+      printf 'version-2 plan has invalid execution_profile in section %s: %s\n' "$section" "$execution_profile" >&2
+      return 1
+    }
+    is_valid_reasoning_profile "$reasoning_profile" || {
+      printf 'version-2 plan has invalid reasoning_profile in section %s: %s\n' "$section" "$reasoning_profile" >&2
+      return 1
+    }
+    is_valid_isolation_mode "$isolation_mode" || {
+      printf 'version-2 plan has invalid isolation in section %s: %s\n' "$section" "$isolation_mode" >&2
+      return 1
+    }
+    is_valid_actor_kind "$executor_mode" || {
+      printf 'version-2 plan executor_mode must be main or subagent in section %s: %s\n' "$section" "$executor_mode" >&2
+      return 1
+    }
+
+    case "$parallel_policy" in
+      forbidden)
+        [[ "$parallel_group" == "none" ]] || {
+          printf 'version-2 forbidden task must use parallel_group none: %s\n' "$task_id" >&2
+          return 1
+        }
+        ;;
+      allowed|required)
+        [[ "$parallel_group" != "none" ]] || {
+          printf 'version-2 parallel task must declare a named parallel_group: %s\n' "$task_id" >&2
+          return 1
+        }
+        if [[ -n "$task_write_refs" && "$isolation_mode" != "isolated-worktree" ]]; then
+          printf 'version-2 parallel write task must use isolated-worktree: %s\n' "$task_id" >&2
+          return 1
+        fi
+        if [[ -z "$task_write_refs" && "$isolation_mode" != "isolated-worktree" && "$isolation_mode" != "shared-read-only" ]]; then
+          printf 'version-2 parallel read-only task must use shared-read-only or isolated-worktree: %s\n' "$task_id" >&2
+          return 1
+        fi
+        ;;
+    esac
+
+    if [[ "$isolation_mode" == "shared-read-only" && -n "$task_write_refs" ]]; then
+      printf 'version-2 shared-read-only task cannot declare write refs: %s\n' "$task_id" >&2
+      return 1
+    fi
+    if [[ "$executor_mode" == "subagent" && -n "$task_write_refs" && "$isolation_mode" != "isolated-worktree" ]]; then
+      printf 'version-2 delegated write task must use isolated-worktree: %s\n' "$task_id" >&2
+      return 1
+    fi
+    if [[ "$executor_mode" == "subagent" && -z "$task_write_refs" && "$isolation_mode" == "controller-checkout" ]]; then
+      printf 'version-2 delegated read-only task must use shared-read-only or isolated-worktree: %s\n' "$task_id" >&2
+      return 1
+    fi
+
+    if [[ "$delegation_policy" == "forbidden" && "$executor_mode" != "main" ]]; then
+      printf 'version-2 delegation-forbidden task must use executor_mode main: %s\n' "$task_id" >&2
+      return 1
+    fi
+    if [[ "$delegation_policy" == "preferred" && "$executor_mode" != "subagent" ]]; then
+      printf 'version-2 delegation-preferred task must use executor_mode subagent: %s\n' "$task_id" >&2
+      return 1
+    fi
+
+    while IFS= read -r resource_lock; do
+      [[ -n "$resource_lock" ]] || continue
+      resource_lock="$(printf '%s\n' "$resource_lock" | normalize_plan_metadata_values)"
+      if [[ "$resource_lock" != "none" ]] && ! plan_token_is_safe "$resource_lock"; then
+        printf 'version-2 plan resource lock must be a portable token in task %s: %s\n' "$task_id" "$resource_lock" >&2
+        return 1
+      fi
+    done < <(extract_markdown_list "$plan_file" "$section" "resource_locks")
+
+    task_ids+=("$task_id")
+    section_by_task["$task_id"]="$section"
+    dependencies_by_task["$task_id"]="$(extract_markdown_list "$plan_file" "$section" "depends_on" | normalize_plan_metadata_values | awk 'NF > 0')"
+    group_by_task["$task_id"]="$parallel_group"
+    policy_by_task["$task_id"]="$parallel_policy"
+    delegation_by_task["$task_id"]="$delegation_policy"
+    isolation_by_task["$task_id"]="$isolation_mode"
+    writes_by_task["$task_id"]="$task_write_refs"
+    locks_by_task["$task_id"]="$(extract_markdown_list "$plan_file" "$section" "resource_locks" | normalize_plan_metadata_values | awk 'NF > 0' | sort -u)"
+  done
+
+  for task_id in "${task_ids[@]}"; do
+    mapfile -t dependency_values < <(printf '%s\n' "${dependencies_by_task[$task_id]}" | awk 'NF > 0')
+    if [[ "${#dependency_values[@]}" -gt 1 ]]; then
+      for dependency_id in "${dependency_values[@]}"; do
+        case "$dependency_id" in
+          none|root)
+            printf 'version-2 task cannot mix %s with task dependencies: %s\n' "$dependency_id" "$task_id" >&2
+            return 1
+            ;;
+        esac
+      done
+    fi
+    for dependency_id in "${dependency_values[@]}"; do
+      case "$dependency_id" in
+        none|root) continue ;;
+      esac
+      [[ "$dependency_id" != "$task_id" ]] || {
+        printf 'version-2 task cannot depend on itself: %s\n' "$task_id" >&2
+        return 1
+      }
+      [[ -n "${section_by_task[$dependency_id]+present}" ]] || {
+        printf 'version-2 task dependency is unknown (%s -> %s)\n' "$task_id" "$dependency_id" >&2
+        return 1
+      }
+    done
+  done
+
+  unresolved_count="${#task_ids[@]}"
+  while [[ "$unresolved_count" -gt 0 ]]; do
+    progress_flag=false
+    for task_id in "${task_ids[@]}"; do
+      [[ -z "${resolved_tasks[$task_id]+present}" ]] || continue
+      ready_flag=true
+      while IFS= read -r dependency_id; do
+        [[ -n "$dependency_id" ]] || continue
+        case "$dependency_id" in
+          none|root) continue ;;
+        esac
+        if [[ -z "${resolved_tasks[$dependency_id]+present}" ]]; then
+          ready_flag=false
+          break
+        fi
+      done <<<"${dependencies_by_task[$task_id]}"
+      if [[ "$ready_flag" == "true" ]]; then
+        resolved_tasks["$task_id"]=1
+        unresolved_count=$((unresolved_count - 1))
+        progress_flag=true
+      fi
+    done
+    if [[ "$progress_flag" != "true" ]]; then
+      printf 'version-2 task dependency graph contains a cycle\n' >&2
+      return 1
+    fi
+  done
+
+  for task_id in "${task_ids[@]}"; do
+    group_name="${group_by_task[$task_id]}"
+    [[ "$group_name" != "none" ]] || continue
+    group_counts["$group_name"]=$(( ${group_counts[$group_name]:-0} + 1 ))
+    if [[ -z "${group_policy[$group_name]+present}" ]]; then
+      group_policy["$group_name"]="${policy_by_task[$task_id]}"
+      group_names+=("$group_name")
+    elif [[ "${group_policy[$group_name]}" != "${policy_by_task[$task_id]}" ]]; then
+      printf 'version-2 parallel group must use one parallel_policy: %s\n' "$group_name" >&2
+      return 1
+    fi
+  done
+
+  if [[ "${#group_names[@]}" -gt 0 && "$parallel_approved" != "true" ]]; then
+    printf 'version-2 named parallel groups require parallel_execution_approved: true\n' >&2
+    return 1
+  fi
+  if [[ "${#group_names[@]}" -eq 0 && "$parallel_approved" == "true" ]]; then
+    printf 'version-2 parallel_execution_approved is true but no named parallel group exists\n' >&2
+    return 1
+  fi
+  for group_name in "${group_names[@]}"; do
+    group_task_count="${group_counts[$group_name]}"
+    [[ "$group_task_count" -ge 2 ]] || {
+      printf 'version-2 parallel group must contain at least two tasks: %s\n' "$group_name" >&2
+      return 1
+    }
+  done
+
+  mapfile -t batch_ids < <(list_plan_parallel_batch_ids "$plan_file" | awk 'NF > 0')
+  for batch_id in "${batch_ids[@]}"; do
+    plan_token_is_safe "$batch_id" || {
+      printf 'version-2 batch_id must be a portable token: %s\n' "$batch_id" >&2
+      return 1
+    }
+    [[ -z "${seen_batch_ids[$batch_id]+present}" ]] || {
+      printf 'version-2 batch_id must be unique: %s\n' "$batch_id" >&2
+      return 1
+    }
+    seen_batch_ids["$batch_id"]=1
+    [[ -n "${group_counts[$batch_id]+present}" ]] || {
+      printf 'version-2 batch_id does not match a task parallel_group: %s\n' "$batch_id" >&2
+      return 1
+    }
+  done
+  [[ "${#batch_ids[@]}" -eq "${#group_names[@]}" ]] || {
+    printf 'version-2 parallel batches must map one-to-one to named task groups\n' >&2
+    return 1
+  }
+
+  for group_name in "${group_names[@]}"; do
+    [[ -n "${seen_batch_ids[$group_name]+present}" ]] || {
+      printf 'version-2 task parallel_group is missing a declared batch: %s\n' "$group_name" >&2
+      return 1
+    }
+
+    batch_max_parallelism="$(parallel_batch_max_parallelism "$plan_file" "$group_name" | normalize_plan_metadata_values)"
+    [[ "$batch_max_parallelism" =~ ^[0-9]+$ && "$batch_max_parallelism" -ge 2 ]] || {
+      printf 'version-2 batch max_parallelism must be an integer of at least 2: %s\n' "$group_name" >&2
+      return 1
+    }
+
+    batch_parallel_policy="$(extract_parallel_batch_scalar "$plan_file" "$group_name" "parallel_policy" | normalize_plan_metadata_values)"
+    if [[ -n "$batch_parallel_policy" && "$batch_parallel_policy" != "${group_policy[$group_name]}" ]]; then
+      printf 'version-2 batch parallel_policy must match its task group: %s\n' "$group_name" >&2
+      return 1
+    fi
+    batch_delegation_policy="$(extract_parallel_batch_scalar "$plan_file" "$group_name" "delegation_policy" | normalize_plan_metadata_values)"
+    if [[ -n "$batch_delegation_policy" ]]; then
+      is_valid_delegation_policy "$batch_delegation_policy" || {
+        printf 'version-2 batch has invalid delegation_policy: %s\n' "$group_name" >&2
+        return 1
+      }
+      for task_id in "${task_ids[@]}"; do
+        [[ "${group_by_task[$task_id]}" == "$group_name" ]] || continue
+        [[ "${delegation_by_task[$task_id]}" == "$batch_delegation_policy" ]] || {
+          printf 'version-2 batch delegation_policy summary must match every group task: %s\n' "$group_name" >&2
+          return 1
+        }
+      done
+    fi
+    batch_isolation_mode="$(extract_parallel_batch_scalar "$plan_file" "$group_name" "isolation" | normalize_plan_metadata_values)"
+    if [[ -n "$batch_isolation_mode" ]]; then
+      is_valid_isolation_mode "$batch_isolation_mode" || {
+        printf 'version-2 batch has invalid isolation summary: %s\n' "$group_name" >&2
+        return 1
+      }
+      for task_id in "${task_ids[@]}"; do
+        [[ "${group_by_task[$task_id]}" == "$group_name" ]] || continue
+        [[ "${isolation_by_task[$task_id]}" == "$batch_isolation_mode" ]] || {
+          printf 'version-2 batch isolation summary must match every group task: %s\n' "$group_name" >&2
+          return 1
+        }
+      done
+    fi
+
+    batch_task_count=0
+    while IFS= read -r batch_task_id; do
+      [[ -n "$batch_task_id" ]] || continue
+      batch_task_id="$(printf '%s\n' "$batch_task_id" | normalize_plan_metadata_values)"
+      plan_token_is_safe "$batch_task_id" || {
+        printf 'version-2 batch task must be a portable token (%s): %s\n' "$group_name" "$batch_task_id" >&2
+        return 1
+      }
+      [[ -n "${section_by_task[$batch_task_id]+present}" ]] || {
+        printf 'version-2 batch contains an unknown task (%s): %s\n' "$group_name" "$batch_task_id" >&2
+        return 1
+      }
+      [[ "${group_by_task[$batch_task_id]}" == "$group_name" ]] || {
+        printf 'version-2 batch task does not belong to its named group (%s): %s\n' "$group_name" "$batch_task_id" >&2
+        return 1
+      }
+      batch_task_key="$group_name|$batch_task_id"
+      [[ -z "${seen_batch_tasks[$batch_task_key]+present}" ]] || {
+        printf 'version-2 batch task must be unique (%s): %s\n' "$group_name" "$batch_task_id" >&2
+        return 1
+      }
+      seen_batch_tasks["$batch_task_key"]=1
+      batch_task_count=$((batch_task_count + 1))
+    done < <(extract_parallel_batch_list "$plan_file" "$group_name" "tasks")
+
+    [[ "$batch_task_count" -eq "${group_counts[$group_name]}" ]] || {
+      printf 'version-2 batch task list must exactly match its named group: %s\n' "$group_name" >&2
+      return 1
+    }
+    for task_id in "${task_ids[@]}"; do
+      [[ "${group_by_task[$task_id]}" == "$group_name" ]] || continue
+      batch_task_key="$group_name|$task_id"
+      [[ -n "${seen_batch_tasks[$batch_task_key]+present}" ]] || {
+        printf 'version-2 batch is missing a group task (%s): %s\n' "$group_name" "$task_id" >&2
+        return 1
+      }
+    done
+
+    convergence_task_id="$(extract_parallel_batch_scalar "$plan_file" "$group_name" "convergence_task" | normalize_plan_metadata_values)"
+    plan_token_is_safe "$convergence_task_id" || {
+      printf 'version-2 batch must declare a portable convergence_task: %s\n' "$group_name" >&2
+      return 1
+    }
+    if [[ "$convergence_task_id" != "controller" ]]; then
+      [[ -n "${section_by_task[$convergence_task_id]+present}" ]] || {
+        printf 'version-2 batch convergence_task is unknown (%s): %s\n' "$group_name" "$convergence_task_id" >&2
+        return 1
+      }
+      [[ "${group_by_task[$convergence_task_id]}" != "$group_name" ]] || {
+        printf 'version-2 batch convergence_task cannot be a batch member (%s): %s\n' "$group_name" "$convergence_task_id" >&2
+        return 1
+      }
+
+      for convergence_member_id in "${task_ids[@]}"; do
+        [[ "${group_by_task[$convergence_member_id]}" == "$group_name" ]] || continue
+        queue_nodes=()
+        visited_nodes=()
+        convergence_found=false
+        while IFS= read -r dependency_id; do
+          [[ -n "$dependency_id" ]] || continue
+          case "$dependency_id" in
+            none|root) continue ;;
+          esac
+          queue_nodes+=("$dependency_id")
+        done <<<"${dependencies_by_task[$convergence_task_id]}"
+        queue_index=0
+        while [[ "$queue_index" -lt "${#queue_nodes[@]}" ]]; do
+          current_node="${queue_nodes[$queue_index]}"
+          queue_index=$((queue_index + 1))
+          [[ -z "${visited_nodes[$current_node]+present}" ]] || continue
+          visited_nodes["$current_node"]=1
+          if [[ "$current_node" == "$convergence_member_id" ]]; then
+            convergence_found=true
+            break
+          fi
+          while IFS= read -r dependency_id; do
+            [[ -n "$dependency_id" ]] || continue
+            case "$dependency_id" in
+              none|root) continue ;;
+            esac
+            queue_nodes+=("$dependency_id")
+          done <<<"${dependencies_by_task[$current_node]}"
+        done
+        [[ "$convergence_found" == "true" ]] || {
+          printf 'version-2 convergence_task must depend on every batch member (%s): %s missing %s\n' "$group_name" "$convergence_task_id" "$convergence_member_id" >&2
+          return 1
+        }
+      done
+    fi
+  done
+
+  for task_id in "${task_ids[@]}"; do
+    group_name="${group_by_task[$task_id]}"
+    [[ "$group_name" != "none" ]] || continue
+    queue_nodes=()
+    visited_nodes=()
+    while IFS= read -r dependency_id; do
+      [[ -n "$dependency_id" ]] || continue
+      case "$dependency_id" in
+        none|root) continue ;;
+      esac
+      queue_nodes+=("$dependency_id")
+    done <<<"${dependencies_by_task[$task_id]}"
+    queue_index=0
+    while [[ "$queue_index" -lt "${#queue_nodes[@]}" ]]; do
+      current_node="${queue_nodes[$queue_index]}"
+      queue_index=$((queue_index + 1))
+      [[ -z "${visited_nodes[$current_node]+present}" ]] || continue
+      visited_nodes["$current_node"]=1
+      if [[ "${group_by_task[$current_node]}" == "$group_name" ]]; then
+        printf 'version-2 parallel group contains a transitive dependency (%s -> %s): %s\n' "$task_id" "$current_node" "$group_name" >&2
+        return 1
+      fi
+      while IFS= read -r dependency_id; do
+        [[ -n "$dependency_id" ]] || continue
+        case "$dependency_id" in
+          none|root) continue ;;
+        esac
+        queue_nodes+=("$dependency_id")
+      done <<<"${dependencies_by_task[$current_node]}"
+    done
+  done
+
+  for ((left_index = 0; left_index < ${#task_ids[@]}; left_index += 1)); do
+    left_task_id="${task_ids[$left_index]}"
+    group_name="${group_by_task[$left_task_id]}"
+    [[ "$group_name" != "none" ]] || continue
+    for ((right_index = left_index + 1; right_index < ${#task_ids[@]}; right_index += 1)); do
+      right_task_id="${task_ids[$right_index]}"
+      [[ "${group_by_task[$right_task_id]}" == "$group_name" ]] || continue
+
+      while IFS= read -r left_ref; do
+        [[ -n "$left_ref" ]] || continue
+        while IFS= read -r right_ref; do
+          [[ -n "$right_ref" ]] || continue
+          if plan_refs_overlap "$left_ref" "$right_ref"; then
+            printf 'version-2 parallel tasks have overlapping write refs (%s, %s): %s <> %s\n' "$left_task_id" "$right_task_id" "$left_ref" "$right_ref" >&2
+            return 1
+          fi
+        done <<<"${writes_by_task[$right_task_id]}"
+      done <<<"${writes_by_task[$left_task_id]}"
+
+      while IFS= read -r left_lock; do
+        [[ -n "$left_lock" && "$left_lock" != "none" ]] || continue
+        while IFS= read -r right_lock; do
+          [[ -n "$right_lock" && "$right_lock" != "none" ]] || continue
+          if [[ "$left_lock" == "$right_lock" ]]; then
+            printf 'version-2 parallel tasks have overlapping resource locks (%s, %s): %s\n' "$left_task_id" "$right_task_id" "$left_lock" >&2
+            return 1
+          fi
+        done <<<"${locks_by_task[$right_task_id]}"
+      done <<<"${locks_by_task[$left_task_id]}"
+    done
+  done
 }
 
 validate_task_failure_policy() {
@@ -386,7 +1101,9 @@ validate_plan_artifact() {
     return 1
   }
 
+  validate_v2_plan_header "$plan_file" || return 1
   validate_plan_task_contracts "$plan_file" || return 1
+  validate_v2_task_contracts "$plan_file" || return 1
   validate_plan_readiness_contract "$plan_file" || return 1
   validate_plan_recovery_contract "$plan_file"
 }

@@ -18,6 +18,7 @@ Choose the smallest sufficient architecture justified by current demand, a const
 
 ## Selection Rules
 
+- Choose the smallest durable option for the declared decision horizon. Reject a knowingly throwaway stopgap unless an experiment or staged migration is the approved goal; every temporary mechanism needs an owner, observable outcome, exit condition, and removal trigger.
 - Prefer an existing boundary or a reversible local extension when it satisfies the approved goal.
 - Require demand or constraint evidence before adding distribution, asynchronous coordination, new infrastructure, speculative seams, or independent operational surfaces.
 - Compare the next unit of benefit with its implementation, migration, coordination, cognitive, runtime, verification, and recovery costs.

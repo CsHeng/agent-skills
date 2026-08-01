@@ -2,11 +2,12 @@
 set -euo pipefail
 
 ROOT_DIR=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+HARNESS_LIB_ROOT="${HARNESS_TEST_SURFACE:-$ROOT_DIR/skills/_harness-libs}"
 
 # shellcheck source=skills/_harness-libs/phase-engine.sh
-source "$ROOT_DIR/skills/_harness-libs/phase-engine.sh"
+source "$HARNESS_LIB_ROOT/phase-engine.sh"
 # shellcheck source=skills/_harness-libs/evaluation-gate.sh
-source "$ROOT_DIR/skills/_harness-libs/evaluation-gate.sh"
+source "$HARNESS_LIB_ROOT/evaluation-gate.sh"
 
 fail() {
   printf 'test-kernel-phase: %s\n' "$*" >&2
@@ -43,6 +44,14 @@ main() {
   [[ "$(resolve_next_phase "dependency-freeze" "design-lite" "false" "true")" == "implement-parallel" ]] || fail "parallel should require explicit approval"
   [[ "$(resolve_next_phase "verify" "design-lite" "true" "false")" == "truth-sync" ]] || fail "truth impact should force truth-sync after verify"
   [[ "$(resolve_next_phase "verify" "design-lite" "false" "false")" == "close" ]] || fail "no truth impact should close after verify"
+
+  is_valid_model_policy "semantic-routing" || fail "semantic routing should be a portable model policy"
+  is_valid_model_policy "inherit-main" || fail "inherit-main should be a portable model policy"
+  is_valid_runtime_binding_outcome "bound" || fail "bound should be a runtime binding outcome"
+  is_valid_runtime_binding_outcome "serial-fallback" || fail "serial fallback should be a runtime binding outcome"
+  is_valid_runtime_binding_outcome "capacity-stop" || fail "capacity stop should be a runtime binding outcome"
+  is_valid_runtime_binding_outcome "parallel-conflict" || fail "parallel conflict should be a runtime binding outcome"
+  is_valid_execution_stop_reason "parallel_capacity_required" || fail "required capacity should have a typed stop reason"
 
   [[ "$(normalize_evaluation_verdict "pass" "pass")" == "pass" ]] || fail "pass/pass should normalize to pass"
   [[ "$(normalize_evaluation_verdict "needs-fixes" "pass")" == "needs-fixes" ]] || fail "needs-fixes should hold the gate"

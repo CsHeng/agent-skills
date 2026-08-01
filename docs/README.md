@@ -5,7 +5,8 @@ This directory mixes long-lived reference notes with stage artifacts kept for hi
 ## Stable Truth
 
 - `architecture/workflow-orchestration.md` is the canonical maintenance view of lifecycle routing, the installed invocation DAG, and implementation repair convergence.
-- `architecture/diagrams/*.puml` are generated human views of the installed controller contract and must not be edited by hand.
+- `architecture/diagrams/harness-routing-sequence.puml` is the generated end-to-end view of request discovery, optional routing, workflow modes, lifecycle gates, review evaluators, truth sync, and close.
+- Other `architecture/diagrams/*.puml` files are generated implementation-controller views and must not be edited by hand.
 - Other files under `architecture/` document focused mode, invocation, install-surface, and maintenance contracts.
 - `changelog/design-decisions.md` records durable architecture decisions and their operational impact.
 

@@ -4,6 +4,7 @@ import copy
 import importlib.util
 import tempfile
 import textwrap
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -154,6 +155,52 @@ class WorkflowContractTests(unittest.TestCase):
             '[[edges]]\nfrom = "review-change"\nto = "implement-change"\n\n[repair]\nowner',
         )
         self.assertTrue(any("contains a cycle" in error for error in self.validate()))
+
+    def test_execution_contract_assigns_logical_and_runtime_ownership(self) -> None:
+        contract_path = REPO_ROOT / "src/skills/workflows/implement-change/references/workflow.toml"
+        with contract_path.open("rb") as handle:
+            contract = tomllib.load(handle)
+
+        execution = contract["execution"]
+        self.assertEqual("plan-change", execution["topology_owner"])
+        self.assertEqual("implement-change", execution["runtime_binding_owner"])
+        self.assertEqual("semantic-routing", execution["default_model_policy"])
+        self.assertEqual(["deep", "balanced", "fast"], execution["execution_profiles"])
+        self.assertEqual(["deep", "standard", "light"], execution["reasoning_profiles"])
+
+    def test_inherit_main_preserves_topology_and_conditional_fallback(self) -> None:
+        contract_path = REPO_ROOT / "src/skills/workflows/implement-change/references/workflow.toml"
+        with contract_path.open("rb") as handle:
+            contract = tomllib.load(handle)
+
+        execution = contract["execution"]
+        self.assertIn("inherit-main", execution["allowed_model_policies"])
+        self.assertTrue(execution["inherit_main_preserves_topology"])
+        self.assertTrue(execution["allowed_parallel_may_serialize"])
+        self.assertEqual("parallel_capacity_required", execution["required_parallel_capacity_exit"])
+
+    def test_workers_cannot_recursively_delegate_or_assume_controller_ownership(self) -> None:
+        contract_path = REPO_ROOT / "src/skills/workflows/implement-change/references/workflow.toml"
+        with contract_path.open("rb") as handle:
+            contract = tomllib.load(handle)
+
+        workers = contract["workers"]
+        for field in (
+            "delegated_recursion",
+            "may_widen_scope",
+            "may_integrate_peer_work",
+            "may_adjudicate_review",
+            "may_repair",
+            "may_decide_continuation",
+            "custom_role_guidance_may_pin_model",
+        ):
+            self.assertFalse(workers[field], field)
+        self.assertTrue(contract["execution"]["controller_converges_batches"])
+        controller_nodes = [node for node in contract["nodes"] if node["role"] == "controller"]
+        repair_nodes = [node for node in contract["nodes"] if node.get("owns_repair_loop")]
+        self.assertEqual(["implement-change"], [node["id"] for node in controller_nodes])
+        self.assertEqual(["implement-change"], [node["id"] for node in repair_nodes])
+        self.assertEqual("implement-change", contract["repair"]["owner"])
 
 
 if __name__ == "__main__":

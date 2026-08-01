@@ -1,5 +1,47 @@
 # Design Decisions
 
+## 2026-08-01 - Repo-Owned Harness Routing And User-Specific Host Wrapper
+
+### Failure Mode
+
+The repo owned lifecycle, mode, skill-exposure, and implementation-controller contracts, but intent-to-skill routing remained partly duplicated in a user-global Codex AGENTS file. That made the installed harness incomplete as a standalone artifact, allowed host routing to drift from `review-change` authority, and left no complete generated sequence for comparing expected and observed routing.
+
+### Change
+
+- Add an install-required `use-coding-skills/references/routing.toml` contract for native-match bypass, ambiguity routing, phase-to-workflow ownership, review evaluators, support routes, composition, and host-wrapper limits.
+- Generate `docs/architecture/diagrams/harness-routing-sequence.puml` from the routing contract plus lifecycle and workflow-mode contracts.
+- Keep `use-coding-skills` optional: direct specific matches bypass it, while ambiguous multi-stage and explicit routing requests enter it.
+- Route implementation review through `review-change`; `review-implementation` remains a bounded evaluator.
+- Reduce the user-global Codex AGENTS file to personal preferences, local-home policy, and a thin pointer to the repo-owned routing surface.
+- Replace over-broad cross-language prescriptions with a smallest-durable implementation, compatibility, dependency, and temporary-mechanism policy in `development-standards`.
+
+### Operational Impact
+
+- The installed skill surface now carries the routing decisions required to understand the harness without reading host-global state.
+- Maintainers can regenerate and inspect one end-to-end sequence to find drift in discovery, mode selection, phase ownership, approval gates, review layering, truth sync, and close.
+- Host wrappers can vary by user or runtime without redefining lifecycle behavior.
+- Contract validation rejects missing phase routes, non-workflow phase owners, invalid review evaluators, unknown support targets, and multiple routing-contract owners.
+
+## 2026-08-01 - Portable Conditional Parallel Subagent Routing
+
+### Failure Mode
+
+Planning recorded a mostly serial task list, while implementation had no deterministic contract for exposing a complete ready frontier, binding safe tasks to subagents, preserving topology across model choices, or stopping when isolation and runtime capacity were insufficient. This left useful parallelism implicit and encouraged provider-specific routing advice outside the approved plan.
+
+### Change
+
+- Make version-2 plans own the portable task DAG, named dependency-frozen batches, delegation eligibility, semantic execution and reasoning profiles, isolation, write sets, resource locks, batch limits, and convergence tasks.
+- Let `implement-change` bind that unchanged topology at runtime through `semantic-routing`, `inherit-main`, or `runtime-default`.
+- Validate the public ledger against the approved plan, select only conflict-free ready members, and return typed serial fallback, capacity stop, or parallel-conflict evidence.
+- Require isolated worktrees for delegated writers and controller-owned complete-group convergence before external dependents advance.
+
+### Operational Impact
+
+- Execution stays serial-first unless the approved plan and human gate explicitly authorize a safe named batch.
+- A user may inherit the main agent's model and reasoning choice without changing whether approved tasks run serially or in parallel.
+- Semantic profiles remain vendor-neutral; concrete model names and session concurrency defaults stay in runtime or user configuration.
+- Allowed batches degrade conservatively to serial execution, while required batches fail closed when effective capacity is insufficient.
+
 ## 2026-07-23 - Allow Intent-Gated Smart Commit Discovery
 
 ### Failure Mode

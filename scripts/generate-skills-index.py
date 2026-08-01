@@ -40,6 +40,8 @@ def build_index() -> dict[str, Any]:
         }
         if "runtime_contract" in entry:
             record["runtime_contract"] = entry["runtime_contract"]
+        if "routing_contract" in entry:
+            record["routing_contract"] = entry["routing_contract"]
         skills.append(record)
     return {"generated_from": "contracts/skills.toml", "skills": skills}
 

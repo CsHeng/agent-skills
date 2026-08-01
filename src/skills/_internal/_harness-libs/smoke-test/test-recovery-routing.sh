@@ -2,9 +2,10 @@
 set -euo pipefail
 
 ROOT_DIR=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+HARNESS_LIB_ROOT="${HARNESS_TEST_SURFACE:-$ROOT_DIR/skills/_harness-libs}"
 
 # shellcheck source=skills/_harness-libs/recovery-routing.sh
-source "$ROOT_DIR/skills/_harness-libs/recovery-routing.sh"
+source "$HARNESS_LIB_ROOT/recovery-routing.sh"
 
 fail() {
   printf 'test-recovery-routing: %s\n' "$*" >&2

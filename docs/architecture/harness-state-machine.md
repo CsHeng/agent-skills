@@ -2,7 +2,7 @@
 
 Workflow mode selection happens before phase implementation. `design-change` is a phase implementation, not the global router.
 
-See `workflow-orchestration.md` for the canonical maintenance view of lifecycle composition, the installed implementation invocation DAG, and the controller-owned repair loop.
+See `workflow-orchestration.md` for the canonical maintenance view of lifecycle composition, the generated full [harness routing sequence](diagrams/harness-routing-sequence.puml), the installed implementation invocation DAG, and the controller-owned repair loop.
 
 ## Modes
 
@@ -40,4 +40,4 @@ Not allowed:
 infrastructure-triage -> execute repo mutation -> close change
 ```
 
-The cross-skill invocation graph stays acyclic. `implement-change` owns an internal `repair -> verify -> review` state transition; lower-plane reviewers return evidence and never call back into the controller. The generated diagrams and their source precedence are documented in `workflow-orchestration.md`.
+The cross-skill invocation graph stays acyclic. `implement-change` owns an internal `repair -> verify -> review` state transition; lower-plane reviewers return evidence and never call back into the controller. The installed `use-coding-skills/references/routing.toml` contract maps discovery and lifecycle phases to their owners, while the generated diagrams and their source precedence are documented in `workflow-orchestration.md`.

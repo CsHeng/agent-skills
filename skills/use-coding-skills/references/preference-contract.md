@@ -10,6 +10,8 @@ These preferences guide local coding work without binding the behavior to one ag
 - Avoid emotional language, praise, motivational tone, and small talk.
 - Use reasonable engineering assumptions instead of stopping for minor ambiguity.
 - Ask only when a missing constraint changes the decision or could cause unsafe work.
+- Treat judgment, viability, or risk questions as counsel: surface material tradeoffs and challenge a weak path before irreversible cost is incurred.
+- Treat a concrete task, approved plan, or specification as execution: follow the bounded brief, flag a material missed risk once, and do not add unrequested scope.
 
 ## Engineering Bias
 

@@ -2,7 +2,7 @@
 
 The skill invocation contract is defined in `contracts/skills.toml`.
 
-See `workflow-orchestration.md` for the canonical maintenance view and generated PlantUML views of the implementation invocation DAG and repair loop.
+See `workflow-orchestration.md` for the canonical maintenance view and generated PlantUML views of the full harness routing sequence, implementation invocation DAG, and repair loop.
 
 ## Categories
 
@@ -25,16 +25,17 @@ See `workflow-orchestration.md` for the canonical maintenance view and generated
 - Internal skills are excluded from external generated targets.
 - Root-flat internal runtime support is allowed only when `runtime_support = true`.
 - A skill with `runtime_contract` must keep that contract inside its source directory so generated install surfaces carry it with the skill.
+- The one skill with `routing_contract` must be a non-lifecycle session skill and must keep that contract inside its source directory.
 - Runtime invocation graphs must be acyclic, evaluators must not call lifecycle workflows, and an implementation repair graph must declare exactly one lifecycle-owning loop owner.
 
 ## Exposure
 
-Public skill IDs are generated from `contracts/skills.toml` into flat target surfaces. Do not add machine-readable contract metadata to `SKILL.md` frontmatter. Repo-global exposure metadata remains in `contracts/skills.toml`; install-required runtime graph metadata lives in a directly linked skill-local `references/` file.
+Public skill IDs are generated from `contracts/skills.toml` into flat target surfaces. Do not add machine-readable contract metadata to `SKILL.md` frontmatter. Repo-global exposure metadata remains in `contracts/skills.toml`; install-required routing and runtime graph metadata lives in directly linked skill-local `references/` files.
 
 Native description matching is the default discovery mechanism, but it is not a deterministic lifecycle gate. A host that must guarantee controller entry may keep a thin intent-to-skill mapping in its user-level agent bootstrap, for example:
 
 - approved plan/design implementation -> `implement-change`
-- implementation/code review -> `review-implementation` plus matching policy overlays
+- implementation/code review -> `review-change`, which uses `review-implementation` plus matching policy overlays as bounded evaluators
 
 The bootstrap must stop at public skill IDs. It must not duplicate workflow edges, repair states, round budgets, or exit rules; those travel with the installed controller under `implement-change/references/`.
 
@@ -46,4 +47,4 @@ Fixed shapes remain valid for durable artifacts, machine-consumed schemas, and e
 
 ## Generated Architecture Views
 
-`scripts/generate-workflow-diagrams.py` derives the implementation DAG and repair-loop PlantUML sources from the installed controller contract. The generated files under `docs/architecture/diagrams/` are review surfaces, not independent contract inputs.
+`scripts/generate-workflow-diagrams.py` derives the full harness routing sequence from the installed routing contract plus lifecycle and mode contracts, and derives the implementation DAG and repair loop from the installed controller contract. The generated files under `docs/architecture/diagrams/` are review surfaces, not independent contract inputs.

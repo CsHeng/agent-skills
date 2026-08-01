@@ -1,6 +1,6 @@
 ---
 name: plan-change
-description: "Use after approved design or scope to create execution-grade plans with task order, dependencies, verification, and explicit fix-forward, stop-and-diagnose, or guarded-rollback failure policy."
+description: "Use after approved design or scope to create execution-grade plans with task order, conditional parallel and delegation policy, semantic execution-profile advice, verification, and explicit recovery policy."
 ---
 
 # Plan Change
@@ -26,7 +26,7 @@ Compile an approved change into an execution plan the harness can govern.
 3. Identify any human confirmation, live-risk, destructive-write, external dependency, credential, or cutover uncertainty and try to resolve it before finalizing the plan.
 4. Run work-package readiness before review.
 5. Define touched files, executable oracles, verification commands, review depth, and failure policy for each task.
-6. Mark any future parallel-safe batch explicitly; otherwise keep the plan serial.
+6. For each task, declare whether parallel execution and delegation are forbidden, allowed, or preferred/required as applicable; name and dependency-freeze every parallel group.
 7. Validate the plan artifact before review.
 8. Route the artifact through mandatory plan review and bounded in-scope autofix when needed.
 9. Hold the artifact at `approval_status: pending` until explicit human plan approval.
@@ -71,11 +71,31 @@ Record a `## Work Package Readiness` section with:
 - `acceptance_oracles`: concrete tests, contracts, probes, dry-runs, manual evidence, or substitute verification
 - `execution_continuity`: `continuous_after_plan_approval`, `pre_confirmation_required`, or `not_ready`
 - `max_review_batches`: default `2`
-- `subagent_ready`: `true` only when a subagent can execute the slice without redefining scope
+- `subagent_ready`: `true` only when at least one declared delegated slice can execute without redefining scope, authority, topology, or oracles
 
 If `decision_status` is not `ready_for_review`, stop and return that typed state instead of making the plan bigger.
 
 If a task cannot declare an executable oracle or substitute verification, it is not ready for implementation unless the plan explicitly marks the task as docs-only, exploratory, or manual-evidence-only.
+
+## Versioned Execution Contract
+
+New execution plans use `plan_contract_version: 2`. Plans without a contract version remain on the deliberate legacy compatibility path; do not silently reinterpret them as version 2.
+
+The plan owns logical execution shape. In addition to the existing task metadata, every version-2 task declares:
+
+- `parallel_group`: a stable named group or `none`
+- `parallel_policy`: `forbidden | allowed | required`
+- `delegation_policy`: `forbidden | allowed | preferred`
+- `execution_profile`: `deep | balanced | fast`
+- `reasoning_profile`: `deep | standard | light`
+- `isolation`: `controller-checkout | isolated-worktree | shared-read-only`
+- `resource_locks`: explicit shared-state locks or `none`
+
+Use `parallel_execution_approved: true` only when the plan contains a named dependency-frozen parallel group. Every simultaneously eligible task in a group must have no direct or transitive dependency on a peer, disjoint writable file refs, disjoint resource locks, and an explicit batch limit. In `## Parallel Batches`, repeat one complete `batch_id` record per named group; its exact `tasks`, `max_parallelism`, optional policy summary, and `convergence_task` must agree with task metadata. Use `controller` as the convergence task only when convergence is owned directly by the harness rather than a later plan task. Parallel write tasks require `isolated-worktree`; `shared-read-only` is valid only when both implementation and test write refs are `none`, and any delegated writer requires an isolated worktree even when its task is serial.
+
+Use semantic routing advice rather than provider model identifiers. `execution_profile` describes capability and cost; `reasoning_profile` describes reasoning intensity. The plan also declares a default runtime model policy from `semantic-routing | inherit-main | runtime-default`. `semantic-routing` is the default for eligible tasks. An execution-time `inherit-main` override changes worker model and reasoning binding only; it cannot rewrite task IDs, dependencies, serial/parallel topology, isolation, locks, touch sets, or oracles.
+
+`implement-change` owns physical binding to the main agent or subagents, concrete available models, effective concurrency, worktrees, convergence, and recorded fallback. It may conservatively serialize `parallel_policy: allowed` work. It must return a typed capacity stop when `parallel_policy: required` cannot be honored. Workers never own integration, review adjudication, repair, or continuation.
 
 ## Execution Continuity
 
@@ -83,7 +103,7 @@ The goal of planning is to maximize uninterrupted execution after plan approval.
 
 Record a `## Execution Continuity` section with:
 - `execution_mode`: `continuous_after_plan_approval`, `pre_confirmation_required`, or `not_ready`
-- `confirmation_clearance`: stable `C*` items for known human decisions, destructive writes, live cutovers, credential needs, or external dependencies
+- `confirmation_clearance`: stable `C*` items for known human decisions, named parallel-batch approval, destructive writes, live cutovers, credential needs, or external dependencies
 - `runtime_contingencies`: stable `X*` items only for observed conditions that block authorized or safe continuation, such as missing required authority or credentials, live state that invalidates the approved plan, loss of management connectivity, a routing or control-plane cycle, writer or quorum exclusivity risk, irreversible data-safety risk, or an explicitly declared guarded-rollback trigger; an ordinary verification failure is not itself a stop contingency
 - `planned_stop_points`: should be empty for the normal case; non-empty only when a known issue cannot be safely pre-confirmed during planning
 - `task_ordering_rationale`: explain why low-risk, no-confirmation tasks run before live, destructive, or high-risk tasks unless a risky task is a hard prerequisite
@@ -126,8 +146,8 @@ Do not finish plan-change with only a generic approval request. The user must be
 - This is a top-level harness entry.
 - A prose status summary is not a valid plan artifact.
 - New implementation plans should be execution-grade task catalogs, not prose-only checklists.
-- Serial execution is the default planning posture.
-- Parallel work must be named, dependency-frozen, and human-approved.
+- Undeclared or unproven work remains serial. Eligible version-2 tasks follow their declared delegation and parallel policies after approval.
+- Parallel work must be named, dependency-frozen, conflict-free, isolated when writable, and human-approved.
 - Prefer pre-confirming known gates during planning over deferring them into execution.
 - Plan approval should normally authorize the whole plan to run; unresolved confirmations are exceptions that must be clearly labeled.
 - Mandatory review happens before the human approval gate.
@@ -136,7 +156,7 @@ Do not finish plan-change with only a generic approval request. The user must be
 - Behavior-changing tasks should declare the failing test, narrow reproducer, or substitute verification evidence expected before implementation.
 - Plan writers must not absorb every possible reviewer concern into the current milestone. Put out-of-scope concerns into `future_phase` or stop with `split_scope` / `needs_design_decision`.
 - Tasks implementing an approved architecture decision should use reversible increments and preserve its upgrade triggers instead of buying all deferred complexity immediately.
-- Each new task should declare enough metadata for task-ledger execution, including `task_id`, `depends_on`, `scope_slice`, task-scoped file refs, `verification_scope`, `executor_mode`, `task_review_depth`, `done_when`, and `failure_policy`.
+- Each new task should declare enough metadata for task-ledger execution, including `task_id`, `depends_on`, `scope_slice`, task-scoped file refs, `verification_scope`, `executor_mode`, version-2 parallel/delegation/profile/isolation/lock fields, `task_review_depth`, `done_when`, and `failure_policy`.
 - Tasks that create or replace a persisted implementation boundary should also declare the conditional implementation-language decision described above.
 - Task order should put low-risk, repo-local, reversible, and no-confirmation tasks before high-risk, live, destructive, or external-dependency tasks unless the risky task is a hard prerequisite.
 - Legacy plans may remain readable in compatibility mode during transition, but new plans should not rely on that fallback.

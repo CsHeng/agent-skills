@@ -5,6 +5,29 @@ id = "implement-change"
 role = "controller"
 entry_phase = "implement-serial"
 
+[execution]
+topology_owner = "plan-change"
+runtime_binding_owner = "implement-change"
+default_model_policy = "semantic-routing"
+allowed_model_policies = ["semantic-routing", "inherit-main", "runtime-default"]
+execution_profiles = ["deep", "balanced", "fast"]
+reasoning_profiles = ["deep", "standard", "light"]
+inherit_main_preserves_topology = true
+allowed_parallel_may_serialize = true
+required_parallel_capacity_exit = "parallel_capacity_required"
+controller_converges_batches = true
+
+[workers]
+default_eligible_delegation = "approved-policy"
+requires_isolated_worktree_for_writes = true
+delegated_recursion = false
+may_widen_scope = false
+may_integrate_peer_work = false
+may_adjudicate_review = false
+may_repair = false
+may_decide_continuation = false
+custom_role_guidance_may_pin_model = false
+
 [[nodes]]
 id = "implement-change"
 role = "controller"

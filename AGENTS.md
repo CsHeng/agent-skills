@@ -28,13 +28,14 @@ Current plugin identity:
 - `.codex-marketplace/plugins/coding`: symlink back to this repository root so Codex can consume the expected `./plugins/coding` marketplace source shape without moving the repository
 - `src/skills/`: source-of-truth skill tree grouped by workflow/session/discipline/policy/tool/git/review/internal category
 - `contracts/skills.toml`: source-of-truth skill exposure and invocation contract
+- `src/skills/session/use-coding-skills/references/routing.toml`: installed discovery, phase-to-owner, review-evaluator, support-route, composition, and host-wrapper contract
 - `skills/`: tracked generated root-flat compatibility surface used by current plugin manifests, command wrappers, and local symlink exposure
 - `.dist/claude/`, `.dist/codex/`: ignored, reproducible target-specific flat skill surfaces generated only when needed
 - `skills/_harness-libs/`: generated root-flat deterministic lifecycle and artifact-DAG runtime support; do not route user workflows directly to it
 - `src/skills/_internal/_harness-libs/artifact-dag.sh`: design/plan linkage, implementation-surface, and allowed-touch-set enforcement shared by plan, execution, and truth-sync runners
 - `commands/`: plugin command docs
 - `docs/architecture/workflow-orchestration.md`: canonical maintenance view of lifecycle routing, the installed implementation DAG, and controller-owned repair
-- `docs/architecture/diagrams/`: generated PlantUML views of the controller-local workflow contract; do not edit by hand
+- `docs/architecture/diagrams/`: generated PlantUML views of full harness routing and the controller-local workflow contract; do not edit by hand
 - `hooks/`: post-edit validation hooks
 - `install.sh`: registers the local marketplace in Claude settings
 - `install-codex.sh`: registers this repository as a Codex local marketplace and installs `coding@csheng`
@@ -54,7 +55,9 @@ Top-level harness authority in this repository is:
 This control plane owns request routing, phase transition, evidence-based recovery routing, parallelization permission, policy injection timing, and completion judgment.
 
 Kernel defaults:
-- serial-first execution
+- serial-first execution unless an approved plan defines a dependency-frozen named batch with explicit human approval, safe isolation, disjoint writes and resource locks, and a bounded maximum width
+- `plan-change` owns portable task topology, batch authorization, delegation eligibility, and semantic execution/reasoning recommendations; `implement-change` owns runtime actor and model binding without changing that topology
+- runtime binding defaults to semantic routing and may honor an explicit `inherit-main` model/reasoning override without changing approved serial/parallel shape; reusable contracts remain provider-neutral
 - fix-forward recovery by default; guarded rollback requires an approved exact trigger, tested target, and verification
 - human-sovereign approvals at design, plan, truth-sync, and close
 - no unattended execution by default
@@ -92,6 +95,7 @@ These commands are Claude Code plugin entry points only. Codex can consume the g
 - Keep reusable behavior agent-agnostic by default. Skills should describe portable workflow contracts, not Codex-only, Claude-only, or UI-only prompt mechanics, unless the file is explicitly scoped to that agent surface.
 - Prefer `src/skills/` plus direct references for reusable behavior. Keep agent-specific wrappers, commands, hooks, and install notes thin.
 - Treat `use-coding-skills` as an optional router for ambiguous multi-stage work and session-boundary guidance; directly matched workflow and policy skills do not require it first.
+- Keep discovery, phase-to-owner mapping, review evaluator selection, support routes, and host-wrapper limits in the installed `use-coding-skills/references/routing.toml` contract. User- or host-level AGENTS files may keep thin public-skill hints but must not become parallel harness truth.
 - Keep skills thin and operational.
 - Treat `src/skills/` and `contracts/skills.toml` as the source of truth for behavior and exposure; generated `skills/` should be refreshed, not edited by hand.
 - Prefer explicit validation and deterministic workflows over vague prompt guidance.
@@ -103,7 +107,9 @@ These commands are Claude Code plugin entry points only. Codex can consume the g
 - Give reviewers a bounded brief containing the approved task slice, exact diff, oracles, touch set, and justified supporting files; do not invite repository-wide discovery.
 - Treat reviewer findings as candidates. Only main-agent `accepted` dispositions may enter repair, and every accepted candidate must have qualifying change causality plus an approved-contract violation.
 - Route review through `review-change` at the harness layer; treat `review-*` skills as lower-plane evaluators.
-- Keep execution serial-first unless a plan defines a dependency-frozen batch with explicit human approval.
+- Keep execution serial-first unless a versioned plan defines a dependency-frozen named batch with explicit human approval. Bound effective width by approved batch maximum, ready tasks, runtime capacity, safe isolation, and disjoint writes and resource locks.
+- Require delegated writers to use isolated worktrees from one dependency-frozen snapshot. Shared checkout is read-only only, and the main controller alone may integrate a batch and advance dependents after group convergence.
+- Treat model policy as a runtime binding concern. `semantic-routing`, `inherit-main`, and `runtime-default` may change actor model/reasoning selection but must not change task IDs, dependencies, groups, limits, touch sets, isolation, locks, or oracles.
 - Do not assume unattended execution.
 - Treat task-ledger execution as lower-plane execution support under `implement-change`, not as a second top-level authority.
 - Treat decision discovery as a bounded design-phase clarification loop, not as a new top-level workflow.

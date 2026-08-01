@@ -22,6 +22,7 @@ Require:
 - approved upstream `design_ref` and `design_version`
 - approved scope, non-goals, future phase, and implementation surface
 - task DAG and dependency state
+- plan contract version, named parallel groups, batch limits, delegation policy, semantic execution and reasoning profiles, isolation, resource locks, and runtime model-policy options
 - acceptance oracles, task failure policies, guarded-rollback metadata when present, and execution-continuity declarations
 - the approved architecture decision reference, reversible staging, and upgrade triggers when the upstream design carries architecture economics
 - explicitly allowed supporting files, each with a reason
@@ -33,6 +34,10 @@ Read the upstream design first, then the plan. Read no other files unless the br
 - one executable milestone objective with explicit non-goals
 - scope contained by the approved design
 - dependency-complete task order and ownership
+- version-2 enum and cross-field validity, or an explicit legacy compatibility path
+- dependency-frozen parallel groups with no peer dependency, writable-path overlap, shared resource lock, or unisolated concurrent write
+- model-policy topology invariance: `semantic-routing`, `inherit-main`, and `runtime-default` may change runtime binding but not the approved DAG or safety boundary
+- conservative capacity behavior: `allowed` work may serialize with evidence, while unavailable `required` work has a typed stop
 - executable oracle or declared substitute for behavior-changing tasks
 - recovery-policy and authority boundaries
 - `Work Package Readiness` and `Execution Continuity` consistency
@@ -55,7 +60,7 @@ Each material candidate includes:
 
 Only causally linked, high-confidence defects that prevent executing the current milestone are eligible blockers. Future-phase concerns, implementation-level hardening, pre-existing debt, unrelated observations, and low-confidence suggestions are non-blocking. If the plan requires a design, authority, or scope change, return a manual decision candidate instead of inventing a local repair.
 
-Prefer PASS when the plan has a bounded executable DAG, sufficient oracles, correct ownership, a fix-forward or explicitly guarded recovery policy, and explicit execution continuity. Do not require rollback machinery for a `fix_forward` task.
+Prefer PASS when the plan has a bounded executable DAG, sufficient oracles, correct ownership, safe declared concurrency, portable routing advice, a fix-forward or explicitly guarded recovery policy, and explicit execution continuity. Do not require concrete provider model identifiers, blanket parallelism, or rollback machinery for a `fix_forward` task.
 
 ## Output
 

@@ -6,10 +6,11 @@ This repository keeps reusable coding-agent behavior in a structured source tree
 
 - `src/skills/**/SKILL.md` is the source of truth for model-facing skill behavior.
 - `contracts/skills.toml` is the source of truth for skill exposure, category, lifecycle ownership, invocation policy, mutation permission, runtime-support exceptions, and pointers to install-required skill-local runtime contracts.
+- `src/skills/session/use-coding-skills/references/routing.toml` is the install-required source for discovery, phase ownership, support routes, review evaluators, composition, and the host-wrapper boundary.
 - `skills/` is tracked generated root-flat compatibility output. Do not edit it directly.
 - `.dist/claude/` and `.dist/codex/` are ignored, reproducible target-specific flat skill surfaces generated only when needed.
 - `skills.index.json` is generated from `contracts/skills.toml`.
-- `docs/architecture/diagrams/*.puml` are generated human views of the installed implementation workflow contract.
+- `docs/architecture/diagrams/*.puml` are generated human views of the installed harness routing and implementation workflow contracts.
 - `skills/_harness-libs/` is generated root-flat deterministic runtime support for lifecycle validation, artifact-DAG enforcement, task ledgers, evaluation, evidence-based recovery routing, truth sync, and close; it is not a user-routed workflow entry.
 
 Regenerate generated surfaces with:
@@ -37,19 +38,24 @@ Any skill addition, deletion, rename, or category change must update:
 - at least one check or fixture when behavior changes
 - `docs/changelog/design-decisions.md` when policy or architecture changes
 
-Do not hand-edit generated PlantUML files. Update the controller-local workflow contract, regenerate the diagrams, and review the resulting architecture view. See `workflow-orchestration.md` for truth precedence and diagram scope.
+Do not hand-edit generated PlantUML files. Update the owning routing, lifecycle, workflow-mode, or controller-local contract, regenerate the diagrams, and review the resulting architecture view. See `workflow-orchestration.md` for truth precedence and diagram scope.
 
 `bash scripts/check.sh` generates Claude and Codex surfaces in a temporary directory and validates them there. Generate `.dist/` explicitly only for local packaging or external-consumer inspection; it must stay ignored and untracked.
 
 ## Lifecycle Authority
 
 - Only `category = "workflow"` may set `lifecycle_owner = true`.
+- Exactly one non-lifecycle session skill owns the installed `routing_contract`; direct matches bypass it, while ambiguous multi-stage routing may enter it.
 - Lower-plane skills may provide method, policy, checks, or tool support, but they must not approve, execute, or close lifecycle state.
 - Mutation-capable skills must require an explicit user request or an approved upstream artifact.
 - Manual tools such as `smart-squash` and `git-worktrees` must never be implicitly invoked.
 - Intent-gated mutation tools such as `smart-commit` may allow model selection only when their description requires an explicit user request for both semantic diff grouping and local commit creation; generic commit, diff, status, and history-cleanup requests must not match.
 - `implement-change` treats an approved plan as one execution unit.
+- `plan-change` owns the versioned task DAG, named parallel-batch authorization, delegation eligibility, portable execution/reasoning profiles, isolation, locks, and convergence metadata.
+- `implement-change` owns runtime actor and profile binding. It may execute an explicitly approved dependency-frozen batch conditionally, but it must preserve the approved topology and use typed serial fallback, capacity stop, or conflict evidence.
+- Delegated writers require isolated worktrees from one dependency-frozen snapshot; shared checkout is read-only, and only the controller may converge a complete group and advance its dependents.
 - `implement-change/references/workflow.toml` travels with the installed controller and owns its invocation subgraph; repo-global architecture docs are the maintenance view, not the only runtime copy.
+- `use-coding-skills/references/routing.toml` travels with the installed router and owns phase-to-workflow and support-route mapping; host AGENTS files remain user-specific wrappers rather than parallel harness truth.
 
 ## Review Invariants
 
@@ -72,4 +78,4 @@ Do not hand-edit generated PlantUML files. Update the controller-local workflow 
 
 ## Environment-Specific Content
 
-Generally installed skills may contain personal engineering style and opinionated local-first defaults, but must avoid host-specific paths, private project names, private token names, unguarded OS-specific commands, and required provider-specific model names.
+Generally installed skills may contain personal engineering style and opinionated local-first defaults, but must avoid host-specific paths, private project names, private token names, unguarded OS-specific commands, and required provider-specific model names. Portable routing uses semantic execution/reasoning profiles; provider model names and user-global concurrency defaults remain runtime configuration outside repository truth.

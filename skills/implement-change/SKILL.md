@@ -1,6 +1,6 @@
 ---
 name: implement-change
-description: "Implement an approved plan end to end with serial tasks, executable oracles, bounded agent-native review, fix-forward repair by default, explicit guarded rollback only when declared, truth sync, and close routing."
+description: "Implement an approved plan end to end with runtime actor/model binding, conditional serial or parallel execution, bounded agent-native review, controller-owned repair, and typed close routing."
 ---
 
 # Implement Change
@@ -25,15 +25,17 @@ Resolve both relative to this `SKILL.md`. The cross-skill graph stays acyclic; r
 ## Workflow
 
 1. Confirm plan approval, dependency state, execution continuity, and current checkout/worktree decision.
-2. Execute ready tasks serially unless the plan explicitly approves a dependency-frozen parallel batch.
-3. Maintain a task ledger rather than relying on conversation memory.
-4. Run the task's narrow and declared executable oracles.
-5. Construct a bounded review brief containing only the approved task slice, exact diff, tests, verification evidence, touch set, and justified supporting files.
-6. Route the brief through `review-change`; prefer a reviewer subagent for non-trivial review and permit direct main-agent review for small mechanical changes.
-7. Independently adjudicate every material candidate and assign the final disposition.
-8. Repair only findings with disposition `accepted`, batching the complete accepted set inside the approved touch set.
-9. Rerun affected and declared verification, then perform focused verification review of accepted findings and repair-introduced regressions.
-10. Route final evidence to `sync-truth`, `close-change`, or a typed stop.
+2. Bind each ready approved task to a main agent or worker, an effective concurrency width, and a runtime model policy. `plan-change` owns task IDs, dependencies, parallel groups, policies, semantic profiles, isolation, locks, and approval; this skill owns only runtime binding and physical execution.
+3. Default eligible tasks to their approved delegation advice and `semantic-routing`. An explicit `inherit-main` override makes a worker inherit the main agent's model and reasoning settings; it preserves the exact approved serial or parallel topology, task IDs, dependencies, isolation, locks, touch sets, and oracles.
+4. Execute serially unless the plan explicitly approves a dependency-frozen, conflict-free parallel batch. Effective concurrency is bounded by runtime capacity, ready tasks, approved limits, isolation, write sets, and locks. Record evidence when `allowed` work serializes; return a typed capacity stop when `required` parallel work cannot run.
+5. Maintain a task ledger rather than relying on conversation memory. Treat its task topology and safety fields as an immutable projection of the approved plan; a mismatch returns dependency-freeze conflict evidence instead of a binding. Workers use their assigned isolated worktree where required and return evidence only; they cannot delegate recursively, widen scope, integrate peer work, adjudicate review findings, repair, or decide continuation.
+6. Verify each worker's actual changed paths and task oracles, then converge a completed batch through this controller before making any dependency on a batch member ready. Count the controller/main actor at most once in a concurrent binding.
+7. Construct a bounded review brief containing only the approved task slice, exact diff, tests, verification evidence, touch set, and justified supporting files.
+8. Route the brief through `review-change`; prefer a reviewer subagent for non-trivial review and permit direct main-agent review for small mechanical changes.
+9. Independently adjudicate every material candidate and assign the final disposition.
+10. Repair only findings with disposition `accepted`, batching the complete accepted set inside the approved touch set.
+11. Rerun affected and declared verification, then perform focused verification review of accepted findings and repair-introduced regressions.
+12. Route final evidence to `sync-truth`, `close-change`, or a typed stop.
 
 ## Repair Ownership
 
@@ -73,9 +75,9 @@ Resolve both relative to this `SKILL.md`. The cross-skill graph stays acyclic; r
 
 ## Operating Rules
 
-- Serial-first and no unattended expansion are defaults.
+- Serial-first and no unattended expansion are defaults. Conditional parallelism never authorizes undeclared work, shared writable checkouts, or new authority.
 - The approved plan is the atomic execution unit; do not stop while ready in-scope tasks remain.
 - Prefer red-green or a narrow reproducer for non-trivial behavior changes.
 - Diagnose reproducible root cause before repair.
-- Never allow a delegated reviewer to delegate recursively or invoke this controller.
+- Never allow a delegated worker or reviewer to delegate recursively or invoke this controller.
 - Report known gate states directly instead of hedging or asking whether to continue.

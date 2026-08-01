@@ -1,6 +1,6 @@
 ---
 name: use-coding-skills
-description: "Use when the user asks how local coding skills should be selected, when an ambiguous multi-stage coding request needs explicit routing, or when session-boundary, memory-boundary, or compact handoff guidance is required. Do not load as a mandatory bootstrap for unrelated work or tasks that directly match a workflow or policy skill."
+description: "Use when the user asks how local coding skills should be selected, when an ambiguous multi-stage coding request needs explicit routing, when host-wrapper boundaries need clarification, or when session-boundary, memory-boundary, or compact handoff guidance is required. Do not load as a mandatory bootstrap for unrelated work or tasks that directly match a workflow or policy skill."
 ---
 
 # Use Coding Skills
@@ -20,16 +20,14 @@ Optional routing and session-boundary guidance for local coding work. Keep this 
 
 ## Default Routing
 
-Use these routes only after this skill has matched an explicit routing or ambiguous multi-stage request. Direct workflow and policy matches do not need this skill first.
+Use these rules only after this skill has matched an explicit routing or ambiguous multi-stage request:
 
-- Response shape and tone: use `output-styles`.
-- Searches, refactors, ad hoc command choice, tool composition, and noisy output control: use `tool-decision-tree`.
-- Design or planning for a new persisted implementation with an unfixed language: use `language-decision-tree`.
-- Language-specific implementation: use the matching language guideline skill.
-- Infrastructure, network, proxy, tunnel, container, GitOps, IaC, Secrets, Auth, or automation triage: use `infrastructure-triage`.
-- README, AGENTS, CLAUDE, docs layout, docs search boundaries, or stage-artifact roots: use `organize-docs`.
-- Memory, session, or context-doc mining: use `skill-miner`.
-- Design, planning, execution, review, truth sync, and close gates: use the sovereign harness skills.
+- Read `references/routing.toml` as the machine-readable discovery, phase-to-owner, review-evaluator, support-route, composition, and host-wrapper contract.
+- Let an explicitly named skill or confident direct workflow or policy match bypass this router.
+- Route ambiguous multi-stage work through this skill, then select the lifecycle mode before invoking a phase owner.
+- Keep exactly one primary response or lifecycle owner. Compose matching session, discipline, policy, tool, or review-component skills only as lower-plane overlays.
+- Route design, planning, execution, review, truth sync, and close through the workflow owners declared by the contract. Review requests enter through `review-change`; artifact-specific `review-*` skills are evaluators, not top-level gates.
+- Keep host-level AGENTS files limited to user preferences, runtime constraints, and thin public-skill entry hints. Do not duplicate the phase graph, repair loop, review budgets, or typed exits outside the repo-owned contract.
 
 ## Compact Instructions
 
@@ -43,6 +41,6 @@ When compacting or handing off long conversations, preserve in priority order:
 
 ## References
 
-- Read `references/routing.md` when task routing or skill selection is ambiguous.
+- Read `references/routing.toml` and `references/routing.md` when task routing, skill selection, lifecycle phase ownership, or host-wrapper scope is ambiguous.
 - Read `references/memory-boundary.md` when a task touches memories, sessions, logs, generated summaries, or stale recalled facts.
 - Read `references/preference-contract.md` when tuning session defaults, response style, or user preference capture.

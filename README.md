@@ -18,6 +18,7 @@ The underlying sovereign kernel still uses:
 
 - `src/skills/` is the source-of-truth skill tree.
 - `contracts/skills.toml` is the source-of-truth exposure and invocation contract.
+- `src/skills/session/use-coding-skills/references/routing.toml` is the install-required discovery, phase-owner, review-evaluator, support-route, composition, and host-wrapper contract.
 - `skills/` is tracked generated root-flat compatibility output for current plugin manifests, command wrappers, and local symlink exposure.
 - `.dist/claude/` and `.dist/codex/` are ignored, reproducible target-specific install surfaces generated only when needed.
 - `skills.index.json` is generated from `contracts/skills.toml`.
@@ -41,14 +42,15 @@ The top-level harness authority for this repository is:
 
 - `analyze-project`: Read-only project-state and truth query entry.
 - `design-change`: Top-level change-design entry for scope, truth impact, boundary impact, and conditional economics-aware selection for material persisted architecture boundaries.
-- `plan-change`: Top-level planning entry for ordered tasks, dependencies, verification, explicit failure policy, conditional persisted implementation-language decisions, and reversible staging of approved architecture decisions.
-- `implement-change`: Top-level execution controller with approved-plan validation, one-plan execution-unit semantics, serial-first fix-forward implementation, controller-owned repair convergence, one-time worktree preflight, and deterministic review/verify/recovery outcomes.
+- `plan-change`: Top-level planning entry for a versioned task DAG, dependencies, named conditional-parallel batches, delegation eligibility, portable execution and reasoning profiles, verification, explicit failure policy, conditional persisted implementation-language decisions, and reversible staging of approved architecture decisions.
+- `implement-change`: Top-level execution controller with approved-plan validation, one-plan execution-unit semantics, serial-first or explicitly approved conditional-parallel implementation, runtime actor and profile binding, controller-owned convergence and repair, one-time worktree preflight, and deterministic fallback/review/verify/recovery outcomes.
 - `review-change`: Top-level agent-native review gate that builds a bounded brief, prefers subagent review when useful, adjudicates candidate findings, and returns one harness verdict.
 - `sync-truth`: Top-level truth-sync gate for stable truth updates with verified evidence.
 - `close-change`: Top-level close gate for merge, release, or cleanup judgment.
 
 Kernel defaults:
-- serial-first execution
+- serial-first execution unless an approved plan defines a dependency-frozen named batch with safe isolation, disjoint writes and resource locks, a bounded width, and explicit human approval
+- portable semantic routing by default; an `inherit-main` override changes model and reasoning binding only, never the approved task topology or serial/parallel shape
 - human-sovereign approvals at design, plan, truth-sync, and close
 - no unattended execution by default
 - `design-change` and `plan-change` require artifact validation plus mandatory review before the human gate
@@ -57,16 +59,16 @@ Kernel defaults:
 
 Harness runner coverage:
 - `design-runner.sh`: design artifact pathing, validation, classification, and approval status
-- `plan-runner.sh`: plan artifact pathing, upstream design linkage, validation, and approval status
-- `execute-runner.sh`: approved-plan validation, touch set, verification scope, truth-sync requirement, and evidence-based recovery route
-  - task-ledger helpers, workspace-mode detection, and deterministic execution-result reporting
+- `plan-runner.sh`: plan artifact pathing, upstream design linkage, versioned DAG and named-batch validation, and approval status
+- `execute-runner.sh`: approved-plan validation, immutable plan-ledger checks, bounded runtime binding, typed serial fallback or capacity/conflict stops, touch set, verification scope, truth-sync requirement, and evidence-based recovery route
+  - task-ledger ready-set and group-convergence helpers, workspace-mode detection, and deterministic execution-result reporting
 - `recovery-routing.sh`: evidence-class routing that never widens lifecycle phase from failure count alone
 
 Lower-plane skills stay available as components the kernel can call, not as competing top-level authorities.
 
 ## Optional Session Routing And Style
 
-- `use-coding-skills`: Optional router for ambiguous multi-stage coding work, session boundaries, and compact handoffs. Direct workflow and policy matches do not load it first.
+- `use-coding-skills`: Optional router for ambiguous multi-stage coding work, session boundaries, and compact handoffs. Its installed routing contract owns phase-to-workflow and support-route mapping; direct workflow and policy matches bypass it.
 - `output-styles`: Agent-agnostic response modes plus the composition rule that one primary skill owns domain order while other matched skills contribute semantic overlays instead of competing report templates.
 
 ## Top-Level Commands
@@ -109,7 +111,7 @@ These commands are Claude plugin-local entry points. Codex can consume the gener
 ### Architecture & Quality
 - `architecture-patterns`: Demand-first architecture selection with smallest-sufficient defaults, explicit lifecycle economics, observable upgrade triggers, and on-demand pattern/theory references.
 - `clean-architecture`: Layering boundaries and dependency direction rules.
-- `development-standards`: Cross-language development standards (naming, structure, reviews).
+- `development-standards`: Cross-language smallest-durable implementation, scoped-edit, compatibility, dependency, temporary-mechanism, maintainability, CLI, and review policy.
 - `quality-standards`: Quality metrics and continuous improvement guidance.
 - `api-contract-strategy`: Structured API contract authoring, compatibility, generated projections, workflow runners, provider/consumer boundaries, and incremental legacy adoption.
 - `executable-oracle-architecture-selector`: Selects executable oracle strategy for architecture, plan readiness, agent-assisted implementation, and runtime feedback loops.
@@ -138,7 +140,7 @@ These commands are Claude plugin-local entry points. Codex can consume the gener
 - Docs directory search guidance and history notes live in `docs/README.md`.
 - Stage artifacts live under `docs/plans/` and are excluded from default docs search by `docs/.ignore`.
 - Architecture and maintenance contracts live under `docs/architecture/`.
-- The canonical workflow maintenance view is `docs/architecture/workflow-orchestration.md`; its implementation DAG and repair-loop PlantUML sources are generated under `docs/architecture/diagrams/`.
+- The canonical workflow maintenance view is `docs/architecture/workflow-orchestration.md`; its full harness routing sequence, implementation DAG, and repair-loop PlantUML sources are generated under `docs/architecture/diagrams/`.
 
 ## Review Defaults
 
@@ -191,7 +193,7 @@ Optional Codex local marketplace registration and plugin install:
 
 Local symlink exposure is also supported. Workstations can expose the generated `skills/` directory through paths such as `~/.agents/skills/coding` and use the same skills without installing the Codex plugin.
 
-For deterministic lifecycle entry, a host-level `AGENTS.md` may keep only thin intent mappings such as approved-plan implementation -> `coding:implement-change` and implementation review -> `coding:review-implementation`. The installed `implement-change/references/workflow.toml` remains the runtime DAG authority; do not copy that graph into the host bootstrap.
+For deterministic lifecycle entry, a host-level `AGENTS.md` may keep user preferences, runtime constraints, and thin public-skill hints such as ambiguous multi-stage work -> `coding:use-coding-skills`. The installed `use-coding-skills/references/routing.toml` and `implement-change/references/workflow.toml` remain the route and runtime DAG authorities; do not copy their graphs, budgets, or exits into the host bootstrap.
 
 Manual Codex flow:
 

@@ -2,9 +2,10 @@
 set -euo pipefail
 
 ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+HARNESS_LIB_ROOT="${HARNESS_TEST_SURFACE:-$ROOT_DIR/skills/_harness-libs}"
 
 # shellcheck source=skills/_harness-libs/plan-runner.sh
-source "$ROOT_DIR/skills/_harness-libs/plan-runner.sh"
+source "$HARNESS_LIB_ROOT/plan-runner.sh"
 
 fail() {
   printf 'test-plan-runner: %s\n' "$*" >&2
@@ -12,14 +13,74 @@ fail() {
 }
 
 assert_contains() {
-  local path="$1"
+  local file_ref="$1"
   local pattern="$2"
   local message="$3"
-  rg -n "$pattern" "$path" >/dev/null || fail "$message"
+  rg -n "$pattern" "$file_ref" >/dev/null || fail "$message"
+}
+
+replace_once() {
+  local file_ref="$1"
+  local old_line="$2"
+  local new_line="$3"
+  local replacement_file="${file_ref}.replacement"
+
+  awk -v old_line="$old_line" -v new_line="$new_line" '
+    BEGIN { replaced = 0 }
+    !replaced && $0 == old_line {
+      print new_line
+      replaced = 1
+      next
+    }
+    { print }
+    END {
+      if (!replaced) {
+        exit 1
+      }
+    }
+  ' "$file_ref" >"$replacement_file" || {
+    rm -f -- "$replacement_file"
+    fail "fixture line not found: $old_line"
+  }
+  mv -- "$replacement_file" "$file_ref"
+}
+
+replace_nth() {
+  local file_ref="$1"
+  local old_line="$2"
+  local new_line="$3"
+  local occurrence="$4"
+  local replacement_file="${file_ref}.replacement"
+
+  awk -v old_line="$old_line" -v new_line="$new_line" -v occurrence="$occurrence" '
+    BEGIN { match_count = 0; replaced = 0 }
+    $0 == old_line {
+      match_count += 1
+      if (match_count == occurrence) {
+        print new_line
+        replaced = 1
+        next
+      }
+    }
+    { print }
+    END {
+      if (!replaced) {
+        exit 1
+      }
+    }
+  ' "$file_ref" >"$replacement_file" || {
+    rm -f -- "$replacement_file"
+    fail "fixture occurrence not found: $old_line occurrence=$occurrence"
+  }
+  mv -- "$replacement_file" "$file_ref"
 }
 
 main() {
   local tmp_dir legacy_plan strict_plan guarded_plan invalid_rollback_plan partial_plan design_file
+  local v2_plan invalid_version_plan invalid_profile_plan invalid_model_plan dependent_group_plan overlap_ref_plan overlap_lock_plan
+  local read_only_plan invalid_shared_write_plan invalid_serial_worker_plan unknown_batch_plan mismatched_batch_plan invalid_convergence_plan
+  local batch_catalog_fixture
+  local -a fixture_batch_ids=()
 
   [[ "$(default_plan_artifact_path "docs/plans/harness-kernel/2026-04-06-add-tier-entitlement-design.md")" == "docs/plans/harness-kernel/2026-04-06-add-tier-entitlement-plan.md" ]] \
     || fail "default plan path drifted"
@@ -31,6 +92,20 @@ main() {
   guarded_plan="$tmp_dir/guarded-plan.md"
   invalid_rollback_plan="$tmp_dir/invalid-rollback-plan.md"
   partial_plan="$tmp_dir/partial-plan.md"
+  v2_plan="$tmp_dir/v2-plan.md"
+  invalid_version_plan="$tmp_dir/invalid-version-plan.md"
+  invalid_profile_plan="$tmp_dir/invalid-profile-plan.md"
+  invalid_model_plan="$tmp_dir/invalid-model-plan.md"
+  dependent_group_plan="$tmp_dir/dependent-group-plan.md"
+  overlap_ref_plan="$tmp_dir/overlap-ref-plan.md"
+  overlap_lock_plan="$tmp_dir/overlap-lock-plan.md"
+  read_only_plan="$tmp_dir/read-only-plan.md"
+  invalid_shared_write_plan="$tmp_dir/invalid-shared-write-plan.md"
+  invalid_serial_worker_plan="$tmp_dir/invalid-serial-worker-plan.md"
+  unknown_batch_plan="$tmp_dir/unknown-batch-plan.md"
+  mismatched_batch_plan="$tmp_dir/mismatched-batch-plan.md"
+  invalid_convergence_plan="$tmp_dir/invalid-convergence-plan.md"
+  batch_catalog_fixture="$tmp_dir/batch-catalog.md"
   design_file="$tmp_dir/design.md"
 
   cat >"$design_file" <<'EOF'
@@ -41,10 +116,37 @@ main() {
 - impl_file_refs:
   - src/example
   - src/example-helper
+  - src/converge
 - test_file_refs:
   - tests/example
   - tests/example-integration
+  - tests/converge
 EOF
+
+  cat >"$batch_catalog_fixture" <<'EOF'
+# Batch Catalog Fixture
+
+## Parallel Batches
+
+- batch_id: P1
+- tasks:
+  - task-a
+  - task-b
+- max_parallelism: 2
+- convergence_task: controller
+
+- batch_id: P2
+- tasks:
+  - task-c
+  - task-d
+- max_parallelism: 3
+- convergence_task: merge-task
+EOF
+
+  mapfile -t fixture_batch_ids < <(list_plan_parallel_batch_ids "$batch_catalog_fixture")
+  [[ "${fixture_batch_ids[*]}" == "P1 P2" ]] || fail "parallel batch catalog should preserve repeated batch order"
+  [[ "$(parallel_batch_max_parallelism "$batch_catalog_fixture" "P2")" == "3" ]] || fail "parallel batch catalog should resolve per-batch limits"
+  [[ "$(extract_parallel_batch_list "$batch_catalog_fixture" "P2" "tasks" | paste -sd ' ' -)" == "task-c task-d" ]] || fail "parallel batch catalog should resolve exact per-batch members"
 
   cat >"$legacy_plan" <<'EOF'
 # Legacy Sample Plan
@@ -98,9 +200,11 @@ EOF
 - impl_file_refs:
   - src/example
   - src/example-helper
+  - src/converge
 - test_file_refs:
   - tests/example
   - tests/example-integration
+  - tests/converge
 - verification_scope:
   - `bash test.sh`
 
@@ -172,6 +276,158 @@ EOF
 - default_failure_policy: fix_forward
 - backup_or_snapshot:
   - retain pre-change state as recovery evidence without automatic restore
+EOF
+
+  cat >"$v2_plan" <<'EOF'
+# Version 2 Parallel Plan
+
+## Upstream Design
+
+- design_ref: design.md
+- design_version: 2026-04-06-initial
+
+## Implementation Scope
+
+- plan_contract_version: 2
+- parallel_execution_approved: true
+- impl_file_refs:
+  - src/example
+  - src/example-helper
+  - src/converge
+- test_file_refs:
+  - tests/example
+  - tests/example-integration
+  - tests/converge
+- verification_scope:
+  - `bash test.sh`
+
+## Work Package Readiness
+
+- milestone_objective: validate one portable conditional-parallel batch
+- non_goals:
+  - no provider-specific model binding
+- future_phase:
+  - no follow-up phase
+- decision_status: ready_for_review
+- oracle_strategy: model-based DAG and binding contract tests
+- acceptance_oracles:
+  - both dependency-free tasks pass independently
+- execution_continuity: continuous_after_plan_approval
+- max_review_batches: 2
+- subagent_ready: true
+
+## Runtime Binding
+
+- default_model_policy: semantic-routing
+- allowed_model_policies:
+  - semantic-routing
+  - inherit-main
+  - runtime-default
+- effective_concurrency: minimum of runtime capacity and safe ready tasks
+
+## Parallel Batches
+
+- batch_id: sample-parallel
+- tasks:
+  - parallel-core
+  - parallel-integration
+- parallel_policy: allowed
+- max_parallelism: 2
+- convergence_task: parallel-converge
+
+## Task 1: Parallel Core
+
+- task_id: parallel-core
+- depends_on:
+  - root
+- scope_slice: first independent write slice
+- impl_file_refs:
+  - src/example
+- test_file_refs:
+  - tests/example
+- verification_scope:
+  - `bash test-core.sh`
+- executor_mode: subagent
+- parallel_group: sample-parallel
+- parallel_policy: allowed
+- delegation_policy: preferred
+- execution_profile: deep
+- reasoning_profile: deep
+- isolation: isolated-worktree
+- resource_locks:
+  - core-contract
+- task_review_depth: boundary
+- done_when:
+  - core verification passes
+- failure_policy: fix_forward
+
+## Task 2: Parallel Integration
+
+- task_id: parallel-integration
+- depends_on:
+  - none
+- scope_slice: second independent write slice
+- impl_file_refs:
+  - src/example-helper
+- test_file_refs:
+  - tests/example-integration
+- verification_scope:
+  - `bash test-integration.sh`
+- executor_mode: subagent
+- parallel_group: sample-parallel
+- parallel_policy: allowed
+- delegation_policy: preferred
+- execution_profile: fast
+- reasoning_profile: standard
+- isolation: isolated-worktree
+- resource_locks:
+  - integration-contract
+- task_review_depth: focused
+- done_when:
+  - integration verification passes
+- failure_policy: fix_forward
+
+## Task 3: Parallel Convergence
+
+- task_id: parallel-converge
+- depends_on:
+  - parallel-core
+  - parallel-integration
+- scope_slice: controller-owned batch convergence
+- impl_file_refs:
+  - src/converge
+- test_file_refs:
+  - tests/converge
+- verification_scope:
+  - `bash test-converge.sh`
+- executor_mode: main
+- parallel_group: none
+- parallel_policy: forbidden
+- delegation_policy: forbidden
+- execution_profile: balanced
+- reasoning_profile: standard
+- isolation: controller-checkout
+- resource_locks:
+  - convergence-contract
+- task_review_depth: boundary
+- done_when:
+  - batch convergence verification passes
+- failure_policy: fix_forward
+
+## Review Gate
+
+- required_entry: review-change
+- required_mode: review-only
+
+## Human Gate
+
+- approval_required: true
+- approval_status: pending
+- next_entry: implement-change
+
+## Recovery
+
+- default_failure_policy: fix_forward
 EOF
 
   cat >"$partial_plan" <<'EOF'
@@ -303,11 +559,58 @@ EOF
   cp "$strict_plan" "$invalid_rollback_plan"
   printf '\n## Rollback\n\n- guarded_task_ids:\n  - none\n' >>"$invalid_rollback_plan"
 
+  cp "$v2_plan" "$invalid_version_plan"
+  replace_once "$invalid_version_plan" '- plan_contract_version: 2' '- plan_contract_version: 99'
+
+  cp "$v2_plan" "$invalid_profile_plan"
+  replace_once "$invalid_profile_plan" '- execution_profile: deep' '- execution_profile: vendor-ultra'
+
+  cp "$v2_plan" "$invalid_model_plan"
+  replace_once "$invalid_model_plan" '- default_model_policy: semantic-routing' '- default_model_policy: provider-pinned'
+
+  cp "$v2_plan" "$dependent_group_plan"
+  replace_once "$dependent_group_plan" '  - none' '  - parallel-core'
+
+  cp "$v2_plan" "$overlap_ref_plan"
+  replace_nth "$overlap_ref_plan" '  - src/example-helper' '  - src/example' 2
+
+  cp "$v2_plan" "$overlap_lock_plan"
+  replace_once "$overlap_lock_plan" '  - integration-contract' '  - core-contract'
+
+  cp "$v2_plan" "$read_only_plan"
+  replace_nth "$read_only_plan" '  - src/example' '  - none' 2
+  replace_nth "$read_only_plan" '  - tests/example' '  - none' 2
+  replace_nth "$read_only_plan" '  - src/example-helper' '  - none' 2
+  replace_nth "$read_only_plan" '  - tests/example-integration' '  - none' 2
+  replace_once "$read_only_plan" '- isolation: isolated-worktree' '- isolation: shared-read-only'
+  replace_once "$read_only_plan" '- isolation: isolated-worktree' '- isolation: shared-read-only'
+
+  cp "$v2_plan" "$invalid_shared_write_plan"
+  replace_once "$invalid_shared_write_plan" '- isolation: isolated-worktree' '- isolation: shared-read-only'
+
+  cp "$v2_plan" "$invalid_serial_worker_plan"
+  replace_once "$invalid_serial_worker_plan" '- executor_mode: main' '- executor_mode: subagent'
+  replace_once "$invalid_serial_worker_plan" '- delegation_policy: forbidden' '- delegation_policy: preferred'
+
+  cp "$v2_plan" "$unknown_batch_plan"
+  replace_once "$unknown_batch_plan" '- batch_id: sample-parallel' '- batch_id: undeclared-batch'
+
+  cp "$v2_plan" "$mismatched_batch_plan"
+  replace_once "$mismatched_batch_plan" '  - parallel-integration' '  - parallel-converge'
+
+  cp "$v2_plan" "$invalid_convergence_plan"
+  replace_once "$invalid_convergence_plan" '- convergence_task: parallel-converge' '- convergence_task: parallel-core'
+
   validate_plan_artifact "$legacy_plan"
   validate_plan_artifact "$strict_plan"
+  validate_plan_artifact "$v2_plan"
+  validate_plan_artifact "$read_only_plan"
   validate_execution_grade_plan_artifact "$strict_plan"
+  validate_execution_grade_plan_artifact "$v2_plan"
+  validate_execution_grade_plan_artifact "$read_only_plan"
   validate_execution_grade_plan_artifact "$guarded_plan"
   [[ "$(plan_approval_status "$strict_plan")" == "pending" ]] || fail "plan approval status should resolve"
+  [[ "$(plan_contract_version "$v2_plan")" == "2" ]] || fail "plan contract version should resolve"
 
   if validate_plan_artifact "$partial_plan" >/dev/null 2>&1; then
     fail "partial task metadata should fail validation in compat mode once metadata appears"
@@ -319,6 +622,39 @@ EOF
   if validate_execution_grade_plan_artifact "$invalid_rollback_plan" >/dev/null 2>&1; then
     fail "fix-forward plan should reject generated rollback metadata"
   fi
+  if validate_execution_grade_plan_artifact "$invalid_version_plan" >/dev/null 2>&1; then
+    fail "unknown plan contract version should fail validation"
+  fi
+  if validate_execution_grade_plan_artifact "$invalid_profile_plan" >/dev/null 2>&1; then
+    fail "unknown execution profile should fail validation"
+  fi
+  if validate_execution_grade_plan_artifact "$invalid_model_plan" >/dev/null 2>&1; then
+    fail "provider-pinned model policy should fail validation"
+  fi
+  if validate_execution_grade_plan_artifact "$dependent_group_plan" >/dev/null 2>&1; then
+    fail "dependency inside one parallel group should fail validation"
+  fi
+  if validate_execution_grade_plan_artifact "$overlap_ref_plan" >/dev/null 2>&1; then
+    fail "overlapping parallel write refs should fail validation"
+  fi
+  if validate_execution_grade_plan_artifact "$overlap_lock_plan" >/dev/null 2>&1; then
+    fail "overlapping parallel resource locks should fail validation"
+  fi
+  if validate_execution_grade_plan_artifact "$invalid_shared_write_plan" >/dev/null 2>&1; then
+    fail "shared-read-only tasks with write refs should fail validation"
+  fi
+  if validate_execution_grade_plan_artifact "$invalid_serial_worker_plan" >/dev/null 2>&1; then
+    fail "delegated write tasks in the controller checkout should fail validation"
+  fi
+  if validate_execution_grade_plan_artifact "$unknown_batch_plan" >/dev/null 2>&1; then
+    fail "batch IDs must match declared task parallel groups"
+  fi
+  if validate_execution_grade_plan_artifact "$mismatched_batch_plan" >/dev/null 2>&1; then
+    fail "batch task lists must exactly match their task groups"
+  fi
+  if validate_execution_grade_plan_artifact "$invalid_convergence_plan" >/dev/null 2>&1; then
+    fail "batch convergence tasks cannot be batch members"
+  fi
 
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'skills/_harness-libs/plan-runner.sh' "plan command should use plan runner"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'confirmation_clearance' "plan command should require confirmation clearance"
@@ -328,6 +664,11 @@ EOF
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'executable-oracle-architecture-selector' "plan command should route non-trivial behavior to oracle selection"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'coding:review-change' "plan command should route through top-level review gate"
   assert_contains "$ROOT_DIR/commands/plan-change.md" 'approval_status:' "plan command should expose the approval status field"
+  assert_contains "$ROOT_DIR/commands/plan-change.md" 'plan_contract_version:[[:space:]]*2' "plan command should require version-2 plans"
+  assert_contains "$ROOT_DIR/commands/plan-change.md" 'parallel_policy:[[:space:]]*forbidden.*allowed.*required' "plan command should define parallel policy"
+  assert_contains "$ROOT_DIR/commands/plan-change.md" 'delegation_policy:[[:space:]]*forbidden.*allowed.*preferred' "plan command should define delegation policy"
+  assert_contains "$ROOT_DIR/commands/plan-change.md" 'semantic-routing' "plan command should default to semantic routing"
+  assert_contains "$ROOT_DIR/commands/plan-change.md" 'inherit-main' "plan command should preserve the inherit-main override"
 }
 
 main "$@"

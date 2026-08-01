@@ -13,10 +13,14 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_CONTRACT = REPO_ROOT / "contracts" / "skills.toml"
+LIFECYCLE_CONTRACT = REPO_ROOT / "contracts" / "lifecycle.toml"
+WORKFLOW_MODES_CONTRACT = REPO_ROOT / "contracts" / "workflow-modes.toml"
 CONTROLLER_ID = "implement-change"
+ROUTER_ID = "use-coding-skills"
 DIAGRAM_DIR = REPO_ROOT / "docs" / "architecture" / "diagrams"
 DAG_PATH = DIAGRAM_DIR / "implementation-invocation-dag.puml"
 REPAIR_PATH = DIAGRAM_DIR / "implementation-repair-loop.puml"
+ROUTING_SEQUENCE_PATH = DIAGRAM_DIR / "harness-routing-sequence.puml"
 
 
 def load_toml(path: Path) -> dict[str, Any]:
@@ -36,6 +40,21 @@ def controller_contract() -> tuple[Path, dict[str, Any]]:
     contract = load_toml(path)
     if contract.get("workflow", {}).get("id") != CONTROLLER_ID:
         raise ValueError(f"workflow id does not match {CONTROLLER_ID}")
+    return path, contract
+
+
+def routing_contract() -> tuple[Path, dict[str, Any]]:
+    skills = load_toml(SKILLS_CONTRACT)["skills"]
+    entry = skills.get(ROUTER_ID)
+    if not entry:
+        raise ValueError(f"missing {ROUTER_ID} skill contract")
+    contract_ref = entry.get("routing_contract")
+    if not contract_ref:
+        raise ValueError(f"missing routing contract for {ROUTER_ID}")
+    path = REPO_ROOT / entry["source"] / contract_ref
+    contract = load_toml(path)
+    if contract.get("routing", {}).get("id") != ROUTER_ID:
+        raise ValueError(f"routing id does not match {ROUTER_ID}")
     return path, contract
 
 
@@ -151,9 +170,238 @@ def render_repair_loop(contract_path: Path, contract: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def render_review_exchange(
+    lines: list[str],
+    review_gate: str,
+    evaluator: str,
+    phase: str,
+) -> None:
+    lines.extend(
+        [
+            f"{alias(review_gate)} -> {alias('review-evaluators')} : {phase} via {evaluator}",
+            f"{alias('review-evaluators')} --> {alias(review_gate)} : candidate findings",
+            f"{alias(review_gate)} -> {alias(review_gate)} : adjudicate + verdict",
+        ]
+    )
+
+
+def render_mode_sequence(
+    mode_name: str,
+    mode: dict[str, Any],
+    phase_routes: dict[str, str],
+    review_evaluators: dict[str, str],
+    gate_policy: dict[str, Any],
+) -> list[str]:
+    phases = mode["phases"]
+    lines = [f"alt mode: {mode_name}"]
+    current = alias("mode-selector")
+    design_phases = set(gate_policy["design_phases"])
+    plan_phases = set(gate_policy["plan_phases"])
+    design_review_phase = gate_policy["design_review_phase"]
+    plan_review_phase = gate_policy["plan_review_phase"]
+    truth_sync_phase = gate_policy["truth_sync_phase"]
+    close_phase = gate_policy["close_phase"]
+
+    for index, phase in enumerate(phases):
+        target = phase_routes[phase]
+        target_alias = alias(target)
+        lines.append(f"{current} -> {target_alias} : {phase}")
+        current = target_alias
+
+        if phase in review_evaluators:
+            render_review_exchange(lines, target, review_evaluators[phase], phase)
+
+        next_phase = phases[index + 1] if index + 1 < len(phases) else None
+        if phase in design_phases and next_phase != design_review_phase:
+            review_gate = phase_routes[design_review_phase]
+            lines.append(f"{current} -> {alias(review_gate)} : mandatory design review")
+            render_review_exchange(
+                lines,
+                review_gate,
+                review_evaluators[design_review_phase],
+                "design",
+            )
+            current = alias(review_gate)
+        if phase in plan_phases and next_phase != plan_review_phase:
+            review_gate = phase_routes[plan_review_phase]
+            lines.append(f"{current} -> {alias(review_gate)} : plan review gate")
+            render_review_exchange(
+                lines,
+                review_gate,
+                review_evaluators[plan_review_phase],
+                "plan",
+            )
+            current = alias(review_gate)
+
+        if phase == design_review_phase or (phase in design_phases and next_phase != design_review_phase):
+            lines.extend(
+                [
+                    f"{current} -> {alias('user')} : design approval gate",
+                    f"{alias('user')} --> {current} : approved",
+                ]
+            )
+        if phase == plan_review_phase or (phase in plan_phases and next_phase != plan_review_phase):
+            lines.extend(
+                [
+                    f"{current} -> {alias('user')} : plan approval gate",
+                    f"{alias('user')} --> {current} : approved",
+                ]
+            )
+        if phase == truth_sync_phase:
+            lines.extend(
+                [
+                    f"{current} -> {alias('user')} : truth-sync approval gate",
+                    f"{alias('user')} --> {current} : approved",
+                ]
+            )
+
+    if phases[-1] == close_phase:
+        lines.append(
+            f"{current} --> {alias('user')} : close decision + remaining human action"
+        )
+    else:
+        lines.append(f"{current} --> {alias('user')} : result / typed stop")
+    return lines
+
+
+def render_routing_sequence(
+    routing_path: Path,
+    routing_contract_data: dict[str, Any],
+    lifecycle: dict[str, Any],
+    workflow_modes: dict[str, Any],
+) -> str:
+    routing_source = routing_path.relative_to(REPO_ROOT).as_posix()
+    lifecycle_source = LIFECYCLE_CONTRACT.relative_to(REPO_ROOT).as_posix()
+    modes_source = WORKFLOW_MODES_CONTRACT.relative_to(REPO_ROOT).as_posix()
+    routing = routing_contract_data["routing"]
+    host_wrapper = routing_contract_data["host_wrapper"]
+    composition = routing_contract_data["composition"]
+    gate_policy = routing_contract_data["gate_policy"]
+    phase_routes = routing_contract_data["phase_routes"]
+    review_evaluators = routing_contract_data["review_evaluators"]
+    support_routes = routing_contract_data["support_routes"]
+    kernel = lifecycle["lifecycle"]["kernel"]
+    modes = workflow_modes["modes"]
+
+    expected_targets = set(phase_routes.values())
+    missing_kernel_targets = expected_targets - set(kernel)
+    if missing_kernel_targets:
+        raise ValueError(
+            "phase routes target skills outside lifecycle kernel: "
+            + ", ".join(sorted(missing_kernel_targets))
+        )
+
+    lines = [
+        "@startuml",
+        f"' Generated from {routing_source}, {lifecycle_source}, and {modes_source}; do not edit by hand.",
+        "title Harness Request Routing And Lifecycle Sequence",
+        "hide footbox",
+        "autonumber",
+        "skinparam shadowing false",
+        "skinparam sequence {",
+        "  ArrowColor #475569",
+        "  LifeLineBorderColor #64748B",
+        "  ParticipantBackgroundColor #F8FAFC",
+        "  ParticipantBorderColor #475569",
+        "}",
+        "",
+        f'actor "User" as {alias("user")}',
+        f'participant "Host wrapper\\n(user-specific)" as {alias("host-wrapper")}',
+        f'participant "Native skill\\nmatching" as {alias("native-matching")}',
+        f'participant "{ROUTER_ID}\\n(optional router)" as {alias(ROUTER_ID)}',
+        f'participant "Workflow mode\\nselector" as {alias("mode-selector")}',
+        f'participant "Lower-plane\\noverlays" as {alias("overlays")}',
+    ]
+    for workflow_id in kernel:
+        lines.append(f'participant "{workflow_id}" as {alias(workflow_id)}')
+    lines.append(
+        f'participant "review-design / review-plan /\\nreview-implementation" as {alias("review-evaluators")}'
+    )
+    lines.extend(
+        [
+            "",
+            f"{alias('user')} -> {alias('host-wrapper')} : request",
+            f"{alias('host-wrapper')} -> {alias('native-matching')} : request + user/runtime constraints",
+            f"note right of {alias('host-wrapper')}",
+            "  Allowed:",
+        ]
+    )
+    lines.extend(f"  - {value}" for value in host_wrapper["allowed"])
+    lines.append("  Forbidden:")
+    lines.extend(f"  - {value}" for value in host_wrapper["forbidden"])
+    lines.extend(
+        [
+            "end note",
+            "",
+            f"alt explicit skill or confident {routing['default_discovery']}",
+            f"  {alias('native-matching')} -> {alias('native-matching')} : choose direct public skill",
+            f"  note right of {alias('native-matching')} : {ROUTER_ID} bypassed",
+            "else ambiguous multi-stage or explicit routing request",
+            f"  {alias('native-matching')} -> {alias(ROUTER_ID)} : resolve primary intent",
+            f"  {alias(ROUTER_ID)} --> {alias('native-matching')} : public route + mode hint",
+            "end",
+            "",
+            f"{alias('native-matching')} -> {alias('overlays')} : match support routes",
+            f"{alias('overlays')} --> {alias('native-matching')} : policy / method / evidence only",
+            f"note right of {alias('overlays')}",
+        ]
+    )
+    lines.extend(f"  {intent} -> {target}" for intent, target in support_routes.items())
+    lines.extend(
+        [
+            "end note",
+            "",
+            "alt support-only request",
+            f"  {alias('native-matching')} -> {alias('overlays')} : invoke matched support skill",
+            f"  {alias('overlays')} --> {alias('user')} : result or evidence",
+            "else lifecycle request",
+            f"  {alias('native-matching')} -> {alias('mode-selector')} : {routing['mode_selector']}",
+        ]
+    )
+
+    mode_lines: list[str] = []
+    for index, (mode_name, mode) in enumerate(modes.items()):
+        rendered = render_mode_sequence(
+            mode_name,
+            mode,
+            phase_routes,
+            review_evaluators,
+            gate_policy,
+        )
+        if index > 0:
+            rendered[0] = f"else mode: {mode_name}"
+        mode_lines.extend(f"  {line}" for line in rendered)
+    lines.extend(mode_lines)
+    lines.extend(
+        [
+            "  end",
+            "end",
+            "",
+            "legend right",
+            f"  one primary owner = {composition['primary_owner_count']}",
+            f"  lifecycle owner category = {composition['lifecycle_owner_category']}",
+            f"  shared rendering baseline = {composition['rendering_baseline']}",
+            "  lower-plane skills never advance lifecycle state",
+            "endlegend",
+            "@enduml",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def expected_outputs() -> dict[Path, str]:
     contract_path, contract = controller_contract()
+    routing_path, routing = routing_contract()
+    lifecycle = load_toml(LIFECYCLE_CONTRACT)
+    workflow_modes = load_toml(WORKFLOW_MODES_CONTRACT)
     return {
+        ROUTING_SEQUENCE_PATH: render_routing_sequence(
+            routing_path,
+            routing,
+            lifecycle,
+            workflow_modes,
+        ),
         DAG_PATH: render_dag(contract_path, contract),
         REPAIR_PATH: render_repair_loop(contract_path, contract),
     }

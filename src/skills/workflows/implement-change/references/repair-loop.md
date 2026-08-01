@@ -4,6 +4,8 @@
 
 `implement-change` owns mutation, candidate adjudication, continuation, and exit decisions. Review gates and evaluators provide evidence only.
 
+`plan-change` owns the approved logical task graph and semantic execution advice. Workers receive only controller-bound runtime assignments: they cannot delegate, widen a touch set, integrate peer work, adjudicate reviewer candidates, repair findings, or decide continuation. The controller verifies changed paths and task oracles, then converges each completed batch before any dependent task becomes ready.
+
 ## States
 
 1. `implement`: apply the approved task slice.
@@ -12,6 +14,8 @@
 4. `classify`: assign a main-agent disposition to every material candidate.
 5. `diagnose`: form a root-cause hypothesis for the complete accepted batch.
 6. `repair`: fix only accepted findings inside the approved touch set.
+
+Runtime capacity may conservatively serialize approved `allowed` parallel work with recorded evidence. When approved `required` parallel work cannot obtain an equivalent isolated execution boundary, the controller exits with the typed capacity stop; neither fallback changes the approved task topology. `inherit-main` changes worker model and reasoning binding only.
 
 ## Candidate Adjudication
 
