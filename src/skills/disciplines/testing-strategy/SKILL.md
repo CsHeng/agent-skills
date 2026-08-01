@@ -1,6 +1,6 @@
 ---
 name: testing-strategy
-description: "Translate an approved executable-oracle strategy into concrete unit, component, integration, contract, workflow, UI/E2E, performance, runtime, or documentation verification with owned fixtures, environments, CI/release lanes, and failure diagnosis. Use when implementing or reviewing project test placement, documentation checks, coverage gates, test isolation, red-green verification, or CI commands after oracle selection."
+description: "Translate an approved executable-oracle strategy into concrete verification with owned boundaries, evidence classes, fixtures, environments, CI/release lanes, and failure diagnosis. Use when implementing, classifying, or auditing unit, component, integration, contract, workflow, UI/E2E, runtime, documentation, or generated checks; reviewing suite size or duplication; improving test isolation; or choosing CI commands after oracle selection."
 ---
 
 # Testing Strategy
@@ -29,6 +29,26 @@ boundary -> oracle -> fixture/environment -> owning suite -> CI/release lane -> 
 6. Define what a failure means and who repairs it.
 
 A missing verification layer is not repaired by duplicating lower-value unit tests.
+
+## Classification Contract
+
+When classifying or auditing existing checks, read [Test Layering And Suite Audit](references/test-layering-and-suite-audit.md).
+
+Record orthogonal fields rather than forcing one overloaded test label:
+
+- protected boundary and observable invariant
+- primary evidence class
+- real dependency and authority scope
+- oracle type and independent source
+- fast, merge, release, or runtime lane
+- cross-cutting quality tags when relevant
+- owning suite and failure diagnosis owner
+
+Choose the primary evidence class from the highest real boundary exercised, not the framework, filename, directory, mock library, or test length. Evidence class and execution lane are separate decisions; security, compatibility, performance, and resilience are usually cross-cutting tags rather than universal hierarchy levels.
+
+Use the smallest realistic boundary that can prove the invariant. Add higher-boundary evidence only when it proves behavior unavailable below, such as real serialization, persistence, provider interaction, a multi-operation workflow, UI behavior, or deployed conditions.
+
+Test and file length are diagnostic signals, not verdicts. Split when one suite mixes protected boundaries, fixtures, authority levels, execution lanes, or diagnosis owners, or when failures cannot be localized. Keep cohesive table-driven matrices, parser cases, and reviewed golden contracts when their oracle remains independent and readable.
 
 ## Verification Placement
 
@@ -103,6 +123,8 @@ When auditing an existing suite, find tests and checkers that read Markdown and 
 - Keep each test independent and avoid shared mutable state.
 - Use readiness checks instead of fixed sleeps.
 - Isolate databases, ports, caches, temporary files, and environment variables.
+- Build subprocess environments from an explicit allowlist starting with an empty mapping; add only required variables and use temporary homes or caches where needed.
+- Inherit the ambient environment only when ambient-environment behavior is the named subject of the test; document the exception, exclude sensitive variables, and redact failure output.
 - Do not require live credentials, production state, or hardware unless the owning plan explicitly authorizes that evidence.
 
 ## Test Design
@@ -131,10 +153,13 @@ When this skill owns the response, lead with the recommended suite placement and
 - concrete verification order
 - material discard reasons and failure modes
 
+For an existing-suite audit, give every discovered suite an evidence-backed primary disposition: `keep`, `refactor`, `replace`, `delete`, `split`, or `move-lane`. Do not turn a shared motivation into an execution dependency; record cross-repository producer, consumer, ownership, and write-set dependencies separately.
+
 When another lifecycle skill owns the response, contribute these results as a semantic overlay.
 
 ## References
 
+- [Test Layering And Suite Audit](references/test-layering-and-suite-audit.md)
 - [Python Testing Examples](references/examples-python.md)
 - [Go Testing Examples](references/examples-go.md)
 - [Capability-Based CI](references/ci-config.md)
