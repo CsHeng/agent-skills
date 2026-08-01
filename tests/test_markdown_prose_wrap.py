@@ -103,7 +103,7 @@ Outer example.
 ```
 ```
 
-Keep this explicit break.  
+Keep this explicit break.\x20\x20
 Start a separate rendered line.
 
 - Parent
