@@ -173,8 +173,7 @@ The prompt builder reads reference files from the skill's `references/` director
 
 Current: reviewer returns single `lens` string. The schema only has one `lens` field but skills specify 3 concern areas.
 
-Option A (schema change): add `lenses_evaluated` array + per-finding `lens` field.
-Option B (prompt-only): instruct reviewer to set `lens` to comma-joined list, validate coverage in `validate_reviewer_output()`.
+Option A (schema change): add `lenses_evaluated` array + per-finding `lens` field. Option B (prompt-only): instruct reviewer to set `lens` to comma-joined list, validate coverage in `validate_reviewer_output()`.
 
 Recommend Option B first (no schema break), upgrade to A later if eval shows lens coverage gaps.
 

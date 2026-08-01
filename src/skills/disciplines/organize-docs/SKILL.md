@@ -40,6 +40,8 @@ Write or update long-lived project truth after explicit user request or explicit
 - Prefer context-appropriate relative file paths and command examples over absolute paths in stable docs.
 - For Git projects, when a repo root needs to be made explicit, prefer `cd "$(git rev-parse --show-toplevel)"` before relative commands.
 - Do not hard-wrap Markdown prose to a fixed column. Keep each natural paragraph or list item on one physical line unless Markdown syntax, tables, code blocks, frontmatter, or intentional hard breaks require separate lines.
+- Keep each searchable statement or contract on one physical line so `rg` and `grep` can match it without reconstructing adjacent lines.
+- When a natural line becomes unwieldy, rewrite the content into multiple complete paragraphs, bullets, numbered steps, headings, or table rows at semantic boundaries. Do not insert fixed-column newlines inside one paragraph or list item.
 
 ## Workflow
 
@@ -50,8 +52,35 @@ Write or update long-lived project truth after explicit user request or explicit
 5. Align canonical terminology across stable docs, path names, test names, and code references when the task is terminology cleanup.
 6. Move or summarize content into stable docs domains without treating plans, drafts, or other stage artifacts as default truth.
 7. When explicitly consolidating plan artifacts, inventory all source plan roots, choose domain-based target directories under the canonical stage root, move files with date-first names, and update references after the move.
-8. Normalize Markdown prose wrapping when touching docs: unwrap fixed-width paragraphs and list-item continuations across stable, stage, and archived docs that are in the requested scope.
+8. Normalize Markdown prose wrapping with the bundled processing workflow: unwrap fixed-width paragraphs and list-item continuations across stable, stage, and archived docs that are in the requested scope, then decompose genuinely over-broad content at semantic boundaries.
 9. Update stable docs only after explicit user approval or explicit drift follow-up from `analyze-project`.
+
+## Markdown Prose Processing
+
+Use the bundled normalizer instead of recreating a temporary parser. It scans Git-visible Markdown, including tracked and untracked files while excluding ignored/cache material and symlinks.
+
+Resolve the installed tool and target repository once:
+
+```bash
+ORGANIZE_DOCS_SKILL_ROOT="/absolute/path/to/organize-docs"
+MARKDOWN_PROSE_TOOL="$(realpath "$ORGANIZE_DOCS_SKILL_ROOT/scripts/normalize-markdown-prose.py")"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+```
+
+Run the workflow in order:
+
+```bash
+python3 "$MARKDOWN_PROSE_TOOL" --root "$REPO_ROOT" --mode count
+python3 "$MARKDOWN_PROSE_TOOL" --root "$REPO_ROOT" --mode preview
+python3 "$MARKDOWN_PROSE_TOOL" --root "$REPO_ROOT" --mode write
+python3 "$MARKDOWN_PROSE_TOOL" --root "$REPO_ROOT" --mode check
+```
+
+- `count` establishes scope without dumping candidates.
+- `preview` shows bounded `current || continuation` pairs without mutation.
+- `write` removes only continuation newlines and aborts if non-whitespace Markdown prose content or fence, heading, table, or list structure changes.
+- `check` fails if any natural paragraph, list item, or blockquote still spans physical lines.
+- After mechanical normalization, inspect genuinely long lines. Split unrelated claims into real Markdown blocks with blank lines or list markers; never reintroduce column-based wrapping.
 
 ## Validation
 
@@ -66,4 +95,4 @@ bash "$CHECK_DOC_BOUNDARIES"
 
 `ORGANIZE_DOCS_SKILL_ROOT` is the directory that contains this `SKILL.md`. Do not use a target-repository relative path for bundled skill scripts; target repositories do not own them.
 
-The checker also rejects fixed-width hard-wrapped Markdown prose in Git-tracked `.md` files. It intentionally skips symlink files, fenced code blocks, frontmatter, Markdown tables, headings, reference definitions, HTML-only lines, thematic breaks, and indented code blocks.
+The checker calls the same bundled normalizer in `check` mode, so detection and rewriting cannot drift. It preserves symlinks, fenced and indented code blocks, frontmatter, Markdown tables, headings, reference definitions, HTML-only lines, thematic breaks, and intentional hard breaks.

@@ -87,8 +87,7 @@ Use `rg --pcre2` before patterns with lookaround or backreferences. If PCRE2 is 
 
 ### Step 3: EXECUTE (Make the Change)
 
-Execute changes only after COUNT and PREVIEW confirm correctness and scope.
-Prefer structured refactors (`ast-grep`) over regex when available.
+Execute changes only after COUNT and PREVIEW confirm correctness and scope. Prefer structured refactors (`ast-grep`) over regex when available.
 
 ## Output Control
 

@@ -155,9 +155,7 @@ Each ledger entry should carry at least:
 - `completed_at`
 - `notes`
 
-The approved plan remains the immutable baseline.
-The task ledger is the mutable progress state.
-Execution must not mutate the approved plan artifact merely to track progress.
+The approved plan remains the immutable baseline. The task ledger is the mutable progress state. Execution must not mutate the approved plan artifact merely to track progress.
 
 ### `execution_result`
 
@@ -234,8 +232,7 @@ Rules:
 - If the user chooses worktree isolation, perform that transition before task execution starts.
 - If the user declines, record that decision for the current run and continue without repeating the prompt mid-plan.
 
-The worktree reminder is a start-of-execution preflight only.
-It is not permission to keep interrupting execution after the plan has started.
+The worktree reminder is a start-of-execution preflight only. It is not permission to keep interrupting execution after the plan has started.
 
 ## Execute Loop
 
@@ -263,8 +260,7 @@ The harness must not ask whether to continue while:
 - no human gate is required
 - no rollback or re-plan condition has been triggered
 
-That behavior is not optional style.
-It is the semantic consequence of treating the approved plan as the execution unit.
+That behavior is not optional style. It is the semantic consequence of treating the approved plan as the execution unit.
 
 ## Stop Conditions
 
@@ -308,8 +304,7 @@ That means:
 
 all stay in the main execution loop rather than being delegated to `repair-review`.
 
-`review-code-impl --repair-review` may remain available, but only as an optional bounded accelerator inside the broader `execute-change` lifecycle.
-It must not become the sovereign execution loop.
+`review-code-impl --repair-review` may remain available, but only as an optional bounded accelerator inside the broader `execute-change` lifecycle. It must not become the sovereign execution loop.
 
 ### Task Review
 
@@ -351,8 +346,7 @@ It is not responsible for:
 - deciding whether the plan is complete
 - deciding whether execution should continue overall
 
-If the top-level execute loop is reliable, `repair-review` becomes optional rather than foundational.
-That is acceptable and does not weaken the design.
+If the top-level execute loop is reliable, `repair-review` becomes optional rather than foundational. That is acceptable and does not weaken the design.
 
 ### Escalated Task Review
 
@@ -433,13 +427,11 @@ The main execution loop then decides:
 - escalate to rollback or re-plan
 - stop for a human gate
 
-Human involvement is required only when a true manual gate has been reached.
-Successful bounded repair batches do not require a new human confirmation by default.
+Human involvement is required only when a true manual gate has been reached. Successful bounded repair batches do not require a new human confirmation by default.
 
 ## Failure And Rollback Semantics
 
-Task-level looping does not replace rollback.
-It makes rollback more accurate.
+Task-level looping does not replace rollback. It makes rollback more accurate.
 
 The harness should treat these as immediate upward stop conditions:
 
@@ -469,8 +461,7 @@ At minimum, execution updates should report:
 - current review/verification state
 - whether the run is still auto-continuing or waiting at a real gate
 
-This is not a separate authority layer.
-It is a user-visible projection of the task ledger.
+This is not a separate authority layer. It is a user-visible projection of the task ledger.
 
 The same ledger can drive:
 

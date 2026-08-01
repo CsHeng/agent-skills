@@ -23,13 +23,11 @@
 - `skills/_review-libs/smoke-test/fixtures/sample-plan.md` New fixture plan that references the sample design and narrows the implementation slice.
 - `skills/_review-libs/smoke-test/test-artifact-dag.sh` New deterministic shell test for markdown parsing, subset enforcement, and schema shape checks.
 - `skills/_review-libs/smoke-test/smoke-cross-model-review.sh` Point plan smoke tests at the new sample plan and keep code-impl smoke constrained to the reviewed files.
-- `commands/review-plan.md`
-  Document the new prevalidation contract: `design_ref` required, design must expose `impl_file_refs`, and plan refs must stay inside the design ceiling.
+- `commands/review-plan.md` Document the new prevalidation contract: `design_ref` required, design must expose `impl_file_refs`, and plan refs must stay inside the design ceiling.
 - `commands/review-code-impl.md` Document design-first evaluation order, allowed-touch filtering, and manual stop when findings are outside the current DAG slice.
 - `skills/review-plan/SKILL.md` Update plan-review expectations to require upstream design linkage and constrained implementation refs.
 - `skills/review-code-impl/SKILL.md` Update code review concerns and repair loop policy around `allowed_touch_set` and non-repairable finding classes.
-- `skills/review-design/SKILL.md`
-  Document the new design-side contract: implementation-surface refs are required.
+- `skills/review-design/SKILL.md` Document the new design-side contract: implementation-surface refs are required.
 - `skills/review-plan/references/workflow-details.md` Align plan workflow with design loading and prevalidation.
 - `skills/review-code-impl/references/workflow-details.md` Align code-review workflow with design-first evaluation and repair fences.
 - `skills/review-design/references/workflow-details.md` Require design docs to declare implementation surface refs.

@@ -35,10 +35,8 @@ curl -sL "${FETCH_URL}"
 curl -sL -H "Authorization: Bearer ${JINA_API_KEY}" "${FETCH_URL}"
 ```
 
-Handles JS rendering and X/Twitter. Zero local dependencies.
-Do not prepend `https://r.jina.ai/` to a URL that is already a Jina Reader URL.
-If Jina returns an error page, including `451` access blocks, continue to the fallback
-instead of retrying with nested Reader URLs.
+Handles JS rendering and X/Twitter. Zero local dependencies. Do not prepend `https://r.jina.ai/` to a URL that is already a Jina Reader URL.
+If Jina returns an error page, including `451` access blocks, continue to the fallback instead of retrying with nested Reader URLs.
 
 ### Step 2: Firecrawl (fallback)
 

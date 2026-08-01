@@ -11,8 +11,7 @@ Agent memory files are staging evidence, not long-term truth. Prefer extracting 
 
 ## Scope
 
-Default scope is the current Git repository. If no Git root exists, use the current working directory. Use all-history scope only when the user explicitly asks to search all local agent homes.
-When the user names additional agent homes, include those homes explicitly instead of assuming only the current host home.
+Default scope is the current Git repository. If no Git root exists, use the current working directory. Use all-history scope only when the user explicitly asks to search all local agent homes. When the user names additional agent homes, include those homes explicitly instead of assuming only the current host home.
 
 Read these sources when available:
 - Codex sessions: `~/.codex/sessions/**/*.jsonl`
@@ -95,11 +94,7 @@ python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py 
   --skill-usage-before-date YYYY-MM-DD
 ```
 
-The script is read-only and accepts only named parameters.
-`--codex-home`, `--claude-home`, and `--grok-home` are repeatable; comma-separated values are also accepted.
-Default sources include `grok`. Grok workspace directories under `sessions/` are URL-encoded absolute paths; scope `current` matches those decoded paths to `--repo-root`.
-Skill usage reports count explicit user mentions, assistant references, and tool calls that name the requested prefix or read files under the requested skill root. They ignore injected long prompt, instruction, and skill inventory blocks so available-skill metadata does not masquerade as usage.
-Use `--skill-usage-include-output` only when tool output itself is the evidence being mined; it is off by default because directory listings and inventory dumps can inflate usage counts.
+The script is read-only and accepts only named parameters. `--codex-home`, `--claude-home`, and `--grok-home` are repeatable; comma-separated values are also accepted. Default sources include `grok`. Grok workspace directories under `sessions/` are URL-encoded absolute paths; scope `current` matches those decoded paths to `--repo-root`. Skill usage reports count explicit user mentions, assistant references, and tool calls that name the requested prefix or read files under the requested skill root. They ignore injected long prompt, instruction, and skill inventory blocks so available-skill metadata does not masquerade as usage. Use `--skill-usage-include-output` only when tool output itself is the evidence being mined; it is off by default because directory listings and inventory dumps can inflate usage counts.
 
 ## Output Rules
 
