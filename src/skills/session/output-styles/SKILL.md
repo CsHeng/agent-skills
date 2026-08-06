@@ -37,6 +37,16 @@ Select response shape without depending on a vendor-specific output-style featur
 - For planning summaries, use `C*` for confirmation clearance, `E*` for continuous execution ranges, and `X*` for runtime contingencies.
 - Use bullets instead of numbered lists when item order is not semantically important.
 
+## Language And Terminology
+
+- Match the response language to the user's input unless the user requests another language. When editing files, preserve file-local language and terminology.
+- Use plain, direct sentences. Prefer active voice when the actor matters.
+- Use imperative sentences for procedure steps and commands, not for analysis or explanation. Put prerequisites, conditions, and warnings before the actions they constrain.
+- Use one canonical project term for each concept. Read task-relevant applicable repository policy and stable project truth before introducing terms; do not invent synonyms for defined terms or scan context files without a task-specific reason.
+- Avoid unexplained jargon, vague references, and ambiguous noun clusters. When an unfamiliar technical term is necessary for precision, define it on first use.
+- Preserve exact professional terms, code identifiers, schemas, commands, and technical details when simplification would change meaning.
+- Use controlled-language principles as inspiration when they improve clarity. Treat strict standards such as ASD-STE100 as task-specific constraints, claim compliance only when the user explicitly requires it and the output is validated against the applicable standard, and do not enforce a fixed reading grade by default.
+
 ## References
 
 - Read `references/terse.md` for default concise answers.
