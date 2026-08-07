@@ -2,17 +2,14 @@
 
 Dual-target Claude Code and Codex plugin skills organized around a sovereign harness kernel, with supporting truth, evaluation, policy, and tooling planes underneath it.
 
+New here? See `docs/quickstart.md` for install verification and a first end-to-end change walkthrough.
+
 For AI-facing repository rules and the docs truth boundary, see `AGENTS.md`.
 
 Human-facing workflow shorthand in this repository is:
-- design
-- plan
-- execute
-
-The underlying sovereign kernel still uses:
-- `design-change`
-- `plan-change`
-- `implement-change`
+- design → `/design-change`
+- plan → `/plan-change`
+- execute → `/implement-change`
 
 ## Source And Install Surfaces
 
@@ -85,53 +82,22 @@ Claude Code plugin command surface mirrors the same seven entries:
 
 These commands are Claude plugin-local entry points. Codex can consume the generated root `skills/` inventory through `.codex-plugin/plugin.json` when installed. Local environments may also expose the same generated tree through agent-specific skill paths such as `~/.agents/skills/coding`.
 
-## Lower-Plane Skills
+## Skill Planes
 
-### Truth Plane
-- `analyze-project`: Read-only project explanation and drift detection with selective terse output by default and a comprehensive truth-audit shape only when explicitly requested.
-- `organize-docs`: Stable-doc maintenance, docs truth boundary policy, and audience separation between `README.md` and `AGENTS.md`.
-- `skill-miner`: Read-only mining of Codex/Claude/Grok sessions, memory files, and project context docs to recommend generic or repo-local skill improvements; its OpenAI agent policy disables implicit invocation.
+Lower-plane skills stay available as components the kernel can call, not as competing top-level authorities. Only workflow skills own lifecycle state; every other plane contributes methods, evidence, or policy.
 
-### Evaluation Plane
-- `review-design`: Bounded design review against approved goals, architecture boundaries, and implementation surface.
-- `review-plan`: Bounded plan review against the approved design, executable DAG, oracle, recovery policy, and readiness.
-- `review-implementation`: Read-only diff review with explicit change causality; returns candidate evidence without owning adjudication or repair.
+![Skill planes overview](docs/architecture/generated/skill-planes.svg)
 
-### Policy Plane
-- `python-guidelines`: Python language/tooling standards (uv, ruff, typing, pytest, service/script patterns).
-- `go-guidelines`: Shared Go language/tooling standards with separate CLI-tool and API-service architecture, library, test, and delivery profiles.
-- `shell-guidelines`: Language policy for all Shell code, including safe variable names, target-matched interpreters, strict mode, quoting, and ShellCheck.
-- `lua-guidelines`: Lua language standards for scripts/config + validation (luac, selene).
-- `powershell-guidelines`: PowerShell 7 scripting standards (strict mode, PSScriptAnalyzer, cross-platform).
+| Plane | Role | Examples |
+|---|---|---|
+| Session | Optional routing, session boundaries, response style | `use-coding-skills`, `output-styles` |
+| Evaluation | Read-only review evaluators coordinated by `review-change` | `review-design`, `review-plan`, `review-implementation` |
+| Discipline | Reusable engineering methods and decision trees | `architecture-patterns`, `clean-architecture`, `testing-strategy`, `language-decision-tree`, `tool-decision-tree`, `skill-miner` |
+| Policy | Language, security, quality, and logging rules | `python-guidelines`, `go-guidelines`, `shell-guidelines`, `security-guardrails`, `sops-age-guardrails`, `development-standards` |
+| Tool | Narrow tool adapters and operational helpers | `web-fetch`, `docker-multiarch-build`, `codex-session-recovery`, `smart-commit` |
+| Manual tools | Explicit user request only, never implicit | `git-worktrees`, `smart-squash` |
 
-### Decision Trees
-- `language-decision-tree`: Design and planning selection for new or migrated persisted implementation boundaries; ordinary existing-language edits and ad hoc commands are excluded.
-- `tool-decision-tree`: Agent ad hoc command and tool composition with direct-tool preference, reviewable scratch-script fallback, and COUNT→PREVIEW→EXECUTE safety.
-
-### Architecture & Quality
-- `architecture-patterns`: Demand-first architecture selection with smallest-sufficient defaults, explicit lifecycle economics, observable upgrade triggers, and on-demand pattern/theory references.
-- `clean-architecture`: Layering boundaries and dependency direction rules.
-- `development-standards`: Cross-language smallest-durable implementation, scoped-edit, compatibility, dependency, temporary-mechanism, maintainability, CLI, and review policy.
-- `quality-standards`: Quality metrics and continuous improvement guidance.
-- `api-contract-strategy`: Structured API contract authoring, compatibility, generated projections, workflow runners, provider/consumer boundaries, and incremental legacy adoption.
-- `executable-oracle-architecture-selector`: Selects executable oracle strategy for architecture, plan readiness, agent-assisted implementation, and runtime feedback loops.
-- `testing-strategy`: Maps executable behavior and documentation properties to fitting verification, avoiding unit-test snapshots of natural-language Markdown.
-
-### Security & Logging
-- `security-guardrails`: Security implementation guardrails (credentials, TLS/CORS, input validation).
-- `security-logging`: Security-focused logging and validation conventions (audit trails, tamper-evident).
-- `logging-standards`: Structured logging standards and observability (format, levels, correlation).
-- `error-patterns`: Error handling patterns and reliability conventions (circuit breaker, retry, cleanup).
-
-### Infrastructure & Tools
-- `infrastructure-triage`: Infrastructure, network, proxy, tunnel, container, GitOps, IaC, Secrets, Auth, and automation triage.
-- `codex-session-recovery`: Audit and merge session JSONL across Codex homes without touching SQLite or other home state.
-- `docker-multiarch-build`: Multi-arch Docker build patterns (buildx, multi-stage, amd64/arm64).
-- `web-fetch`: Web content fetching and processing (Jina Reader, Firecrawl fallback).
-
-### Git & Commit Workflow
-- `smart-commit`: Intent-gated Git workflow that may be model-selected only when the user explicitly asks to group current diffs by business domain or purpose and create focused local commits; it then executes eligible local commits automatically after exclusion checks.
-- `smart-squash`: Cleanup unpushed commit history by analyzing and grouping commits by business logic.
+The authoritative inventory with roles, permissions, and install targets is `contracts/skills.toml`; the rendered map above is generated from it by `scripts/generate-workflow-diagrams.py`. Internal runtime support (`_harness-libs`) is intentionally not user-facing. Each skill's own `SKILL.md` under `src/skills/` is the deep-dive entry for how that skill works.
 
 ## Docs
 
@@ -140,7 +106,7 @@ These commands are Claude plugin-local entry points. Codex can consume the gener
 - Docs directory search guidance and history notes live in `docs/README.md`.
 - Stage artifacts live under `docs/plans/` and are excluded from default docs search by `docs/.ignore`.
 - Architecture and maintenance contracts live under `docs/architecture/`.
-- The canonical workflow maintenance view is `docs/architecture/workflow-orchestration.md`; its full harness routing sequence, implementation DAG, and repair-loop PlantUML sources are generated under `docs/architecture/diagrams/`.
+- The canonical workflow maintenance view is `docs/architecture/workflow-orchestration.md`; rendered SVG views live under `docs/architecture/generated/` for direct human viewing, with generated PlantUML sources under `docs/architecture/diagrams/`.
 
 ## Review Defaults
 
@@ -207,3 +173,36 @@ Codex manifest validation:
 ```bash
 uvx --with pyyaml python "$HOME/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py" .
 ```
+
+### Verify
+
+```bash
+claude plugin list
+```
+
+Expect `coding@csheng` with `Status: enabled`. **Restart Claude Code after install or update** to apply changes; skills and commands are loaded at session start.
+
+### Update After Local Changes
+
+This marketplace installs from the local directory; Claude does not fetch a remote package. After pulling or editing this repository:
+
+```bash
+claude plugin marketplace update csheng
+claude plugin update coding@csheng
+```
+
+Then restart Claude Code. During pre-release development, uninstall/reinstall also works without a version bump:
+
+```bash
+claude plugin uninstall coding@csheng
+claude plugin install coding@csheng
+```
+
+Codex update when the plugin install surface is in use:
+
+```bash
+uvx --with pyyaml python "$HOME/.codex/skills/.system/plugin-creator/scripts/update_plugin_cachebuster.py" .
+codex plugin add coding@csheng
+```
+
+Start a new Codex thread to pick up refreshed plugin skills and metadata. Workstations using symlink exposure through `~/.agents/skills/coding` only need to update this repository and start a new agent session.

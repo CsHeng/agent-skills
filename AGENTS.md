@@ -35,7 +35,8 @@ Current plugin identity:
 - `src/skills/_internal/_harness-libs/artifact-dag.sh`: design/plan linkage, implementation-surface, and allowed-touch-set enforcement shared by plan, execution, and truth-sync runners
 - `commands/`: plugin command docs
 - `docs/architecture/workflow-orchestration.md`: canonical maintenance view of lifecycle routing, the installed implementation DAG, and controller-owned repair
-- `docs/architecture/diagrams/`: generated PlantUML views of full harness routing and the controller-local workflow contract; do not edit by hand
+- `docs/architecture/diagrams/`: generated PlantUML views of full harness routing, the skill planes, and the controller-local workflow contract; do not edit by hand
+- `docs/architecture/generated/`: tracked SVG renderings of those diagrams for human-facing docs; regenerated together with the PlantUML sources by `scripts/generate-workflow-diagrams.py`
 - `hooks/`: post-edit validation hooks
 - `install.sh`: registers the local marketplace in Claude settings
 - `install-codex.sh`: registers this repository as a Codex local marketplace and installs `coding@csheng`
@@ -151,6 +152,7 @@ Key properties:
 
 Required tools for validation and plugin management:
 - `jq` (JSON linting)
+- `plantuml` (PlantUML syntax checks and tracked SVG diagram rendering)
 - GNU-compatible `realpath` with `--relative-to` support (coreutils on macOS)
 - GNU/Homebrew Bash 4 or newer (runtime namerefs, associative arrays, `mapfile`, and syntax checks)
 - `claude` CLI with plugin support
@@ -166,6 +168,8 @@ python3 scripts/flatten-skills.py --target root-flat
 python3 scripts/generate-workflow-diagrams.py
 bash scripts/check.sh
 ```
+
+`generate-workflow-diagrams.py` refreshes both the PlantUML sources and their tracked SVG renderings; `--check` (also run by `check.sh`) fails when either is stale. Install the optional pre-commit hook with `bash hooks/install-git-hooks.sh` to regenerate and stage diagrams automatically when their contract or generator inputs are part of a commit.
 
 The aggregate check generates and validates Claude and Codex install surfaces in a temporary directory. Generate `.dist/` explicitly only when a local external surface is needed.
 
