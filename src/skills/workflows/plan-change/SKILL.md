@@ -19,6 +19,30 @@ Compile an approved change into an execution plan the harness can govern.
 - the user only wants code execution against an already approved plan
 - the task is only review, truth sync, or close
 
+## Bundled Runtime
+
+Resolve both installed helpers relative to this `SKILL.md` before changing into the target repository. `SKILL_ROOT` is assigned by the agent to the activated skill directory; do not assume the host exported it:
+
+```bash
+SKILL_ROOT="/absolute/path/to/plan-change"
+DESIGN_RUNNER="$(realpath "$SKILL_ROOT/scripts/harness/design-runner.sh")"
+PLAN_RUNNER="$(realpath "$SKILL_ROOT/scripts/harness/plan-runner.sh")"
+[[ -f "$DESIGN_RUNNER" && -f "$PLAN_RUNNER" ]] || exit 1
+```
+
+Machine-check the upstream design before planning, then validate the plan and its approval state:
+
+```bash
+bash "$DESIGN_RUNNER" validate "<design-file>"
+[[ "$(bash "$DESIGN_RUNNER" approval-status "<design-file>")" == "approved" ]] || exit 1
+bash "$PLAN_RUNNER" entry-phase
+bash "$PLAN_RUNNER" default-path "<design-file>"
+bash "$PLAN_RUNNER" validate "<plan-file>"
+bash "$PLAN_RUNNER" approval-status "<plan-file>"
+```
+
+The plan starts with `approval_status: pending`; only explicit human approval changes it to `approved` and authorizes `implement-change`.
+
 ## Workflow
 
 1. Load the approved design or boundary decision.
@@ -28,7 +52,7 @@ Compile an approved change into an execution plan the harness can govern.
 5. Define touched files, executable oracles, verification commands, review depth, and failure policy for each task.
 6. For each task, declare whether parallel execution and delegation are forbidden, allowed, or preferred/required as applicable; name and dependency-freeze every parallel group.
 7. Validate the plan artifact before review.
-8. Route the artifact through mandatory plan review and bounded in-scope autofix when needed.
+8. Route the artifact through mandatory plan review owned by `review-change` and bounded in-scope autofix when needed.
 9. Hold the artifact at `approval_status: pending` until explicit human plan approval.
 10. In the final planning summary, show whether execution can proceed continuously after approval or which confirmation IDs still need answers.
 11. Stop after explicit human plan approval and hand off to `implement-change`.

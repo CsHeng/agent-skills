@@ -7,11 +7,12 @@ This repository keeps reusable coding-agent behavior in a structured source tree
 - `src/skills/**/SKILL.md` is the source of truth for model-facing skill behavior.
 - `contracts/skills.toml` is the source of truth for skill exposure, category, lifecycle ownership, invocation policy, mutation permission, runtime-support exceptions, and pointers to install-required skill-local runtime contracts.
 - `src/skills/session/use-coding-skills/references/routing.toml` is the install-required source for discovery, phase ownership, support routes, review evaluators, composition, and the host-wrapper boundary.
+- `src/runtime/harness/` is the non-discoverable source for deterministic lifecycle, artifact-DAG, task-ledger, evaluation, recovery, truth-sync, and close runtime support.
 - `skills/` is tracked generated root-flat compatibility output. Do not edit it directly.
 - `.dist/claude/` and `.dist/codex/` are ignored, reproducible target-specific flat skill surfaces generated only when needed.
 - `skills.index.json` is generated from `contracts/skills.toml`.
 - `docs/architecture/diagrams/*.puml` are generated human views of the installed harness routing and implementation workflow contracts.
-- `skills/_harness-libs/` is generated root-flat deterministic runtime support for lifecycle validation, artifact-DAG enforcement, task ledgers, evaluation, evidence-based recovery routing, truth sync, and close; it is not a user-routed workflow entry.
+- Runner-owning generated skills carry a current `scripts/harness/` bundle. Runtime support is never exposed as a separate public skill.
 
 Regenerate generated surfaces with:
 
@@ -41,6 +42,8 @@ Any skill addition, deletion, rename, or category change must update:
 Do not hand-edit generated PlantUML files. Update the owning routing, lifecycle, workflow-mode, or controller-local contract, regenerate the diagrams, and review the resulting architecture view. See `workflow-orchestration.md` for truth precedence and diagram scope.
 
 `bash scripts/check.sh` generates Claude and Codex surfaces in a temporary directory and validates them there. Generate `.dist/` explicitly only for local packaging or external-consumer inspection; it must stay ignored and untracked.
+
+Claude Code and Codex plugin marketplaces are maintained repository surfaces. Optional `npx skills` use by other agents is consumer-managed guidance only: repository checks do not select targets, inspect destinations or duplicate exposure, guarantee coexistence, or own installation lifecycle operations.
 
 ## Lifecycle Authority
 

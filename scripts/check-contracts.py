@@ -6,10 +6,10 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-import tomllib
 from pathlib import Path
 from typing import Any
 
+import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = REPO_ROOT / "contracts" / "skills.toml"
@@ -26,6 +26,289 @@ VALID_CATEGORIES = {
 }
 EXTERNAL_TARGETS = {"claude", "codex"}
 VALID_WORKFLOW_ROLES = {"controller", "gate", "evaluator", "policy", "oracle", "support"}
+RUNTIME_BUNDLES = {"harness": REPO_ROOT / "src/runtime/harness"}
+EXPECTED_RUNTIME_OWNERS = {
+    "close-change",
+    "design-change",
+    "implement-change",
+    "plan-change",
+    "review-change",
+    "sync-truth",
+}
+
+
+def validate_distribution_contract(repo_root: Path = REPO_ROOT) -> list[str]:
+    target_path = repo_root / "contracts" / "install-targets.toml"
+    try:
+        with target_path.open("rb") as handle:
+            data = tomllib.load(handle)
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        return [f"invalid install target contract: {exc}"]
+
+    distribution = data.get("distribution")
+    targets = data.get("targets")
+    if not isinstance(distribution, dict):
+        return ["install target contract must contain [distribution]"]
+    if not isinstance(targets, dict):
+        return ["install target contract must contain [targets.*] entries"]
+
+    errors: list[str] = []
+    expected = {
+        "provider_plugin_targets": ["claude", "codex"],
+        "shared_payload_target": "root-flat",
+        "long_tail_cli": "npx skills@latest",
+        "long_tail_policy": "advisory",
+        "long_tail_owner": "consumer",
+        "enforce_destinations": False,
+        "detect_duplicates": False,
+        "coexistence_guaranteed": False,
+        "public_name_prefix": "",
+    }
+    for field, expected_value in expected.items():
+        if distribution.get(field) != expected_value:
+            errors.append(
+                f"distribution.{field} must be {expected_value!r}; "
+                f"found {distribution.get(field)!r}"
+            )
+    unexpected_fields = sorted(set(distribution) - set(expected))
+    if unexpected_fields:
+        errors.append(
+            "distribution contract contains unsupported enforcement fields: "
+            + ", ".join(unexpected_fields)
+        )
+
+    required_targets = {"claude", "codex", "root-flat"}
+    missing_targets = sorted(required_targets - set(targets))
+    if missing_targets:
+        errors.append(
+            "install target contract is missing retained targets: "
+            + ", ".join(missing_targets)
+        )
+    for target_name in required_targets:
+        target = targets.get(target_name)
+        if (
+            isinstance(target, dict)
+            and target.get("include_internal_runtime_support") is not False
+        ):
+            errors.append(
+                f"targets.{target_name}.include_internal_runtime_support must be false"
+            )
+    return errors
+
+
+def validate_semantic_contracts(
+    contract: dict[str, Any], repo_root: Path = REPO_ROOT
+) -> list[str]:
+    skills = contract.get("skills")
+    if not isinstance(skills, dict):
+        return ["skill contract must contain [skills.*] entries"]
+
+    errors: list[str] = []
+    public_entries = {
+        entry.get("public_id"): entry
+        for entry in skills.values()
+        if isinstance(entry, dict) and isinstance(entry.get("public_id"), str)
+    }
+    adjacency: dict[str, set[str]] = {
+        public_id: set() for public_id in public_entries
+    }
+
+    for skill_name, entry in sorted(skills.items()):
+        public_id = entry.get("public_id")
+        requirements = entry.get("semantic_requires", [])
+        if not isinstance(public_id, str):
+            continue
+        if not isinstance(requirements, list) or not all(
+            isinstance(target, str) and target for target in requirements
+        ):
+            errors.append(
+                f"{skill_name}: semantic_requires must be an array of non-empty strings"
+            )
+            continue
+        if len(requirements) != len(set(requirements)):
+            errors.append(f"{skill_name}: semantic_requires contains duplicates")
+        for target in requirements:
+            if target == public_id:
+                errors.append(f"{skill_name}: semantic_requires cannot reference itself")
+            elif target not in public_entries:
+                errors.append(
+                    f"{skill_name}: semantic_requires references unknown skill: {target}"
+                )
+            else:
+                adjacency[public_id].add(target)
+        if entry.get("category") == "review-component" and requirements:
+            errors.append(
+                f"{skill_name}: review-component evaluators cannot invoke semantic dependencies"
+            )
+        if "use-coding-skills" in requirements:
+            errors.append(
+                f"{skill_name}: public skills cannot depend on the optional session router"
+            )
+
+    cycle = _runtime_contract_cycle(adjacency)
+    if cycle:
+        errors.append(
+            "semantic dependency graph contains a cycle: " + " -> ".join(cycle)
+        )
+
+    semantic_install = contract.get("semantic_install")
+    if not isinstance(semantic_install, dict):
+        errors.append("skill contract must contain [semantic_install]")
+    else:
+        expected_install = {
+            "dependency_resolution": "consumer",
+            "selective_install_requires_transitive_closure": True,
+            "complete_profile": "sovereign-harness",
+        }
+        for field, expected_value in expected_install.items():
+            if semantic_install.get(field) != expected_value:
+                errors.append(
+                    f"semantic_install.{field} must be {expected_value!r}; "
+                    f"found {semantic_install.get(field)!r}"
+                )
+
+    profiles = contract.get("profiles")
+    profile = profiles.get("sovereign-harness") if isinstance(profiles, dict) else None
+    if not isinstance(profile, dict) or profile.get("selection") != "all-public":
+        errors.append(
+            "profiles.sovereign-harness.selection must be 'all-public'"
+        )
+
+    for skill_name, entry in sorted(skills.items()):
+        routing_contract = entry.get("routing_contract")
+        source = entry.get("source")
+        public_id = entry.get("public_id")
+        if not routing_contract or not isinstance(source, str) or not isinstance(public_id, str):
+            continue
+        routing_path = repo_root / source / routing_contract
+        try:
+            with routing_path.open("rb") as handle:
+                routing = tomllib.load(handle)
+        except (OSError, tomllib.TOMLDecodeError):
+            continue
+        expected_targets: set[str] = set()
+        for table_name in ("phase_routes", "review_evaluators", "support_routes"):
+            table = routing.get(table_name)
+            if isinstance(table, dict):
+                expected_targets.update(
+                    target for target in table.values() if isinstance(target, str)
+                )
+        composition = routing.get("composition")
+        if isinstance(composition, dict):
+            rendering_baseline = composition.get("rendering_baseline")
+            if isinstance(rendering_baseline, str):
+                expected_targets.add(rendering_baseline)
+        expected_targets.discard(public_id)
+        declared_targets = adjacency.get(public_id, set())
+        if declared_targets != expected_targets:
+            errors.append(
+                f"{skill_name}: semantic_requires must match routing targets; "
+                f"expected={sorted(expected_targets)} actual={sorted(declared_targets)}"
+            )
+
+    for skill_name, entry in sorted(skills.items()):
+        runtime_contract = entry.get("runtime_contract")
+        source = entry.get("source")
+        if not runtime_contract or not isinstance(source, str):
+            continue
+        contract_path = repo_root / source / runtime_contract
+        try:
+            with contract_path.open("rb") as handle:
+                runtime = tomllib.load(handle)
+        except (OSError, tomllib.TOMLDecodeError):
+            continue
+        for edge in runtime.get("edges", []):
+            if not isinstance(edge, dict):
+                continue
+            source_id = edge.get("from")
+            target_id = edge.get("to")
+            if (
+                isinstance(source_id, str)
+                and isinstance(target_id, str)
+                and target_id not in adjacency.get(source_id, set())
+            ):
+                errors.append(
+                    f"{skill_name}: runtime edge lacks semantic_requires declaration: "
+                    f"{source_id} -> {target_id}"
+                )
+
+    return errors
+
+
+def validate_command_retirement_contract(
+    contract: dict[str, Any], repo_root: Path = REPO_ROOT
+) -> list[str]:
+    retirement = contract.get("command_retirement")
+    if not isinstance(retirement, dict):
+        return ["skill contract must contain [command_retirement]"]
+
+    errors: list[str] = []
+    archive_destination = retirement.get("archive_destination")
+    if archive_destination != "archived/commands":
+        errors.append(
+            "command_retirement.archive_destination must be 'archived/commands'"
+        )
+    if retirement.get("archive_ready") is not True:
+        errors.append("command_retirement.archive_ready must be true after parity")
+
+    groups: dict[str, list[str]] = {}
+    for field in ("absorbed_by_skill", "thin_wrappers", "archive_only"):
+        values = retirement.get(field)
+        if not isinstance(values, list) or not all(
+            isinstance(value, str) and value for value in values
+        ):
+            errors.append(
+                f"command_retirement.{field} must be an array of non-empty strings"
+            )
+            groups[field] = []
+        else:
+            groups[field] = values
+
+    classified = [item for values in groups.values() for item in values]
+    if len(classified) != len(set(classified)):
+        errors.append("command retirement classifications must be disjoint")
+    if groups.get("archive_only") != ["check-secrets"]:
+        errors.append("check-secrets must be the only archive-only command")
+
+    active_root = repo_root / "commands"
+    archive_root = repo_root / str(archive_destination)
+    active_commands = {
+        path.stem for path in active_root.glob("*.md") if path.is_file()
+    }
+    archived_commands = {
+        path.stem for path in archive_root.glob("*.md") if path.is_file()
+    }
+    duplicates = sorted(active_commands & archived_commands)
+    if duplicates:
+        errors.append(
+            "command docs cannot be active and archived simultaneously: "
+            + ", ".join(duplicates)
+        )
+    actual_commands = active_commands | archived_commands
+    expected_commands = set(classified)
+    if actual_commands != expected_commands:
+        errors.append(
+            "command retirement inventory differs; "
+            f"expected={sorted(expected_commands)} actual={sorted(actual_commands)}"
+        )
+
+    skills = contract.get("skills")
+    public_ids = set()
+    if isinstance(skills, dict):
+        public_ids = {
+            entry.get("public_id")
+            for entry in skills.values()
+            if isinstance(entry, dict)
+        }
+    for command_name in groups.get("absorbed_by_skill", []) + groups.get(
+        "thin_wrappers", []
+    ):
+        if command_name not in public_ids:
+            errors.append(
+                f"command retirement owner is not a public skill: {command_name}"
+            )
+
+    return errors
 
 
 def load_manifest() -> dict[str, Any]:
@@ -33,7 +316,7 @@ def load_manifest() -> dict[str, Any]:
         data = tomllib.load(handle)
     skills = data.get("skills")
     if not isinstance(skills, dict):
-        raise ValueError("contracts/skills.toml must contain [skills.*] entries")
+        raise TypeError("contracts/skills.toml must contain [skills.*] entries")
     return skills
 
 
@@ -502,14 +785,19 @@ def check_index() -> list[str]:
 
 
 def validate() -> list[str]:
-    errors: list[str] = []
+    errors = validate_distribution_contract()
     try:
-        skills = load_manifest()
-    except (OSError, tomllib.TOMLDecodeError, ValueError) as exc:
+        with CONTRACT_PATH.open("rb") as handle:
+            contract = tomllib.load(handle)
+        skills = contract.get("skills")
+        if not isinstance(skills, dict):
+            raise TypeError("contracts/skills.toml must contain [skills.*] entries")
+    except (OSError, tomllib.TOMLDecodeError, TypeError) as exc:
         return [str(exc)]
 
     manifest_sources: set[str] = set()
     public_ids: set[str] = set()
+    runtime_owners: set[str] = set()
 
     for skill_name, entry in sorted(skills.items()):
         source = entry.get("source")
@@ -549,6 +837,19 @@ def validate() -> list[str]:
             if install == ["root-flat"] and not entry.get("runtime_support", False):
                 errors.append(f"{skill_name}: root-flat internal support requires runtime_support=true")
 
+        runtime_bundle = entry.get("runtime_bundle")
+        if runtime_bundle is not None:
+            if runtime_bundle not in RUNTIME_BUNDLES:
+                errors.append(
+                    f"{skill_name}: unknown runtime_bundle: {runtime_bundle}"
+                )
+            elif category != "workflow" or not entry.get("lifecycle_owner", False):
+                errors.append(
+                    f"{skill_name}: runtime bundles belong only to lifecycle workflow skills"
+                )
+            elif isinstance(public_id, str):
+                runtime_owners.add(public_id)
+
         if category == "manual-tool" and entry.get("implicit_invocation", False):
             errors.append(f"{skill_name}: manual-tool cannot be implicitly invoked")
 
@@ -565,8 +866,21 @@ def validate() -> list[str]:
     if stale_manifest:
         errors.append("manifest sources missing from src/skills: " + ", ".join(stale_manifest))
 
+    if runtime_owners != EXPECTED_RUNTIME_OWNERS:
+        errors.append(
+            "runtime bundle owners differ; "
+            f"expected={sorted(EXPECTED_RUNTIME_OWNERS)} actual={sorted(runtime_owners)}"
+        )
+    for bundle_name, bundle_root in RUNTIME_BUNDLES.items():
+        if not bundle_root.is_dir():
+            errors.append(f"runtime bundle source is missing: {bundle_name}")
+        elif (bundle_root / "SKILL.md").exists():
+            errors.append(f"runtime bundle source must not be discoverable: {bundle_name}")
+
     errors.extend(validate_runtime_contracts(skills))
     errors.extend(validate_routing_contracts(skills))
+    errors.extend(validate_semantic_contracts(contract))
+    errors.extend(validate_command_retirement_contract(contract))
     errors.extend(check_index())
     return errors
 

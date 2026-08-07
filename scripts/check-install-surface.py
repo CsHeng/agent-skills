@@ -6,14 +6,16 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-import tomllib
 from pathlib import Path
 from typing import Any
 
+import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = REPO_ROOT / "contracts" / "skills.toml"
 TARGETS_PATH = REPO_ROOT / "contracts" / "install-targets.toml"
+RUNTIME_BUNDLES = {"harness": REPO_ROOT / "src/runtime/harness"}
+RUNTIME_EXCLUDED_ROOTS = {"agents", "smoke-test"}
 
 
 def load_toml(path: Path) -> dict[str, Any]:
@@ -55,6 +57,70 @@ def selected_runtime_contracts(target: str) -> dict[str, str]:
     return expected
 
 
+def selected_runtime_bundles(target: str) -> dict[str, str]:
+    data = load_toml(CONTRACT_PATH)
+    expected: dict[str, str] = {}
+    for entry in data["skills"].values():
+        if target not in entry.get("install", []):
+            continue
+        runtime_bundle = entry.get("runtime_bundle")
+        if runtime_bundle:
+            expected[entry["public_id"]] = runtime_bundle
+    return expected
+
+
+def runtime_bundle_files(bundle_name: str) -> dict[str, Path]:
+    source = RUNTIME_BUNDLES.get(bundle_name)
+    if source is None or not source.is_dir():
+        raise ValueError(f"unknown or missing runtime bundle: {bundle_name}")
+    return {
+        path.relative_to(source).as_posix(): path
+        for path in source.rglob("*")
+        if path.is_file()
+        and path.relative_to(source).parts[0] not in RUNTIME_EXCLUDED_ROOTS
+        and path.name != "SKILL.md"
+        and "__pycache__" not in path.relative_to(source).parts
+    }
+
+
+def validate_portable_content(target: str, public_id: str, generated_dir: Path) -> list[str]:
+    errors: list[str] = []
+    for path in generated_dir.rglob("*"):
+        if not path.is_file():
+            continue
+        try:
+            content = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        relative_path = path.relative_to(generated_dir).as_posix()
+        if "_harness-libs" in content:
+            errors.append(
+                f"{target}: {public_id}/{relative_path} references retired sibling runtime"
+            )
+        provider_roots = (
+            "$PLUGIN_ROOT",
+            "${PLUGIN_ROOT",
+            "$CLAUDE_PLUGIN_ROOT",
+            "${CLAUDE_PLUGIN_ROOT",
+        )
+        for provider_root in provider_roots:
+            if provider_root in content:
+                errors.append(
+                    f"{target}: {public_id}/{relative_path} assumes provider root {provider_root}"
+                )
+        first_use = min(
+            (position for token in ("$SKILL_ROOT", "${SKILL_ROOT") if (position := content.find(token)) >= 0),
+            default=-1,
+        )
+        if first_use >= 0:
+            assignment = content.find("SKILL_ROOT=")
+            if assignment < 0 or assignment > first_use:
+                errors.append(
+                    f"{target}: {public_id}/{relative_path} uses SKILL_ROOT before assigning it"
+                )
+    return errors
+
+
 def validate(target: str, dest: Path) -> list[str]:
     errors: list[str] = []
     skills_dir = dest if target == "root-flat" else dest / "skills"
@@ -63,6 +129,7 @@ def validate(target: str, dest: Path) -> list[str]:
 
     try:
         expected = selected_entries(target)
+        runtime_bundles = selected_runtime_bundles(target)
     except (KeyError, ValueError) as exc:
         return [str(exc)]
 
@@ -84,6 +151,22 @@ def validate(target: str, dest: Path) -> list[str]:
             for path in source_dir.rglob("*")
             if path.is_file()
         }
+        runtime_bundle = runtime_bundles.get(public_id)
+        if runtime_bundle:
+            try:
+                bundle_files = runtime_bundle_files(runtime_bundle)
+            except ValueError as exc:
+                errors.append(f"{target}: {public_id}: {exc}")
+                continue
+            for relative_path, source_file in bundle_files.items():
+                bundled_path = f"scripts/harness/{relative_path}"
+                if bundled_path in source_files:
+                    errors.append(
+                        f"{target}: runtime bundle collides with authored file for "
+                        f"{public_id}/{bundled_path}"
+                    )
+                    continue
+                source_files[bundled_path] = source_file
         generated_files = {
             path.relative_to(generated_dir).as_posix(): path
             for path in generated_dir.rglob("*")
@@ -100,6 +183,7 @@ def validate(target: str, dest: Path) -> list[str]:
                 errors.append(
                     f"{target}: generated content differs for {public_id}/{relative_path}"
                 )
+        errors.extend(validate_portable_content(target, public_id, generated_dir))
 
     for public_id, runtime_contract in selected_runtime_contracts(target).items():
         contract_file = skills_dir / public_id / runtime_contract

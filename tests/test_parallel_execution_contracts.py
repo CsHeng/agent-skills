@@ -5,16 +5,14 @@ import subprocess
 import unittest
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CONTRACTS = REPO_ROOT / "src/skills/_internal/_harness-libs/contracts.sh"
+CONTRACTS = REPO_ROOT / "src/runtime/harness/contracts.sh"
 PORTABLE_PLAN_SURFACES = (
     REPO_ROOT / "src/skills/workflows/plan-change/SKILL.md",
     REPO_ROOT / "src/skills/review-components/review-plan/SKILL.md",
     REPO_ROOT / "src/skills/disciplines/executable-oracle-architecture-selector/SKILL.md",
     CONTRACTS,
-    REPO_ROOT / "src/skills/_internal/_harness-libs/plan-runner.sh",
-    REPO_ROOT / "commands/plan-change.md",
+    REPO_ROOT / "src/runtime/harness/plan-runner.sh",
 )
 CONCRETE_PROVIDER_MODEL = re.compile(
     r"\b(?:gpt-\d|claude-(?:\d|opus|sonnet|haiku)|gemini-(?:\d|pro|flash))",

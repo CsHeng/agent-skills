@@ -16,6 +16,12 @@ When prose, diagrams, and runtime behavior disagree, resolve drift in this order
 
 `docs/plans/` records design and implementation history. It is useful for rationale and dispute resolution but is not current runtime truth.
 
+## Installed Surface
+
+Claude Code and Codex retain their native plugin marketplaces and consume the same generated public `skills/` inventory. Other agents may consume that payload through optional, consumer-managed `npx skills` guidance. Lifecycle entry is through public skills and native description matching or a thin host mapping to those skills.
+
+Each runner-owning workflow carries its own generated `scripts/harness/` runtime bundle sourced from `src/runtime/harness/`. Runtime helpers are not separately discoverable skills, and workflow execution does not depend on a provider plugin root or a sibling support skill.
+
 ## Lifecycle Shape
 
 Workflow mode selection precedes phase implementation. The selected mode determines which design, plan, review, truth-sync, recovery-policy, and evidence requirements apply.
@@ -98,7 +104,7 @@ Only `implement-change` mutates implementation state inside this loop. `review-i
 
 ## Discovery And Bootstrap
 
-Native matching can compose one primary workflow with matching policy overlays, such as `review-change` with `review-implementation` and `go-guidelines` for a Go implementation review. When a host needs deterministic entry, its thin wrapper points only to public skill IDs or `use-coding-skills`; the installed routing and controller contracts remain authoritative.
+Native matching can compose one primary workflow with matching policy overlays, such as `review-change` with `review-implementation` and `go-guidelines` for a Go implementation review. When a host needs deterministic entry, its thin mapping points only to public skill IDs or `use-coding-skills`; the installed routing and controller contracts remain authoritative.
 
 ## Maintenance
 

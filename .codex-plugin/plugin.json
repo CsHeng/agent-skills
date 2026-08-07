@@ -7,8 +7,8 @@
     "email": "csheng1204@gmail.com",
     "url": "https://github.com/CsHeng"
   },
-  "homepage": "https://github.com/CsHeng/csheng-skills",
-  "repository": "https://github.com/CsHeng/csheng-skills",
+  "homepage": "https://github.com/CsHeng/agent-skills",
+  "repository": "https://github.com/CsHeng/agent-skills",
   "license": "MIT",
   "keywords": [
     "coding",
@@ -29,7 +29,7 @@
       "Review",
       "Interactive"
     ],
-    "websiteURL": "https://github.com/CsHeng/csheng-skills",
+    "websiteURL": "https://github.com/CsHeng/agent-skills",
     "defaultPrompt": [
       "Use coding skills to review this change.",
       "Use coding skills to plan this implementation.",

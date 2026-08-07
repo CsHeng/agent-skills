@@ -1,3 +1,18 @@
+[semantic_install]
+dependency_resolution = "consumer"
+selective_install_requires_transitive_closure = true
+complete_profile = "sovereign-harness"
+
+[profiles.sovereign-harness]
+selection = "all-public"
+
+[command_retirement]
+archive_destination = "archived/commands"
+archive_ready = true
+absorbed_by_skill = ["close-change", "design-change", "implement-change", "plan-change", "review-change", "sync-truth"]
+thin_wrappers = ["analyze-project", "review-design", "review-implementation", "review-plan", "smart-commit"]
+archive_only = ["check-secrets"]
+
 [skills.analyze-project]
 source = "src/skills/workflows/analyze-project"
 public_id = "analyze-project"
@@ -17,6 +32,8 @@ lifecycle_owner = true
 implicit_invocation = false
 may_mutate_repo = false
 may_spawn_agent = false
+runtime_bundle = "harness"
+semantic_requires = ["review-change"]
 
 [skills.plan-change]
 source = "src/skills/workflows/plan-change"
@@ -27,6 +44,8 @@ lifecycle_owner = true
 implicit_invocation = false
 may_mutate_repo = false
 may_spawn_agent = false
+runtime_bundle = "harness"
+semantic_requires = ["review-change"]
 
 [skills.implement-change]
 source = "src/skills/workflows/implement-change"
@@ -39,6 +58,8 @@ may_mutate_repo = true
 may_spawn_agent = true
 requires_approved_plan = true
 runtime_contract = "references/workflow.toml"
+runtime_bundle = "harness"
+semantic_requires = ["review-change", "sync-truth", "close-change"]
 
 [skills.review-change]
 source = "src/skills/workflows/review-change"
@@ -49,6 +70,8 @@ lifecycle_owner = true
 implicit_invocation = false
 may_mutate_repo = false
 may_spawn_agent = true
+runtime_bundle = "harness"
+semantic_requires = ["review-design", "review-plan", "review-implementation"]
 
 [skills.sync-truth]
 source = "src/skills/workflows/sync-truth"
@@ -60,6 +83,7 @@ implicit_invocation = false
 may_mutate_repo = true
 may_spawn_agent = false
 requires_explicit_user_request = true
+runtime_bundle = "harness"
 
 [skills.close-change]
 source = "src/skills/workflows/close-change"
@@ -70,6 +94,7 @@ lifecycle_owner = true
 implicit_invocation = false
 may_mutate_repo = false
 may_spawn_agent = false
+runtime_bundle = "harness"
 
 [skills.use-coding-skills]
 source = "src/skills/session/use-coding-skills"
@@ -81,6 +106,7 @@ implicit_invocation = true
 may_mutate_repo = false
 may_spawn_agent = false
 routing_contract = "references/routing.toml"
+semantic_requires = ["analyze-project", "plan-change", "design-change", "review-change", "implement-change", "sync-truth", "close-change", "review-design", "review-plan", "review-implementation", "output-styles", "tool-decision-tree", "development-standards", "language-decision-tree", "infrastructure-triage", "organize-docs", "skill-miner"]
 
 [skills.output-styles]
 source = "src/skills/session/output-styles"
@@ -406,14 +432,3 @@ lifecycle_owner = false
 implicit_invocation = false
 may_mutate_repo = false
 may_spawn_agent = true
-
-[skills.harness-libs]
-source = "src/skills/_internal/_harness-libs"
-public_id = "_harness-libs"
-category = "internal"
-install = ["root-flat"]
-lifecycle_owner = false
-implicit_invocation = false
-may_mutate_repo = false
-may_spawn_agent = false
-runtime_support = true

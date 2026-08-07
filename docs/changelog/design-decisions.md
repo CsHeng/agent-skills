@@ -1,5 +1,27 @@
 # Design Decisions
 
+## 2026-08-07 - Native Provider Plugins And Advisory Agent Skills Distribution
+
+### Failure Mode
+
+Extending repository-owned install, update, removal, symlink, destination, duplicate-detection, and coexistence logic to every coding agent would make the project responsible for unstable external layouts. At the same time, the generated `_harness-libs` pseudo-skill made individual workflow installation depend on a sibling directory, and Claude-only command wrappers duplicated behavior already owned by public skills.
+
+### Change
+
+- Keep the maintained Claude Code and Codex marketplace/plugin paths.
+- Keep all public skill names unchanged and publish the generated root `skills/` tree as the shared portable payload.
+- Present `npx skills@latest add CsHeng/agent-skills` only as optional consumer-managed guidance for other agents.
+- Do not restrict selected agents, scopes, destinations, or copy/symlink modes; do not detect duplicate exposure or guarantee coexistence.
+- Move deterministic runtime source to non-discoverable `src/runtime/harness/` and bundle it into each runner-owning skill at `scripts/harness/`.
+- Retire the active Claude command surface after its durable behavior is absorbed into public skills, retaining only inert history outside discovery.
+
+### Operational Impact
+
+- Repository acceptance covers public identities, semantic requirements, package closure, owner-local runtime, both native plugins, and command retirement. It does not execute or police external installation state.
+- Consumers and the upstream CLI own optional external selection, installation, updates, removal, cleanup, duplicates, and coexistence.
+- Portable skill resources use skill-relative paths; a universal provider-supplied `$PLUGIN_ROOT` or `$SKILL_ROOT` environment variable is not part of the contract.
+- The approach follows the [Agent Skills](https://agentskills.io/) shape and learned from [mattpocock/skills](https://github.com/mattpocock/skills), the [`skills` CLI](https://github.com/vercel-labs/skills), [Codex Skills](https://developers.openai.com/codex/skills/), and [Superpowers](https://github.com/obra/superpowers). Local contracts remain authoritative.
+
 ## 2026-08-01 - Repo-Owned Harness Routing And User-Specific Host Wrapper
 
 ### Failure Mode

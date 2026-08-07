@@ -1,22 +1,18 @@
 # Development Skills
 
-Dual-target Claude Code and Codex plugin skills organized around a sovereign harness kernel, with supporting truth, evaluation, policy, and tooling planes underneath it.
+Claude Code and Codex plugins plus a portable public skill payload organized around a sovereign harness kernel, with supporting truth, evaluation, policy, and tooling planes underneath it.
 
 New here? See `docs/quickstart.md` for install verification and a first end-to-end change walkthrough.
 
 For AI-facing repository rules and the docs truth boundary, see `AGENTS.md`.
-
-Human-facing workflow shorthand in this repository is:
-- design → `/design-change`
-- plan → `/plan-change`
-- execute → `/implement-change`
 
 ## Source And Install Surfaces
 
 - `src/skills/` is the source-of-truth skill tree.
 - `contracts/skills.toml` is the source-of-truth exposure and invocation contract.
 - `src/skills/session/use-coding-skills/references/routing.toml` is the install-required discovery, phase-owner, review-evaluator, support-route, composition, and host-wrapper contract.
-- `skills/` is tracked generated root-flat compatibility output for current plugin manifests, command wrappers, and local symlink exposure.
+- `src/runtime/harness/` is non-discoverable deterministic lifecycle and artifact-DAG runtime source.
+- `skills/` is tracked generated root-flat public payload for current plugin manifests and optional external discovery. Runner-owning skills carry their own `scripts/harness/` bundle.
 - `.dist/claude/` and `.dist/codex/` are ignored, reproducible target-specific install surfaces generated only when needed.
 - `skills.index.json` is generated from `contracts/skills.toml`.
 
@@ -68,19 +64,13 @@ Lower-plane skills stay available as components the kernel can call, not as comp
 - `use-coding-skills`: Optional router for ambiguous multi-stage coding work, session boundaries, and compact handoffs. Its installed routing contract owns phase-to-workflow and support-route mapping; direct workflow and policy matches bypass it.
 - `output-styles`: Agent-agnostic response modes plus the composition rule that one primary skill owns domain order while other matched skills contribute semantic overlays instead of competing report templates.
 
-## Top-Level Commands
+## Distribution
 
-Claude Code plugin command surface mirrors the same seven entries:
+- Claude Code uses the maintained local marketplace and plugin path exposed by `.claude-plugin/` and `install.sh`.
+- Codex uses the maintained local marketplace and plugin path exposed by `.codex-plugin/`, `.codex-marketplace/`, and `install-codex.sh`.
+- Other coding agents may optionally discover and install the public payload with `npx skills@latest add CsHeng/agent-skills`.
 
-- `/analyze-project`
-- `/design-change`
-- `/plan-change`
-- `/implement-change`
-- `/review-change`
-- `/sync-truth`
-- `/close-change`
-
-These commands are Claude plugin-local entry points. Codex can consume the generated root `skills/` inventory through `.codex-plugin/plugin.json` when installed. Local environments may also expose the same generated tree through agent-specific skill paths such as `~/.agents/skills/coding`.
+The `npx skills` path is guidance, not a repository-owned installer contract. This repository does not restrict selected agents, scopes, destinations, or copy/symlink modes; it does not inspect duplicate exposure or promise that independently installed copies coexist. Selection, installation, updates, removal, cleanup, and any coexistence issues belong to the consumer and the upstream CLI. Public skill names remain unchanged.
 
 ## Skill Planes
 
@@ -97,7 +87,7 @@ Lower-plane skills stay available as components the kernel can call, not as comp
 | Tool | Narrow tool adapters and operational helpers | `web-fetch`, `docker-multiarch-build`, `codex-session-recovery`, `smart-commit` |
 | Manual tools | Explicit user request only, never implicit | `git-worktrees`, `smart-squash` |
 
-The authoritative inventory with roles, permissions, and install targets is `contracts/skills.toml`; the rendered map above is generated from it by `scripts/generate-workflow-diagrams.py`. Internal runtime support (`_harness-libs`) is intentionally not user-facing. Each skill's own `SKILL.md` under `src/skills/` is the deep-dive entry for how that skill works.
+The authoritative inventory with roles, permissions, semantic requirements, and install targets is `contracts/skills.toml`; the rendered map above is generated from it by `scripts/generate-workflow-diagrams.py`. Harness runtime is bundled into each runner-owning skill and is not exposed as a separate skill. Each skill's own `SKILL.md` under `src/skills/` is the deep-dive entry for how that skill works.
 
 ## Docs
 
@@ -151,13 +141,19 @@ Local scope (writes to `$CLAUDE_PROJECT_DIR/.claude/settings.local.json` when av
 ./install.sh --scope local
 ```
 
-Optional Codex local marketplace registration and plugin install:
+Codex local marketplace registration and plugin install:
 
 ```bash
 ./install-codex.sh
 ```
 
-Local symlink exposure is also supported. Workstations can expose the generated `skills/` directory through paths such as `~/.agents/skills/coding` and use the same skills without installing the Codex plugin.
+For other coding agents, the optional advisory path is:
+
+```bash
+npx skills@latest add CsHeng/agent-skills
+```
+
+Review the upstream CLI's proposed targets and locations before accepting them. The repository neither constrains nor verifies that choice and does not manage coexistence with either provider plugin.
 
 For deterministic lifecycle entry, a host-level `AGENTS.md` may keep user preferences, runtime constraints, and thin public-skill hints such as ambiguous multi-stage work -> `coding:use-coding-skills`. The installed `use-coding-skills/references/routing.toml` and `implement-change/references/workflow.toml` remain the route and runtime DAG authorities; do not copy their graphs, budgets, or exits into the host bootstrap.
 
@@ -180,7 +176,7 @@ uvx --with pyyaml python "$HOME/.codex/skills/.system/plugin-creator/scripts/val
 claude plugin list
 ```
 
-Expect `coding@csheng` with `Status: enabled`. **Restart Claude Code after install or update** to apply changes; skills and commands are loaded at session start.
+Expect `coding@csheng` with `Status: enabled`. **Restart Claude Code after install or update** to apply changes; skills are loaded at session start.
 
 ### Update After Local Changes
 
@@ -205,4 +201,10 @@ uvx --with pyyaml python "$HOME/.codex/skills/.system/plugin-creator/scripts/upd
 codex plugin add coding@csheng
 ```
 
-Start a new Codex thread to pick up refreshed plugin skills and metadata. Workstations using symlink exposure through `~/.agents/skills/coding` only need to update this repository and start a new agent session.
+Start a new Codex thread to pick up refreshed plugin skills and metadata. Consumer-managed `npx skills` installations follow the upstream CLI's own update and removal workflow.
+
+## References And Acknowledgements
+
+The portable payload follows the [Agent Skills](https://agentskills.io/) directory model. [mattpocock/skills](https://github.com/mattpocock/skills) and the [`skills` CLI](https://github.com/vercel-labs/skills) informed the portability and bundled-resource approach, while the maintained Codex lane follows [Codex Skills](https://developers.openai.com/codex/skills/).
+
+Early versions of this harness drew substantial inspiration from [Superpowers](https://github.com/obra/superpowers), especially its provider-native plugin approach and reusable cross-agent skill techniques. The contracts and lifecycle rules in this repository are the authority for current behavior.

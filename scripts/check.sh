@@ -57,4 +57,8 @@ PYTHONDONTWRITEBYTECODE=1 \
 PYTHONPYCACHEPREFIX="$HOME/.cache/python/market-csheng" \
 python3 -m unittest discover -s tests -p 'test_*.py'
 
+for smoke_test in src/runtime/harness/smoke-test/test-*.sh; do
+  bash "$smoke_test"
+done
+
 bash scripts/check-review-boundary.sh

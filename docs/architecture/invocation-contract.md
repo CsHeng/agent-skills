@@ -15,15 +15,14 @@ See `workflow-orchestration.md` for the canonical maintenance view and generated
 | `tool` | Narrow tool adapter or operational helper | no |
 | `manual-tool` | Explicit user action only | no |
 | `review-component` | Lower-plane review evaluator | no |
-| `internal` | Runtime support library | no |
 
 ## Hard Rules
 
 - Only workflow skills may set `lifecycle_owner = true`.
 - Manual tools must set `implicit_invocation = false`.
 - Mutation-capable skills must set either `requires_explicit_user_request = true` or `requires_approved_plan = true`.
-- Internal skills are excluded from external generated targets.
-- Root-flat internal runtime support is allowed only when `runtime_support = true`.
+- Non-discoverable runtime source must be bundled into each workflow that declares `runtime_bundle`; it is never emitted as a public skill.
+- Direct and transitive `semantic_requires` entries must resolve to public skills, and the complete-inventory profile must remain closed.
 - A skill with `runtime_contract` must keep that contract inside its source directory so generated install surfaces carry it with the skill.
 - The one skill with `routing_contract` must be a non-lifecycle session skill and must keep that contract inside its source directory.
 - Runtime invocation graphs must be acyclic, evaluators must not call lifecycle workflows, and an implementation repair graph must declare exactly one lifecycle-owning loop owner.

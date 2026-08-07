@@ -23,6 +23,26 @@ The review brief distinguishes the `main` actor from a `delegated` reviewer.
 4. Give a reviewer subagent only the bounded review brief, not the full conversation or an invitation to audit the repository.
 5. A delegated reviewer runs with `actor_role: delegated` and must not delegate recursively.
 
+## Artifact Validation
+
+For design or plan review, resolve the installed validators relative to this `SKILL.md` before entering the target repository. `SKILL_ROOT` is an explicit local assignment, not a provider contract:
+
+```bash
+SKILL_ROOT="/absolute/path/to/review-change"
+DESIGN_RUNNER="$(realpath "$SKILL_ROOT/scripts/harness/design-runner.sh")"
+PLAN_RUNNER="$(realpath "$SKILL_ROOT/scripts/harness/plan-runner.sh")"
+[[ -f "$DESIGN_RUNNER" && -f "$PLAN_RUNNER" ]] || exit 1
+```
+
+Validate the selected artifact before semantic review:
+
+```bash
+bash "$DESIGN_RUNNER" validate "<design-file>"
+bash "$PLAN_RUNNER" validate "<plan-file>"
+```
+
+Select exactly one target: a design artifact, a plan artifact, or an implementation task slice. For implementation review, use the explicitly supplied changed files or the current bounded diff when no files were supplied. Stop when the selected artifact is absent or invalid.
+
 ## Bounded Review Brief
 
 The main agent constructs:

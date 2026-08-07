@@ -6,8 +6,8 @@
     "name": "CsHeng",
     "email": "csheng1204@gmail.com"
   },
-  "homepage": "https://github.com/CsHeng/csheng-skills",
-  "repository": "https://github.com/CsHeng/csheng-skills",
+  "homepage": "https://github.com/CsHeng/agent-skills",
+  "repository": "https://github.com/CsHeng/agent-skills",
   "license": "MIT",
   "keywords": ["coding", "guidelines", "standards", "development"],
   "hooks": {

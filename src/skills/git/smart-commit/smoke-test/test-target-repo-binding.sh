@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-SKILL_FILE="$ROOT_DIR/skills/smart-commit/SKILL.md"
-COMMAND_FILE="$ROOT_DIR/commands/smart-commit.md"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SKILL_FILE="$SKILL_DIR/SKILL.md"
 
 fail() {
   printf 'ERROR: %s\n' "$1" >&2
@@ -22,9 +21,6 @@ main() {
   assert_contains "$SKILL_FILE" 'TARGET_REPO'
   assert_contains "$SKILL_FILE" 'git -C "$TARGET_REPO"'
   assert_contains "$SKILL_FILE" 'Never use the plugin repository as the implicit target repository'
-
-  assert_contains "$COMMAND_FILE" 'Bash(git -C:*)'
-  assert_contains "$COMMAND_FILE" 'resolve the target repository from the invocation working directory'
 }
 
 main "$@"

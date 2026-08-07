@@ -19,6 +19,26 @@ Judge whether the current change can finish.
 - the task is still in design, planning, execution, or review
 - the request only asks for local git status or cleanup advice
 
+## Bundled Runtime
+
+Resolve the installed helper relative to this `SKILL.md` before changing into the target repository. `SKILL_ROOT` is a local assignment to the activated skill directory, not an ambient host variable:
+
+```bash
+SKILL_ROOT="/absolute/path/to/close-change"
+RUNNER="$(realpath "$SKILL_ROOT/scripts/harness/close-runner.sh")"
+[[ -f "$RUNNER" ]] || exit 1
+```
+
+Validate explicit close evidence and emit the deterministic decision:
+
+```bash
+bash "$RUNNER" entry-phase
+bash "$RUNNER" validate "<merge|release|cleanup>" "<review-status>" "<verify-status>" "<truth-sync-required>" "<truth-sync-completed>"
+bash "$RUNNER" decision "<merge|release|cleanup>" "<review-status>" "<verify-status>" "<truth-sync-required>" "<truth-sync-completed>"
+```
+
+Close mode is `merge`, `release`, or `cleanup`, with `cleanup` as the default when omitted. Closure requires passing review and verification plus completed truth sync whenever it is required. If validation fails, do not merge, release, or clean up; follow the returned `sync-truth` or `implement-change` route.
+
 ## Workflow
 
 1. Check whether review, verification, and truth-sync gates are satisfied as applicable.

@@ -29,7 +29,6 @@ patterns=(
 search_paths=(
   README.md
   AGENTS.md
-  commands
   contracts
   docs
   scripts
@@ -42,7 +41,7 @@ for pattern in "${patterns[@]}"; do
     --glob '!docs/changelog/**' \
     --glob '!CHANGELOG.md' \
     --glob '!scripts/check-review-boundary.sh' \
-    --glob '!src/skills/_internal/_harness-libs/smoke-test/test-agent-native-review.sh' \
+    --glob '!src/runtime/harness/smoke-test/test-agent-native-review.sh' \
     --glob '!skills/**' \
     --glob '!*.source-map.json' \
     2>/dev/null; then

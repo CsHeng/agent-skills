@@ -1,5 +1,6 @@
 {
   "name": "csheng",
+  "description": "Local Claude Code marketplace for the coding skill plugin",
   "owner": {
     "name": "CsHeng",
     "email": "csheng1204@gmail.com"

@@ -1,5 +1,80 @@
 {
+  "command_retirement": {
+    "absorbed_by_skill": [
+      "close-change",
+      "design-change",
+      "implement-change",
+      "plan-change",
+      "review-change",
+      "sync-truth"
+    ],
+    "archive_destination": "archived/commands",
+    "archive_only": [
+      "check-secrets"
+    ],
+    "archive_ready": true,
+    "thin_wrappers": [
+      "analyze-project",
+      "review-design",
+      "review-implementation",
+      "review-plan",
+      "smart-commit"
+    ]
+  },
   "generated_from": "contracts/skills.toml",
+  "profiles": {
+    "sovereign-harness": {
+      "selection": "all-public",
+      "semantic_closure_complete": true,
+      "skills": [
+        "analyze-project",
+        "api-contract-strategy",
+        "architecture-patterns",
+        "clean-architecture",
+        "close-change",
+        "codex-session-recovery",
+        "design-change",
+        "development-standards",
+        "docker-multiarch-build",
+        "error-patterns",
+        "executable-oracle-architecture-selector",
+        "git-worktrees",
+        "go-guidelines",
+        "implement-change",
+        "infrastructure-triage",
+        "language-decision-tree",
+        "logging-standards",
+        "lua-guidelines",
+        "organize-docs",
+        "output-styles",
+        "plan-change",
+        "powershell-guidelines",
+        "python-guidelines",
+        "quality-standards",
+        "review-change",
+        "review-design",
+        "review-implementation",
+        "review-plan",
+        "security-guardrails",
+        "security-logging",
+        "shell-guidelines",
+        "skill-miner",
+        "smart-commit",
+        "smart-squash",
+        "sops-age-guardrails",
+        "sync-truth",
+        "testing-strategy",
+        "tool-decision-tree",
+        "use-coding-skills",
+        "web-fetch"
+      ]
+    }
+  },
+  "semantic_install": {
+    "complete_profile": "sovereign-harness",
+    "dependency_resolution": "consumer",
+    "selective_install_requires_transitive_closure": true
+  },
   "skills": [
     {
       "category": "workflow",
@@ -13,6 +88,8 @@
       "lifecycle_owner": true,
       "may_mutate_repo": false,
       "public_id": "analyze-project",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/workflows/analyze-project"
     },
     {
@@ -27,6 +104,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "api-contract-strategy",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/api-contract-strategy"
     },
     {
@@ -41,6 +120,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "architecture-patterns",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/architecture-patterns"
     },
     {
@@ -55,6 +136,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "clean-architecture",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/clean-architecture"
     },
     {
@@ -69,6 +152,9 @@
       "lifecycle_owner": true,
       "may_mutate_repo": false,
       "public_id": "close-change",
+      "runtime_bundle": "harness",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/workflows/close-change"
     },
     {
@@ -83,6 +169,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "codex-session-recovery",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/tools/codex-session-recovery"
     },
     {
@@ -97,6 +185,16 @@
       "lifecycle_owner": true,
       "may_mutate_repo": false,
       "public_id": "design-change",
+      "runtime_bundle": "harness",
+      "semantic_requires": [
+        "review-change"
+      ],
+      "semantic_transitive_requires": [
+        "review-change",
+        "review-design",
+        "review-implementation",
+        "review-plan"
+      ],
       "source": "src/skills/workflows/design-change"
     },
     {
@@ -111,6 +209,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "development-standards",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/policies/development-standards"
     },
     {
@@ -125,6 +225,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "docker-multiarch-build",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/tools/docker-multiarch-build"
     },
     {
@@ -139,6 +241,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "error-patterns",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/error-patterns"
     },
     {
@@ -153,6 +257,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "executable-oracle-architecture-selector",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/executable-oracle-architecture-selector"
     },
     {
@@ -167,6 +273,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": true,
       "public_id": "git-worktrees",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/git/git-worktrees"
     },
     {
@@ -181,19 +289,9 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "go-guidelines",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/policies/go-guidelines"
-    },
-    {
-      "category": "internal",
-      "id": "harness-libs",
-      "implicit_invocation": false,
-      "install": [
-        "root-flat"
-      ],
-      "lifecycle_owner": false,
-      "may_mutate_repo": false,
-      "public_id": "_harness-libs",
-      "source": "src/skills/_internal/_harness-libs"
     },
     {
       "category": "workflow",
@@ -207,7 +305,21 @@
       "lifecycle_owner": true,
       "may_mutate_repo": true,
       "public_id": "implement-change",
+      "runtime_bundle": "harness",
       "runtime_contract": "references/workflow.toml",
+      "semantic_requires": [
+        "review-change",
+        "sync-truth",
+        "close-change"
+      ],
+      "semantic_transitive_requires": [
+        "close-change",
+        "review-change",
+        "review-design",
+        "review-implementation",
+        "review-plan",
+        "sync-truth"
+      ],
       "source": "src/skills/workflows/implement-change"
     },
     {
@@ -222,6 +334,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "infrastructure-triage",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/infrastructure-triage"
     },
     {
@@ -236,6 +350,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "language-decision-tree",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/language-decision-tree"
     },
     {
@@ -250,6 +366,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "logging-standards",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/policies/logging-standards"
     },
     {
@@ -264,6 +382,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "lua-guidelines",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/policies/lua-guidelines"
     },
     {
@@ -278,6 +398,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": true,
       "public_id": "organize-docs",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/organize-docs"
     },
     {
@@ -292,6 +414,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "output-styles",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/session/output-styles"
     },
     {
@@ -306,6 +430,16 @@
       "lifecycle_owner": true,
       "may_mutate_repo": false,
       "public_id": "plan-change",
+      "runtime_bundle": "harness",
+      "semantic_requires": [
+        "review-change"
+      ],
+      "semantic_transitive_requires": [
+        "review-change",
+        "review-design",
+        "review-implementation",
+        "review-plan"
+      ],
       "source": "src/skills/workflows/plan-change"
     },
     {
@@ -320,6 +454,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "powershell-guidelines",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/policies/powershell-guidelines"
     },
     {
@@ -334,6 +470,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "python-guidelines",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/policies/python-guidelines"
     },
     {
@@ -348,6 +486,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "quality-standards",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/policies/quality-standards"
     },
     {
@@ -362,6 +502,17 @@
       "lifecycle_owner": true,
       "may_mutate_repo": false,
       "public_id": "review-change",
+      "runtime_bundle": "harness",
+      "semantic_requires": [
+        "review-design",
+        "review-plan",
+        "review-implementation"
+      ],
+      "semantic_transitive_requires": [
+        "review-design",
+        "review-implementation",
+        "review-plan"
+      ],
       "source": "src/skills/workflows/review-change"
     },
     {
@@ -376,6 +527,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "review-design",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/review-components/review-design"
     },
     {
@@ -390,6 +543,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "review-implementation",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/review-components/review-implementation"
     },
     {
@@ -404,6 +559,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "review-plan",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/review-components/review-plan"
     },
     {
@@ -418,6 +575,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "security-guardrails",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/policies/security-guardrails"
     },
     {
@@ -432,6 +591,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "security-logging",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/policies/security-logging"
     },
     {
@@ -446,6 +607,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "shell-guidelines",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/policies/shell-guidelines"
     },
     {
@@ -460,6 +623,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "skill-miner",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/skill-miner"
     },
     {
@@ -474,6 +639,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": true,
       "public_id": "smart-commit",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/git/smart-commit"
     },
     {
@@ -488,6 +655,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": true,
       "public_id": "smart-squash",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/git/smart-squash"
     },
     {
@@ -502,6 +671,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "sops-age-guardrails",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/policies/sops-age-guardrails"
     },
     {
@@ -516,6 +687,9 @@
       "lifecycle_owner": true,
       "may_mutate_repo": true,
       "public_id": "sync-truth",
+      "runtime_bundle": "harness",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/workflows/sync-truth"
     },
     {
@@ -530,6 +704,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "testing-strategy",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/testing-strategy"
     },
     {
@@ -544,6 +720,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "tool-decision-tree",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/tool-decision-tree"
     },
     {
@@ -559,6 +737,44 @@
       "may_mutate_repo": false,
       "public_id": "use-coding-skills",
       "routing_contract": "references/routing.toml",
+      "semantic_requires": [
+        "analyze-project",
+        "plan-change",
+        "design-change",
+        "review-change",
+        "implement-change",
+        "sync-truth",
+        "close-change",
+        "review-design",
+        "review-plan",
+        "review-implementation",
+        "output-styles",
+        "tool-decision-tree",
+        "development-standards",
+        "language-decision-tree",
+        "infrastructure-triage",
+        "organize-docs",
+        "skill-miner"
+      ],
+      "semantic_transitive_requires": [
+        "analyze-project",
+        "close-change",
+        "design-change",
+        "development-standards",
+        "implement-change",
+        "infrastructure-triage",
+        "language-decision-tree",
+        "organize-docs",
+        "output-styles",
+        "plan-change",
+        "review-change",
+        "review-design",
+        "review-implementation",
+        "review-plan",
+        "skill-miner",
+        "sync-truth",
+        "tool-decision-tree"
+      ],
       "source": "src/skills/session/use-coding-skills"
     },
     {
@@ -573,6 +789,8 @@
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "public_id": "web-fetch",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
       "source": "src/skills/tools/web-fetch"
     }
   ]

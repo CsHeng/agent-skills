@@ -22,6 +22,29 @@ Before implementation, read completely:
 
 Resolve both relative to this `SKILL.md`. The cross-skill graph stays acyclic; repair is internal controller state.
 
+The deterministic execution helper is bundled with this skill. Resolve it before changing into the target repository; the assignment below is explicit and does not rely on an ambient variable:
+
+```bash
+SKILL_ROOT="/absolute/path/to/implement-change"
+RUNNER="$(realpath "$SKILL_ROOT/scripts/harness/execute-runner.sh")"
+[[ -f "$RUNNER" ]] || exit 1
+```
+
+Before mutation, require an approved execution-grade plan and materialize its immutable task projection:
+
+```bash
+bash "$RUNNER" entry-phase
+[[ "$(bash "$RUNNER" approval-status "<plan-file>")" == "approved" ]] || exit 1
+bash "$RUNNER" validate "<plan-file>"
+bash "$RUNNER" mode "<plan-file>"
+bash "$RUNNER" allowed-touch-set "<plan-file>"
+bash "$RUNNER" verification-commands "<plan-file>"
+bash "$RUNNER" task-catalog "<plan-file>"
+bash "$RUNNER" task-ledger "<plan-file>"
+```
+
+Use the remaining runner operations for the one-time worktree preflight, ready-set and runtime binding, controller convergence, evidence-based recovery, final evaluation gate, and machine-checkable execution result. The approved `allowed_touch_set` is exactly the plan's implementation and test refs. Each task's declared `verification_scope` must pass before its ledger state converges.
+
 ## Workflow
 
 1. Confirm plan approval, dependency state, execution continuity, and current checkout/worktree decision.
@@ -36,6 +59,8 @@ Resolve both relative to this `SKILL.md`. The cross-skill graph stays acyclic; r
 10. Repair only findings with disposition `accepted`, batching the complete accepted set inside the approved touch set.
 11. Rerun affected and declared verification, then perform focused verification review of accepted findings and repair-introduced regressions.
 12. Route final evidence to `sync-truth`, `close-change`, or a typed stop.
+
+After every task is converged, combine review and verification with `gate-result`. Return the resulting next entry or exact typed stop directly; do not insert a confirmation question when the gate already determines continuation.
 
 ## Repair Ownership
 
