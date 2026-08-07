@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import re
+import shutil
+import subprocess
 import sys
 import tomllib
 from pathlib import Path
@@ -18,9 +20,11 @@ WORKFLOW_MODES_CONTRACT = REPO_ROOT / "contracts" / "workflow-modes.toml"
 CONTROLLER_ID = "implement-change"
 ROUTER_ID = "use-coding-skills"
 DIAGRAM_DIR = REPO_ROOT / "docs" / "architecture" / "diagrams"
+GENERATED_DIR = REPO_ROOT / "docs" / "architecture" / "generated"
 DAG_PATH = DIAGRAM_DIR / "implementation-invocation-dag.puml"
 REPAIR_PATH = DIAGRAM_DIR / "implementation-repair-loop.puml"
 ROUTING_SEQUENCE_PATH = DIAGRAM_DIR / "harness-routing-sequence.puml"
+SKILL_PLANES_PATH = DIAGRAM_DIR / "skill-planes.puml"
 
 
 def load_toml(path: Path) -> dict[str, Any]:
@@ -390,11 +394,106 @@ def render_routing_sequence(
     return "\n".join(lines)
 
 
+PLANE_ORDER = [
+    ("workflow", "Sovereign Harness Kernel (workflow)"),
+    ("session", "Session Plane"),
+    ("review-component", "Evaluation Plane (review components)"),
+    ("discipline", "Discipline Plane"),
+    ("policy", "Policy Plane"),
+    ("tool", "Tool Plane"),
+    ("manual-tool", "Manual Tools (explicit user request only)"),
+]
+
+
+def render_skill_planes(skills: dict[str, Any]) -> str:
+    source = SKILLS_CONTRACT.relative_to(REPO_ROOT).as_posix()
+    by_category: dict[str, list[str]] = {}
+    for skill_id, entry in sorted(skills.items()):
+        category = entry.get("category", "unknown")
+        if category == "internal":
+            continue
+        by_category.setdefault(category, []).append(skill_id)
+
+    lines = [
+        "@startuml",
+        f"' Generated from {source}; do not edit by hand.",
+        "title Skill Planes Overview",
+        "top to bottom direction",
+        "skinparam shadowing false",
+        "skinparam packageStyle rectangle",
+        "skinparam ArrowColor #475569",
+        "skinparam rectangle {",
+        "  BackgroundColor #F8FAFC",
+        "  BorderColor #475569",
+        "}",
+        "",
+    ]
+    for category, label in PLANE_ORDER:
+        members = by_category.get(category, [])
+        if not members:
+            continue
+        stereotype = " <<kernel>>" if category == "workflow" else ""
+        lines.append(f'package "{label}" as {alias("plane_" + category)}{stereotype} {{')
+        for skill_id in members:
+            lines.append(f'  rectangle "{skill_id}" as {alias(skill_id)}')
+        lines.append("}")
+        lines.append("")
+
+    kernel_alias = alias("plane_workflow")
+    visible_categories = [category for category, _label in PLANE_ORDER if by_category.get(category)]
+    for previous, current in zip(visible_categories, visible_categories[1:]):
+        lines.append(f"{alias('plane_' + previous)} -[hidden]-> {alias('plane_' + current)}")
+    lines.append("")
+    for category in visible_categories[1:]:
+        lines.append(f"{kernel_alias} ..> {alias('plane_' + category)} : composes")
+
+    lines.extend(
+        [
+            "",
+            "note as ownership_note",
+            "  Only workflow skills own lifecycle state.",
+            "  Lower planes contribute methods, evidence, or policy.",
+            "end note",
+            "",
+            "legend right",
+            "  kernel = top-level lifecycle authority",
+            "  review components = read-only evaluators",
+            "  manual tools = explicit user request only",
+            "  internal runtime support is intentionally omitted",
+            "endlegend",
+            "@enduml",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def render_svg(puml_content: str) -> str:
+    plantuml = shutil.which("plantuml")
+    if not plantuml:
+        raise RuntimeError("plantuml not found on PATH; install it to render tracked SVG views")
+    result = subprocess.run(
+        [plantuml, "-tsvg", "-charset", "UTF-8", "-pipe"],
+        input=puml_content.encode("utf-8"),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"plantuml SVG render failed: {result.stderr.decode('utf-8', 'replace')}")
+    return result.stdout.decode("utf-8")
+
+
+def svg_path_for(puml_path: Path) -> Path:
+    return GENERATED_DIR / (puml_path.stem + ".svg")
+
+
 def expected_outputs() -> dict[Path, str]:
     contract_path, contract = controller_contract()
     routing_path, routing = routing_contract()
     lifecycle = load_toml(LIFECYCLE_CONTRACT)
     workflow_modes = load_toml(WORKFLOW_MODES_CONTRACT)
+    skills = load_toml(SKILLS_CONTRACT)["skills"]
     return {
         ROUTING_SEQUENCE_PATH: render_routing_sequence(
             routing_path,
@@ -404,6 +503,7 @@ def expected_outputs() -> dict[Path, str]:
         ),
         DAG_PATH: render_dag(contract_path, contract),
         REPAIR_PATH: render_repair_loop(contract_path, contract),
+        SKILL_PLANES_PATH: render_skill_planes(skills),
     }
 
 
@@ -420,6 +520,24 @@ def main(argv: list[str]) -> int:
 
     if args.check:
         stale = [path for path, expected in outputs.items() if not path.is_file() or path.read_text(encoding="utf-8") != expected]
+        if shutil.which("plantuml"):
+            for path, expected in outputs.items():
+                svg_path = svg_path_for(path)
+                try:
+                    expected_svg = render_svg(expected)
+                except RuntimeError as exc:
+                    print(f"workflow diagram check failed: {exc}", file=sys.stderr)
+                    return 1
+                if not svg_path.is_file() or svg_path.read_text(encoding="utf-8") != expected_svg:
+                    stale.append(svg_path)
+        else:
+            missing_svg = [svg_path_for(path) for path in outputs if not svg_path_for(path).is_file()]
+            if missing_svg:
+                for svg_path in missing_svg:
+                    print(f"missing rendered diagram: {svg_path.relative_to(REPO_ROOT)}", file=sys.stderr)
+                stale.extend(missing_svg)
+            else:
+                print("warning: plantuml not found; SVG freshness not verified", file=sys.stderr)
         if stale:
             for path in stale:
                 print(f"stale workflow diagram: {path.relative_to(REPO_ROOT)}", file=sys.stderr)
@@ -428,8 +546,20 @@ def main(argv: list[str]) -> int:
         return 0
 
     DIAGRAM_DIR.mkdir(parents=True, exist_ok=True)
+    GENERATED_DIR.mkdir(parents=True, exist_ok=True)
+    if not shutil.which("plantuml"):
+        print(
+            "plantuml not found on PATH; install it to render tracked SVG views",
+            file=sys.stderr,
+        )
+        return 1
     for path, content in outputs.items():
         path.write_text(content, encoding="utf-8")
+        try:
+            svg_path_for(path).write_text(render_svg(content), encoding="utf-8")
+        except RuntimeError as exc:
+            print(f"workflow diagram generation failed: {exc}", file=sys.stderr)
+            return 1
     return 0
 
 

@@ -1,0 +1,99 @@
+@startuml
+' Generated from contracts/skills.toml; do not edit by hand.
+title Skill Planes Overview
+top to bottom direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam ArrowColor #475569
+skinparam rectangle {
+  BackgroundColor #F8FAFC
+  BorderColor #475569
+}
+
+package "Sovereign Harness Kernel (workflow)" as n_plane_workflow <<kernel>> {
+  rectangle "analyze-project" as n_analyze_project
+  rectangle "close-change" as n_close_change
+  rectangle "design-change" as n_design_change
+  rectangle "implement-change" as n_implement_change
+  rectangle "plan-change" as n_plan_change
+  rectangle "review-change" as n_review_change
+  rectangle "sync-truth" as n_sync_truth
+}
+
+package "Session Plane" as n_plane_session {
+  rectangle "output-styles" as n_output_styles
+  rectangle "use-coding-skills" as n_use_coding_skills
+}
+
+package "Evaluation Plane (review components)" as n_plane_review_component {
+  rectangle "review-design" as n_review_design
+  rectangle "review-implementation" as n_review_implementation
+  rectangle "review-plan" as n_review_plan
+}
+
+package "Discipline Plane" as n_plane_discipline {
+  rectangle "api-contract-strategy" as n_api_contract_strategy
+  rectangle "architecture-patterns" as n_architecture_patterns
+  rectangle "clean-architecture" as n_clean_architecture
+  rectangle "error-patterns" as n_error_patterns
+  rectangle "executable-oracle-architecture-selector" as n_executable_oracle_architecture_selector
+  rectangle "infrastructure-triage" as n_infrastructure_triage
+  rectangle "language-decision-tree" as n_language_decision_tree
+  rectangle "organize-docs" as n_organize_docs
+  rectangle "skill-miner" as n_skill_miner
+  rectangle "testing-strategy" as n_testing_strategy
+  rectangle "tool-decision-tree" as n_tool_decision_tree
+}
+
+package "Policy Plane" as n_plane_policy {
+  rectangle "development-standards" as n_development_standards
+  rectangle "go-guidelines" as n_go_guidelines
+  rectangle "logging-standards" as n_logging_standards
+  rectangle "lua-guidelines" as n_lua_guidelines
+  rectangle "powershell-guidelines" as n_powershell_guidelines
+  rectangle "python-guidelines" as n_python_guidelines
+  rectangle "quality-standards" as n_quality_standards
+  rectangle "security-guardrails" as n_security_guardrails
+  rectangle "security-logging" as n_security_logging
+  rectangle "shell-guidelines" as n_shell_guidelines
+  rectangle "sops-age-guardrails" as n_sops_age_guardrails
+}
+
+package "Tool Plane" as n_plane_tool {
+  rectangle "codex-session-recovery" as n_codex_session_recovery
+  rectangle "docker-multiarch-build" as n_docker_multiarch_build
+  rectangle "smart-commit" as n_smart_commit
+  rectangle "web-fetch" as n_web_fetch
+}
+
+package "Manual Tools (explicit user request only)" as n_plane_manual_tool {
+  rectangle "git-worktrees" as n_git_worktrees
+  rectangle "smart-squash" as n_smart_squash
+}
+
+n_plane_workflow -[hidden]-> n_plane_session
+n_plane_session -[hidden]-> n_plane_review_component
+n_plane_review_component -[hidden]-> n_plane_discipline
+n_plane_discipline -[hidden]-> n_plane_policy
+n_plane_policy -[hidden]-> n_plane_tool
+n_plane_tool -[hidden]-> n_plane_manual_tool
+
+n_plane_workflow ..> n_plane_session : composes
+n_plane_workflow ..> n_plane_review_component : composes
+n_plane_workflow ..> n_plane_discipline : composes
+n_plane_workflow ..> n_plane_policy : composes
+n_plane_workflow ..> n_plane_tool : composes
+n_plane_workflow ..> n_plane_manual_tool : composes
+
+note as ownership_note
+  Only workflow skills own lifecycle state.
+  Lower planes contribute methods, evidence, or policy.
+end note
+
+legend right
+  kernel = top-level lifecycle authority
+  review components = read-only evaluators
+  manual tools = explicit user request only
+  internal runtime support is intentionally omitted
+endlegend
+@enduml

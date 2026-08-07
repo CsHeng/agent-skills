@@ -12,7 +12,7 @@ When prose, diagrams, and runtime behavior disagree, resolve drift in this order
 4. `src/skills/session/use-coding-skills/references/routing.toml` defines installed discovery behavior, phase-to-owner mapping, review evaluators, support routes, composition, and the host-wrapper boundary.
 5. `src/skills/workflows/implement-change/references/workflow.toml` defines the invocation subgraph and repair metadata that must travel with the installed controller.
 6. `src/skills/workflows/implement-change/references/repair-loop.md` explains the controller's repair semantics.
-7. The PlantUML files in `diagrams/` are generated views for humans and must not be edited by hand.
+7. The PlantUML files in `diagrams/` and the rendered SVG files in `generated/` are generated views for humans and must not be edited by hand.
 
 `docs/plans/` records design and implementation history. It is useful for rationale and dispute resolution but is not current runtime truth.
 
@@ -30,7 +30,7 @@ Workflow skills own lifecycle transitions. Discipline, policy, tool, and review-
 
 ## Request Discovery And Route Ownership
 
-The [harness routing sequence](diagrams/harness-routing-sequence.puml) is generated from the installed routing contract plus the repository lifecycle and workflow-mode contracts. It shows the expected route from a user request through the optional host wrapper, native skill matching, optional ambiguity routing, lower-plane composition, mode selection, lifecycle gates, review evaluators, truth sync, and close.
+The harness routing sequence ([rendered SVG](generated/harness-routing-sequence.svg), [PlantUML source](diagrams/harness-routing-sequence.puml)) is generated from the installed routing contract plus the repository lifecycle and workflow-mode contracts. It shows the expected route from a user request through the optional host wrapper, native skill matching, optional ambiguity routing, lower-plane composition, mode selection, lifecycle gates, review evaluators, truth sync, and close.
 
 Native description matching is the default discovery path. An explicitly named skill or confident direct workflow or policy match bypasses `use-coding-skills`; an ambiguous multi-stage request or explicit routing question enters it. `use-coding-skills` does not become a mandatory bootstrap or lifecycle controller.
 
@@ -48,7 +48,7 @@ When the approved design carries an architecture decision, `plan-change` referen
 
 ## Implementation Invocation DAG
 
-The [implementation invocation DAG](diagrams/implementation-invocation-dag.puml) is generated from the controller-local runtime contract.
+The implementation invocation DAG ([rendered SVG](generated/implementation-invocation-dag.svg), [PlantUML source](diagrams/implementation-invocation-dag.puml)) is generated from the controller-local runtime contract.
 
 The installed subgraph has one lifecycle controller:
 
@@ -71,7 +71,7 @@ Delegated writers use isolated worktrees derived from one dependency-frozen snap
 
 ## Repair Loop
 
-The [implementation repair loop](diagrams/implementation-repair-loop.puml) is also generated from the installed controller contract.
+The implementation repair loop ([rendered SVG](generated/implementation-repair-loop.svg), [PlantUML source](diagrams/implementation-repair-loop.puml)) is also generated from the installed controller contract.
 
 The normal transition is:
 
@@ -102,11 +102,13 @@ Native matching can compose one primary workflow with matching policy overlays, 
 
 ## Maintenance
 
-Regenerate the diagrams after changing routing, lifecycle, workflow-mode, or controller-local workflow contracts:
+Regenerate the diagrams and their tracked SVG renderings after changing routing, lifecycle, workflow-mode, skills, or controller-local workflow contracts:
 
 ```bash
 python3 scripts/generate-workflow-diagrams.py
 ```
+
+SVG rendering requires `plantuml` on `PATH`. The optional pre-commit hook (`bash hooks/install-git-hooks.sh`) regenerates and stages both automatically when diagram inputs are part of a commit.
 
 Validate that diagrams are current and syntactically valid:
 
