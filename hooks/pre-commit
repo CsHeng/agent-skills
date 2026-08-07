@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Pre-commit hook: keep generated workflow diagrams (puml + tracked SVG) in sync
+# when their contract or generator inputs are part of the commit.
+# Install with: bash hooks/install-git-hooks.sh
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+staged="$(git diff --cached --name-only)"
+
+inputs_re='^(contracts/.*\.toml|src/skills/session/use-coding-skills/references/routing\.toml|src/skills/workflows/implement-change/references/workflow\.toml|scripts/generate-workflow-diagrams\.py|docs/architecture/diagrams/.*\.puml)$'
+
+if ! grep -qE "$inputs_re" <<<"$staged"; then
+  exit 0
+fi
+
+if python3 scripts/generate-workflow-diagrams.py --check >/dev/null 2>&1; then
+  exit 0
+fi
+
+echo "pre-commit: regenerating workflow diagrams and tracked SVG views" >&2
+python3 scripts/generate-workflow-diagrams.py
+git add docs/architecture/diagrams docs/architecture/generated
