@@ -1,4 +1,6 @@
 interface:
-  display_name: "Logging Standards"
-  short_description: "Help with Logging Standards tasks"
-  default_prompt: "Use $logging-standards for this workflow."
+  display_name: "Logging and Audit Evidence"
+  short_description: "Design goal-driven application and audit logging"
+  default_prompt: "Use $logging-standards to design logging from its operational, security, or audit goal."
+policy:
+  allow_implicit_invocation: true

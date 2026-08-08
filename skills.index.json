@@ -77,9 +77,21 @@
   },
   "skills": [
     {
+      "activation_mode": "native",
       "category": "workflow",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "analyze-project",
-      "implicit_invocation": false,
+      "implicit_invocation": true,
       "install": [
         "claude",
         "codex",
@@ -87,13 +99,29 @@
       ],
       "lifecycle_owner": true,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "project-truth-audit"
+      ],
       "public_id": "analyze-project",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/workflows/analyze-project"
     },
     {
+      "activation_mode": "native",
       "category": "discipline",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "api-contract-strategy",
       "implicit_invocation": true,
       "install": [
@@ -103,13 +131,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "api-contract-governance"
+      ],
       "public_id": "api-contract-strategy",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/api-contract-strategy"
     },
     {
+      "activation_mode": "native",
       "category": "discipline",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "architecture-patterns",
       "implicit_invocation": true,
       "install": [
@@ -119,15 +163,31 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "architecture-and-boundaries"
+      ],
       "public_id": "architecture-patterns",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/architecture-patterns"
     },
     {
+      "activation_mode": "explicit",
       "category": "discipline",
+      "default_role": "helper",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": false,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "clean-architecture",
-      "implicit_invocation": true,
+      "implicit_invocation": false,
       "install": [
         "claude",
         "codex",
@@ -135,13 +195,28 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [],
       "public_id": "clean-architecture",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
-      "source": "src/skills/disciplines/clean-architecture"
+      "source": "src/skills/disciplines/clean-architecture",
+      "superseded_by": "architecture-patterns"
     },
     {
+      "activation_mode": "controller",
       "category": "workflow",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": false,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "close-change",
       "implicit_invocation": false,
       "install": [
@@ -151,6 +226,8 @@
       ],
       "lifecycle_owner": true,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [],
       "public_id": "close-change",
       "runtime_bundle": "harness",
       "semantic_requires": [],
@@ -158,7 +235,19 @@
       "source": "src/skills/workflows/close-change"
     },
     {
+      "activation_mode": "explicit",
       "category": "tool",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": false,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "codex-session-recovery",
       "implicit_invocation": false,
       "install": [
@@ -168,15 +257,31 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "explicit-codex-session-recovery"
+      ],
       "public_id": "codex-session-recovery",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/tools/codex-session-recovery"
     },
     {
+      "activation_mode": "native",
       "category": "workflow",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "design-change",
-      "implicit_invocation": false,
+      "implicit_invocation": true,
       "install": [
         "claude",
         "codex",
@@ -184,6 +289,10 @@
       ],
       "lifecycle_owner": true,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "change-scope-design"
+      ],
       "public_id": "design-change",
       "runtime_bundle": "harness",
       "semantic_requires": [
@@ -198,7 +307,19 @@
       "source": "src/skills/workflows/design-change"
     },
     {
+      "activation_mode": "conditional",
       "category": "policy",
+      "default_role": "overlay",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "development-standards",
       "implicit_invocation": true,
       "install": [
@@ -208,13 +329,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "cross-language-implementation-policy"
+      ],
       "public_id": "development-standards",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/policies/development-standards"
     },
     {
+      "activation_mode": "native",
       "category": "tool",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "docker-multiarch-build",
       "implicit_invocation": true,
       "install": [
@@ -224,13 +361,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "docker-multiarch"
+      ],
       "public_id": "docker-multiarch-build",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/tools/docker-multiarch-build"
     },
     {
+      "activation_mode": "native",
       "category": "discipline",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "error-patterns",
       "implicit_invocation": true,
       "install": [
@@ -240,13 +393,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "resilience-and-recovery"
+      ],
       "public_id": "error-patterns",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/error-patterns"
     },
     {
+      "activation_mode": "conditional",
       "category": "discipline",
+      "default_role": "overlay",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "executable-oracle-architecture-selector",
       "implicit_invocation": true,
       "install": [
@@ -256,13 +425,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "executable-oracle-selection"
+      ],
       "public_id": "executable-oracle-architecture-selector",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/executable-oracle-architecture-selector"
     },
     {
+      "activation_mode": "explicit",
       "category": "manual-tool",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": false,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "git-worktrees",
       "implicit_invocation": false,
       "install": [
@@ -272,13 +457,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": true,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "explicit-git-worktree-operation"
+      ],
       "public_id": "git-worktrees",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/git/git-worktrees"
     },
     {
+      "activation_mode": "conditional",
       "category": "policy",
+      "default_role": "overlay",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "go-guidelines",
       "implicit_invocation": true,
       "install": [
@@ -288,13 +489,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "go-language-policy"
+      ],
       "public_id": "go-guidelines",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/policies/go-guidelines"
     },
     {
+      "activation_mode": "native",
       "category": "workflow",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "implement-change",
       "implicit_invocation": true,
       "install": [
@@ -304,6 +521,10 @@
       ],
       "lifecycle_owner": true,
       "may_mutate_repo": true,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "approved-plan-execution"
+      ],
       "public_id": "implement-change",
       "runtime_bundle": "harness",
       "runtime_contract": "references/workflow.toml",
@@ -323,7 +544,19 @@
       "source": "src/skills/workflows/implement-change"
     },
     {
+      "activation_mode": "native",
       "category": "discipline",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "infrastructure-triage",
       "implicit_invocation": true,
       "install": [
@@ -333,13 +566,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "infrastructure-data-path"
+      ],
       "public_id": "infrastructure-triage",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/infrastructure-triage"
     },
     {
+      "activation_mode": "conditional",
       "category": "discipline",
+      "default_role": "overlay",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "language-decision-tree",
       "implicit_invocation": true,
       "install": [
@@ -349,13 +598,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "persisted-language-selection"
+      ],
       "public_id": "language-decision-tree",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/language-decision-tree"
     },
     {
+      "activation_mode": "native",
       "category": "policy",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "logging-standards",
       "implicit_invocation": true,
       "install": [
@@ -365,13 +630,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "application-logging"
+      ],
       "public_id": "logging-standards",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/policies/logging-standards"
     },
     {
+      "activation_mode": "conditional",
       "category": "policy",
+      "default_role": "overlay",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "lua-guidelines",
       "implicit_invocation": true,
       "install": [
@@ -381,13 +662,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "lua-language-policy"
+      ],
       "public_id": "lua-guidelines",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/policies/lua-guidelines"
     },
     {
+      "activation_mode": "native",
       "category": "discipline",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "organize-docs",
       "implicit_invocation": true,
       "install": [
@@ -397,13 +694,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": true,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "documentation-organization"
+      ],
       "public_id": "organize-docs",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/organize-docs"
     },
     {
+      "activation_mode": "baseline",
       "category": "session",
+      "default_role": "overlay",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "output-styles",
       "implicit_invocation": true,
       "install": [
@@ -413,15 +726,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [],
       "public_id": "output-styles",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/session/output-styles"
     },
     {
+      "activation_mode": "native",
       "category": "workflow",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "plan-change",
-      "implicit_invocation": false,
+      "implicit_invocation": true,
       "install": [
         "claude",
         "codex",
@@ -429,6 +756,10 @@
       ],
       "lifecycle_owner": true,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "execution-plan"
+      ],
       "public_id": "plan-change",
       "runtime_bundle": "harness",
       "semantic_requires": [
@@ -443,7 +774,19 @@
       "source": "src/skills/workflows/plan-change"
     },
     {
+      "activation_mode": "conditional",
       "category": "policy",
+      "default_role": "overlay",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "powershell-guidelines",
       "implicit_invocation": true,
       "install": [
@@ -453,13 +796,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "powershell-language-policy"
+      ],
       "public_id": "powershell-guidelines",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/policies/powershell-guidelines"
     },
     {
+      "activation_mode": "conditional",
       "category": "policy",
+      "default_role": "overlay",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "python-guidelines",
       "implicit_invocation": true,
       "install": [
@@ -469,15 +828,31 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "python-language-policy"
+      ],
       "public_id": "python-guidelines",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/policies/python-guidelines"
     },
     {
+      "activation_mode": "explicit",
       "category": "policy",
+      "default_role": "helper",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": false,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "quality-standards",
-      "implicit_invocation": true,
+      "implicit_invocation": false,
       "install": [
         "claude",
         "codex",
@@ -485,15 +860,30 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [],
       "public_id": "quality-standards",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
-      "source": "src/skills/policies/quality-standards"
+      "source": "src/skills/policies/quality-standards",
+      "superseded_by": "development-standards"
     },
     {
+      "activation_mode": "native",
       "category": "workflow",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "review-change",
-      "implicit_invocation": false,
+      "implicit_invocation": true,
       "install": [
         "claude",
         "codex",
@@ -501,6 +891,10 @@
       ],
       "lifecycle_owner": true,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "lifecycle-review-gate"
+      ],
       "public_id": "review-change",
       "runtime_bundle": "harness",
       "semantic_requires": [
@@ -516,7 +910,19 @@
       "source": "src/skills/workflows/review-change"
     },
     {
+      "activation_mode": "controller",
       "category": "review-component",
+      "default_role": "evaluator",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": false,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "review-design",
       "implicit_invocation": false,
       "install": [
@@ -526,15 +932,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [],
       "public_id": "review-design",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/review-components/review-design"
     },
     {
+      "activation_mode": "controller",
       "category": "review-component",
+      "default_role": "evaluator",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": false,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "review-implementation",
-      "implicit_invocation": true,
+      "implicit_invocation": false,
       "install": [
         "claude",
         "codex",
@@ -542,13 +962,27 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [],
       "public_id": "review-implementation",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/review-components/review-implementation"
     },
     {
+      "activation_mode": "controller",
       "category": "review-component",
+      "default_role": "evaluator",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": false,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "review-plan",
       "implicit_invocation": false,
       "install": [
@@ -558,13 +992,27 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [],
       "public_id": "review-plan",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/review-components/review-plan"
     },
     {
+      "activation_mode": "native",
       "category": "policy",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "security-guardrails",
       "implicit_invocation": true,
       "install": [
@@ -574,15 +1022,31 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "application-security-controls"
+      ],
       "public_id": "security-guardrails",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/policies/security-guardrails"
     },
     {
+      "activation_mode": "explicit",
       "category": "policy",
+      "default_role": "helper",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": false,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "security-logging",
-      "implicit_invocation": true,
+      "implicit_invocation": false,
       "install": [
         "claude",
         "codex",
@@ -590,13 +1054,28 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [],
       "public_id": "security-logging",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
-      "source": "src/skills/policies/security-logging"
+      "source": "src/skills/policies/security-logging",
+      "superseded_by": "logging-standards"
     },
     {
+      "activation_mode": "conditional",
       "category": "policy",
+      "default_role": "overlay",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "shell-guidelines",
       "implicit_invocation": true,
       "install": [
@@ -606,13 +1085,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "shell-language-policy"
+      ],
       "public_id": "shell-guidelines",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/policies/shell-guidelines"
     },
     {
+      "activation_mode": "explicit",
       "category": "discipline",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": false,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "skill-miner",
       "implicit_invocation": false,
       "install": [
@@ -622,13 +1117,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "explicit-skill-history-mining"
+      ],
       "public_id": "skill-miner",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/skill-miner"
     },
     {
+      "activation_mode": "native",
       "category": "tool",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "smart-commit",
       "implicit_invocation": true,
       "install": [
@@ -638,13 +1149,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": true,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "focused-smart-commit"
+      ],
       "public_id": "smart-commit",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/git/smart-commit"
     },
     {
+      "activation_mode": "explicit",
       "category": "manual-tool",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": false,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "smart-squash",
       "implicit_invocation": false,
       "install": [
@@ -654,13 +1181,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": true,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "explicit-unpushed-history-squash"
+      ],
       "public_id": "smart-squash",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/git/smart-squash"
     },
     {
+      "activation_mode": "native",
       "category": "policy",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "sops-age-guardrails",
       "implicit_invocation": true,
       "install": [
@@ -670,13 +1213,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "sops-age-secrets"
+      ],
       "public_id": "sops-age-guardrails",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/policies/sops-age-guardrails"
     },
     {
+      "activation_mode": "controller",
       "category": "workflow",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": false,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "sync-truth",
       "implicit_invocation": false,
       "install": [
@@ -686,6 +1245,8 @@
       ],
       "lifecycle_owner": true,
       "may_mutate_repo": true,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [],
       "public_id": "sync-truth",
       "runtime_bundle": "harness",
       "semantic_requires": [],
@@ -693,7 +1254,19 @@
       "source": "src/skills/workflows/sync-truth"
     },
     {
+      "activation_mode": "native",
       "category": "discipline",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "testing-strategy",
       "implicit_invocation": true,
       "install": [
@@ -703,13 +1276,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "verification-strategy"
+      ],
       "public_id": "testing-strategy",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/testing-strategy"
     },
     {
+      "activation_mode": "conditional",
       "category": "discipline",
+      "default_role": "overlay",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "tool-decision-tree",
       "implicit_invocation": true,
       "install": [
@@ -719,13 +1308,29 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "ad-hoc-tool-selection"
+      ],
       "public_id": "tool-decision-tree",
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/disciplines/tool-decision-tree"
     },
     {
+      "activation_mode": "native",
       "category": "session",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "use-coding-skills",
       "implicit_invocation": true,
       "install": [
@@ -735,50 +1340,105 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "coding-skill-routing",
+        "session-boundary-handoff"
+      ],
       "public_id": "use-coding-skills",
       "routing_contract": "references/routing.toml",
       "semantic_requires": [
         "analyze-project",
-        "plan-change",
-        "design-change",
-        "review-change",
-        "implement-change",
-        "sync-truth",
+        "api-contract-strategy",
+        "architecture-patterns",
         "close-change",
-        "review-design",
-        "review-plan",
-        "review-implementation",
-        "output-styles",
-        "tool-decision-tree",
+        "codex-session-recovery",
+        "design-change",
         "development-standards",
-        "language-decision-tree",
+        "docker-multiarch-build",
+        "error-patterns",
+        "executable-oracle-architecture-selector",
+        "git-worktrees",
+        "go-guidelines",
+        "implement-change",
         "infrastructure-triage",
+        "language-decision-tree",
+        "logging-standards",
+        "lua-guidelines",
         "organize-docs",
-        "skill-miner"
+        "output-styles",
+        "plan-change",
+        "powershell-guidelines",
+        "python-guidelines",
+        "review-change",
+        "review-design",
+        "review-implementation",
+        "review-plan",
+        "security-guardrails",
+        "shell-guidelines",
+        "skill-miner",
+        "smart-commit",
+        "smart-squash",
+        "sops-age-guardrails",
+        "sync-truth",
+        "testing-strategy",
+        "tool-decision-tree",
+        "web-fetch"
       ],
       "semantic_transitive_requires": [
         "analyze-project",
+        "api-contract-strategy",
+        "architecture-patterns",
         "close-change",
+        "codex-session-recovery",
         "design-change",
         "development-standards",
+        "docker-multiarch-build",
+        "error-patterns",
+        "executable-oracle-architecture-selector",
+        "git-worktrees",
+        "go-guidelines",
         "implement-change",
         "infrastructure-triage",
         "language-decision-tree",
+        "logging-standards",
+        "lua-guidelines",
         "organize-docs",
         "output-styles",
         "plan-change",
+        "powershell-guidelines",
+        "python-guidelines",
         "review-change",
         "review-design",
         "review-implementation",
         "review-plan",
+        "security-guardrails",
+        "shell-guidelines",
         "skill-miner",
+        "smart-commit",
+        "smart-squash",
+        "sops-age-guardrails",
         "sync-truth",
-        "tool-decision-tree"
+        "testing-strategy",
+        "tool-decision-tree",
+        "web-fetch"
       ],
       "source": "src/skills/session/use-coding-skills"
     },
     {
+      "activation_mode": "native",
       "category": "tool",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
       "id": "web-fetch",
       "implicit_invocation": true,
       "install": [
@@ -788,6 +1448,10 @@
       ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "web-content-retrieval"
+      ],
       "public_id": "web-fetch",
       "semantic_requires": [],
       "semantic_transitive_requires": [],

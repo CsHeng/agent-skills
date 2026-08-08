@@ -14,6 +14,12 @@ from typing import TypedDict
 import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from skill_activation import derived_implicit_invocation, project_openai_metadata
+
 CONTRACT_PATH = REPO_ROOT / "contracts" / "skills.toml"
 TARGETS_PATH = REPO_ROOT / "contracts" / "install-targets.toml"
 RUNTIME_BUNDLES = {"harness": REPO_ROOT / "src/runtime/harness"}
@@ -26,6 +32,7 @@ class SkillEntry(TypedDict, total=False):
     category: str
     install: list[str]
     runtime_bundle: str
+    activation_mode: str
 
 
 class TargetEntry(TypedDict, total=False):
@@ -38,8 +45,9 @@ def load_toml(path: Path) -> dict[str, object]:
         return tomllib.load(handle)
 
 
-def load_skills() -> dict[str, SkillEntry]:
-    data = load_toml(CONTRACT_PATH)
+def load_skills(data: dict[str, object] | None = None) -> dict[str, SkillEntry]:
+    if data is None:
+        data = load_toml(CONTRACT_PATH)
     skills = data.get("skills")
     if not isinstance(skills, dict):
         raise SystemExit("contracts/skills.toml must contain [skills.*] entries")
@@ -170,7 +178,8 @@ def assert_portable_content(public_id: str, generated_skill: Path) -> None:
 
 
 def generate_target(target: str, dest: Path) -> None:
-    skills = load_skills()
+    contract = load_toml(CONTRACT_PATH)
+    skills = load_skills(contract)
     selected = selected_skills(skills, target)
     tmp_parent = REPO_ROOT / ".tmp-install"
     tmp_parent.mkdir(exist_ok=True)
@@ -191,6 +200,19 @@ def generate_target(target: str, dest: Path) -> None:
                 raise SystemExit(f"missing SKILL.md for {public_id}: {source_rel}")
             generated_skill = skills_dest / public_id
             shutil.copytree(source_path, generated_skill, symlinks=False)
+            metadata_path = generated_skill / "agents" / "openai.yaml"
+            try:
+                metadata_source = metadata_path.read_text(encoding="utf-8")
+            except OSError:
+                metadata_source = ""
+            metadata_path.parent.mkdir(parents=True, exist_ok=True)
+            metadata_path.write_text(
+                project_openai_metadata(
+                    metadata_source,
+                    derived_implicit_invocation(contract, entry),
+                ),
+                encoding="utf-8",
+            )
             runtime_bundle = entry.get("runtime_bundle")
             if runtime_bundle:
                 copy_runtime_bundle(

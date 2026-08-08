@@ -1,4 +1,6 @@
 interface:
-  display_name: "Clean Architecture"
-  short_description: "Help with Clean Architecture tasks"
-  default_prompt: "Use $clean-architecture for this workflow."
+  display_name: "Clean Architecture (Compatibility)"
+  short_description: "Explicit handoff to architecture-patterns"
+  default_prompt: "Use $clean-architecture only as an explicit compatibility handoff to $architecture-patterns."
+policy:
+  allow_implicit_invocation: false

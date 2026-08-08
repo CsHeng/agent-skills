@@ -27,14 +27,14 @@ Current plugin identity:
 - `.codex-marketplace/plugins/coding`: symlink back to this repository root so Codex can consume the expected `./plugins/coding` marketplace source shape without moving the repository
 - `src/skills/`: source-of-truth skill tree grouped by workflow/session/discipline/policy/tool/git/review category
 - `src/runtime/harness/`: non-discoverable deterministic harness runtime and repository smoke tests
-- `contracts/skills.toml`: source-of-truth skill exposure and invocation contract
-- `src/skills/session/use-coding-skills/references/routing.toml`: installed discovery, phase-to-owner, review-evaluator, support-route, composition, and host-wrapper contract
+- `contracts/skills.toml`: source-of-truth skill exposure, activation-mode, default-role, compatibility-successor, and provider-projection contract
+- `src/skills/session/use-coding-skills/references/routing.toml`: installed semantic trigger-case, discovery, phase-to-owner, review-evaluator, support-route, composition, and host-wrapper contract
 - `skills/`: tracked generated root-flat public payload used by current plugin manifests and optional external discovery
 - `.dist/claude/`, `.dist/codex/`: ignored, reproducible target-specific flat skill surfaces generated only when needed
 - `skills/<owner>/scripts/harness/`: generated owner-local runtime bundles for `design-change`, `plan-change`, `implement-change`, `review-change`, `sync-truth`, and `close-change`
 - `archived/`: inert historical material outside active plugin discovery and default repository search
 - `docs/architecture/workflow-orchestration.md`: canonical maintenance view of lifecycle routing, the installed implementation DAG, and controller-owned repair
-- `docs/architecture/diagrams/`: generated PlantUML views of full harness routing, the skill planes, and the controller-local workflow contract; do not edit by hand
+- `docs/architecture/diagrams/`: generated PlantUML views of full harness routing, skill planes, activation and trigger ownership, and the controller-local workflow contract; do not edit by hand
 - `docs/architecture/generated/`: tracked SVG renderings of those diagrams for human-facing docs; regenerated together with the PlantUML sources by `scripts/generate-workflow-diagrams.py`
 - `hooks/`: post-edit validation hooks
 - `install.sh`: registers the local marketplace in Claude settings
@@ -88,6 +88,8 @@ Claude Code and Codex retain their repository-owned plugin marketplaces. Other c
 - Keep discovery, phase-to-owner mapping, review evaluator selection, support routes, and host-wrapper limits in the installed `use-coding-skills/references/routing.toml` contract. User- or host-level AGENTS files may keep thin public-skill hints but must not become parallel harness truth.
 - Keep skills thin and operational.
 - Treat `src/skills/` and `contracts/skills.toml` as the source of truth for behavior and exposure; generated `skills/` should be refreshed, not edited by hand.
+- Author activation only through `activation_mode` and `default_role` in `contracts/skills.toml`; derive provider metadata through the contract-level projection table, and do not restore per-skill invocation booleans or source-authored Codex invocation policy.
+- Keep semantic case ownership, positive and negative boundaries, optional overlays, and non-authoritative lexical hints in the installed routing contract; do not duplicate them in host wrappers or prose.
 - Prefer explicit validation and deterministic workflows over vague prompt guidance.
 - Use `output-styles` as the shared conversational rendering baseline. Select one primary skill to own domain order and treat other matched skills as semantic overlays rather than independent report generators.
 - Keep fixed output schemas inside the skill that owns a durable artifact or machine-consumed result; ordinary conversational skills should render only decision-relevant parts of their internal checklist.

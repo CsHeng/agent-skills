@@ -1,4 +1,4 @@
 interface:
   display_name: "Shell Guidelines"
-  short_description: "Apply Shell standards as a workflow policy"
-  default_prompt: "Use $shell-guidelines as the Shell policy overlay for this task."
+  short_description: "Review persisted or correctness-sensitive Shell code"
+  default_prompt: "Use $shell-guidelines as a conditional policy overlay for this non-trivial Shell surface."

@@ -32,6 +32,8 @@ Choose the smallest sufficient architecture justified by current demand, a const
 
 When shaping module interfaces, test seams, domain terminology, or caller contracts, read `references/interface-and-domain-language.md`.
 
+When the decision concerns handlers, services, repositories, framework isolation, inward dependency direction, or cross-boundary tests, read `references/clean-boundaries.md`.
+
 Keep interfaces small and behavior-bearing. Create seams for proven variation or caller-visible test contracts, not for hypothetical substitution.
 
 ## Decision Result

@@ -70,3 +70,419 @@ persisted-language-selection = "language-decision-tree"
 infrastructure = "infrastructure-triage"
 documentation = "organize-docs"
 memory-and-session-mining = "skill-miner"
+
+[[trigger_cases]]
+id = "project-truth-audit"
+owner = "analyze-project"
+positive = [
+  "Explain this repository's purpose, architecture, current state, or documented truth without changing it.",
+  "Audit stable project truth for drift, gaps, unfinished work, or search boundaries.",
+]
+negative = [
+  "Diagnose a live infrastructure incident whose runtime data path is the primary question.",
+  "Implement a requested repository change.",
+]
+lexical_hints = ["analyze project", "repo truth", "architecture drift"]
+
+[[trigger_cases]]
+id = "change-scope-design"
+owner = "design-change"
+positive = [
+  "Classify a proposed change's scope, boundaries, risks, and required design depth before planning.",
+  "Create or revise an approved design artifact for a behavior or architecture change.",
+]
+negative = [
+  "Turn an already approved design into an execution-grade task plan.",
+  "Implement an already approved plan.",
+]
+lexical_hints = ["design change", "design-lite", "design-full"]
+
+[[trigger_cases]]
+id = "execution-plan"
+owner = "plan-change"
+positive = [
+  "Convert approved scope or design into ordered tasks, touch sets, oracles, and recovery policy.",
+  "Review and repair an implementation plan before its human approval gate.",
+]
+negative = [
+  "Decide unresolved architecture boundaries that still require design.",
+  "Execute tasks from an already approved plan.",
+]
+lexical_hints = ["implementation plan", "task DAG", "plan change"]
+
+[[trigger_cases]]
+id = "approved-plan-execution"
+owner = "implement-change"
+positive = [
+  "Implement an approved plan through its declared verification and review gates.",
+  "Continue controller-owned repair for the active approved implementation slice.",
+]
+negative = [
+  "Plan a change whose execution order is not yet approved.",
+  "Perform a read-only project explanation with no requested mutation.",
+]
+lexical_hints = ["implement approved plan", "execute plan", "fix forward"]
+
+[[trigger_cases]]
+id = "lifecycle-review-gate"
+owner = "review-change"
+positive = [
+  "Run the top-level review gate for a bounded design, plan, or implementation artifact.",
+  "Adjudicate candidate findings against the approved task slice and its evidence.",
+]
+negative = [
+  "Implement accepted findings or mutate the reviewed code.",
+  "Give informal feedback that is not a lifecycle review request.",
+]
+lexical_hints = ["review change", "review gate", "adjudicate findings"]
+
+[[trigger_cases]]
+id = "coding-skill-routing"
+owner = "use-coding-skills"
+positive = [
+  "Explain which local coding skill should own an ambiguous or multi-stage request.",
+  "Resolve host-wrapper, composition, or direct-match routing boundaries.",
+]
+negative = [
+  "A request directly and confidently matches one public workflow or policy skill.",
+  "A domain owner can answer without session-level routing guidance.",
+]
+lexical_hints = ["which skill", "route this request", "coding skills"]
+
+[[trigger_cases]]
+id = "session-boundary-handoff"
+owner = "use-coding-skills"
+positive = [
+  "Prepare or interpret a compact handoff across a session, compaction, or agent boundary.",
+  "Clarify session and memory boundaries for continuing coding work safely.",
+]
+negative = [
+  "Recover persisted Codex JSONL history after explicitly invoking the recovery tool.",
+  "Mine historical sessions for reusable skill improvements.",
+]
+lexical_hints = ["session handoff", "compaction", "memory boundary"]
+
+[[trigger_cases]]
+id = "documentation-organization"
+owner = "organize-docs"
+positive = [
+  "Organize README, AGENTS, stable docs, stage artifacts, terminology, or docs search boundaries.",
+  "Choose canonical documentation roots and prevent duplicated durable truth.",
+]
+negative = [
+  "Explain existing project truth without reorganizing documentation.",
+  "Synchronize truth after a verified behavior change through the lifecycle gate.",
+]
+lexical_hints = ["organize docs", "README AGENTS split", "docs boundary"]
+
+[[trigger_cases]]
+id = "api-contract-governance"
+owner = "api-contract-strategy"
+positive = [
+  "Design API contract ownership, compatibility, provider conformance, or consumer adapters.",
+  "Choose OpenAPI, generated-client, workflow, or contract-testing boundaries across consumers.",
+]
+negative = [
+  "Make an ordinary implementation edit where the existing API contract is fixed.",
+  "Choose general service boundaries unrelated to an API contract lifecycle.",
+]
+lexical_hints = ["API contract", "OpenAPI", "consumer compatibility"]
+
+[[trigger_cases]]
+id = "architecture-and-boundaries"
+owner = "architecture-patterns"
+positive = [
+  "Decide service, module, layer, dependency-direction, interface-placement, or integration boundaries.",
+  "Compare monolith, microservice, dependency injection, or clean architecture patterns.",
+]
+negative = [
+  "Select the implementation language for a new persisted boundary.",
+  "Apply already decided boundaries while implementing an approved task.",
+]
+lexical_hints = ["architecture", "service boundary", "dependency direction"]
+
+[[trigger_cases]]
+id = "resilience-and-recovery"
+owner = "error-patterns"
+positive = [
+  "Design error classification, retries, circuit breaking, cleanup, resource recovery, or health evidence.",
+  "Choose an explicit recovery policy and observable failure boundary.",
+]
+negative = [
+  "Design application log fields or audit-event retention.",
+  "Diagnose a specific infrastructure incident whose state owner is still unknown.",
+]
+lexical_hints = ["resilience", "retry", "recovery policy"]
+
+[[trigger_cases]]
+id = "infrastructure-data-path"
+owner = "infrastructure-triage"
+positive = [
+  "Troubleshoot or design infrastructure, network, proxy, tunnel, container, GitOps, IaC, auth, or automation paths.",
+  "Identify runtime state ownership, permissions, drift, control boundaries, and recovery evidence.",
+]
+negative = [
+  "Perform broad repository orientation without a runtime incident or infrastructure design question.",
+  "Design in-process application error handling only.",
+]
+lexical_hints = ["infrastructure", "network path", "GitOps"]
+
+[[trigger_cases]]
+id = "verification-strategy"
+owner = "testing-strategy"
+positive = [
+  "Translate an approved oracle strategy into concrete test layers, fixtures, environments, CI lanes, and evidence.",
+  "Audit test scope, duplication, isolation, or verification commands for a known boundary.",
+]
+negative = [
+  "Choose among TDD, contract, property, characterization, runtime, or chaos oracles before planning.",
+  "Apply one language's lint and test tooling conventions only.",
+]
+lexical_hints = ["testing strategy", "test layers", "verification scope"]
+
+[[trigger_cases]]
+id = "docker-multiarch"
+owner = "docker-multiarch-build"
+positive = [
+  "Build or validate multi-architecture Docker images with buildx, Compose, amd64, or arm64 behavior.",
+  "Diagnose cross-platform container image or platform selection problems.",
+]
+negative = [
+  "Troubleshoot a general container runtime incident unrelated to image architecture.",
+  "Harden a container image for security without a multi-architecture concern.",
+]
+lexical_hints = ["multiarch", "buildx", "amd64 arm64"]
+
+[[trigger_cases]]
+id = "web-content-retrieval"
+owner = "web-fetch"
+positive = [
+  "Fetch or read a named URL, web page, PDF, incomplete web result, or X post.",
+  "Choose the repository's bounded fallback path for retrieving web content.",
+]
+negative = [
+  "Search local repository files or select an ad hoc local CLI.",
+  "Control a signed-in browser UI rather than retrieve page content.",
+]
+lexical_hints = ["fetch URL", "read PDF", "web content"]
+
+[[trigger_cases]]
+id = "application-logging"
+owner = "logging-standards"
+positive = [
+  "Design application, observability, security, or audit logging goals, events, fields, correlation, retention, or access.",
+  "Choose structured logging and redaction profiles for a specific operational or audit need.",
+]
+negative = [
+  "Implement input validation, injection prevention, CORS, TLS, or upload controls.",
+  "Design retry and failure-recovery behavior without a logging question.",
+]
+lexical_hints = ["logging", "audit trail", "correlation ID"]
+
+[[trigger_cases]]
+id = "application-security-controls"
+owner = "security-guardrails"
+positive = [
+  "Implement or review secrets, TLS, CORS, validation, injection, XSS, uploads, or container-hardening controls.",
+  "Define exploit-prevention and secure-input boundaries for application code.",
+]
+negative = [
+  "Choose security audit events, redaction, retention, or tamper evidence for logs.",
+  "Edit a SOPS age encryption policy or recipient boundary.",
+]
+lexical_hints = ["security guardrails", "input validation", "container hardening"]
+
+[[trigger_cases]]
+id = "sops-age-secrets"
+owner = "sops-age-guardrails"
+positive = [
+  "Create, edit, or review SOPS age rules, recipients, identities, encrypted fields, or secret placement.",
+  "Plan a decrypt-edit-reencrypt workflow without exposing plaintext secrets.",
+]
+negative = [
+  "Apply general application secret-handling policy without SOPS or age.",
+  "Manage credentials through an unrelated infrastructure runtime.",
+]
+lexical_hints = ["SOPS", "age recipient", "encrypted_regex"]
+
+[[trigger_cases]]
+id = "focused-smart-commit"
+owner = "smart-commit"
+positive = [
+  "Explicitly ask to group current working-tree diffs by business purpose and create focused local commits.",
+  "Split staged and unstaged work into semantic commits without rewriting history.",
+]
+negative = [
+  "Ask for a generic single commit with no grouping requirement.",
+  "Ask to squash or rewrite unpushed commits.",
+]
+lexical_hints = ["smart commit", "group diffs", "focused commits"]
+
+[[trigger_cases]]
+id = "executable-oracle-selection"
+owner = "executable-oracle-architecture-selector"
+positive = [
+  "Choose which executable oracle architecture should make a work package ready before planning or review.",
+  "Compare TDD, BDD, contract, property, characterization, mutation, runtime, canary, or chaos evidence.",
+]
+negative = [
+  "Implement concrete tests after the oracle boundary is already approved.",
+  "Run a known verification command for an existing task.",
+]
+lexical_hints = ["oracle strategy", "TDD or contract tests", "readiness gate"]
+
+[[trigger_cases]]
+id = "persisted-language-selection"
+owner = "language-decision-tree"
+positive = [
+  "Choose an implementation language for a new persisted project, service, tool, automation surface, or approved migration.",
+  "Compare durable language choices before the implementation boundary is fixed.",
+]
+negative = [
+  "Choose an ad hoc command for the agent's current investigation.",
+  "Edit an existing module whose language is already fixed.",
+]
+lexical_hints = ["choose language", "new service language", "persisted tool"]
+
+[[trigger_cases]]
+id = "ad-hoc-tool-selection"
+owner = "tool-decision-tree"
+positive = [
+  "Select or compose an agent-side ad hoc CLI for search, structured data, or a reviewable one-off transformation.",
+  "Choose between rg, fd, find, ast-grep, jq, yq, or COUNT PREVIEW EXECUTE flow.",
+]
+negative = [
+  "Use a routine known search command without a tool-choice decision.",
+  "Choose the persisted implementation language for a repository artifact.",
+]
+lexical_hints = ["which CLI", "rg or grep", "COUNT PREVIEW EXECUTE"]
+
+[[trigger_cases]]
+id = "cross-language-implementation-policy"
+owner = "development-standards"
+positive = [
+  "Choose repository-specific maintainability, compatibility, dependency, migration, or quality-gate policy across languages.",
+  "Review whether a proposed implementation is the smallest durable request-scoped change.",
+]
+negative = [
+  "Select exact Python, Go, Lua, PowerShell, or Shell tooling conventions.",
+  "Define executable test layers or arbitrary universal metric thresholds.",
+]
+lexical_hints = ["development standards", "maintainability policy", "smallest durable change"]
+
+[[trigger_cases]]
+id = "go-language-policy"
+owner = "go-guidelines"
+positive = [
+  "Apply Go-specific module, context, error, CLI, service, test, or toolchain policy after Go is fixed.",
+  "Review existing Go code against repository Go conventions.",
+]
+negative = [
+  "Decide whether a new service should use Go or another language.",
+  "Apply generic cross-language maintainability policy only.",
+]
+lexical_hints = ["Go module", "go test", "Go service"]
+
+[[trigger_cases]]
+id = "lua-language-policy"
+owner = "lua-guidelines"
+positive = [
+  "Apply Lua-specific code, configuration, luac, selene, WezTerm, Hammerspoon, or Rime policy.",
+  "Review an existing Lua surface after its language is fixed.",
+]
+negative = [
+  "Choose Lua as the persisted language for a new tool.",
+  "Edit unrelated configuration that is not Lua.",
+]
+lexical_hints = ["Lua", "luac", "selene"]
+
+[[trigger_cases]]
+id = "powershell-language-policy"
+owner = "powershell-guidelines"
+positive = [
+  "Apply PowerShell strict mode, approved verbs, cross-platform behavior, PSScriptAnalyzer, tests, or module conventions.",
+  "Review an existing PowerShell script or module.",
+]
+negative = [
+  "Choose PowerShell versus another persisted implementation language.",
+  "Compose an ad hoc Shell command that is not PowerShell code.",
+]
+lexical_hints = ["PowerShell", "PSScriptAnalyzer", "approved verbs"]
+
+[[trigger_cases]]
+id = "python-language-policy"
+owner = "python-guidelines"
+positive = [
+  "Apply Python-specific uv, ruff, typing, pytest, packaging, CLI, or service conventions after Python is fixed.",
+  "Review existing Python code against repository Python policy.",
+]
+negative = [
+  "Choose Python as the language for a new persisted boundary.",
+  "Select general verification architecture across languages.",
+]
+lexical_hints = ["Python", "uv", "ruff pytest"]
+
+[[trigger_cases]]
+id = "shell-language-policy"
+owner = "shell-guidelines"
+positive = [
+  "Apply Shell quoting, strict mode, variable, interpreter, portability, ShellCheck, or macOS behavior to Shell code.",
+  "Review a persisted script, CI fragment, or ad hoc command as Shell code.",
+]
+negative = [
+  "Select Shell versus another language for a new persisted implementation.",
+  "Choose among general search or structured-data tools without Shell-policy risk.",
+]
+lexical_hints = ["Shell", "set -euo pipefail", "ShellCheck"]
+
+[[trigger_cases]]
+id = "explicit-skill-history-mining"
+owner = "skill-miner"
+positive = [
+  "Explicitly invoke $coding:skill-miner to audit configured agent histories for skill usage or improvement evidence.",
+  "Explicitly invoke $coding:skill-miner to classify durable truth extraction and memory cleanup candidates.",
+]
+negative = [
+  "Ask for ordinary current-repository analysis without explicitly selecting skill-miner.",
+  "Ask which skill should route an ambiguous live request.",
+]
+lexical_hints = ["$coding:skill-miner", "mine sessions", "skill usage"]
+
+[[trigger_cases]]
+id = "explicit-codex-session-recovery"
+owner = "codex-session-recovery"
+positive = [
+  "Explicitly invoke $coding:codex-session-recovery to audit or merge Codex JSONL histories across CODEX_HOME directories.",
+  "Explicitly request the bounded session recovery workflow without touching SQLite, auth, memories, or logs.",
+]
+negative = [
+  "Mine sessions for reusable workflow patterns rather than recover persisted history.",
+  "Repair general Codex configuration or authentication state.",
+]
+lexical_hints = ["$coding:codex-session-recovery", "session JSONL", "CODEX_HOME"]
+
+[[trigger_cases]]
+id = "explicit-git-worktree-operation"
+owner = "git-worktrees"
+positive = [
+  "Explicitly invoke $coding:git-worktrees to create, compare, integrate, repair, or clean up Git worktrees.",
+  "Explicitly request worktree isolation for a bounded branch workflow.",
+]
+negative = [
+  "Use the current checkout for ordinary serial implementation.",
+  "Ask for generic Git status or commit operations without a worktree task.",
+]
+lexical_hints = ["$coding:git-worktrees", "git worktree", "isolated worktree"]
+
+[[trigger_cases]]
+id = "explicit-unpushed-history-squash"
+owner = "smart-squash"
+positive = [
+  "Explicitly invoke $coding:smart-squash to reorganize or squash unpushed commits after preflight and approval.",
+  "Explicitly request semantic cleanup of local unpublished history.",
+]
+negative = [
+  "Group current working-tree diffs into new focused commits.",
+  "Rewrite pushed history or perform an unapproved destructive reset.",
+]
+lexical_hints = ["$coding:smart-squash", "squash unpushed commits", "rewrite local history"]

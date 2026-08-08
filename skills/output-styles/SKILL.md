@@ -1,11 +1,11 @@
 ---
 name: output-styles
-description: "Use for response style selection in coding work: terse senior-engineering defaults, explanatory mode, review findings, implementation closeouts, evidence labels, and compact high-signal formatting."
+description: "Shared rendering baseline for coding responses: terse defaults, explanatory mode, review findings, closeouts, evidence labels, and compact high-signal formatting. Compose after selecting the primary skill; never treat output style as competing user intent."
 ---
 
 # Output Styles
 
-Select response shape without depending on a vendor-specific output-style feature.
+Apply the shared response rendering baseline after the request's primary owner is selected. This skill never owns domain order, lifecycle state, or completion judgment and is not a standalone user intent.
 
 ## Mode Selection
 

@@ -2,3 +2,5 @@ interface:
   display_name: "API Contract Strategy"
   short_description: "Design structured API contract and workflow stacks"
   default_prompt: "Use $api-contract-strategy to select API contract authoring, workflow, and generated projection boundaries."
+policy:
+  allow_implicit_invocation: true

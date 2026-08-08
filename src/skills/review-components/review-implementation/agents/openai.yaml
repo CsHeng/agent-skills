@@ -1,6 +1,4 @@
 interface:
   display_name: "Review Implementation"
-  short_description: "Review implementation evidence and diffs"
-  default_prompt: "Use $review-implementation to review this implementation and report evidence-backed findings."
-policy:
-  allow_implicit_invocation: true
+  short_description: "Controller-only implementation candidate evaluator"
+  default_prompt: "Use $review-implementation only with a controller-supplied bounded diff and review brief."

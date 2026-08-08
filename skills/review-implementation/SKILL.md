@@ -1,11 +1,11 @@
 ---
 name: review-implementation
-description: "Review an implementation diff against the approved task slice using a bounded agent-native review brief, change causality, and executable evidence. Return candidate findings only; lifecycle controllers own adjudication and repair."
+description: "Controller-selected implementation evaluator for an exact task diff and bounded review brief. Return causality-qualified candidate findings only; direct review intent belongs to review-change, and lifecycle controllers own repair."
 ---
 
 # Review Implementation
 
-Judge whether the supplied diff correctly implements the approved task slice. Do not audit the repository.
+Run only when `review-change` or `implement-change` selects this evaluator with a bounded implementation brief. Judge the exact task diff and return candidate findings; do not own direct review intent, repair, or repository-wide audit.
 
 ## Actor Contract
 

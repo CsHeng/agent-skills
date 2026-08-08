@@ -2,3 +2,5 @@ interface:
   display_name: "Analyze Project"
   short_description: "Analyze project truth and drift"
   default_prompt: "Use $analyze-project to give a compact, evidence-backed current-state answer; expand to a full truth audit only when explicitly requested."
+policy:
+  allow_implicit_invocation: true

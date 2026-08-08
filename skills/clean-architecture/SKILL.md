@@ -1,54 +1,16 @@
 ---
 name: clean-architecture
-description: "Use for clean architecture boundaries: handlers, services, repositories, dependency direction, interface placement, and cross-layer calls."
+description: "Compatibility entry for explicitly named clean-architecture requests; hand off architecture boundaries to architecture-patterns."
 ---
 
-# Clean Architecture
+# Clean Architecture Compatibility
 
-## Purpose
+Use this skill only when the user explicitly names `clean-architecture` or an existing thin host entry selects this public ID. It is retained for compatibility and does not compete for native architecture requests.
 
-Define stable boundaries so business logic stays independent from transport, persistence, and framework choices.
+The durable owner is `architecture-patterns`:
 
-## Scope
+- read `architecture-patterns/references/clean-boundaries.md` for handlers, services, repositories, dependency direction, interface placement, and cross-boundary tests
+- apply `architecture-patterns` as the response owner or lifecycle overlay
+- compose `testing-strategy` only when concrete test layering or verification must be planned
 
-In-scope:
-- Dependency direction rules and layer responsibilities
-- Interface-first design and dependency inversion
-- Test strategy aligned to layers
-
-Out-of-scope:
-- Language-specific framework setup (see `python-services-dev` and `go-services-dev`)
-
-## Layer Contract
-
-Layers (outer to inner):
-- handlers: HTTP/gRPC/CLI adapters, request parsing, response formatting
-- services: business rules, validation, orchestration
-- repositories: persistence and external IO
-- models: domain entities and value objects
-
-Dependency direction:
-- outer layers may reference inner layers
-- inner layers must not reference outer layers
-- cross-boundary calls go through interfaces
-
-## Deterministic Steps
-
-1. Define domain models first (entities, invariants, validation rules).
-2. Define repository interfaces in the service layer (what the service needs, not how it is stored).
-3. Implement services using interfaces only; pass dependencies via constructors.
-4. Implement repositories in outer layers; keep IO and mapping isolated.
-5. Implement handlers as thin adapters; no business rules in handlers.
-6. Add tests:
-   - services: behavioral tests against in-memory or fake repositories
-   - repositories: integration tests
-   - handlers: minimal routing/serialization tests
-
-## Checklist
-
-- Dependencies point inward (handlers -> services -> repositories -> models)
-- Interfaces exist at the boundary where the dependency would otherwise point outward
-- Handlers contain no business rules
-- Services contain no framework-specific imports
-- Repositories contain no business rules
-- Tests focus on behavior at the service layer
+Do not emit an independent checklist or report schema. Preserve this public ID until a separately approved compatibility migration removes it.

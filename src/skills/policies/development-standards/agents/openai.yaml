@@ -1,4 +1,4 @@
 interface:
   display_name: "Development Standards"
-  short_description: "Keep implementations small, durable, and scoped"
-  default_prompt: "Use $development-standards to apply the repo's cross-language implementation, dependency, and compatibility policy."
+  short_description: "Overlay scoped cross-language implementation policy"
+  default_prompt: "Use $development-standards as a conditional overlay for repository-owned implementation and quality policy."

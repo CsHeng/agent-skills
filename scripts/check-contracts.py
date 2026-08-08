@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -12,6 +13,12 @@ from typing import Any
 import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from skill_activation import validate_activation_contract
+
 CONTRACT_PATH = REPO_ROOT / "contracts" / "skills.toml"
 INDEX_PATH = REPO_ROOT / "skills.index.json"
 VALID_CATEGORIES = {
@@ -198,6 +205,19 @@ def validate_semantic_contracts(
             rendering_baseline = composition.get("rendering_baseline")
             if isinstance(rendering_baseline, str):
                 expected_targets.add(rendering_baseline)
+        trigger_cases = routing.get("trigger_cases")
+        if isinstance(trigger_cases, list):
+            for trigger_case in trigger_cases:
+                if not isinstance(trigger_case, dict):
+                    continue
+                owner = trigger_case.get("owner")
+                if isinstance(owner, str):
+                    expected_targets.add(owner)
+                overlays = trigger_case.get("overlays", [])
+                if isinstance(overlays, list):
+                    expected_targets.update(
+                        target for target in overlays if isinstance(target, str)
+                    )
         expected_targets.discard(public_id)
         declared_targets = adjacency.get(public_id, set())
         if declared_targets != expected_targets:
@@ -540,6 +560,159 @@ def validate_runtime_contracts(skills: dict[str, Any], repo_root: Path = REPO_RO
     return errors
 
 
+def validate_trigger_cases(
+    skills: dict[str, Any], routing_contract: dict[str, Any]
+) -> list[str]:
+    errors: list[str] = []
+    public_entries = {
+        entry.get("public_id"): entry
+        for entry in skills.values()
+        if isinstance(entry, dict) and isinstance(entry.get("public_id"), str)
+    }
+    raw_cases = routing_contract.get("trigger_cases")
+    if not isinstance(raw_cases, list) or not raw_cases:
+        return ["routing contract requires non-empty [[trigger_cases]] entries"]
+
+    seen_ids: set[str] = set()
+    owned_cases: dict[str, set[str]] = {public_id: set() for public_id in public_entries}
+    overlay_cases: dict[str, set[str]] = {public_id: set() for public_id in public_entries}
+    case_id_pattern = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+    for index, raw_case in enumerate(raw_cases, start=1):
+        if not isinstance(raw_case, dict):
+            errors.append(f"trigger case #{index} must be a table")
+            continue
+        case_id = raw_case.get("id")
+        label = str(case_id or f"#{index}")
+        if not isinstance(case_id, str) or not case_id_pattern.fullmatch(case_id):
+            errors.append(f"trigger case {label}: id must be a stable kebab-case string")
+        elif case_id in seen_ids:
+            errors.append(f"duplicate trigger case id: {case_id}")
+        else:
+            seen_ids.add(case_id)
+
+        owner = raw_case.get("owner")
+        if not isinstance(owner, str) or not owner:
+            errors.append(f"trigger case {label}: exactly one owner is required")
+            owner_entry = None
+        else:
+            owner_entry = public_entries.get(owner)
+            if owner_entry is None:
+                errors.append(f"trigger case {label}: unknown owner: {owner}")
+            else:
+                owned_cases[owner].add(label)
+                if owner_entry.get("default_role") == "evaluator":
+                    errors.append(
+                        f"trigger case {label}: controller evaluator cannot own a trigger case: {owner}"
+                    )
+                if owner_entry.get("superseded_by") is not None:
+                    errors.append(
+                        f"trigger case {label}: compatibility helper cannot own a trigger case: {owner}"
+                    )
+
+        positives = raw_case.get("positive")
+        negatives = raw_case.get("negative")
+        positive_valid = (
+            isinstance(positives, list)
+            and bool(positives)
+            and all(isinstance(value, str) and value.strip() for value in positives)
+        )
+        negative_valid = (
+            isinstance(negatives, list)
+            and bool(negatives)
+            and all(isinstance(value, str) and value.strip() for value in negatives)
+        )
+        if not positive_valid:
+            errors.append(f"trigger case {label}: requires non-empty positive examples")
+        if not negative_valid:
+            errors.append(f"trigger case {label}: requires non-empty negative examples")
+        if raw_case.get("lexical_hints") and (not positive_valid or not negative_valid):
+            errors.append(
+                f"trigger case {label}: cannot be keyword-only; lexical hints are non-authoritative"
+            )
+
+        overlays = raw_case.get("overlays", [])
+        if not isinstance(overlays, list) or not all(
+            isinstance(value, str) and value for value in overlays
+        ):
+            errors.append(f"trigger case {label}: overlays must be a string array")
+            overlays = []
+        if len(overlays) != len(set(overlays)):
+            errors.append(f"trigger case {label}: overlays contain duplicates")
+        for overlay in overlays:
+            overlay_entry = public_entries.get(overlay)
+            if overlay_entry is None:
+                errors.append(f"trigger case {label}: unknown overlay: {overlay}")
+                continue
+            overlay_cases[overlay].add(label)
+            if overlay_entry.get("lifecycle_owner", False):
+                errors.append(
+                    f"trigger case {label}: lifecycle owner cannot be an overlay: {overlay}"
+                )
+            if overlay == owner:
+                errors.append(f"trigger case {label}: owner cannot also be an overlay")
+
+        lexical_hints = raw_case.get("lexical_hints", [])
+        if not isinstance(lexical_hints, list) or not all(
+            isinstance(value, str) and value for value in lexical_hints
+        ):
+            errors.append(f"trigger case {label}: lexical_hints must be a string array")
+
+    composition = routing_contract.get("composition")
+    baseline_target = (
+        composition.get("rendering_baseline")
+        if isinstance(composition, dict)
+        else None
+    )
+    baseline_skills = [
+        public_id
+        for public_id, entry in public_entries.items()
+        if entry.get("activation_mode") == "baseline"
+    ]
+    if baseline_skills != [baseline_target]:
+        errors.append(
+            "baseline must match composition.rendering_baseline; "
+            f"baseline={baseline_skills} rendering_baseline={baseline_target!r}"
+        )
+
+    phase_routes = routing_contract.get("phase_routes")
+    review_evaluators = routing_contract.get("review_evaluators")
+    controller_targets = {
+        target
+        for table in (phase_routes, review_evaluators)
+        if isinstance(table, dict)
+        for target in table.values()
+        if isinstance(target, str)
+    }
+    for entry in public_entries.values():
+        requirements = entry.get("semantic_requires", [])
+        if isinstance(requirements, list):
+            controller_targets.update(
+                target for target in requirements if isinstance(target, str)
+            )
+
+    for public_id, entry in sorted(public_entries.items()):
+        mode = entry.get("activation_mode")
+        successor = entry.get("superseded_by")
+        if mode == "native" and not owned_cases[public_id]:
+            errors.append(f"{public_id}: native skill must own at least one trigger case")
+        elif mode == "conditional" and not (
+            owned_cases[public_id] or overlay_cases[public_id]
+        ):
+            errors.append(
+                f"{public_id}: conditional skill must own or overlay a trigger case"
+            )
+        elif mode == "controller" and public_id not in controller_targets:
+            errors.append(
+                f"{public_id}: controller skill is not reachable from a declared controller edge"
+            )
+        elif mode == "explicit" and not (owned_cases[public_id] or successor):
+            errors.append(
+                f"{public_id}: explicit skill requires an explicit-entry case or successor"
+            )
+    return errors
+
+
 def validate_routing_contracts(
     skills: dict[str, Any],
     repo_root: Path = REPO_ROOT,
@@ -762,6 +935,7 @@ def validate_routing_contracts(
                     f"{skill_name}: support route {intent} cannot target a lifecycle owner: {target}"
                 )
 
+    errors.extend(validate_trigger_cases(skills, contract))
     return errors
 
 
@@ -850,8 +1024,8 @@ def validate() -> list[str]:
             elif isinstance(public_id, str):
                 runtime_owners.add(public_id)
 
-        if category == "manual-tool" and entry.get("implicit_invocation", False):
-            errors.append(f"{skill_name}: manual-tool cannot be implicitly invoked")
+        if category == "manual-tool" and entry.get("activation_mode") != "explicit":
+            errors.append(f"{skill_name}: manual-tool must use explicit activation")
 
         if entry.get("may_mutate_repo", False):
             has_guard = entry.get("requires_explicit_user_request", False) or entry.get("requires_approved_plan", False)
@@ -877,6 +1051,7 @@ def validate() -> list[str]:
         elif (bundle_root / "SKILL.md").exists():
             errors.append(f"runtime bundle source must not be discoverable: {bundle_name}")
 
+    errors.extend(validate_activation_contract(contract, REPO_ROOT, check_sources=True))
     errors.extend(validate_runtime_contracts(skills))
     errors.extend(validate_routing_contracts(skills))
     errors.extend(validate_semantic_contracts(contract))

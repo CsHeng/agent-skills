@@ -1,101 +1,15 @@
 ---
 name: security-logging
-description: "Use for security and audit logging: audit trails, redaction, tamper evidence, access-control evidence, and suspicious activity logs."
+description: "Compatibility entry for explicitly named security-logging requests; hand off security and audit evidence to logging-standards."
 ---
-## Purpose
 
-Define security-focused logging and input validation standards so that services can detect, trace, and audit security-relevant events consistently.
+# Security Logging Compatibility
 
-## IO Semantics
+Use this skill only when the user explicitly names `security-logging` or an existing thin host entry selects this public ID. It is retained for compatibility and owns no independent logging or security-control workflow.
 
-Input: Application logs, inbound requests, and configuration surfaces that must be validated or monitored for security.
+Route the request as follows:
 
-Output: Structured logging and validation patterns that flag suspicious input, support incident response, and integrate with monitoring systems.
+- `logging-standards` owns security and audit event selection, structured fields, redaction, correlation, retention, access, alert evidence, and tamper evidence; read its `references/security-and-audit-logging.md` profile
+- `security-guardrails` owns validation, injection prevention, uploads, CORS, TLS, authentication controls, and other exploit-prevention behavior
 
-Side Effects: When adopted, may increase log volume and require tuning of alerting rules and storage policies.
-
-## Input Validation Security
-
-Execute input validation at all system boundaries:
-- Length validation with configurable limits
-- SQL injection pattern detection
-- XSS pattern detection
-- Filename sanitization for uploads
-
-## API Request Validation
-
-Execute comprehensive API security:
-- Rate limiting checks
-- Request size validation (default: 10MB limit)
-- Response status logging for 4xx/5xx errors
-- IP address and user agent tracking
-
-## Credential Security
-
-### Secret Detection
-Scan for hardcoded secrets:
-- Password patterns in code
-- API key patterns
-- Token patterns
-- Database URL patterns with credentials
-
-### Secret Replacement
-Replace hardcoded secrets with environment variables:
-- Create backups before modification
-- Add os import if missing
-- Use os.getenv() for credential access
-
-## Structured Logging
-
-### Security Event Logging
-- Timestamp in ISO 8601 format with timezone
-- Service name and event type
-- Severity levels: CRITICAL, HIGH, MEDIUM, INFO
-- User ID and request details
-- Integrity hash for tamper detection
-
-### Event Types
-- Authentication events (login success/failure)
-- Authorization events (access granted/denied)
-- Privilege escalation events
-- Rate limit violations
-- Suspicious activity detection
-
-## Log Integrity
-
-### Tamper-Evident Logging
-- Chain log entries with previous hash
-- Store hash chain separately
-- Verify integrity on demand
-- Calculate SHA256 for file verification
-
-## Access Control
-
-### Multi-Factor Authentication
-- TOTP-based MFA with pyotp
-- Provisioning URI generation
-- Token verification with window tolerance
-- Account lockout after failed attempts
-
-### Account Lockout
-- Track failed login attempts
-- Lock after threshold (default: 5 attempts)
-- Automatic unlock after duration (default: 15 minutes)
-- Reset attempts on successful login
-
-## Checklist
-
-- [ ] Input validation at all boundaries
-- [ ] SQL injection patterns detected
-- [ ] XSS patterns detected
-- [ ] Secrets scanned and replaced
-- [ ] Structured logging implemented
-- [ ] Security events logged with integrity hash
-- [ ] Log chain for tamper detection
-- [ ] MFA enabled for sensitive operations
-- [ ] Account lockout configured
-
-## References
-
-- [Python Security Logging Examples](references/examples-python.md)
-- [Secret Scanner Script](references/secret-scanner.md)
+Do not emit an independent checklist or report schema. Preserve this public ID until a separately approved compatibility migration removes it.

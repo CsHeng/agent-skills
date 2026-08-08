@@ -14,11 +14,13 @@ class SmartCommitTriggerContractTest(unittest.TestCase):
             contract = tomllib.load(handle)["skills"]["smart-commit"]
 
         self.assertEqual(contract["category"], "tool")
-        self.assertTrue(contract["implicit_invocation"])
+        self.assertEqual(contract["activation_mode"], "native")
+        self.assertEqual(contract["default_role"], "primary")
+        self.assertNotIn("implicit_invocation", contract)
         self.assertTrue(contract["requires_explicit_user_request"])
 
-    def test_openai_policy_allows_implicit_invocation(self) -> None:
-        metadata = (
+    def test_openai_policy_is_derived_only_on_generated_surface(self) -> None:
+        source_metadata = (
             REPO_ROOT
             / "src"
             / "skills"
@@ -27,8 +29,12 @@ class SmartCommitTriggerContractTest(unittest.TestCase):
             / "agents"
             / "openai.yaml"
         ).read_text(encoding="utf-8")
+        generated_metadata = (
+            REPO_ROOT / "skills" / "smart-commit" / "agents" / "openai.yaml"
+        ).read_text(encoding="utf-8")
 
-        self.assertIn("allow_implicit_invocation: true", metadata)
+        self.assertNotIn("allow_implicit_invocation", source_metadata)
+        self.assertIn("allow_implicit_invocation: true", generated_metadata)
 
 
 if __name__ == "__main__":

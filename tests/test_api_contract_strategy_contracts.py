@@ -24,7 +24,9 @@ class APIContractStrategyRegistrationTests(unittest.TestCase):
         self.assertEqual(manifest["category"], "discipline")
         self.assertEqual(manifest["install"], ["claude", "codex", "root-flat"])
         self.assertFalse(manifest["lifecycle_owner"])
-        self.assertTrue(manifest["implicit_invocation"])
+        self.assertEqual(manifest["activation_mode"], "native")
+        self.assertEqual(manifest["default_role"], "primary")
+        self.assertNotIn("implicit_invocation", manifest)
         self.assertFalse(manifest["may_mutate_repo"])
         self.assertFalse(manifest["may_spawn_agent"])
 

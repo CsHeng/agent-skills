@@ -1,11 +1,11 @@
 ---
 name: review-design
-description: "Review design documents against approved goals, non-goals, architecture boundaries, risks, and acceptance criteria using a bounded agent-native review brief. Return candidate findings only; the main agent owns adjudication and repair."
+description: "Controller-selected design evaluator for a bounded review brief. Return candidate boundary findings only; direct review intent belongs to review-change, and the main agent owns adjudication and repair."
 ---
 
 # Review Design
 
-Decide whether the supplied design can safely enter planning. Review the approved design slice, not the repository as a whole.
+Run only when `review-change` selects this evaluator for a design review. Decide whether the supplied design can safely enter planning and return candidate findings; do not own direct review intent or inspect the repository as a whole.
 
 ## Actor Contract
 

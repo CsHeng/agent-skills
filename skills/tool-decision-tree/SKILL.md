@@ -1,13 +1,13 @@
 ---
 name: tool-decision-tree
-description: "Use for agent ad hoc CLI/tool selection and command composition, including fd/find, rg/grep, ast-grep, jq/yq, reviewable scratch scripts, and COUNT/PREVIEW/EXECUTE."
+description: "Use when agent-side ad hoc work needs a non-trivial CLI choice, nested command composition, structural search, data transformation, reviewable scratch logic, or risky COUNT/PREVIEW/EXECUTE boundary. Do not load for routine rg, file reads, or ordinary repository status checks."
 ---
 
 # Tool Decision Tree
 
 ## Purpose
 
-Canonical agent ad hoc tool selection, command composition, and progressive search workflow (COUNT -> PREVIEW -> EXECUTE). This skill governs how the current task is executed; it does not choose the implementation language for new persisted repository code.
+Select and compose agent-side tools when correctness, output volume, quoting, structure, or mutation risk makes the choice non-trivial. Routine `rg`, bounded file reads, and ordinary repository status checks do not require this skill. This skill does not choose the implementation language for persisted repository code and does not own the task lifecycle.
 
 ## Progressive Disclosure
 
@@ -15,7 +15,7 @@ Canonical agent ad hoc tool selection, command composition, and progressive sear
 
 ## Target Preflight
 
-Before searching, refactoring, or running repository-specific commands, identify the target:
+For ambiguous multi-repository, runtime-specific, generated, ignored, or risky operations, identify the target before composing the command:
 
 ```bash
 pwd
@@ -24,6 +24,7 @@ test -e <target-path>
 ```
 
 Rules:
+- Skip this preflight when the current repository and bounded read target are already unambiguous.
 - If no Git root exists, do not treat `git status` failure as a task blocker; switch to path-scoped file checks.
 - If multiple repositories or home directories are in scope, print or record the active target path before drawing conclusions.
 - For runtime or host-specific work, verify the active host/home context before importing assumptions from a previous incident.

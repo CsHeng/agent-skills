@@ -1,142 +1,54 @@
 ---
 name: logging-standards
-description: "Use for application logging design: levels, structured format, correlation IDs, tracing, rotation, aggregation, and observability logs."
+description: "Use for goal-driven application, observability, security, and audit logging: event selection, structured fields, levels, correlation, redaction, retention, access, and tamper evidence."
 ---
 
-## Purpose
+# Logging Standards
 
-Define structured logging and observability standards for consistent log format, correlation, and monitoring across all services.
+Design logs from the operational, diagnostic, security, or audit question they must answer. Do not impose one timestamp, line format, field set, backend, or retention period on every service.
 
-## IO Semantics
+## Ownership Boundary
 
-Input: Application logs, HTTP access logs, and observability requirements.
+- This skill owns application, access, observability, security, and audit log event design.
+- `security-guardrails` owns prevention and enforcement controls such as input validation, injection prevention, CORS, TLS, uploads, authorization, and container hardening.
+- `error-patterns` owns failure classification and recovery behavior. Logging records the evidence but does not replace the recovery policy.
+- A lifecycle workflow remains the primary owner when logging is one part of a larger implementation or review.
 
-Output: Standardized log formats, correlation patterns, and monitoring configurations.
+## Design Workflow
 
-Side Effects: May require log aggregation infrastructure (ELK, Splunk) and storage policy tuning.
+1. State the consumer and decision: debugging, operations, alerting, incident response, access evidence, compliance, or business audit.
+2. Select the smallest event set that answers that decision without duplicating metrics, traces, or domain state.
+3. Define stable event names, severity semantics, required fields, correlation, cardinality limits, and ownership.
+4. Classify secrets, personal data, regulated data, and attacker-controlled values before choosing redaction or omission.
+5. Define routing, access, retention, deletion, integrity, and failure behavior according to repository and operational policy.
+6. Verify representative events, absent sensitive fields, correlation across the required path, and the consumer's query or alert.
 
-## App Log Format
+## Event And Level Rules
 
-Standard format: `+0800 2025-08-06 15:22:30 INFO main.go(180) | Descriptive message`
+- Log state transitions, boundary outcomes, and actionable failures rather than narrating every function call.
+- Use levels according to the service's operational response. `ERROR` should normally mean an owner must investigate or a declared operation failed; expected client rejection is not automatically an error.
+- Keep access logs, application events, and immutable audit records distinct when their consumers, schemas, access, or retention differ.
+- Avoid duplicate emission at every layer. Record an error where useful context and response ownership meet.
 
-Components:
-- Timezone offset (+0800 or appropriate)
-- Timestamp: YYYY-MM-DD HH:MM:SS
-- Level: DEBUG, INFO, WARN, ERROR, FATAL
-- Source: file.extension(line)
-- Separator: pipe character (|)
-- Message: descriptive, actionable content
+## Structured Context
 
-## HTTP Access Log Format
+- Prefer stable machine-queryable event names and fields with consistent types.
+- Include request, operation, trace, span, job, or business correlation only when it is available and needed by the consumer.
+- Keep high-cardinality or unbounded values out of indexed fields unless the backend and query need justify them.
+- Treat message text as supporting context, not the only schema.
+- Follow repository or platform schemas such as OpenTelemetry or ECS when they are already owned; do not add a standard merely for uniformity.
 
-Use GoAccess-compatible format for web traffic analysis:
-- Prefer NCSA Combined Log Format across services
-- Use "with Virtual Host" variant when applicable
-- Keep HTTP access logs separate from application logs
-- Document chosen format per service in README or ops runbook
+## Security And Audit Profile
 
-## Log Level Guidelines
+Read `references/security-and-audit-logging.md` when the request concerns authentication, authorization, privileged operations, sensitive-data access, redaction, retention, restricted access, suspicious activity, or tamper evidence.
 
-| Level | Usage |
-|-------|-------|
-| DEBUG | Detailed diagnostic information (development only) |
-| INFO | Application flow and state changes |
-| WARN | Unexpected situations, application continues |
-| ERROR | Error events, application continues |
-| FATAL | Critical errors causing termination |
+## Operations
 
-## Context and Correlation
+- Bound local storage and define rotation or backpressure before logs can exhaust a runtime.
+- Make transport failure behavior explicit: drop, buffer, retry, block, or fail closed only according to the event's requirement.
+- Assign aggregation, archive, retention, and deletion to named infrastructure or compliance owners.
+- Test queries and alerts with representative events. A log that cannot be retrieved or correlated does not satisfy its goal.
 
-Required fields for distributed tracing:
-- `request_id`: Per-request identifier
-- `correlation_id`: Cross-service tracing
-- `user_id`, `session_id`: User context when appropriate
-- `duration_ms`, `memory_usage`: Performance metrics
-- `trace_id`, `span_id`: OpenTelemetry integration (preferred)
+## Result
 
-## Field Naming Conventions
-
-- Use snake_case: `user_id`, `request_id`, `error_code`
-- Consistent naming across all services
-- Standard fields: `timestamp`, `level`, `message`
-- Prefer Elastic Common Schema (ECS) when possible
-- Document custom fields in project documentation
-
-## Structured Logging
-
-- Key-value pairs for context
-- Consistent field naming
-- Appropriate data types (strings, numbers, booleans)
-- JSON serialization for complex objects
-- Schema validation for structured fields (preferred)
-
-## Security Logging
-
-Required:
-- Log authentication attempts (success/failure)
-- Record authorization failures (resource, action)
-- Log sensitive data access (purpose, user context)
-- Implement audit logging for security events
-
-Prohibited:
-- Log passwords, API keys, credentials
-- Include PII without redaction
-- Expose stack traces in user-facing messages
-
-## Performance Logging
-
-- Operation durations for monitoring
-- Resource usage (memory, CPU, disk)
-- Database query performance and connection pool status
-- External API latency and success rates
-- Distributed tracing for end-to-end visibility
-
-## Configuration Management
-
-- Environment-specific log levels (dev, staging, prod)
-- Log rotation to prevent disk space issues
-- Retention periods based on compliance requirements
-- Centralized log aggregation
-- Environment-specific configuration files (preferred)
-
-## Monitoring and Alerting
-
-- Log-based monitoring for critical events
-- Alerts for error rates, response times, system health
-- Log volume and pattern anomaly detection
-- Regular alerting configuration testing
-- Automated dashboards for visualization (preferred)
-
-## Compliance and Audit
-
-- Audit logging for sensitive operations
-- Log integrity and tamper prevention
-- Logs available for required retention periods
-- Secure archival and retrieval processes
-- Write-once storage for compliance-critical logs (preferred)
-
-## Tool Requirements
-
-| Category | Requirement |
-|----------|-------------|
-| Libraries | Structured logging with language-appropriate libraries |
-| Aggregation | Centralized system (ELK stack, Splunk, etc.) |
-| Monitoring | Real-time log monitoring and alerting |
-| Analysis | Log search and analysis capabilities |
-| Observability | Integration with metrics and tracing (preferred) |
-
-## Checklist
-
-- [ ] App log format follows standard
-- [ ] HTTP access logs use GoAccess-compatible format
-- [ ] Log levels configured per environment
-- [ ] Correlation IDs implemented
-- [ ] Sensitive data excluded from logs
-- [ ] Log rotation configured
-- [ ] Monitoring and alerting set up
-- [ ] Audit logging for sensitive operations
-
-## References
-
-- [Python Logging Examples](references/examples-python.md)
-- [Go Logging Examples](references/examples-go.md)
+When this skill owns the response, lead with the logging goal and selected event contract. Report only the decision-relevant event classes, fields, sensitive data handling, delivery and retention ownership, and executable evidence. Do not emit a second report when another lifecycle or domain skill owns the task.

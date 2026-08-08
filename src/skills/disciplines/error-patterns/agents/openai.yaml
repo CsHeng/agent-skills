@@ -1,4 +1,4 @@
 interface:
-  display_name: "Error Patterns"
-  short_description: "Help with Error Patterns tasks"
-  default_prompt: "Use $error-patterns for this workflow."
+  display_name: "Resilience and Recovery"
+  short_description: "Classify failures and choose bounded recovery behavior"
+  default_prompt: "Use $error-patterns to design resilience and recovery for this known failure boundary."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Session Recovery"
+  short_description: "Audit and safely merge Codex session JSONL history"
+  default_prompt: "Use $codex-session-recovery to audit or merge Codex session history."

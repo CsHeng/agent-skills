@@ -12,6 +12,15 @@ from typing import Any
 import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from skill_activation import (
+    derived_implicit_invocation,
+    effective_provider_state,
+)
+
 CONTRACT_PATH = REPO_ROOT / "contracts" / "skills.toml"
 INDEX_PATH = REPO_ROOT / "skills.index.json"
 
@@ -44,6 +53,35 @@ def transitive_requirements(
     return sorted(visited)
 
 
+def trigger_case_index(
+    manifest: dict[str, Any],
+) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+    owned: dict[str, list[str]] = {
+        entry["public_id"]: [] for entry in manifest.values()
+    }
+    overlaid: dict[str, list[str]] = {
+        entry["public_id"]: [] for entry in manifest.values()
+    }
+    routing_entries = [
+        entry for entry in manifest.values() if entry.get("routing_contract")
+    ]
+    if len(routing_entries) != 1:
+        raise SystemExit("exactly one skill must declare routing_contract")
+    routing_entry = routing_entries[0]
+    routing_path = (
+        REPO_ROOT / routing_entry["source"] / routing_entry["routing_contract"]
+    )
+    with routing_path.open("rb") as handle:
+        routing = tomllib.load(handle)
+    for trigger_case in routing.get("trigger_cases", []):
+        case_id = trigger_case["id"]
+        owner = trigger_case["owner"]
+        owned[owner].append(case_id)
+        for overlay in trigger_case.get("overlays", []):
+            overlaid[overlay].append(case_id)
+    return owned, overlaid
+
+
 def build_index() -> dict[str, Any]:
     contract = load_contract()
     manifest = contract.get("skills")
@@ -53,6 +91,7 @@ def build_index() -> dict[str, Any]:
         entry["public_id"]: list(entry.get("semantic_requires", []))
         for entry in manifest.values()
     }
+    owned_cases, overlay_cases = trigger_case_index(manifest)
     skills = []
     for skill_name, entry in sorted(manifest.items()):
         public_id = entry["public_id"]
@@ -63,7 +102,12 @@ def build_index() -> dict[str, Any]:
             "category": entry["category"],
             "install": entry.get("install", []),
             "lifecycle_owner": entry.get("lifecycle_owner", False),
-            "implicit_invocation": entry.get("implicit_invocation", False),
+            "activation_mode": entry["activation_mode"],
+            "default_role": entry["default_role"],
+            "implicit_invocation": derived_implicit_invocation(contract, entry),
+            "effective_provider_state": effective_provider_state(contract, entry),
+            "owned_trigger_cases": sorted(owned_cases[public_id]),
+            "overlay_trigger_cases": sorted(overlay_cases[public_id]),
             "may_mutate_repo": entry.get("may_mutate_repo", False),
             "semantic_requires": adjacency[public_id],
             "semantic_transitive_requires": transitive_requirements(
@@ -76,6 +120,8 @@ def build_index() -> dict[str, Any]:
             record["routing_contract"] = entry["routing_contract"]
         if "runtime_bundle" in entry:
             record["runtime_bundle"] = entry["runtime_bundle"]
+        if "superseded_by" in entry:
+            record["superseded_by"] = entry["superseded_by"]
         skills.append(record)
 
     profiles: dict[str, Any] = {}

@@ -83,19 +83,17 @@ Automate secret lifecycle management:
 - Remove package caches
 - Pin dependency versions
 
-## Security Monitoring
+## Authentication And Abuse Controls
 
-### Event Logging
-- Log all authentication attempts
-- Track authorization failures
-- Monitor privilege escalations
-- Detect brute force attacks
+- Require multi-factor authentication, account lockout, rate limiting, or step-up verification when the threat model or policy justifies the control.
+- Keep thresholds, recovery, bypass, and support ownership configurable and testable rather than embedding universal values.
+- Store authentication factors and recovery material through the owned secret boundary; never generate or persist them as a logging side effect.
 
-### Anomaly Detection
-- Track login locations
-- Alert on suspicious patterns
-- Implement rate limiting
-- Send alerts for critical events
+## Security Evidence Handoff
+
+- Define which control outcome must be observable without recording secrets or unnecessary personal data.
+- Route security and audit event selection, redaction, correlation, retention, access, alert evidence, and tamper evidence to `logging-standards`.
+- Keep prevention, validation, authorization enforcement, and response behavior in this skill; logs are evidence, not the security control itself.
 
 ## Checklist
 
@@ -108,7 +106,8 @@ Automate secret lifecycle management:
 - [ ] XSS patterns detected
 - [ ] File uploads validated
 - [ ] Containers hardened
-- [ ] Security events logged
+- [ ] Authentication and abuse controls match the threat model
+- [ ] Security evidence requirements handed to `logging-standards`
 
 ## References
 

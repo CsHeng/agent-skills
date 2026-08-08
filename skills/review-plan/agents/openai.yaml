@@ -1,4 +1,6 @@
 interface:
   display_name: "Review Plan"
-  short_description: "Help with Review Plan tasks"
-  default_prompt: "Use $review-plan for this workflow."
+  short_description: "Controller-only plan candidate-finding evaluator"
+  default_prompt: "Use $review-plan only when review-change supplies a bounded plan review brief."
+policy:
+  allow_implicit_invocation: false

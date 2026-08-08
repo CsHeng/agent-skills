@@ -1,11 +1,11 @@
 ---
 name: review-plan
-description: "Review implementation plans against an approved design, executable task DAG, bounded scope, verification, explicit recovery policy, and execution continuity using an agent-native bounded review brief. Return candidate findings only."
+description: "Controller-selected plan evaluator for a bounded review brief. Return candidate DAG, scope, oracle, and recovery findings only; direct review intent belongs to review-change."
 ---
 
 # Review Implementation Plan
 
-Decide whether the supplied current-milestone plan can safely enter execution. Do not review future phases or implementation details outside the plan gate.
+Run only when `review-change` selects this evaluator for a plan review. Decide whether the supplied current-milestone plan can safely enter execution and return candidate findings; do not own direct review intent or future phases.
 
 ## Actor Contract
 

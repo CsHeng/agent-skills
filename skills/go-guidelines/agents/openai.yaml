@@ -2,3 +2,5 @@ interface:
   display_name: "Go Guidelines"
   short_description: "Apply Go standards as a workflow policy"
   default_prompt: "Use $go-guidelines as the Go policy overlay for this task."
+policy:
+  allow_implicit_invocation: true

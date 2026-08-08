@@ -2,3 +2,5 @@ interface:
   display_name: "Smart Squash"
   short_description: "Help with Smart Squash tasks"
   default_prompt: "Use $smart-squash for this workflow."
+policy:
+  allow_implicit_invocation: false

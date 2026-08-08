@@ -2,3 +2,5 @@ interface:
   display_name: "Sync Truth"
   short_description: "Help with Sync Truth tasks"
   default_prompt: "Use $sync-truth for this workflow."
+policy:
+  allow_implicit_invocation: false

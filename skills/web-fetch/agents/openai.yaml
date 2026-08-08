@@ -2,3 +2,5 @@ interface:
   display_name: "Web Fetch"
   short_description: "Help with Web Fetch tasks"
   default_prompt: "Use $web-fetch for this workflow."
+policy:
+  allow_implicit_invocation: true

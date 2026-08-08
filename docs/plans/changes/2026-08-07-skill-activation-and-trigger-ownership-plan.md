@@ -1,0 +1,508 @@
+# Skill Activation And Trigger Ownership Implementation Plan
+
+## Upstream Design
+
+- design_ref: 2026-08-07-skill-activation-and-trigger-ownership-design.md
+- design_version: 1
+
+## Implementation Scope
+
+- target_repository: /Users/csheng/workspace/playground/market-csheng
+- execution_cwd: /Users/csheng/workspace/playground/market-csheng
+- plan_contract_version: 2
+- parallel_execution_approved: false
+- architecture_decision_ref: SAO-001-case-owned-skill-activation
+- impl_file_refs:
+  - AGENTS.md
+  - README.md
+  - contracts/skills.toml
+  - docs/README.md
+  - docs/architecture
+  - docs/plans/changes/2026-08-07-skill-activation-and-trigger-ownership-truth-sync.md
+  - scripts/check-contracts.py
+  - scripts/check-install-surface.py
+  - scripts/flatten-skills.py
+  - scripts/generate-skills-index.py
+  - scripts/generate-workflow-diagrams.py
+  - scripts/skill_activation.py
+  - skills
+  - skills.index.json
+  - src/skills/disciplines/architecture-patterns
+  - src/skills/disciplines/clean-architecture
+  - src/skills/disciplines/error-patterns
+  - src/skills/disciplines/skill-miner
+  - src/skills/disciplines/tool-decision-tree
+  - src/skills/git/smart-commit/agents/openai.yaml
+  - src/skills/policies/development-standards
+  - src/skills/policies/logging-standards
+  - src/skills/policies/quality-standards
+  - src/skills/policies/security-guardrails
+  - src/skills/policies/security-logging
+  - src/skills/policies/shell-guidelines
+  - src/skills/review-components
+  - src/skills/session/output-styles
+  - src/skills/session/use-coding-skills
+  - src/skills/workflows/implement-change/agents/openai.yaml
+- test_file_refs:
+  - scripts/check.sh
+  - src/runtime/harness/smoke-test
+  - src/skills/disciplines/skill-miner/tests
+  - tests
+- verification_scope:
+  - Preserve the pre-implementation status of every path outside the approved design surface and compare the final changed-path set with this plan.
+  - Correct session evidence classification before using observed frequency to prioritize trigger or consolidation work.
+  - Prove one authored activation mode deterministically controls Codex policy projection for every public skill while the shared root-flat surface remains provider-compatible and Claude's description-and-routing fallback is reported explicitly.
+  - Prove every public skill has a complete semantic trigger boundary and every trigger case has exactly one primary owner.
+  - Preserve all public IDs and sovereign lifecycle ownership while converting only the approved overlaps into explicit compatibility helpers.
+  - Regenerate the index, root-flat payload, macro planes, trigger-ownership view, and provider validation surfaces from source rather than editing them directly.
+  - Run focused parser and contract tests, sovereign harness smoke tests, provider-native validators, aggregate repository checks, Markdown whitespace checks, and bounded implementation review.
+
+## Architecture Binding
+
+- architecture_decision_ref: SAO-001-case-owned-skill-activation
+- chosen_option: Use contract-authored activation modes plus case-centered ownership in the installed routing contract, project Codex invocation policy deterministically, preserve a provider-compatible shared root with an explicit Claude description-and-routing fallback, retain public IDs through explicit compatibility helpers, and treat observed session usage as confidence-labeled evidence rather than routing authority.
+- reversible_increments:
+  - Repair usage measurement without changing effective activation.
+  - Introduce activation modes and provider projection while retaining all public skills.
+  - Add complete case ownership before moving overlapping guidance.
+  - Convert overlaps only after successor content and reference validation pass.
+  - Narrow broad descriptions, regenerate architecture views, and synchronize stable truth last.
+- upgrade_triggers:
+  - Return to design if Codex policy projection or explicit controller loading cannot safely preserve controller-only versus explicit-only behavior on the installed surface.
+  - Revisit provider-specific install roots only if corrected evidence shows repeated Claude owner collisions after descriptions and case routing are narrowed.
+  - Propose a public rename only through a separately approved migration after corrected measurements show persistent ambiguity that activation modes, case ownership, descriptions, and display labels cannot resolve.
+  - Consider a classifier only after repeated case-owner misrouting is demonstrated against a deterministic evaluation set with a named owner and safe fallback.
+
+## Work Package Readiness
+
+- milestone_objective: Deliver one measurable, deterministic, case-owned activation system for all current public skills, reduce prompt competition through bounded consolidation and description repair, preserve public IDs, and expose the result through generated provider metadata and architecture views.
+- non_goals:
+  - No third-party skill-repository redesign or cross-repository skill inventory classification.
+  - No keyword-only router, learned classifier, frequency-based deletion, or claim that session logs reveal every native model decision.
+  - No public ID rename, breaking removal, plugin manifest change, version bump, commit, push, release, reinstall, or user-global mutation.
+  - No change to lifecycle phases, human gates, review budgets, repair ownership, task topology, or close judgment.
+  - No hand edits to generated `skills/`, `skills.index.json`, PlantUML, or SVG files.
+  - No new persisted implementation-language boundary; existing Python, TOML, Markdown, Shell, and PlantUML conventions remain fixed.
+- future_phase:
+  - Evaluate public renames only after a corrected multi-agent usage window and a separately approved compatibility migration.
+  - Evaluate a deterministic classifier only if the case registry and provider projection still show repeated measurable owner collisions.
+  - Remove compatibility helper IDs only through a separately approved breaking release with consumer migration evidence.
+- decision_status: ready_for_review
+- oracle_strategy: Contract and conformance first: table-driven characterization tests for session evidence; activation-schema and provider-projection tests; semantic case-ownership coverage and invalid-fixture tests; compatibility-successor checks; generated index, payload, PlantUML, and SVG freshness; provider-native plugin validation; sovereign harness smoke tests; and bounded review.
+- acceptance_oracles:
+  - All-repository history scanning reports only the current repository skill inventory and does not persist raw session text or private paths.
+  - Usage output separates declared activation, provider projection, explicit invocation, skill load, assistant reference, tool output, and heuristic model activation with no Claude wrapped-tool-result false positive.
+  - Every `[skills.<id>]` has one valid activation mode and default role, with any compatibility successor resolving to a current public ID.
+  - Generated Codex `agents/openai.yaml` policy matches the derived contract for all public skills; shared `SKILL.md` frontmatter remains accepted by both retained plugin validators, and source metadata contains no second invocation-policy truth.
+  - Claude's shared-surface default visibility is shown as an effective-provider state distinct from desired activation rather than claimed as enforceable parity.
+  - Every semantic trigger case has exactly one owner, positive and negative cases, and optional overlays; every public skill satisfies the coverage rule for its activation mode.
+  - Review evaluators are controller-owned, session baseline and router scopes are non-competing, and routine search or shell fragments do not activate broad selector skills.
+  - `clean-architecture`, `quality-standards`, and `security-logging` remain public explicit compatibility helpers whose durable content has one verified successor owner.
+  - Public IDs, lifecycle routes, provider plugin manifests, approval gates, runtime DAG, and repair semantics remain unchanged.
+  - Generated macro skill planes and trigger ownership views are fresh and derived only from machine contracts.
+  - Focused tests, required generators, sovereign harness smoke tests, provider validators, `bash scripts/check.sh`, and `git diff --check` pass without unrelated tracked drift.
+  - Bounded implementation review leaves no accepted current-slice finding unresolved, and truth synchronization ends at its pending human gate.
+- execution_continuity: continuous_after_plan_approval
+- max_review_batches: 2
+- subagent_ready: false
+
+## Runtime Binding
+
+- default_model_policy: semantic-routing
+- allowed_model_policies:
+  - semantic-routing
+  - inherit-main
+  - runtime-default
+- effective_concurrency: 1
+
+## Execution Continuity
+
+- execution_mode: continuous_after_plan_approval
+- confirmation_clearance:
+  - C0: Plan approval authorizes the complete serial repository-local implementation, deterministic regeneration, verification, bounded implementation review, accepted in-scope repair, and creation of a pending truth-sync artifact in the current checkout. It does not authorize a public ID rename, compatibility-helper deletion, commit, push, release, version bump, plugin installation, agent-home mutation, or final truth-sync and close approval.
+- runtime_contingencies:
+  - X1: If Codex policy projection, shared-root validator compatibility, or explicit controller loading cannot preserve the selected controller-only and explicit-only boundaries, stop before exposure changes with `needs-design-decision`.
+  - X2: If unique required behavior in `clean-architecture`, `quality-standards`, or `security-logging` cannot be assigned to an approved successor without widening that successor's boundary, stop before compatibility conversion with `needs-plan-change`.
+  - X3: If implementation requires a changed path outside the approved implementation or test surface, preserve the diff and stop with `needs-plan-change` instead of widening scope implicitly.
+- planned_stop_points:
+  - P1: After SAO-060 passes generation, verification, bounded review, and truth-sync artifact validation, stop at the explicit truth-sync human approval gate before close.
+- task_ordering_rationale: The parser must establish trustworthy evidence categories before usage can inform wording. Activation semantics must then become authoritative before trigger cases can be validated. Case ownership must exist before overlap content moves, so successor boundaries are explicit. Description narrowing follows consolidation, and generated views plus stable truth run only after the implemented contracts and skill bodies converge.
+
+## Task 1: Repair current-skill usage measurement
+
+- task_id: SAO-010
+- depends_on:
+  - none
+- scope_slice: Make `skill-miner` measure this repository's skill inventory across all configured coding-agent histories with explicit evidence classes and conservative inference, without changing activation policy.
+- architecture_decision_ref: SAO-001-case-owned-skill-activation
+- reversible_increments:
+  - Add failing fixtures for current false positives and inventory-policy drift.
+  - Correct inventory and event classification while retaining the existing CLI behavior through compatible defaults.
+  - Regenerate only the affected public skill projection after focused tests pass.
+- upgrade_triggers:
+  - Keep model activation heuristic rather than exact unless an agent exposes a stable first-party invocation event with a fixture-backed schema.
+- impl_file_refs:
+  - src/skills/disciplines/skill-miner/SKILL.md
+  - src/skills/disciplines/skill-miner/scripts/extract-session-signals.py
+  - skills/skill-miner
+- test_file_refs:
+  - src/skills/disciplines/skill-miner/tests
+- verification_scope:
+  - Add fixtures for Codex explicit `$skill` requests, assistant references, skill-file loads, injected base-instruction inventory, and tool outputs.
+  - Add Claude fixtures where outer `type: user` contains user-authored text versus `toolUseResult`, `tool_use`, or hook payloads; only the former may count as explicit invocation.
+  - Add an all-repositories fixture proving `--scope all` scans every configured home while `--skill-usage-root` and the repository contract restrict inventory to current-repository skills.
+  - Add contract and provider-policy fixtures proving inventory reports declared policy separately from source frontmatter and provider defaults.
+  - Replace the single usage category with explicit user invocation, assistant reference, skill load, tool output, and heuristic model-activation summaries; retain raw record counts as an upper bound.
+  - Do not emit or commit raw session text by default; examples remain opt-in and bounded by the existing limit controls.
+  - Run `python3 -m unittest discover -s src/skills/disciplines/skill-miner/tests -p 'test_*.py'` and a sanitized `--scope all --skill-usage-only --format json --limit 0` smoke run against the current repository inventory.
+- executor_mode: main
+- parallel_group: none
+- parallel_policy: forbidden
+- delegation_policy: forbidden
+- execution_profile: deep
+- reasoning_profile: deep
+- isolation: controller-checkout
+- resource_locks:
+  - session-measurement-schema
+- task_review_depth: focused
+- done_when:
+  - Fixture evidence distinguishes explicit invocation, load, reference, output, and inference without counting injected inventories or Claude wrapped tool results as user intent.
+  - All-repositories scanning remains independent from the current-repository inventory boundary.
+  - Current contract and provider-policy state are reported separately instead of inferred from `SKILL.md` defaults alone.
+  - The focused unit suite and sanitized live smoke run pass, and no session content is added to Git.
+- failure_policy: fix_forward
+- [ ] Add red fixtures for inventory policy and session-record classification.
+- [ ] Implement conservative evidence categories and contract-aware inventory.
+- [ ] Update usage instructions, refresh the affected generated skill, and pass focused tests.
+
+## Task 2: Establish authoritative activation and capability-aware provider projection
+
+- task_id: SAO-020
+- depends_on:
+  - SAO-010
+- scope_slice: Replace authored invocation booleans and copied provider defaults with the approved activation modes, a shared derivation module, deterministic Codex metadata, an explicit Claude fallback, and cross-target compatibility checks.
+- architecture_decision_ref: SAO-001-case-owned-skill-activation
+- reversible_increments:
+  - Add activation-schema fixtures before migrating contract entries.
+  - Migrate all public entries while retaining every public ID and install target.
+  - Project supported provider metadata into temporary targets and the tracked root-flat surface only after contract validation passes.
+- upgrade_triggers:
+  - Return to design under X1 if Codex projection or explicit controller loading cannot safely represent the selected controller and explicit boundaries.
+- impl_file_refs:
+  - contracts/skills.toml
+  - scripts/check-contracts.py
+  - scripts/check-install-surface.py
+  - scripts/flatten-skills.py
+  - scripts/generate-skills-index.py
+  - scripts/skill_activation.py
+  - skills
+  - skills.index.json
+  - src/skills/disciplines/skill-miner/scripts/extract-session-signals.py
+  - src/skills/git/smart-commit/agents/openai.yaml
+  - src/skills/review-components/review-implementation/agents/openai.yaml
+  - src/skills/workflows/implement-change/agents/openai.yaml
+- test_file_refs:
+  - src/skills/disciplines/skill-miner/tests
+  - tests
+- verification_scope:
+  - Define and validate `native`, `conditional`, `controller`, `explicit`, and `baseline` activation modes plus `primary`, `overlay`, `evaluator`, and `helper` default roles.
+  - Encode the design's complete initial assignment for all public skills and remove authored `implicit_invocation` booleans from the contract as independent truth.
+  - Add `superseded_by` metadata for the three compatibility helpers, validate successor IDs, and prohibit successor cycles.
+  - Record the capability mapping once in a contract-level activation-mode projection table: Codex `allow_implicit_invocation: true` for `native`, `conditional`, and `baseline`, and `false` for `controller` and `explicit`; keep controller evaluators reachable through explicit controller references.
+  - Centralize repository generator, validator, index, effective-provider-state, and shared-frontmatter compatibility interpretation in `scripts/skill_activation.py`.
+  - Preserve source and shared generated `SKILL.md` provider neutrality, prohibit `disable-model-invocation: true` on the shared payload because the retained Codex validator rejects it, and record Claude's default visibility as a separate effective state.
+  - Preserve source OpenAI interface metadata and remove the existing hand-authored policy keys that would compete with generated policy.
+  - Make `flatten-skills.py` inject generated Codex `policy.allow_implicit_invocation` while preserving authored descriptions, shared frontmatter, display metadata, resources, and runtime bundles.
+  - Adapt install-surface validation to compare authored bytes plus an allowed deterministic metadata projection rather than requiring provider metadata to be byte-identical to source.
+  - Emit activation mode, default role, successors, and only derived compatibility fields in `skills.index.json`.
+  - Migrate the SAO-010 compatibility reader to read the supplied contract's activation-mode projection table directly, rerun its focused fixtures after removing authored per-skill booleans, and regenerate `skills/skill-miner` so measurement cannot remain coupled to the retired schema or import a repository-only sibling module.
+  - Add invalid-mode, invalid-role, missing-mode, stale-policy, Codex projection-drift, unsupported shared-frontmatter, successor-cycle, and all-target compatibility tests.
+- executor_mode: main
+- parallel_group: none
+- parallel_policy: forbidden
+- delegation_policy: forbidden
+- execution_profile: deep
+- reasoning_profile: deep
+- isolation: controller-checkout
+- resource_locks:
+  - skill-activation-contract
+  - generated-provider-metadata
+- task_review_depth: deep
+- done_when:
+  - Every public skill has one valid activation mode and role, and compatibility successors resolve without cycles.
+  - The contract is the only authored activation authority; source frontmatter and OpenAI interface files contain no competing invocation policy.
+  - Claude, Codex, and root-flat generated surfaces all carry the derived Codex policy without an unsupported shared-frontmatter disable flag, and effective Claude visibility is reported separately.
+  - The SAO-010 measurement fixtures pass against the migrated activation schema and shared contract table while the generated skill remains independently installable.
+  - The generated index exposes the new semantics and no public ID, install target, lifecycle owner, or provider manifest changes.
+  - Focused activation, generation, and install-surface tests pass.
+- failure_policy: fix_forward
+- [ ] Add the shared activation derivation and red contract fixtures.
+- [ ] Migrate all skill entries and remove duplicated authored invocation policy.
+- [ ] Project, validate, and index supported provider metadata plus effective-provider state for every generated target.
+- [ ] Migrate and rerun the portable measurement reader against the new sole activation authority without a repository-sibling dependency.
+
+## Task 3: Assign semantic trigger-case ownership
+
+- task_id: SAO-030
+- depends_on:
+  - SAO-020
+- scope_slice: Extend the installed routing contract with complete semantic cases so every request case has one owner and every public skill has a positive, negative, overlay, controller, explicit, baseline, or compatibility boundary.
+- architecture_decision_ref: SAO-001-case-owned-skill-activation
+- reversible_increments:
+  - Add invalid ownership fixtures before changing the installed contract.
+  - Record cases by stable semantic ID without changing phase routes or lifecycle ownership.
+  - Expose case IDs through the generated index only after complete coverage passes.
+- upgrade_triggers:
+  - Consider a classifier only when corrected evidence demonstrates repeated case-owner collisions after this registry and description repair are active.
+- impl_file_refs:
+  - contracts/skills.toml
+  - scripts/check-contracts.py
+  - scripts/generate-skills-index.py
+  - skills.index.json
+  - src/skills/session/use-coding-skills/SKILL.md
+  - src/skills/session/use-coding-skills/references/routing.toml
+  - skills/use-coding-skills
+- test_file_refs:
+  - tests/test_semantic_skill_contracts.py
+  - tests/test_skill_routing_contracts.py
+- verification_scope:
+  - Add case records with stable IDs, one owner, non-empty positive cases, non-empty negative cases, optional overlays, and optional non-authoritative lexical hints.
+  - Cover all native domain and workflow intents, ambiguous routing, session handoff, language and policy predicates, controller review, explicit tools, compatibility entries, and the rendering baseline.
+  - Require native skills to own a case; conditional skills to own a predicated case or appear as an overlay; controller skills to be reachable from workflow, phase, review, or controller edges; explicit skills to have explicit cases or successors; and the baseline to match `composition.rendering_baseline`.
+  - Reject duplicate case IDs, missing or multiple owners, unknown targets, lifecycle-owner overlays, controller evaluators exposed as native owners, native compatibility helpers, uncovered public skills, and keyword-only cases without semantic positive and negative examples.
+  - Preserve `native-description-match`, direct-match router bypass, one primary response owner, current phase routes, review evaluators, support routes, and host-wrapper limits.
+  - Update `use-coding-skills` prose to point to case ownership without duplicating the registry.
+  - Emit owned-case and overlay-case IDs in `skills.index.json` for inspection without making the index authored truth.
+- executor_mode: main
+- parallel_group: none
+- parallel_policy: forbidden
+- delegation_policy: forbidden
+- execution_profile: deep
+- reasoning_profile: deep
+- isolation: controller-checkout
+- resource_locks:
+  - installed-routing-contract
+  - trigger-case-registry
+- task_review_depth: deep
+- done_when:
+  - Every current public skill satisfies the coverage rule for its activation mode.
+  - Every trigger case has one and only one owner with useful positive and negative semantic boundaries.
+  - Overlay composition cannot create another lifecycle owner or another report authority.
+  - Existing lifecycle and review routes are byte-equivalent in meaning and routing tests pass.
+- failure_policy: fix_forward
+- [ ] Add failing ownership, coverage, and invalid-composition fixtures.
+- [ ] Author the complete case registry and keep lexical hints non-authoritative.
+- [ ] Expose derived case ownership in the index and pass routing plus semantic tests.
+
+## Task 4: Consolidate overlapping skills behind compatibility entries
+
+- task_id: SAO-040
+- depends_on:
+  - SAO-030
+- scope_slice: Move unique durable guidance from the three approved overlaps into their named owners, leave explicit compatibility entry points, and remove stale or arbitrary rules without changing public IDs.
+- architecture_decision_ref: SAO-001-case-owned-skill-activation
+- reversible_increments:
+  - Inventory unique clauses and active references before moving content.
+  - Add successor references and validate them before reducing compatibility skill bodies.
+  - Regenerate public projections only after active-reference and semantic checks pass.
+- upgrade_triggers:
+  - Stop under X2 if a unique required behavior cannot fit an approved successor without changing that successor's domain boundary.
+- impl_file_refs:
+  - contracts/skills.toml
+  - src/skills/disciplines/architecture-patterns
+  - src/skills/disciplines/clean-architecture
+  - src/skills/policies/development-standards
+  - src/skills/policies/logging-standards
+  - src/skills/policies/quality-standards
+  - src/skills/policies/security-guardrails
+  - src/skills/policies/security-logging
+  - skills
+  - skills.index.json
+- test_file_refs:
+  - tests
+- verification_scope:
+  - Move reusable layer, dependency-direction, interface-placement, and cross-boundary testing guidance into an on-demand `architecture-patterns` reference; remove stale nonexistent `python-services-dev` and `go-services-dev` references.
+  - Replace universal complexity, maintainability-index, coverage, duplication, and debt thresholds with repository-owned gate selection in `development-standards`; point to the already-owned executable evidence in `testing-strategy` and language-specific tooling in existing overlays without modifying or copying their rules in this task.
+  - Move security and audit event selection, redaction, correlation, retention, access, and tamper-evidence guidance into an on-demand `logging-standards` profile; keep validation, injection, upload, CORS, TLS, and exploit prevention under `security-guardrails`.
+  - Convert `clean-architecture`, `quality-standards`, and `security-logging` to short explicit compatibility helpers that name successors, preserve their public ID, contain no independent broad trigger, and do not emit a competing report schema.
+  - Treat missing required behavior in the existing `testing-strategy` or language overlays as X2 evidence requiring a plan change; do not silently widen SAO-040's touch set.
+  - Add checks that compatibility helpers are explicit, have valid successors, own no native case, and do not retain prohibited stale references or arbitrary global thresholds.
+  - Scan active source, routing, index, and stable docs for references that would still treat compatibility helpers as native owners; ignore `docs/plans/` history unless validating this migration artifact.
+- executor_mode: main
+- parallel_group: none
+- parallel_policy: forbidden
+- delegation_policy: forbidden
+- execution_profile: balanced
+- reasoning_profile: deep
+- isolation: controller-checkout
+- resource_locks:
+  - architecture-policy-content
+  - compatibility-skill-surface
+- task_review_depth: deep
+- done_when:
+  - The three compatibility IDs remain installable and explicitly addressable but no longer compete under native matching.
+  - Every retained durable rule has one successor owner and active references resolve to that owner.
+  - Stale nonexistent skill references and unowned universal quality or logging defaults are absent from active source.
+  - Public projection, successor, routing, and active-reference checks pass without deleting a public skill.
+- failure_policy: fix_forward
+- [ ] Classify unique versus duplicate content and add successor references.
+- [ ] Move durable guidance to architecture, development, logging, security, testing, or language owners.
+- [ ] Reduce the old skills to explicit compatibility entries and prove active reference convergence.
+
+## Task 5: Narrow broad activation descriptions and operating scopes
+
+- task_id: SAO-050
+- depends_on:
+  - SAO-040
+- scope_slice: Align the remaining high-collision skill descriptions and bodies with the case registry, keeping positive and negative boundaries clear without duplicating machine routing truth.
+- architecture_decision_ref: SAO-001-case-owned-skill-activation
+- reversible_increments:
+  - Compare each target description with its owned and excluded cases before editing prose.
+  - Change source skills only, then regenerate and inspect their provider-visible descriptions.
+  - Use display-label improvements without changing public IDs.
+- upgrade_triggers:
+  - Defer any public rename until the design's measured ambiguity trigger is satisfied and a migration is separately approved.
+- impl_file_refs:
+  - src/skills/disciplines/error-patterns
+  - src/skills/disciplines/tool-decision-tree
+  - src/skills/policies/development-standards
+  - src/skills/policies/logging-standards
+  - src/skills/policies/shell-guidelines
+  - src/skills/review-components
+  - src/skills/session/output-styles
+  - src/skills/session/use-coding-skills
+  - skills
+- test_file_refs:
+  - tests
+- verification_scope:
+  - Narrow `tool-decision-tree` to non-trivial ad hoc tool selection, command composition, structural search, data transformation, or risky preview/execute boundaries; exclude routine `rg`, file reads, and ordinary repository status checks.
+  - Narrow `shell-guidelines` to persisted Shell, CI or automation code, non-trivial command fragments, and high-risk quoting or portability review; exclude every trivial shell command from mandatory activation.
+  - Keep `use-coding-skills` limited to explicit skill-selection questions, ambiguous multi-stage routing, host-wrapper boundaries, and session handoff; direct confident workflow and policy matches continue to bypass it.
+  - Make `output-styles` a rendering baseline rather than a competing user intent, and keep `development-standards` a conditional implementation overlay rather than an independent report owner.
+  - Make `review-design`, `review-plan`, and `review-implementation` descriptions controller-only and candidate-finding-only; direct review intent remains owned by `review-change`.
+  - Rewrite `error-patterns` around resilience and recovery decisions, remove lifecycle duplication, and use `Resilience and Recovery` only as a generated display label while keeping its public ID.
+  - Rewrite `logging-standards` around application, observability, security, and audit logging goals without mandating one timezone, timestamp, source-line, vendor stack, or universal retention rule.
+  - Inspect every current public description against the registry, edit only the named approved description surfaces, and record all other descriptions as unchanged reviewed evidence. A newly discovered material collision outside the named touch set triggers X3 and `needs-plan-change`; it is not an implicit edit branch.
+  - Avoid exact-prose tests; validate structural coverage and provider-visible description freshness, then use bounded semantic review for wording.
+- executor_mode: main
+- parallel_group: none
+- parallel_policy: forbidden
+- delegation_policy: forbidden
+- execution_profile: balanced
+- reasoning_profile: deep
+- isolation: controller-checkout
+- resource_locks:
+  - public-skill-descriptions
+  - lower-plane-scope
+- task_review_depth: deep
+- done_when:
+  - The named broad skills state their positive boundary, material exclusions, and lower-plane role consistently with the case registry.
+  - Review components, session baseline, router, implementation policy, tool selector, and Shell policy no longer compete for unrelated primary intent.
+  - Resilience and logging guidance is goal-driven and does not duplicate lifecycle or security-control ownership.
+  - All public IDs remain unchanged and generated provider-visible descriptions are fresh.
+- failure_policy: fix_forward
+- [ ] Align broad descriptions with owned and excluded semantic cases.
+- [ ] Rewrite resilience and logging guidance while preserving IDs.
+- [ ] Review the complete public description inventory and regenerate only from source.
+
+## Task 6: Generate architecture views, converge verification, and synchronize truth
+
+- task_id: SAO-060
+- depends_on:
+  - SAO-050
+- scope_slice: Generate all derived surfaces, add the trigger-ownership view beside the macro planes, run complete focused and aggregate acceptance, perform bounded implementation review, synchronize stable truth, and stop at the pending truth-sync gate.
+- architecture_decision_ref: SAO-001-case-owned-skill-activation
+- reversible_increments:
+  - Generate and inspect the index, provider payloads, macro planes, and trigger-ownership view before stable prose changes.
+  - Prove contract and runtime behavior before synchronizing documentation.
+  - Create a pending truth-sync artifact only after review and verification evidence is available.
+- upgrade_triggers:
+  - Return to design under X1 if provider validation invalidates the selected activation representation.
+- impl_file_refs:
+  - AGENTS.md
+  - README.md
+  - docs/README.md
+  - docs/architecture
+  - docs/plans/changes/2026-08-07-skill-activation-and-trigger-ownership-truth-sync.md
+  - scripts/generate-workflow-diagrams.py
+  - skills
+  - skills.index.json
+- test_file_refs:
+  - scripts/check.sh
+  - src/runtime/harness/smoke-test
+  - src/skills/disciplines/skill-miner/tests
+  - tests
+- verification_scope:
+  - Extend `scripts/generate-workflow-diagrams.py` to keep `skill-planes.puml` as the category and lifecycle-authority view and add `skill-trigger-ownership.puml` plus its tracked SVG from activation and routing contracts.
+  - Show activation mode, compatibility status, case owner edges, overlays, controller evaluators, and the baseline without rendering lexical hints as routing logic.
+  - Run `python3 scripts/generate-skills-index.py`, `python3 scripts/flatten-skills.py --target root-flat`, and `python3 scripts/generate-workflow-diagrams.py`; do not edit their outputs by hand.
+  - Generate temporary Claude and Codex surfaces and prove Codex invocation metadata, shared-frontmatter compatibility, effective Claude visibility reporting, public inventory, runtime bundles, and provider-neutral source boundaries through `scripts/check-install-surface.py`.
+  - Run the full `skill-miner` unit suite and a sanitized all-repositories current-inventory smoke report with examples disabled.
+  - Run activation, routing, semantic, distribution, and workflow Python tests plus the sovereign surface, design, plan, review, artifact-DAG, recovery-routing, and execute-runner smoke tests required by AGENTS.md.
+  - Run `bash scripts/check.sh`, `claude plugin validate --strict .`, `uvx --with pyyaml python "$HOME/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py" .`, and `git diff --check`; do not install or update either plugin.
+  - Compare final changed paths with the approved touch set and route the exact SAO-010 through SAO-060 diff, oracles, public-ID proof, and generated metadata evidence through `review-change` with `review-implementation`.
+  - Adjudicate candidate findings, repair only accepted causally linked current-slice violations, rerun affected checks, and perform at most one focused verification review plus the one allowed additional same-slice repair attempt.
+  - Use `sync-truth` to update the invocation contract, orchestration view, README inventory explanation, docs index, repository agent hints, and maintenance guidance from verified behavior; remove obsolete statements that `implicit_invocation` is authored truth.
+  - Create and validate `docs/plans/changes/2026-08-07-skill-activation-and-trigger-ownership-truth-sync.md` in the `pending` approval state, then stop at P1 before truth approval or close.
+  - Report focused failures separately from unrelated pre-existing aggregate failures and do not modify any user-global installation.
+- executor_mode: main
+- parallel_group: none
+- parallel_policy: forbidden
+- delegation_policy: forbidden
+- execution_profile: deep
+- reasoning_profile: deep
+- isolation: controller-checkout
+- resource_locks:
+  - generated-skill-surfaces
+  - architecture-diagrams
+  - stable-truth
+  - final-review
+- task_review_depth: deep
+- done_when:
+  - The tracked index, root-flat payload, macro planes, trigger-ownership PlantUML, and SVGs are fresh projections of authored contracts and source skills.
+  - Current-repository activation and trigger ownership is documented without claiming exact model causality or classifying third-party inventories.
+  - Public IDs, plugin manifests, lifecycle routes, human gates, runtime DAG, and repair behavior remain intact.
+  - Focused tests, required smoke suites, both provider-native validators, aggregate checks, and Markdown whitespace checks pass or any unrelated baseline failure is isolated with evidence.
+  - Implementation review and focused verification review leave no accepted current-slice finding unresolved.
+  - The truth-sync artifact validates in `pending` state and execution stops at P1.
+- failure_policy: fix_forward
+- [ ] Generate the provider, index, macro-plane, and trigger-ownership surfaces.
+- [ ] Run focused, sovereign-harness, provider-native, aggregate, and whitespace acceptance.
+- [ ] Complete bounded implementation review and accepted in-scope repair.
+- [ ] Synchronize stable truth, validate the pending artifact, and stop at the human gate.
+
+## Review Gate
+
+- required_entry: review-change
+- required_mode: review-only
+- review_component: review-plan
+- review_depth: boundary
+- max_review_batches: 2
+- review_status: passed
+- review_evidence: One bounded delegated review found two execution-boundary defects: SAO-020 did not carry the measurement reader through the activation-schema migration, and SAO-040/SAO-050 described conditional writes outside their task touch sets. Both findings were accepted and repaired. A controller-found shared-provider constraint was also repaired by replacing unsupported Claude-frontmatter parity with a contract-level capability table, deterministic Codex policy, provider-compatible shared frontmatter, direct portable contract reading in `skill-miner`, and explicit Claude effective-state reporting. Strict validation, design-surface containment, and a focused verification review then passed with no remaining blocker.
+- supporting_files:
+  - 2026-08-07-skill-activation-and-trigger-ownership-design.md: approved goals, non-goals, activation model, consolidation boundary, acceptance, and implementation surface.
+  - contracts/skills.toml: current exposure, lifecycle, invocation, permission, and semantic dependency contract.
+  - src/skills/session/use-coding-skills/references/routing.toml: current installed discovery, phase, evaluator, support, composition, and host-wrapper contract.
+  - src/skills/disciplines/skill-miner/scripts/extract-session-signals.py: current inventory and session usage classifier targeted by SAO-010.
+  - scripts/flatten-skills.py: current generated-surface copy behavior targeted by provider projection.
+  - scripts/check-contracts.py: current schema, routing, semantic, and lifecycle validation boundary.
+  - scripts/generate-workflow-diagrams.py: current category-only skill-plane generator targeted by SAO-060.
+  - src/skills/policies/development-standards/references/skill-authoring.md: current description and invocation-surface authoring policy.
+  - AGENTS.md: source/generated ownership, public-ID compatibility, review, validation, and human-gate rules.
+- pass_condition: The plan preserves the approved sequence and public boundaries, has an executable serial DAG with complete task touch sets and oracles, treats measurement uncertainty conservatively, preserves lifecycle authority, and reaches one pending truth-sync gate without hidden external mutation.
+
+## Human Gate
+
+- approval_required: true
+- approval_status: approved
+- next_entry: implement-change
+
+## Recovery
+
+- default_failure_policy: fix_forward
+- recovery_evidence:
+  - The pre-implementation Git status and final changed-path comparison preserve unrelated-work evidence.
+  - Every mutation is repository-local, text-based, generated from source, and repairable inside a declared serial task boundary.
+  - Public IDs remain present throughout the migration, so measurement, activation projection, case ownership, consolidation, wording, and truth synchronization can be verified as separate reversible increments.
+  - Provider and compatibility stop conditions occur before exposure or compatibility conversion when their prerequisites are not proven.

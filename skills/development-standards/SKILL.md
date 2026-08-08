@@ -1,11 +1,13 @@
 ---
 name: development-standards
-description: "Use for cross-language implementation policy: the smallest durable change, request-scoped edits, compatibility and migration decisions, dependency selection, temporary mechanisms, maintainability, custom CLI conventions, and implementation review expectations."
+description: "Use as a conditional cross-language implementation overlay for smallest durable changes, request-scoped edits, compatibility, dependencies, temporary mechanisms, maintainability, and repository-owned quality gates. It does not own lifecycle routing or an independent report."
 ---
 
 # Development Standards
 
 Choose the smallest durable implementation that satisfies the current approved requirements, contracts, and declared decision horizon. Durable does not mean speculative; do not buy flexibility, abstraction, compatibility, or operational surface without a current owner and need.
+
+This is a conditional implementation overlay. Do not select it as the primary owner for project analysis, design, planning, execution, or review.
 
 ## Precedence And Composition
 
@@ -52,6 +54,15 @@ Choose the smallest durable implementation that satisfies the current approved r
 - Comment why a non-obvious constraint exists; do not narrate obvious code.
 - Validate external input at the owned boundary and handle failures that can occur under the declared runtime contract.
 - Measure before optimizing and keep performance work tied to an observed bottleneck or explicit objective.
+
+## Repository-Owned Quality Gates
+
+- Follow quality gates already owned by the target repository, approved plan, CI contract, or release policy before introducing a new metric.
+- Select a new lint, complexity, duplication, coverage, or debt gate only when it protects a named boundary, has a baseline, an accountable owner, a failure response, and an adoption or migration path.
+- Do not impose universal numeric thresholds across repositories or languages. A metric is evidence for a goal, not the goal itself.
+- Let `testing-strategy` own executable test evidence, suite boundaries, fixtures, and CI lanes. Let the matching language guideline own concrete linter, formatter, type-checker, and test-runner configuration.
+- Treat trends and changed-code gates as preferable to arbitrary repository-wide targets when legacy baselines cannot satisfy a justified policy immediately.
+- Record technical debt only when its impact, scope, owner, priority, and retirement evidence are actionable; do not create dashboards or recurring process by default.
 
 ## Custom CLI Conventions
 

@@ -8,8 +8,8 @@ When prose, diagrams, and runtime behavior disagree, resolve drift in this order
 
 1. `contracts/workflow-modes.toml` defines mode requirements and phase shape.
 2. `contracts/lifecycle.toml` defines kernel membership and repository-wide defaults.
-3. `contracts/skills.toml` defines skill exposure, roles, permissions, and the installed runtime-contract pointer.
-4. `src/skills/session/use-coding-skills/references/routing.toml` defines installed discovery behavior, phase-to-owner mapping, review evaluators, support routes, composition, and the host-wrapper boundary.
+3. `contracts/skills.toml` defines skill exposure, activation modes, default roles, compatibility successors, permissions, provider projection capabilities, and installed contract pointers.
+4. `src/skills/session/use-coding-skills/references/routing.toml` defines semantic trigger-case ownership, installed discovery behavior, phase-to-owner mapping, review evaluators, support routes, composition, and the host-wrapper boundary.
 5. `src/skills/workflows/implement-change/references/workflow.toml` defines the invocation subgraph and repair metadata that must travel with the installed controller.
 6. `src/skills/workflows/implement-change/references/repair-loop.md` explains the controller's repair semantics.
 7. The PlantUML files in `diagrams/` and the rendered SVG files in `generated/` are generated views for humans and must not be edited by hand.
@@ -19,6 +19,8 @@ When prose, diagrams, and runtime behavior disagree, resolve drift in this order
 ## Installed Surface
 
 Claude Code and Codex retain their native plugin marketplaces and consume the same generated public `skills/` inventory. Other agents may consume that payload through optional, consumer-managed `npx skills` guidance. Lifecycle entry is through public skills and native description matching or a thin host mapping to those skills.
+
+Activation intent is authored once in `contracts/skills.toml`. Generation projects Codex `policy.allow_implicit_invocation` from the contract-level mode table: `native`, `conditional`, and `baseline` allow implicit invocation, while `controller` and `explicit` do not. The shared `SKILL.md` payload remains provider-neutral. Claude's effective visibility is recorded as `default-visible`; the repository does not claim an unsupported per-skill Claude visibility switch.
 
 Each runner-owning workflow carries its own generated `scripts/harness/` runtime bundle sourced from `src/runtime/harness/`. Runtime helpers are not separately discoverable skills, and workflow execution does not depend on a provider plugin root or a sibling support skill.
 
@@ -40,7 +42,9 @@ The harness routing sequence ([rendered SVG](generated/harness-routing-sequence.
 
 Native description matching is the default discovery path. An explicitly named skill or confident direct workflow or policy match bypasses `use-coding-skills`; an ambiguous multi-stage request or explicit routing question enters it. `use-coding-skills` does not become a mandatory bootstrap or lifecycle controller.
 
-The selected lifecycle mode determines the phase sequence, while `routing.toml` maps each phase to one workflow owner. Review requests enter through `review-change`; `review-design`, `review-plan`, and `review-implementation` remain artifact-specific read-only evaluators. The support-route table selects `output-styles`, tooling, implementation policy, language, infrastructure, documentation, and mining overlays without granting them lifecycle authority.
+The semantic case registry gives each request case exactly one owner with positive and negative boundaries. Optional overlays add conditional policy or technique without becoming a second response owner. Lexical hints are non-authoritative examples and are never interpreted as a keyword router. The activation and trigger-ownership view ([rendered SVG](generated/skill-trigger-ownership.svg), [PlantUML source](diagrams/skill-trigger-ownership.puml)) shows activation modes, default roles, compatibility successors, case-owner and overlay edges, controller evaluators, phase-routed controllers, and the rendering baseline.
+
+The selected lifecycle mode determines the phase sequence, while `routing.toml` maps each phase to one workflow owner. Review requests enter through `review-change`; `review-design`, `review-plan`, and `review-implementation` remain controller-selected artifact-specific read-only evaluators. The support-route table selects `output-styles`, tooling, implementation policy, language, infrastructure, documentation, and mining overlays without granting them lifecycle authority.
 
 A host-level AGENTS file may supply user preferences, runtime constraints, and thin public-skill entry hints. It must not duplicate the phase graph, phase-to-owner mapping, repair states, review budgets, or typed exits. Those contracts travel with the repo-owned skill surface.
 
@@ -105,6 +109,8 @@ Only `implement-change` mutates implementation state inside this loop. `review-i
 ## Discovery And Bootstrap
 
 Native matching can compose one primary workflow with matching policy overlays, such as `review-change` with `review-implementation` and `go-guidelines` for a Go implementation review. When a host needs deterministic entry, its thin mapping points only to public skill IDs or `use-coding-skills`; the installed routing and controller contracts remain authoritative.
+
+Compatibility IDs remain explicit entry points only: `clean-architecture` hands off to `architecture-patterns`, `quality-standards` to `development-standards`, and `security-logging` to `logging-standards`. Public IDs remain stable while their successors own the durable guidance and native semantic cases.
 
 ## Maintenance
 

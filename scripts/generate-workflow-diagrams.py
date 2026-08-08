@@ -25,6 +25,7 @@ DAG_PATH = DIAGRAM_DIR / "implementation-invocation-dag.puml"
 REPAIR_PATH = DIAGRAM_DIR / "implementation-repair-loop.puml"
 ROUTING_SEQUENCE_PATH = DIAGRAM_DIR / "harness-routing-sequence.puml"
 SKILL_PLANES_PATH = DIAGRAM_DIR / "skill-planes.puml"
+TRIGGER_OWNERSHIP_PATH = DIAGRAM_DIR / "skill-trigger-ownership.puml"
 
 
 def load_toml(path: Path) -> dict[str, Any]:
@@ -468,6 +469,132 @@ def render_skill_planes(skills: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+ACTIVATION_ORDER = ["native", "conditional", "controller", "explicit", "baseline"]
+
+
+def render_skill_trigger_ownership(
+    skills: dict[str, Any],
+    routing_path: Path,
+    routing: dict[str, Any],
+) -> str:
+    skill_source = SKILLS_CONTRACT.relative_to(REPO_ROOT).as_posix()
+    routing_source = routing_path.relative_to(REPO_ROOT).as_posix()
+    by_mode: dict[str, list[tuple[str, dict[str, Any]]]] = {
+        mode: [] for mode in ACTIVATION_ORDER
+    }
+    for skill_id, entry in sorted(skills.items()):
+        mode = entry.get("activation_mode")
+        if mode in by_mode:
+            by_mode[mode].append((skill_id, entry))
+
+    lines = [
+        "@startuml",
+        f"' Generated from {skill_source} and {routing_source}; do not edit by hand.",
+        "title Skill Activation And Trigger Ownership",
+        "left to right direction",
+        "skinparam shadowing false",
+        "skinparam packageStyle rectangle",
+        "skinparam ArrowColor #475569",
+        "skinparam rectangle {",
+        "  BackgroundColor #F8FAFC",
+        "  BorderColor #475569",
+        "}",
+        "",
+    ]
+
+    for mode in ACTIVATION_ORDER:
+        members = by_mode[mode]
+        lines.append(f'package "Activation: {mode}" as {alias("activation_" + mode)} {{')
+        for skill_id, entry in members:
+            role = entry.get("default_role", "unknown")
+            compatibility = "\\n(compatibility)" if entry.get("superseded_by") else ""
+            stereotype = " <<compatibility>>" if entry.get("superseded_by") else ""
+            lines.append(
+                f'  rectangle "{skill_id}\\n[{role}]{compatibility}" as '
+                f'{alias("skill_" + skill_id)}{stereotype}'
+            )
+        lines.append("}")
+        lines.append("")
+
+    lines.append(f'package "Semantic trigger cases" as {alias("trigger_cases")} {{')
+    for trigger_case in routing.get("trigger_cases", []):
+        case_id = trigger_case["id"]
+        lines.append(
+            f'  rectangle "{case_id}" as {alias("case_" + case_id)} <<case>>'
+        )
+    lines.append("}")
+    lines.append("")
+
+    for trigger_case in routing.get("trigger_cases", []):
+        case_id = trigger_case["id"]
+        owner = trigger_case["owner"]
+        lines.append(
+            f'{alias("case_" + case_id)} --> {alias("skill_" + owner)} : case owner'
+        )
+        for overlay in trigger_case.get("overlays", []):
+            lines.append(
+                f'{alias("case_" + case_id)} ..> {alias("skill_" + overlay)} : overlay'
+            )
+
+    for skill_id, entry in sorted(skills.items()):
+        successor = entry.get("superseded_by")
+        if successor:
+            lines.append(
+                f'{alias("skill_" + skill_id)} ..> {alias("skill_" + successor)} : superseded_by'
+            )
+
+    review_evaluators = routing.get("review_evaluators", {})
+    evaluator_phases: dict[str, list[str]] = {}
+    if isinstance(review_evaluators, dict):
+        for phase, evaluator in review_evaluators.items():
+            evaluator_phases.setdefault(evaluator, []).append(phase)
+    for evaluator, phases in sorted(evaluator_phases.items()):
+        lines.append(
+            f'{alias("skill_review-change")} --> {alias("skill_" + evaluator)} : '
+            f'controller evaluator\\n{", ".join(sorted(phases))}'
+        )
+
+    phase_routes = routing.get("phase_routes", {})
+    controller_phases: dict[str, list[str]] = {}
+    if isinstance(phase_routes, dict):
+        for phase, target in phase_routes.items():
+            if skills.get(target, {}).get("activation_mode") == "controller":
+                controller_phases.setdefault(target, []).append(phase)
+    if controller_phases:
+        lines.append(
+            f'rectangle "Controller phase routes" as {alias("controller_routes")} <<controller>>'
+        )
+        for target, phases in sorted(controller_phases.items()):
+            lines.append(
+                f'{alias("controller_routes")} --> {alias("skill_" + target)} : '
+                f'{", ".join(sorted(phases))}'
+            )
+
+    baseline = routing.get("composition", {}).get("rendering_baseline")
+    if baseline:
+        lines.extend(
+            [
+                f'rectangle "Response composition" as {alias("response_composition")}',
+                f'{alias("response_composition")} ..> {alias("skill_" + baseline)} : rendering baseline',
+            ]
+        )
+
+    lines.extend(
+        [
+            "",
+            "legend right",
+            "  solid case edge = one semantic case owner",
+            "  dotted overlay edge = conditional composition",
+            "  compatibility = explicit public handoff retained",
+            "  lexical hints are intentionally not rendered as routing logic",
+            "endlegend",
+            "@enduml",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def render_svg(puml_content: str) -> str:
     plantuml = shutil.which("plantuml")
     if not plantuml:
@@ -504,6 +631,11 @@ def expected_outputs() -> dict[Path, str]:
         DAG_PATH: render_dag(contract_path, contract),
         REPAIR_PATH: render_repair_loop(contract_path, contract),
         SKILL_PLANES_PATH: render_skill_planes(skills),
+        TRIGGER_OWNERSHIP_PATH: render_skill_trigger_ownership(
+            skills,
+            routing_path,
+            routing,
+        ),
     }
 
 

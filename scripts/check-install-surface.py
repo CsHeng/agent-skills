@@ -12,6 +12,12 @@ from typing import Any
 import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from skill_activation import derived_implicit_invocation, project_openai_metadata
+
 CONTRACT_PATH = REPO_ROOT / "contracts" / "skills.toml"
 TARGETS_PATH = REPO_ROOT / "contracts" / "install-targets.toml"
 RUNTIME_BUNDLES = {"harness": REPO_ROOT / "src/runtime/harness"}
@@ -66,6 +72,18 @@ def selected_runtime_bundles(target: str) -> dict[str, str]:
         runtime_bundle = entry.get("runtime_bundle")
         if runtime_bundle:
             expected[entry["public_id"]] = runtime_bundle
+    return expected
+
+
+def selected_activation_policies(target: str) -> dict[str, bool]:
+    contract = load_toml(CONTRACT_PATH)
+    expected: dict[str, bool] = {}
+    for entry in contract["skills"].values():
+        if target not in entry.get("install", []):
+            continue
+        expected[entry["public_id"]] = derived_implicit_invocation(
+            contract, entry
+        )
     return expected
 
 
@@ -130,6 +148,7 @@ def validate(target: str, dest: Path) -> list[str]:
     try:
         expected = selected_entries(target)
         runtime_bundles = selected_runtime_bundles(target)
+        activation_policies = selected_activation_policies(target)
     except (KeyError, ValueError) as exc:
         return [str(exc)]
 
@@ -146,11 +165,12 @@ def validate(target: str, dest: Path) -> list[str]:
 
         source_dir = REPO_ROOT / expected[public_id]
         generated_dir = skills_dir / public_id
-        source_files = {
+        source_files: dict[str, Path | None] = {
             path.relative_to(source_dir).as_posix(): path
             for path in source_dir.rglob("*")
             if path.is_file()
         }
+        source_files.setdefault("agents/openai.yaml", None)
         runtime_bundle = runtime_bundles.get(public_id)
         if runtime_bundle:
             try:
@@ -179,7 +199,20 @@ def validate(target: str, dest: Path) -> list[str]:
             )
             continue
         for relative_path, source_file in source_files.items():
-            if source_file.read_bytes() != generated_files[relative_path].read_bytes():
+            if relative_path == "agents/openai.yaml":
+                source_text = (
+                    source_file.read_text(encoding="utf-8")
+                    if source_file is not None
+                    else ""
+                )
+                expected_bytes = project_openai_metadata(
+                    source_text, activation_policies[public_id]
+                ).encode("utf-8")
+            elif source_file is not None:
+                expected_bytes = source_file.read_bytes()
+            else:
+                raise AssertionError(f"unexpected generated-only file: {relative_path}")
+            if expected_bytes != generated_files[relative_path].read_bytes():
                 errors.append(
                     f"{target}: generated content differs for {public_id}/{relative_path}"
                 )

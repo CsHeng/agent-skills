@@ -1,23 +1,24 @@
 ---
 name: shell-guidelines
-description: "Apply Shell language policy to any Shell code, including persisted scripts, CI and local automation, ad hoc command fragments, or implementation reviews: safe variable names, target-matched interpreters, strict mode, quoting, portability, ShellCheck, and macOS/Homebrew behavior. Use as a language/tooling overlay alongside the primary workflow; do not take lifecycle ownership."
+description: "Apply Shell policy to persisted scripts, CI or automation, non-trivial command fragments, and quoting, interpreter, portability, or safety reviews. Use as a conditional language overlay; routine single-layer shell commands do not require activation, and this skill never owns the lifecycle."
 ---
 
 # Shell Guidelines
 
 ## Purpose
 
-Define the Shell language-policy overlay for safe, portable, auditable Shell code. The primary workflow owns the task lifecycle, and `tool-decision-tree` owns ad hoc tool selection and command composition.
+Define the Shell language-policy overlay for persisted or correctness-sensitive Shell code. The primary workflow owns the task lifecycle, and `tool-decision-tree` owns non-trivial ad hoc tool selection and command composition. Do not load this skill merely because a routine read-only command runs through a shell.
 
 ## Scope
 
 In-scope:
-- Shell fragments inside agent ad hoc commands
+- Non-trivial Shell fragments whose quoting, expansion, interpreter, pipeline, or failure behavior affects correctness
 - Editing or creating shell scripts (`.sh`, bash/zsh scripts)
 - CI and local automation scripts
 - Code review and syntax audit for shell files
 
 Out-of-scope:
+- Routine single-layer commands such as a bounded `rg`, file read, or `git status` when no Shell policy decision is present
 - Agent ad hoc tool choice and command composition (see `tool-decision-tree` skill)
 - Language selection (see `language-decision-tree` skill)
 - Tool selection and progressive search workflow (see `tool-decision-tree` skill)

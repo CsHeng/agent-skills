@@ -1,4 +1,6 @@
 interface:
   display_name: "Tool Decision Tree"
-  short_description: "Help with Tool Decision Tree tasks"
-  default_prompt: "Use $tool-decision-tree for this workflow."
+  short_description: "Select non-trivial ad hoc tools and safe command flows"
+  default_prompt: "Use $tool-decision-tree when this task needs a non-trivial ad hoc tool or command-composition decision."
+policy:
+  allow_implicit_invocation: true

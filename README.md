@@ -9,8 +9,8 @@ For AI-facing repository rules and the docs truth boundary, see `AGENTS.md`.
 ## Source And Install Surfaces
 
 - `src/skills/` is the source-of-truth skill tree.
-- `contracts/skills.toml` is the source-of-truth exposure and invocation contract.
-- `src/skills/session/use-coding-skills/references/routing.toml` is the install-required discovery, phase-owner, review-evaluator, support-route, composition, and host-wrapper contract.
+- `contracts/skills.toml` is the source-of-truth exposure, activation-mode, default-role, compatibility-successor, and provider-projection contract.
+- `src/skills/session/use-coding-skills/references/routing.toml` is the install-required semantic trigger-case, discovery, phase-owner, review-evaluator, support-route, composition, and host-wrapper contract.
 - `src/runtime/harness/` is non-discoverable deterministic lifecycle and artifact-DAG runtime source.
 - `skills/` is tracked generated root-flat public payload for current plugin manifests and optional external discovery. Runner-owning skills carry their own `scripts/harness/` bundle.
 - `.dist/claude/` and `.dist/codex/` are ignored, reproducible target-specific install surfaces generated only when needed.
@@ -61,8 +61,26 @@ Lower-plane skills stay available as components the kernel can call, not as comp
 
 ## Optional Session Routing And Style
 
-- `use-coding-skills`: Optional router for ambiguous multi-stage coding work, session boundaries, and compact handoffs. Its installed routing contract owns phase-to-workflow and support-route mapping; direct workflow and policy matches bypass it.
+- `use-coding-skills`: Optional router for ambiguous multi-stage coding work, session boundaries, and compact handoffs. Its installed routing contract owns semantic case boundaries, phase-to-workflow mapping, and support routes; direct workflow and policy matches bypass it.
 - `output-styles`: Agent-agnostic response modes plus the composition rule that one primary skill owns domain order while other matched skills contribute semantic overlays instead of competing report templates.
+
+## Activation And Trigger Ownership
+
+Each public skill declares one activation mode and one default role in `contracts/skills.toml`. The installed routing contract assigns every semantic trigger case exactly one owner and records positive and negative examples; optional overlays contribute policy or technique without becoming another primary owner. Lexical hints are examples for inspection, not keyword routing rules.
+
+| Activation mode | Intended use | Generated Codex policy |
+|---|---|---:|
+| `native` | Direct semantic owner | implicit allowed |
+| `conditional` | Predicate-matched overlay or focused owner | implicit allowed |
+| `controller` | Reached through lifecycle or review control | implicit disabled |
+| `explicit` | Explicit selection or compatibility handoff | implicit disabled |
+| `baseline` | Shared rendering composition | implicit allowed |
+
+Codex invocation policy is generated from this table into flat install surfaces; it is not authored independently per skill. Claude's shared payload remains provider-compatible and reports effective `default-visible` state rather than claiming an unsupported per-skill visibility switch.
+
+![Skill activation and trigger ownership](docs/architecture/generated/skill-trigger-ownership.svg)
+
+The compatibility IDs `clean-architecture`, `quality-standards`, and `security-logging` remain explicitly invokable, but their durable owners are `architecture-patterns`, `development-standards`, and `logging-standards`. Public skill IDs and install targets remain unchanged.
 
 ## Distribution
 
@@ -82,10 +100,11 @@ Lower-plane skills stay available as components the kernel can call, not as comp
 |---|---|---|
 | Session | Optional routing, session boundaries, response style | `use-coding-skills`, `output-styles` |
 | Evaluation | Read-only review evaluators coordinated by `review-change` | `review-design`, `review-plan`, `review-implementation` |
-| Discipline | Reusable engineering methods and decision trees | `architecture-patterns`, `clean-architecture`, `testing-strategy`, `language-decision-tree`, `tool-decision-tree`, `skill-miner` |
+| Discipline | Reusable engineering methods and decision trees | `architecture-patterns`, `testing-strategy`, `language-decision-tree`, `tool-decision-tree`, `skill-miner` |
 | Policy | Language, security, quality, and logging rules | `python-guidelines`, `go-guidelines`, `shell-guidelines`, `security-guardrails`, `sops-age-guardrails`, `development-standards` |
 | Tool | Narrow tool adapters and operational helpers | `web-fetch`, `docker-multiarch-build`, `codex-session-recovery`, `smart-commit` |
 | Manual tools | Explicit user request only, never implicit | `git-worktrees`, `smart-squash` |
+| Compatibility | Explicit retained IDs that hand off to a successor | `clean-architecture`, `quality-standards`, `security-logging` |
 
 The authoritative inventory with roles, permissions, semantic requirements, and install targets is `contracts/skills.toml`; the rendered map above is generated from it by `scripts/generate-workflow-diagrams.py`. Harness runtime is bundled into each runner-owning skill and is not exposed as a separate skill. Each skill's own `SKILL.md` under `src/skills/` is the deep-dive entry for how that skill works.
 
@@ -117,7 +136,7 @@ Repair behavior:
 
 - Keep skills thin and operational: purpose, scope, deterministic steps, and a short checklist.
 - Avoid long tutorial content inside skills; keep examples minimal.
-- Prefer cross-skill references over duplication (for example, services skills reference `clean-architecture`).
+- Prefer cross-skill references over duplication; architecture layers and clean boundaries belong to `architecture-patterns`.
 - Prefer bounded readonly review context and narrow repair fences for plan-bound execution work.
 - Keep decision discovery, work-package readiness, and bounded review inside the sovereign harness instead of restoring third-party workflow control.
 

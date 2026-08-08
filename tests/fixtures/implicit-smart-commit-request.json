@@ -2,6 +2,7 @@
   "request": "Group the current working-tree diffs by business domain and create focused local commits.",
   "skill": "smart-commit",
   "expected_category": "tool",
-  "expected_implicit_invocation": true,
+  "expected_activation_mode": "native",
+  "expected_default_role": "primary",
   "expected_requires_explicit_user_request": true
 }
