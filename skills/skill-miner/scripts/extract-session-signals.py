@@ -8,6 +8,7 @@ import json
 import re
 import shlex
 import subprocess
+import tomllib
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -77,6 +78,26 @@ class SkillInventoryEntry:
     category: str
     disable_model_invocation: bool
     description: str
+    declared_implicit_invocation: bool | None
+    activation_mode: str
+    default_role: str
+    codex_allow_implicit_invocation: bool
+    codex_policy_source: str
+    claude_model_visibility: str
+    claude_policy_source: str
+
+
+@dataclass(frozen=True)
+class SkillContractEntry:
+    name: str
+    source: str
+    public_id: str
+    category: str
+    declared_implicit_invocation: bool | None
+    activation_mode: str
+    default_role: str
+    codex_allow_implicit_invocation: bool | None
+    claude_effective_visibility: str
 
 
 @dataclass(frozen=True)
@@ -122,7 +143,12 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument("--format", choices=("markdown", "json"), default="markdown")
-    parser.add_argument("--limit", type=int, default=5)
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help="Maximum raw examples to emit. Defaults to 0 so session text remains opt-in.",
+    )
     parser.add_argument(
         "--skill-usage-root",
         action="append",
@@ -133,6 +159,11 @@ def parse_args() -> argparse.Namespace:
         "--skill-usage-prefix",
         default="",
         help="Skill namespace prefix to count, for example mattpocock-skills.",
+    )
+    parser.add_argument(
+        "--skill-usage-contract",
+        default="",
+        help="Optional skills.toml contract used to report declared policy separately from provider metadata.",
     )
     parser.add_argument(
         "--skill-usage-before-date",
@@ -238,8 +269,105 @@ def parse_frontmatter(text: str) -> dict[str, str]:
     return data
 
 
-def iter_skill_inventory(paths: list[Path]) -> dict[str, SkillInventoryEntry]:
+def load_skill_contract(
+    contract_path: Path | None,
+) -> tuple[dict[Path, SkillContractEntry], dict[str, SkillContractEntry]]:
+    if contract_path is None:
+        return {}, {}
+    resolved_contract = contract_path.expanduser().resolve()
+    try:
+        with resolved_contract.open("rb") as handle:
+            contract = tomllib.load(handle)
+    except (OSError, tomllib.TOMLDecodeError):
+        return {}, {}
+
+    repo_root = resolved_contract.parent.parent
+    mode_projections = contract.get("activation_modes") or {}
+    by_source: dict[Path, SkillContractEntry] = {}
+    by_name: dict[str, SkillContractEntry] = {}
+    for name, raw_entry in (contract.get("skills") or {}).items():
+        if not isinstance(raw_entry, dict):
+            continue
+        source = str(raw_entry.get("source") or "")
+        public_id = str(raw_entry.get("public_id") or name)
+        declared = raw_entry.get("implicit_invocation")
+        if not isinstance(declared, bool):
+            declared = None
+        activation_mode = str(raw_entry.get("activation_mode") or "")
+        mode_projection = (
+            mode_projections.get(activation_mode)
+            if isinstance(mode_projections, dict)
+            else None
+        )
+        if not isinstance(mode_projection, dict):
+            mode_projection = {}
+        projected_codex = mode_projection.get("codex_allow_implicit_invocation")
+        if not isinstance(projected_codex, bool):
+            projected_codex = None
+        if declared is None and projected_codex is not None:
+            declared = projected_codex
+        entry = SkillContractEntry(
+            name=str(name),
+            source=source,
+            public_id=public_id,
+            category=str(raw_entry.get("category") or ""),
+            declared_implicit_invocation=declared,
+            activation_mode=activation_mode,
+            default_role=str(raw_entry.get("default_role") or ""),
+            codex_allow_implicit_invocation=projected_codex,
+            claude_effective_visibility=str(
+                mode_projection.get("claude_effective_visibility") or ""
+            ),
+        )
+        by_name[entry.name] = entry
+        by_name[entry.public_id] = entry
+        if source:
+            by_source[(repo_root / source / "SKILL.md").resolve()] = entry
+    return by_source, by_name
+
+
+def read_codex_source_policy(skill_path: Path) -> tuple[bool, str]:
+    metadata_path = skill_path.parent / "agents" / "openai.yaml"
+    try:
+        text = metadata_path.read_text(errors="replace")
+    except OSError:
+        return True, "provider-default"
+
+    in_policy = False
+    policy_indent = 0
+    for raw_line in text.splitlines():
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        indent = len(raw_line) - len(raw_line.lstrip())
+        if stripped == "policy:":
+            in_policy = True
+            policy_indent = indent
+            continue
+        if in_policy and indent <= policy_indent:
+            in_policy = False
+        if in_policy and stripped.startswith("allow_implicit_invocation:"):
+            value = stripped.split(":", 1)[1].strip().lower()
+            if value in {"true", "false"}:
+                return value == "true", "source-metadata"
+    return True, "provider-default"
+
+
+def infer_inventory_category(rel_path: Path) -> str:
+    parts = rel_path.parts
+    if len(parts) >= 4 and parts[0] == "skills":
+        return parts[1]
+    if len(parts) >= 3:
+        return parts[0]
+    return ""
+
+
+def iter_skill_inventory(
+    paths: list[Path],
+    contract_path: Path | None = None,
+) -> dict[str, SkillInventoryEntry]:
     entries: dict[str, SkillInventoryEntry] = {}
+    contract_by_source, contract_by_name = load_skill_contract(contract_path)
     for root in paths:
         expanded_root = root.expanduser().resolve()
         if not expanded_root.exists():
@@ -257,13 +385,54 @@ def iter_skill_inventory(paths: list[Path]) -> dict[str, SkillInventoryEntry]:
                 rel_path = path.relative_to(inventory_root)
             except ValueError:
                 rel_path = path
-            category = rel_path.parts[1] if len(rel_path.parts) >= 3 and rel_path.parts[0] == "skills" else ""
+            contract_entry = contract_by_source.get(path.resolve()) or contract_by_name.get(name)
+            category = (
+                contract_entry.category
+                if contract_entry is not None and contract_entry.category
+                else infer_inventory_category(rel_path)
+            )
+            disable_model_invocation = (
+                metadata.get("disable-model-invocation", "").lower() == "true"
+            )
+            codex_allow_implicit_invocation, codex_policy_source = read_codex_source_policy(path)
+            if (
+                contract_entry is not None
+                and contract_entry.codex_allow_implicit_invocation is not None
+            ):
+                codex_allow_implicit_invocation = (
+                    contract_entry.codex_allow_implicit_invocation
+                )
+                codex_policy_source = "contract-derived"
+            claude_model_visibility = (
+                "disabled" if disable_model_invocation else "default-visible"
+            )
+            claude_policy_source = (
+                "shared-frontmatter" if disable_model_invocation else "provider-default"
+            )
+            if (
+                contract_entry is not None
+                and contract_entry.claude_effective_visibility
+                and not disable_model_invocation
+            ):
+                claude_model_visibility = contract_entry.claude_effective_visibility
+                claude_policy_source = "contract-effective-state"
             entries[name] = SkillInventoryEntry(
                 name=name,
                 path=str(rel_path),
                 category=category,
-                disable_model_invocation=metadata.get("disable-model-invocation", "").lower() == "true",
+                disable_model_invocation=disable_model_invocation,
                 description=metadata.get("description", ""),
+                declared_implicit_invocation=(
+                    contract_entry.declared_implicit_invocation
+                    if contract_entry is not None
+                    else None
+                ),
+                activation_mode=contract_entry.activation_mode if contract_entry is not None else "",
+                default_role=contract_entry.default_role if contract_entry is not None else "",
+                codex_allow_implicit_invocation=codex_allow_implicit_invocation,
+                codex_policy_source=codex_policy_source,
+                claude_model_visibility=claude_model_visibility,
+                claude_policy_source=claude_policy_source,
             )
     return entries
 
@@ -273,27 +442,32 @@ def build_skill_usage_markers(
     skill_roots: list[Path],
     inventory: dict[str, SkillInventoryEntry],
 ) -> tuple[dict[str, tuple[str, ...]], tuple[str, ...]]:
-    resolved_roots = [root.expanduser().resolve() for root in skill_roots]
+    expanded_roots = [root.expanduser().absolute() for root in skill_roots]
+    resolved_roots = [root.resolve() for root in expanded_roots]
     skill_markers: dict[str, tuple[str, ...]] = {}
     for name, entry in inventory.items():
         markers = {
             f"{skill_prefix}:{name}" if skill_prefix else "",
             f"${skill_prefix}:{name}" if skill_prefix else "",
             entry.path,
+            f"/{name}/SKILL.md",
         }
         for root in resolved_roots:
             markers.add(str((root / entry.path).resolve()))
+        for root in expanded_roots:
+            markers.add(str(root / entry.path))
         skill_markers[name] = tuple(marker for marker in sorted(markers) if marker)
 
     root_markers = {skill_prefix} if skill_prefix else set()
     root_markers.update(str(root) for root in resolved_roots)
+    root_markers.update(str(root) for root in expanded_roots)
     return skill_markers, tuple(marker for marker in sorted(root_markers) if marker)
 
 
 def match_skill_usage_names(
     text: str,
     skill_markers: dict[str, tuple[str, ...]],
-    root_markers: tuple[str, ...],
+    _root_markers: tuple[str, ...],
 ) -> tuple[str, ...]:
     names: set[str] = set()
     if not text:
@@ -303,8 +477,22 @@ def match_skill_usage_names(
         if any(marker and marker in text for marker in markers):
             names.add(name)
 
-    if not names and any(marker and marker in text for marker in root_markers):
-        names.add("(repo)")
+    return tuple(sorted(names))
+
+
+def match_explicit_skill_names(
+    text: str,
+    skill_prefix: str,
+    inventory: dict[str, SkillInventoryEntry],
+) -> tuple[str, ...]:
+    names: set[str] = set()
+    for name in inventory:
+        public_name = f"{skill_prefix}:{name}" if skill_prefix else name
+        pattern = re.compile(
+            rf"(?<![\w:$-])\${re.escape(public_name)}(?![\w-])"
+        )
+        if pattern.search(text):
+            names.add(name)
     return tuple(sorted(names))
 
 
@@ -319,13 +507,16 @@ def add_skill_usage_record(
     line: int,
     skill_markers: dict[str, tuple[str, ...]],
     root_markers: tuple[str, ...],
+    skill_prefix: str = "",
+    inventory: dict[str, SkillInventoryEntry] | None = None,
     limit_text: int = 300,
 ) -> None:
     if skip_injected_text(text):
         return
-    if not any(marker and marker in text for marker in root_markers):
-        return
-    names = match_skill_usage_names(text, skill_markers, root_markers)
+    if category == "user_explicit":
+        names = match_explicit_skill_names(text, skill_prefix, inventory or {})
+    else:
+        names = match_skill_usage_names(text, skill_markers, root_markers)
     if not names:
         return
     skill_usage_records.append(
@@ -339,6 +530,43 @@ def add_skill_usage_record(
             names,
             " ".join(text.split())[:limit_text],
         )
+    )
+
+
+def is_skill_load_call(call_name: str, text: str) -> bool:
+    normalized_name = call_name.lower().replace("-", "_")
+    return "SKILL.md" in text or normalized_name in {
+        "skill",
+        "load_skill",
+        "read_skill",
+    }
+
+
+def claude_wrapped_tool_payload(obj: dict[str, Any]) -> bool:
+    if "toolUseResult" in obj or "hook" in obj:
+        return True
+    message = obj.get("message") or {}
+    content = message.get("content") if isinstance(message, dict) else None
+    if not isinstance(content, list):
+        return False
+    return any(
+        isinstance(item, dict)
+        and str(item.get("type") or "") in {"tool_result", "tool_use", "hook"}
+        for item in content
+    )
+
+
+def claude_text_content(obj: dict[str, Any]) -> str:
+    message = obj.get("message") or obj.get("content") or {}
+    content = message.get("content") if isinstance(message, dict) else message
+    if isinstance(content, str):
+        return content
+    if not isinstance(content, list):
+        return ""
+    return "\n".join(
+        str(item.get("text") or "")
+        for item in content
+        if isinstance(item, dict) and str(item.get("type") or "text") == "text"
     )
 
 
@@ -820,6 +1048,8 @@ def scan_codex_skill_usage(
     include_output: bool,
     skill_markers: dict[str, tuple[str, ...]],
     root_markers: tuple[str, ...],
+    skill_prefix: str,
+    inventory: dict[str, SkillInventoryEntry],
     records: list[SkillUsageRecord],
 ) -> None:
     cwd = "(unknown)"
@@ -860,6 +1090,8 @@ def scan_codex_skill_usage(
                 line_number,
                 skill_markers,
                 root_markers,
+                skill_prefix,
+                inventory,
             )
         elif item_type == "function_call":
             arguments: dict[str, Any] = {}
@@ -867,18 +1099,23 @@ def scan_codex_skill_usage(
                 arguments = json.loads(payload.get("arguments") or "{}")
             except json.JSONDecodeError:
                 pass
-            text = json.dumps({"name": payload.get("name"), "arguments": arguments}, ensure_ascii=False)
+            call_name = str(payload.get("name") or "")
+            text = json.dumps({"name": call_name, "arguments": arguments}, ensure_ascii=False)
+            if not is_skill_load_call(call_name, text):
+                continue
             add_skill_usage_record(
                 records,
                 text,
                 "codex",
-                "tool_call",
+                "skill_load",
                 cwd,
                 session_id,
                 path.name,
                 line_number,
                 skill_markers,
                 root_markers,
+                skill_prefix,
+                inventory,
             )
         elif item_type == "function_call_output":
             if not include_output:
@@ -896,6 +1133,8 @@ def scan_codex_skill_usage(
                 line_number,
                 skill_markers,
                 root_markers,
+                skill_prefix,
+                inventory,
             )
 
 
@@ -907,6 +1146,8 @@ def scan_claude_skill_usage(
     include_output: bool,
     skill_markers: dict[str, tuple[str, ...]],
     root_markers: tuple[str, ...],
+    skill_prefix: str,
+    inventory: dict[str, SkillInventoryEntry],
     records: list[SkillUsageRecord],
 ) -> None:
     objects = list(iter_jsonl_with_lines(path))
@@ -927,20 +1168,57 @@ def scan_claude_skill_usage(
 
     for line_number, obj in objects:
         obj_type = obj.get("type") or ""
-        category = ""
-        text = ""
         if obj_type == "user":
-            category = "user_explicit"
-            text = flatten_text(obj.get("message") or obj.get("content"))
+            if claude_wrapped_tool_payload(obj):
+                if not include_output:
+                    continue
+                category = "tool_output"
+                text = json.dumps(obj, ensure_ascii=False)
+            else:
+                category = "user_explicit"
+                text = claude_text_content(obj)
         elif obj_type == "assistant":
-            category = "assistant_reference"
-            text = flatten_text(obj.get("message") or obj.get("content"))
+            text = claude_text_content(obj)
+            if text:
+                add_skill_usage_record(
+                    records,
+                    text,
+                    "claude",
+                    "assistant_reference",
+                    cwd,
+                    session_id,
+                    path.name,
+                    line_number,
+                    skill_markers,
+                    root_markers,
+                    skill_prefix,
+                    inventory,
+                )
+            blob = json.dumps(obj, ensure_ascii=False)
+            if claude_wrapped_tool_payload(obj) and is_skill_load_call("", blob):
+                add_skill_usage_record(
+                    records,
+                    blob,
+                    "claude",
+                    "skill_load",
+                    cwd,
+                    session_id,
+                    path.name,
+                    line_number,
+                    skill_markers,
+                    root_markers,
+                    skill_prefix,
+                    inventory,
+                )
+            continue
         elif include_output:
             blob = json.dumps(obj, ensure_ascii=False)
             if "toolUseResult" in blob or "tool_use" in blob or "hook" in blob:
                 category = "tool_output"
                 text = blob
-        if not category:
+            else:
+                continue
+        else:
             continue
         add_skill_usage_record(
             records,
@@ -953,6 +1231,8 @@ def scan_claude_skill_usage(
             line_number,
             skill_markers,
             root_markers,
+            skill_prefix,
+            inventory,
         )
 
 
@@ -963,6 +1243,8 @@ def scan_grok_skill_usage(
     cutoff_date: str,
     skill_markers: dict[str, tuple[str, ...]],
     root_markers: tuple[str, ...],
+    skill_prefix: str,
+    inventory: dict[str, SkillInventoryEntry],
     records: list[SkillUsageRecord],
 ) -> None:
     """Count skill mentions in Grok prompt_history lines."""
@@ -985,13 +1267,15 @@ def scan_grok_skill_usage(
             records,
             text,
             "grok",
-            "user_message",
+            "user_explicit",
             cwd,
             session_id or str(obj.get("session_id") or ""),
             path.name,
             line_number,
             skill_markers,
             root_markers,
+            skill_prefix,
+            inventory,
         )
 
 
@@ -1008,7 +1292,12 @@ def build_skill_usage_report(
     if not skill_roots and not skill_prefix:
         return {}
 
-    inventory = iter_skill_inventory(skill_roots)
+    contract_path = (
+        Path(args.skill_usage_contract)
+        if args.skill_usage_contract.strip()
+        else None
+    )
+    inventory = iter_skill_inventory(skill_roots, contract_path)
     skill_markers, root_markers = build_skill_usage_markers(skill_prefix, skill_roots, inventory)
     records: list[SkillUsageRecord] = []
     grok_homes = grok_homes or []
@@ -1024,6 +1313,8 @@ def build_skill_usage_report(
                     args.skill_usage_include_output,
                     skill_markers,
                     root_markers,
+                    skill_prefix,
+                    inventory,
                     records,
                 )
     if "claude" in sources:
@@ -1037,6 +1328,8 @@ def build_skill_usage_report(
                     args.skill_usage_include_output,
                     skill_markers,
                     root_markers,
+                    skill_prefix,
+                    inventory,
                     records,
                 )
     if "grok" in sources:
@@ -1053,6 +1346,8 @@ def build_skill_usage_report(
                         args.skill_usage_before_date,
                         skill_markers,
                         root_markers,
+                        skill_prefix,
+                        inventory,
                         records,
                     )
 
@@ -1073,10 +1368,51 @@ def build_skill_usage_report(
     for name, sessions in skill_sessions.items():
         by_skill_session[name] = len(sessions)
 
+    activation_summary: Counter[str] = Counter()
+    activation_by_skill: dict[str, Counter[str]] = defaultdict(Counter)
+    evidence_by_skill_session: dict[tuple[str, str], set[str]] = defaultdict(set)
+    for record in records:
+        session_key = record.session_id or f"{record.source}:{record.file}"
+        for name in record.skills:
+            evidence_by_skill_session[(name, session_key)].add(record.category)
+    for (name, _), categories in evidence_by_skill_session.items():
+        if "skill_load" not in categories:
+            continue
+        activation_summary["skill_load_upper_bound"] += 1
+        if "user_explicit" in categories:
+            activation_category = "explicit_request_with_load"
+        else:
+            activation_category = "heuristic_inferred"
+        activation_summary[activation_category] += 1
+        activation_by_skill[name][activation_category] += 1
+
     inventory_by_category = Counter(entry.category or "(root)" for entry in inventory.values())
     inventory_by_invocation = Counter(
         "disable-model-invocation" if entry.disable_model_invocation else "model-invoked"
         for entry in inventory.values()
+    )
+    inventory_by_declared_invocation = Counter(
+        (
+            "declared-implicit"
+            if entry.declared_implicit_invocation is True
+            else "declared-explicit"
+            if entry.declared_implicit_invocation is False
+            else "undeclared"
+        )
+        for entry in inventory.values()
+    )
+    inventory_by_codex_policy = Counter(
+        "allow-implicit" if entry.codex_allow_implicit_invocation else "explicit-only"
+        for entry in inventory.values()
+    )
+    inventory_by_claude_visibility = Counter(
+        entry.claude_model_visibility for entry in inventory.values()
+    )
+    inventory_by_activation_mode = Counter(
+        entry.activation_mode or "undeclared" for entry in inventory.values()
+    )
+    inventory_by_default_role = Counter(
+        entry.default_role or "undeclared" for entry in inventory.values()
     )
 
     return {
@@ -1087,11 +1423,28 @@ def build_skill_usage_report(
         "inventory_total": len(inventory),
         "inventory_by_category": dict(inventory_by_category),
         "inventory_by_invocation": dict(inventory_by_invocation),
+        "inventory_by_declared_invocation": dict(inventory_by_declared_invocation),
+        "inventory_by_activation_mode": dict(inventory_by_activation_mode),
+        "inventory_by_default_role": dict(inventory_by_default_role),
+        "inventory_by_codex_policy": dict(inventory_by_codex_policy),
+        "inventory_by_claude_visibility": dict(inventory_by_claude_visibility),
         "records": len(records),
         "sessions": len(session_ids),
         "by_category": dict(by_category),
         "by_skill": dict(by_skill.most_common()),
         "by_skill_session": dict(by_skill_session.most_common()),
+        "model_activation_summary": {
+            key: activation_summary[key]
+            for key in (
+                "explicit_request_with_load",
+                "heuristic_inferred",
+                "skill_load_upper_bound",
+            )
+        },
+        "model_activation_by_skill": {
+            name: dict(counts)
+            for name, counts in sorted(activation_by_skill.items())
+        },
         "inventory": [entry.__dict__ for entry in sorted(inventory.values(), key=lambda item: (item.category, item.name))],
         "examples": [record.__dict__ for record in records[: args.limit if args.limit > 0 else 0]],
     }
@@ -1253,8 +1606,26 @@ def print_markdown_report(report: dict[str, Any], limit: int) -> None:
         print("- inventory_by_invocation:")
         for key, value in Counter(skill_usage["inventory_by_invocation"]).most_common():
             print(f"  - {key}: {value}")
+        print("- inventory_by_declared_invocation:")
+        for key, value in Counter(skill_usage["inventory_by_declared_invocation"]).most_common():
+            print(f"  - {key}: {value}")
+        print("- inventory_by_activation_mode:")
+        for key, value in Counter(skill_usage["inventory_by_activation_mode"]).most_common():
+            print(f"  - {key}: {value}")
+        print("- inventory_by_default_role:")
+        for key, value in Counter(skill_usage["inventory_by_default_role"]).most_common():
+            print(f"  - {key}: {value}")
+        print("- inventory_by_codex_policy:")
+        for key, value in Counter(skill_usage["inventory_by_codex_policy"]).most_common():
+            print(f"  - {key}: {value}")
+        print("- inventory_by_claude_visibility:")
+        for key, value in Counter(skill_usage["inventory_by_claude_visibility"]).most_common():
+            print(f"  - {key}: {value}")
         print("- by_category:")
         for key, value in Counter(skill_usage["by_category"]).most_common():
+            print(f"  - {key}: {value}")
+        print("- model_activation_summary:")
+        for key, value in skill_usage["model_activation_summary"].items():
             print(f"  - {key}: {value}")
         print("- by_skill_sessions:")
         for key, value in Counter(skill_usage["by_skill_session"]).most_common(20):

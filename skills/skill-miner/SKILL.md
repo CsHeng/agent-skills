@@ -94,7 +94,24 @@ python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py 
   --skill-usage-before-date YYYY-MM-DD
 ```
 
-The script is read-only and accepts only named parameters. `--codex-home`, `--claude-home`, and `--grok-home` are repeatable; comma-separated values are also accepted. Default sources include `grok`. Grok workspace directories under `sessions/` are URL-encoded absolute paths; scope `current` matches those decoded paths to `--repo-root`. Skill usage reports count explicit user mentions, assistant references, and tool calls that name the requested prefix or read files under the requested skill root. They ignore injected long prompt, instruction, and skill inventory blocks so available-skill metadata does not masquerade as usage. Use `--skill-usage-include-output` only when tool output itself is the evidence being mined; it is off by default because directory listings and inventory dumps can inflate usage counts.
+For the current repository, keep all-agent history scope separate from the inventory boundary and supply the contract explicitly:
+
+```bash
+python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py \
+  --scope all \
+  --skill-usage-only \
+  --skill-usage-root /absolute/path/to/repo/src/skills \
+  --skill-usage-prefix coding \
+  --skill-usage-contract /absolute/path/to/repo/contracts/skills.toml \
+  --format json \
+  --limit 0
+```
+
+The script is read-only and accepts only named parameters. `--codex-home`, `--claude-home`, and `--grok-home` are repeatable; comma-separated values are also accepted. Default sources include `grok`. Grok workspace directories under `sessions/` are URL-encoded absolute paths; scope `current` matches those decoded paths to `--repo-root`.
+
+Skill usage evidence is separated into explicit `$skill` user requests, assistant references, skill-file loads, and optional tool outputs. A model activation is only a heuristic summary: a skill load without an explicit user request in the same session is inferred activation, while raw records remain an upper bound rather than an exact invocation count. Installed flat paths resolve through exact current-inventory public ID directories; loads that cannot resolve to a current public ID are excluded instead of entering a repository-wide fallback bucket. Injected prompts, instruction blocks, available-skill inventories, and Claude tool-result wrappers do not count as user intent. `--skill-usage-contract` reports declared contract state, Codex source policy/defaults, and Claude frontmatter/default visibility as separate fields.
+
+Raw examples are disabled by default. Set a positive `--limit` only when bounded session excerpts are required. Use `--skill-usage-include-output` only when tool output itself is evidence; it is off by default because directory listings and inventory dumps can inflate usage counts.
 
 ## Output Rules
 
