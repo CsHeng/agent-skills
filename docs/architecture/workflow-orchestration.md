@@ -69,9 +69,15 @@ The installed subgraph has one lifecycle controller:
 - `implement-change` owns plan-bound execution, verification, repair convergence, truth-sync routing, and close routing.
 - `review-change` is the agent-native review gate: it constructs a bounded brief, chooses preferred subagent or direct main-agent review, and adjudicates candidate evidence.
 - `review-implementation` is a read-only evaluator and returns candidate evidence only.
-- `sync-truth` and `close-change` remain explicit downstream gates.
+- `sync-truth` owns bounded stable-truth mutation and its human approval gate; controller entry requires the approved plan and immutable passing execution result.
+- `organize-docs` composes below `sync-truth` only when the approved plan declares a supported docs-governance predicate, and it cannot widen the stable-truth touch set.
+- `close-change` owns evidence-bound judgment after truth approval and returns the terminal `closed` state without mutating the repository or executing merge, release, cleanup, commit, push, install, or deploy actions.
 
 Reverse calls from evaluators or gates into `implement-change` are forbidden. This keeps the public invocation graph acyclic while allowing the controller to own an internal repair state machine.
+
+After every planned task is controller-converged and implementation review and verification pass, `implement-change` records an immutable execution result bound to the approved design and plan, the canonical task ledger, review and verification references, the allowed touch set, and the declared stable-truth refs. A truth-affecting result continues directly to controller-authorized `sync-truth` preparation and stops at the pending truth approval gate; it does not ask for close first. A non-truth-affecting result may advance directly to close approval.
+
+`close-change` derives eligibility only from the approved plan, immutable execution result, and, when required, the exact approved truth-sync artifact. Pending, missing, invalid, or mismatched evidence routes to its owning upstream phase. Successful judgment produces `terminal_state: closed` with `next_entry: null`; there is no successful `close-change` self-route.
 
 ## Conditional Parallel Execution
 

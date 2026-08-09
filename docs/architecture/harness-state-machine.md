@@ -43,3 +43,17 @@ infrastructure-triage -> execute repo mutation -> close change
 The cross-skill invocation graph stays acyclic. `implement-change` owns an internal `repair -> verify -> review` state transition; lower-plane reviewers return evidence and never call back into the controller. The installed `use-coding-skills/references/routing.toml` contract maps discovery and lifecycle phases to their owners, while the generated diagrams and their source precedence are documented in `workflow-orchestration.md`.
 
 The active entry surface consists of public skills. Claude Code and Codex expose them through their retained native plugins; optional external `npx skills` installation is consumer-managed and does not change lifecycle ownership, state transitions, or approval gates.
+
+## Evidence-Bound Lifecycle Tail
+
+The execution tail uses explicit evidence states rather than conversation-memory claims:
+
+```text
+implementation-pending -> task-complete -> truth-sync-pending -> ready-for-close -> closed
+```
+
+`implement-change` emits immutable execution evidence only after the approved task ledger has controller convergence, oracle, and integration proof and the bounded review and verification gates pass. If the approved design has medium or high truth impact, the approved version-2 plan must declare non-empty stable truth refs inside its immutable touch set; missing or invalid scope routes to `plan-change` with `truth_sync_scope_required`.
+
+Truth-affecting work advances to controller-authorized `sync-truth` preparation. `sync-truth` may update only the declared stable refs, may compose `organize-docs` only for supported structured docs-governance predicates, and then stops at the explicit human truth approval gate. Non-truth-affecting work can enter `ready-for-close` directly.
+
+`close-change` validates the approved plan, immutable execution result, and exact approved truth artifact when one is required. Successful close judgment transitions from `close` to terminal `closed`, reports `next_entry: null`, and performs no repository or external lifecycle action. `closed` is idempotently terminal; a successful close never routes back to `close-change`.

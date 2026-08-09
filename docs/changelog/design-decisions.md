@@ -1,5 +1,25 @@
 # Design Decisions
 
+## 2026-08-09 - Evidence-Bound Truth Sync Before Terminal Close
+
+### Failure Mode
+
+`close-change` could be approved before a truth-affecting implementation synchronized stable project truth, after which the controller discovered missing documentation and routed backward. Close eligibility also depended on caller-supplied status flags, successful close routed to itself, and documentation organization could appear to be an unconditional part of truth sync.
+
+### Change
+
+- Require truth-affecting version-2 plans to declare bounded stable truth refs and structured docs-governance predicates.
+- Bind execution evidence to the exact approved design and plan, canonical converged task ledger, review and verification references, allowed touch set, and stable truth refs.
+- Continue passing truth-affecting implementation into controller-authorized `sync-truth` preparation before close and stop at one explicit human truth approval gate.
+- Keep direct mutation authority distinct from approved-controller authority and compose `organize-docs` only for a declared supported predicate inside the same stable truth touch set.
+- Make `close-change` derive eligibility from exact artifacts, reject caller status overrides, and return terminal `closed` with no successful self-route.
+
+### Operational Impact
+
+- Implemented behavior and stable documentation converge before close approval, so close never needs to discover missing truth and route backward.
+- Simple stable-fact updates do not trigger repository-wide docs organization; only the declared bounded governance need activates it.
+- Close remains judgment-only and does not imply merge, release, cleanup, commit, push, plugin install, distribution, or deploy.
+
 ## 2026-08-07 - Native Provider Plugins And Advisory Agent Skills Distribution
 
 ### Failure Mode

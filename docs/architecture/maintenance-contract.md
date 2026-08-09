@@ -59,6 +59,10 @@ Claude Code and Codex plugin marketplaces are maintained repository surfaces. Op
 - Delegated writers require isolated worktrees from one dependency-frozen snapshot; shared checkout is read-only, and only the controller may converge a complete group and advance its dependents.
 - `implement-change/references/workflow.toml` travels with the installed controller and owns its invocation subgraph; repo-global architecture docs are the maintenance view, not the only runtime copy.
 - `use-coding-skills/references/routing.toml` travels with the installed router and owns phase-to-workflow and support-route mapping; host AGENTS files remain user-specific wrappers rather than parallel harness truth.
+- Truth-affecting version-2 plans must declare stable truth refs inside the immutable implementation touch set and supported docs-governance predicates; missing legacy scope fails closed with a typed plan route.
+- Direct `sync-truth` or `organize-docs` mutation requires an explicit user request. Controller mutation is a separate authority that requires an approved plan plus immutable execution evidence with exact design, plan, task-ledger, review, verification, touch-set, and stable-ref identity.
+- `organize-docs` is never implied by a Markdown suffix or truth sync alone. It composes only for a declared supported predicate and remains bounded to the exact stable refs selected by `sync-truth`.
+- `close-change` is a read-only judgment gate. It accepts no caller status booleans, requires the exact approved truth artifact when truth sync is required, and terminates at `closed` with no successful self-route or automatic merge, release, cleanup, commit, push, install, or deploy action.
 
 ## Review Invariants
 
