@@ -43,5 +43,6 @@ When compacting or handing off long conversations, preserve in priority order:
 ## References
 
 - Read `references/routing.toml` and `references/routing.md` when task routing, skill selection, lifecycle phase ownership, or host-wrapper scope is ambiguous.
+- Read `references/phase-boundary-decision-tree.md` when choosing how to preserve or discard context between completed coding phases.
 - Read `references/memory-boundary.md` when a task touches memories, sessions, logs, generated summaries, or stale recalled facts.
 - Read `references/preference-contract.md` when tuning session defaults, response style, or user preference capture.
