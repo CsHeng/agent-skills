@@ -60,6 +60,12 @@ build_evaluation_verdict() {
           ($truth_sync_required == false) or
           ($truth_sync_required == true and $truth_sync_completed == true)
         )
+      ),
+      lifecycle_state: (
+        if $verdict != "pass" then "task-complete"
+        elif $truth_sync_required == true and $truth_sync_completed == false then "truth-sync-pending"
+        else "ready-for-close"
+        end
       )
     }'
 }

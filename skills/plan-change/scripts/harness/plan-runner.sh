@@ -222,6 +222,139 @@ plan_uses_v2_contract() {
   [[ "$(plan_contract_version "$plan_file")" == "2" ]]
 }
 
+plan_truth_sync_required() {
+  local plan_file="$1"
+  local required_value=""
+
+  required_value="$(extract_markdown_scalar "$plan_file" "Implementation Scope" "truth_sync_required" | normalize_plan_metadata_values)"
+  case "$required_value" in
+    true|false) printf '%s\n' "$required_value" ;;
+    "") printf 'false\n' ;;
+    *)
+      printf 'truth_sync_scope_required: truth_sync_required must be true or false\n' >&2
+      return 1
+      ;;
+  esac
+}
+
+is_supported_plan_docs_governance_predicate() {
+  case "$1" in
+    none|readme-agents-claude-ownership|stable-truth-roots|docs-search-boundaries|stage-artifact-placement|canonical-terminology-across-surfaces|markdown-prose-structure) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+plan_design_truth_sync_required() {
+  local plan_file="$1"
+  local repo_root=""
+  local design_file=""
+  local truth_impact=""
+  local -a resolved_design=()
+
+  repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+  mapfile -t resolved_design < <(resolve_plan_design_ref "$repo_root" "$plan_file" 2>/dev/null || true)
+  [[ "${#resolved_design[@]}" -ge 1 ]] || {
+    printf 'unknown\n'
+    return
+  }
+  design_file="${resolved_design[0]}"
+  [[ -f "$design_file" ]] || {
+    printf 'unknown\n'
+    return
+  }
+  truth_impact="$(awk '
+    match($0, /truth_impact:[[:space:]]*(low|medium|high)/) {
+      value = substr($0, RSTART, RLENGTH)
+      sub(/^truth_impact:[[:space:]]*/, "", value)
+      print value
+      exit
+    }
+  ' "$design_file")"
+  case "$truth_impact" in
+    medium|high) printf 'true\n' ;;
+    low) printf 'false\n' ;;
+    *) printf 'unknown\n' ;;
+  esac
+}
+
+validate_plan_truth_sync_contract() {
+  local plan_file="$1"
+  local truth_required=""
+  local design_truth_required=""
+  local truth_ref=""
+  local predicate_id=""
+  local saw_none=false
+  local saw_governance=false
+  local -a plan_surfaces=()
+  local -a stable_truth_refs=()
+  local -a docs_predicates=()
+
+  plan_uses_v2_contract "$plan_file" || return 0
+  truth_required="$(plan_truth_sync_required "$plan_file")" || return 1
+  design_truth_required="$(plan_design_truth_sync_required "$plan_file")"
+  if [[ "$design_truth_required" == "true" && "$truth_required" != "true" ]]; then
+    printf 'truth_sync_scope_required: approved design truth impact requires truth_sync_required: true\n' >&2
+    return 1
+  fi
+  [[ "$truth_required" == "true" ]] || return 0
+
+  rg -n '^## Truth Sync Handoff$' "$plan_file" >/dev/null || {
+    printf 'truth_sync_scope_required: truth-affecting version-2 plan requires a Truth Sync Handoff\n' >&2
+    return 1
+  }
+
+  mapfile -t stable_truth_refs < <(extract_markdown_list "$plan_file" "Truth Sync Handoff" "stable_truth_refs" | normalize_plan_metadata_values | awk 'NF > 0')
+  [[ "${#stable_truth_refs[@]}" -gt 0 ]] || {
+    printf 'truth_sync_scope_required: stable_truth_refs must not be empty\n' >&2
+    return 1
+  }
+
+  mapfile -t plan_surfaces < <({
+    extract_markdown_list "$plan_file" "Implementation Scope" "impl_file_refs"
+    extract_markdown_list "$plan_file" "Implementation Scope" "test_file_refs"
+  } | normalize_plan_metadata_values | awk 'NF > 0' | sort -u)
+  : "${plan_surfaces[*]}"
+
+  for truth_ref in "${stable_truth_refs[@]}"; do
+    declared_repo_path_ref_is_safe "$truth_ref" || {
+      printf 'truth_sync_scope_required: unsafe stable truth ref: %s\n' "$truth_ref" >&2
+      return 1
+    }
+    case "$truth_ref" in
+      docs/plans/*|*/docs/plans/*)
+        printf 'truth_sync_scope_required: stable truth ref must not use the stage artifact root: %s\n' "$truth_ref" >&2
+        return 1
+        ;;
+    esac
+    path_matches_any_surface plan_surfaces "$truth_ref" || {
+      printf 'truth_sync_scope_required: stable truth ref is outside the immutable plan touch set: %s\n' "$truth_ref" >&2
+      return 1
+    }
+  done
+
+  mapfile -t docs_predicates < <(extract_markdown_list "$plan_file" "Truth Sync Handoff" "docs_governance_predicates" | normalize_plan_metadata_values | awk 'NF > 0')
+  [[ "${#docs_predicates[@]}" -gt 0 ]] || {
+    printf 'truth_sync_scope_required: docs_governance_predicates must declare none or a supported predicate\n' >&2
+    return 1
+  }
+
+  for predicate_id in "${docs_predicates[@]}"; do
+    is_supported_plan_docs_governance_predicate "$predicate_id" || {
+      printf 'truth_sync_scope_required: unsupported docs governance predicate: %s\n' "$predicate_id" >&2
+      return 1
+    }
+    if [[ "$predicate_id" == "none" ]]; then
+      saw_none=true
+    else
+      saw_governance=true
+    fi
+  done
+  if [[ "$saw_none" == "true" && "$saw_governance" == "true" ]]; then
+    printf 'truth_sync_scope_required: none cannot be combined with docs governance predicates\n' >&2
+    return 1
+  fi
+}
+
 plan_token_is_safe() {
   local token="$1"
   [[ "$token" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]
@@ -1102,6 +1235,7 @@ validate_plan_artifact() {
   }
 
   validate_v2_plan_header "$plan_file" || return 1
+  validate_plan_truth_sync_contract "$plan_file" || return 1
   validate_plan_task_contracts "$plan_file" || return 1
   validate_v2_task_contracts "$plan_file" || return 1
   validate_plan_readiness_contract "$plan_file" || return 1

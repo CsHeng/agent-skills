@@ -96,3 +96,12 @@ focused_verification_passes = 1
 additional_same_slice_repair_attempts = 1
 states = ["implement", "verify", "review", "classify", "diagnose", "repair"]
 typed_exits = ["pass", "replan", "redesign", "needs-authority", "guarded-rollback", "non-convergent"]
+
+[tail]
+evidence_owner = "implement-change"
+truth_scope_owner = "plan-change"
+truth_mutation_owner = "sync-truth"
+close_judgment_owner = "close-change"
+truth_sync_controller_authority_requires = ["approved-plan", "resolved-design", "immutable-execution-result", "stable-truth-refs", "allowed-touch-set"]
+execution_states = ["implementation-pending", "task-complete", "truth-sync-pending", "ready-for-close", "closed"]
+successful_close_terminal = true

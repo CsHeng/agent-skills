@@ -30,6 +30,7 @@ readonly HARNESS_PHASES=(
   verify
   truth-sync
   close
+  closed
 )
 
 readonly HARNESS_CHANGE_CLASSES=(A B C D)
@@ -46,6 +47,22 @@ readonly HARNESS_ISOLATION_MODES=(controller-checkout isolated-worktree shared-r
 readonly HARNESS_MODEL_POLICIES=(semantic-routing inherit-main runtime-default)
 readonly HARNESS_ACTOR_KINDS=(main subagent)
 readonly HARNESS_RUNTIME_BINDING_OUTCOMES=(bound serial-fallback capacity-stop parallel-conflict)
+readonly HARNESS_DOCS_GOVERNANCE_PREDICATES=(
+  none
+  readme-agents-claude-ownership
+  stable-truth-roots
+  docs-search-boundaries
+  stage-artifact-placement
+  canonical-terminology-across-surfaces
+  markdown-prose-structure
+)
+readonly HARNESS_EXECUTION_LIFECYCLE_STATES=(
+  implementation-pending
+  task-complete
+  truth-sync-pending
+  ready-for-close
+  closed
+)
 readonly HARNESS_FAILURE_KINDS=(
   classification-failure
   truth-conflict
@@ -69,6 +86,7 @@ readonly HARNESS_EXECUTION_STOP_REASONS=(
   plan_incomplete
   final_review_failed
   final_verification_failed
+  truth_sync_scope_required
   truth_sync_required
   ready_for_close
 )
@@ -101,6 +119,8 @@ is_valid_isolation_mode() { contains_value "$1" "${HARNESS_ISOLATION_MODES[@]}";
 is_valid_model_policy() { contains_value "$1" "${HARNESS_MODEL_POLICIES[@]}"; }
 is_valid_actor_kind() { contains_value "$1" "${HARNESS_ACTOR_KINDS[@]}"; }
 is_valid_runtime_binding_outcome() { contains_value "$1" "${HARNESS_RUNTIME_BINDING_OUTCOMES[@]}"; }
+is_valid_docs_governance_predicate() { contains_value "$1" "${HARNESS_DOCS_GOVERNANCE_PREDICATES[@]}"; }
+is_valid_execution_lifecycle_state() { contains_value "$1" "${HARNESS_EXECUTION_LIFECYCLE_STATES[@]}"; }
 is_valid_failure_kind() { contains_value "$1" "${HARNESS_FAILURE_KINDS[@]}"; }
 is_valid_task_status() { contains_value "$1" "${HARNESS_TASK_STATUSES[@]}"; }
 is_valid_execution_stop_reason() { contains_value "$1" "${HARNESS_EXECUTION_STOP_REASONS[@]}"; }

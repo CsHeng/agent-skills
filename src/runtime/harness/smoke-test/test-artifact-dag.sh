@@ -100,6 +100,14 @@ EOF
   path_matches_any_surface surfaces "src/app/main.go" || fail "directory surface should include child"
   path_matches_any_surface surfaces "src/other/main.go" && fail "unrelated path matched surface"
 
+  exact_ref_sets_match <(printf '%s\n' "docs/architecture/a.md" "docs/architecture/b.md") \
+    <(printf '%s\n' "docs/architecture/b.md" "docs/architecture/a.md") \
+    || fail "exact ref comparison should ignore declaration order"
+  if exact_ref_sets_match <(printf '%s\n' "docs/architecture/a.md") \
+    <(printf '%s\n' "docs/architecture/a.md" "docs/architecture/b.md"); then
+    fail "exact ref comparison should reject missing or additional refs"
+  fi
+
   printf 'test-artifact-dag: PASS\n'
 }
 

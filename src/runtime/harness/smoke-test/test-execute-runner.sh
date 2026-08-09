@@ -299,6 +299,7 @@ EOF
 
 - plan_contract_version: 2
 - parallel_execution_approved: true
+- truth_sync_required: true
 - impl_file_refs:
   - src/example.py
   - src/helper.py
@@ -333,6 +334,13 @@ EOF
   - inherit-main
   - runtime-default
 - effective_concurrency: minimum of the plan and runtime limits
+
+## Truth Sync Handoff
+
+- stable_truth_refs:
+  - src/example.py
+- docs_governance_predicates:
+  - none
 
 ## Parallel Batches
 
@@ -553,6 +561,25 @@ EOF
   execution_result_json="$(build_execution_result_json "$approved_plan" "$ledger_file" "implement-serial" "task-1" "task_blocked_requires_human" "pending" "pending" "implement-change" "implement-serial" "true" "$workspace_mode")"
   assert_json "$execution_result_json" '.stop_reason == "task_blocked_requires_human"' "execution result should preserve deterministic stop reason"
   assert_json "$execution_result_json" '.remaining_task_count == 1 and .completed_task_count == 0' "execution result should count task ledger state"
+  assert_json "$execution_result_json" '.approved_plan_ref | endswith("approved-plan.md")' "execution result should bind the approved plan identity"
+  assert_json "$execution_result_json" '.approved_design_ref | endswith("design.md")' "execution result should bind the approved design identity"
+  assert_json "$execution_result_json" '.plan_sha256 | length == 64' "execution result should bind immutable plan content"
+  assert_json "$execution_result_json" '.design_sha256 | length == 64' "execution result should bind immutable design content"
+  assert_json "$execution_result_json" '.ledger_sha256 | length == 64' "execution result should bind immutable task evidence"
+  assert_json "$execution_result_json" '.task_evidence | length == 1 and .[0].task_id == "task-1"' "execution result should embed its immutable task projection"
+  assert_json "$execution_result_json" '.review_gate_ref != null and .verification_ref != null' "execution result should expose deterministic review and verification refs"
+  assert_json "$execution_result_json" '.lifecycle_state == "implementation-pending"' "incomplete execution should expose the pending implementation state explicitly"
+
+  jq 'map(
+    .status = "done"
+    | .convergence_verified = true
+    | .convergence_actor = "controller"
+    | .oracles_verified = true
+    | .integration_verified = true
+  )' "$ledger_file" >"$tmp_dir/completed-ledger.json"
+  execution_result_json="$(build_execution_result_json "$approved_plan" "$tmp_dir/completed-ledger.json" "verify" "" "truth_sync_required" "pass" "pass" "sync-truth" "truth-sync" "false" "$workspace_mode")"
+  assert_json "$execution_result_json" '.truth_sync_required == true and .stable_truth_refs == []' "legacy truth-affecting evidence should expose its missing stable truth scope"
+  assert_json "$execution_result_json" '.stop_reason == "truth_sync_scope_required" and .lifecycle_state == "task-complete" and .next_entry == "plan-change"' "missing legacy truth scope should return a typed planning stop"
 
   verdict="$(build_execute_gate_result "pass" "pass" "true" "false")"
   assert_json "$verdict" '.verdict == "pass"' "execute gate should preserve pass verdict"

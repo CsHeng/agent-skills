@@ -58,9 +58,9 @@ Use the remaining runner operations for the one-time worktree preflight, ready-s
 9. Independently adjudicate every material candidate and assign the final disposition.
 10. Repair only findings with disposition `accepted`, batching the complete accepted set inside the approved touch set.
 11. Rerun affected and declared verification, then perform focused verification review of accepted findings and repair-introduced regressions.
-12. Route final evidence to `sync-truth`, `close-change`, or a typed stop.
+12. When review and verification pass, derive the tail route from the approved plan and immutable execution result. If truth sync is required, invoke `sync-truth` through its approved-controller context, prepare the bounded stable truth update, and stop only at its human approval gate. If truth sync is not required, route directly to `close-change`; otherwise return the exact typed stop.
 
-After every task is converged, combine review and verification with `gate-result`. Return the resulting next entry or exact typed stop directly; do not insert a confirmation question when the gate already determines continuation.
+After every task is converged, record `task-complete`, `truth-sync-pending`, or `ready-for-close` in the execution result rather than relying on conversation state. A required truth-sync route is continuous controller work under the approved plan and does not require the user to invoke another skill. Return the pending truth approval gate, close entry, or exact typed stop directly; do not insert a confirmation question when the evidence already determines continuation.
 
 ## Repair Ownership
 

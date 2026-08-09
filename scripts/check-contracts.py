@@ -1032,6 +1032,12 @@ def validate() -> list[str]:
             if not has_guard:
                 errors.append(f"{skill_name}: mutation-capable skills need explicit request or approved-plan guard")
 
+        if skill_name in {"sync-truth", "organize-docs"}:
+            if not entry.get("requires_explicit_user_request", False):
+                errors.append(f"{skill_name}: direct mutation requires an explicit user request guard")
+            if not entry.get("requires_approved_plan", False):
+                errors.append(f"{skill_name}: controller mutation requires an approved-plan guard")
+
     source_dirs = source_skill_dirs()
     missing_manifest = sorted(source_dirs - manifest_sources)
     stale_manifest = sorted(manifest_sources - source_dirs)

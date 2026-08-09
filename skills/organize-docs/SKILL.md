@@ -5,7 +5,7 @@ description: "Use for docs organization: README/AGENTS/CLAUDE split, stable trut
 
 # Organize Docs
 
-Write or update long-lived project truth after explicit user request or explicit drift follow-up from `analyze-project`.
+Write or update long-lived project truth after an explicit user request, an explicit drift follow-up from `analyze-project`, or a bounded `sync-truth` controller handoff backed by an approved plan and immutable execution evidence.
 
 ## Use This Skill When
 
@@ -23,6 +23,10 @@ Write or update long-lived project truth after explicit user request or explicit
 - the task is just local git, worktree, or execution status
 
 ## Core Rules
+
+- Direct invocation still requires explicit user intent or explicit drift follow-up; implicit native matching alone never authorizes mutation.
+- Controller invocation is valid only under `sync-truth`, for declared docs-governance predicates and stable truth refs inside the same immutable approved touch set.
+- A Markdown suffix alone is not a docs-governance predicate, and controller composition never authorizes repository-wide cleanup or prose normalization.
 
 - `README.md` stays human-facing.
 - `AGENTS.md` stays AI-facing.
@@ -53,7 +57,7 @@ Write or update long-lived project truth after explicit user request or explicit
 6. Move or summarize content into stable docs domains without treating plans, drafts, or other stage artifacts as default truth.
 7. When explicitly consolidating plan artifacts, inventory all source plan roots, choose domain-based target directories under the canonical stage root, move files with date-first names, and update references after the move.
 8. Normalize Markdown prose wrapping with the bundled processing workflow: unwrap fixed-width paragraphs and list-item continuations across stable, stage, and archived docs that are in the requested scope, then decompose genuinely over-broad content at semantic boundaries.
-9. Update stable docs only after explicit user approval or explicit drift follow-up from `analyze-project`.
+9. Update stable docs only after explicit user approval, explicit drift follow-up from `analyze-project`, or a validated approved-plan `sync-truth` controller handoff.
 
 ## Markdown Prose Processing
 

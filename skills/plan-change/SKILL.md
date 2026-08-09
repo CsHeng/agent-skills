@@ -105,6 +105,8 @@ If a task cannot declare an executable oracle or substitute verification, it is 
 
 New execution plans use `plan_contract_version: 2`. Plans without a contract version remain on the deliberate legacy compatibility path; do not silently reinterpret them as version 2.
 
+Truth-affecting version-2 plans also contain `## Truth Sync Handoff` with non-empty `stable_truth_refs` and `docs_governance_predicates`. Stable truth refs must be safe repository-relative paths inside the immutable implementation touch set and must not point into `docs/plans/`. Declare `none` when no docs-governance component is needed; otherwise use only the supported ownership, truth-root, search-boundary, stage-placement, canonical-terminology, or prose-structure predicates. Missing or invalid truth scope returns the typed `truth_sync_scope_required` planning state instead of allowing execution or widening scope.
+
 The plan owns logical execution shape. In addition to the existing task metadata, every version-2 task declares:
 
 - `parallel_group`: a stable named group or `none`

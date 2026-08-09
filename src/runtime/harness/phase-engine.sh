@@ -80,7 +80,8 @@ resolve_next_phase() {
       fi
       ;;
     truth-sync) printf 'close\n' ;;
-    close) printf 'close\n' ;;
+    close) printf 'closed\n' ;;
+    closed) printf 'closed\n' ;;
     *) return 1 ;;
   esac
 }

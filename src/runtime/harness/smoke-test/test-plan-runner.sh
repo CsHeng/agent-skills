@@ -82,7 +82,7 @@ main() {
   local tmp_dir legacy_plan strict_plan guarded_plan invalid_rollback_plan partial_plan design_file
   local v2_plan invalid_version_plan invalid_profile_plan invalid_model_plan dependent_group_plan overlap_ref_plan overlap_lock_plan
   local read_only_plan invalid_shared_write_plan invalid_serial_worker_plan unknown_batch_plan mismatched_batch_plan invalid_convergence_plan
-  local batch_catalog_fixture
+  local batch_catalog_fixture truth_design truth_scope_plan missing_truth_scope_plan invalid_truth_ref_plan invalid_docs_predicate_plan false_truth_scope_plan
   local -a fixture_batch_ids=()
   local plan_skill=""
 
@@ -116,6 +116,12 @@ main() {
   mismatched_batch_plan="$tmp_dir/mismatched-batch-plan.md"
   invalid_convergence_plan="$tmp_dir/invalid-convergence-plan.md"
   batch_catalog_fixture="$tmp_dir/batch-catalog.md"
+  truth_design="$tmp_dir/truth-design.md"
+  truth_scope_plan="$tmp_dir/truth-scope-plan.md"
+  missing_truth_scope_plan="$tmp_dir/missing-truth-scope-plan.md"
+  invalid_truth_ref_plan="$tmp_dir/invalid-truth-ref-plan.md"
+  invalid_docs_predicate_plan="$tmp_dir/invalid-docs-predicate-plan.md"
+  false_truth_scope_plan="$tmp_dir/false-truth-scope-plan.md"
   design_file="$tmp_dir/design.md"
 
   cat >"$design_file" <<'EOF'
@@ -152,6 +158,51 @@ EOF
 - max_parallelism: 3
 - convergence_task: merge-task
 EOF
+
+  cat >"$truth_design" <<'EOF'
+# Truth Design Fixture
+
+## Change Classification
+
+- truth_impact: high
+EOF
+
+  cat >"$truth_scope_plan" <<'EOF'
+# Truth Scope Fixture
+
+## Upstream Design
+
+- design_ref: truth-design.md
+- design_version: 1
+
+## Implementation Scope
+
+- plan_contract_version: 2
+- truth_sync_required: true
+- impl_file_refs:
+  - docs/architecture/runtime.md
+- test_file_refs:
+  - tests/runtime.sh
+
+## Truth Sync Handoff
+
+- stable_truth_refs:
+  - docs/architecture/runtime.md
+- docs_governance_predicates:
+  - canonical-terminology-across-surfaces
+EOF
+
+  cp "$truth_scope_plan" "$missing_truth_scope_plan"
+  sed -i '/^## Truth Sync Handoff$/,$d' "$missing_truth_scope_plan"
+
+  cp "$truth_scope_plan" "$invalid_truth_ref_plan"
+  replace_nth "$invalid_truth_ref_plan" '  - docs/architecture/runtime.md' '  - docs/plans/changes/runtime.md' 2
+
+  cp "$truth_scope_plan" "$invalid_docs_predicate_plan"
+  sed -i 's/canonical-terminology-across-surfaces/all-markdown/' "$invalid_docs_predicate_plan"
+
+  cp "$truth_scope_plan" "$false_truth_scope_plan"
+  sed -i 's/truth_sync_required: true/truth_sync_required: false/' "$false_truth_scope_plan"
 
   mapfile -t fixture_batch_ids < <(list_plan_parallel_batch_ids "$batch_catalog_fixture")
   [[ "${fixture_batch_ids[*]}" == "P1 P2" ]] || fail "parallel batch catalog should preserve repeated batch order"
@@ -621,6 +672,19 @@ EOF
   validate_execution_grade_plan_artifact "$guarded_plan"
   [[ "$(plan_approval_status "$strict_plan")" == "pending" ]] || fail "plan approval status should resolve"
   [[ "$(plan_contract_version "$v2_plan")" == "2" ]] || fail "plan contract version should resolve"
+  validate_plan_truth_sync_contract "$truth_scope_plan"
+  if validate_plan_truth_sync_contract "$missing_truth_scope_plan" >/dev/null 2>&1; then
+    fail "truth-affecting version-2 plans should require a truth-sync handoff"
+  fi
+  if validate_plan_truth_sync_contract "$invalid_truth_ref_plan" >/dev/null 2>&1; then
+    fail "stable truth refs should reject stage artifacts"
+  fi
+  if validate_plan_truth_sync_contract "$invalid_docs_predicate_plan" >/dev/null 2>&1; then
+    fail "unknown docs governance predicates should fail validation"
+  fi
+  if validate_plan_truth_sync_contract "$false_truth_scope_plan" >/dev/null 2>&1; then
+    fail "a plan cannot override required design truth impact with false"
+  fi
 
   if validate_plan_artifact "$partial_plan" >/dev/null 2>&1; then
     fail "partial task metadata should fail validation in compat mode once metadata appears"

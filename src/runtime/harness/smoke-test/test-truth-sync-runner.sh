@@ -10,31 +10,206 @@ GENERATED_SKILLS_ROOT="${HARNESS_GENERATED_SKILLS_ROOT:-$ROOT_DIR/skills}"
 # shellcheck source=truth-sync-runner.sh
 source "$HARNESS_LIB_ROOT/truth-sync-runner.sh"
 
+TEST_TRUTH_SYNC_TMP=""
+
 fail() {
   printf 'test-truth-sync-runner: %s\n' "$*" >&2
   exit 1
 }
 
 assert_contains() {
-  local path="$1"
+  local file_ref="$1"
   local pattern="$2"
   local message="$3"
 
-  rg -n -- "$pattern" "$path" >/dev/null || fail "$message"
+  rg -n -- "$pattern" "$file_ref" >/dev/null || fail "$message"
 }
 
 assert_json() {
-  local json="$1"
-  local expr="$2"
+  local json_value="$1"
+  local expression="$2"
   local message="$3"
 
-  if ! jq -e "$expr" <<<"$json" >/dev/null; then
+  if ! jq -e "$expression" <<<"$json_value" >/dev/null; then
     fail "$message"
   fi
 }
 
+write_tail_fixture() {
+  local fixture_root="$1"
+  local design_file="$fixture_root/design.md"
+  local plan_file="$fixture_root/plan.md"
+
+  cat >"$design_file" <<'EOF'
+# Tail Design
+
+## Change Classification
+
+- truth_impact: high
+
+## Human Gate
+
+- approval_required: true
+- approval_status: approved
+- next_entry: plan-change
+
+## Implementation Surface
+
+- impl_file_refs:
+  - docs/architecture/runtime.md
+- test_file_refs:
+  - tests/runtime.sh
+EOF
+
+  cat >"$plan_file" <<'EOF'
+# Tail Plan
+
+## Upstream Design
+
+- design_ref: design.md
+- design_version: 1
+
+## Implementation Scope
+
+- plan_contract_version: 2
+- parallel_execution_approved: false
+- truth_sync_required: true
+- impl_file_refs:
+  - docs/architecture/runtime.md
+- test_file_refs:
+  - tests/runtime.sh
+- verification_scope:
+  - bash tests/runtime.sh
+
+## Work Package Readiness
+
+- milestone_objective: verify the evidence-bound tail
+- non_goals:
+  - no external close action
+- future_phase:
+  - none
+- decision_status: ready_for_review
+- oracle_strategy: structured harness contract tests
+- acceptance_oracles:
+  - tail evidence matches exactly
+- execution_continuity: continuous_after_plan_approval
+- max_review_batches: 2
+- subagent_ready: false
+
+## Runtime Binding
+
+- default_model_policy: semantic-routing
+- allowed_model_policies:
+  - semantic-routing
+- effective_concurrency: 1
+
+## Task 1: Tail Contract
+
+- task_id: tail-task
+- depends_on:
+  - none
+- scope_slice: verify tail evidence
+- impl_file_refs:
+  - docs/architecture/runtime.md
+- test_file_refs:
+  - tests/runtime.sh
+- verification_scope:
+  - bash tests/runtime.sh
+- executor_mode: main
+- parallel_group: none
+- parallel_policy: forbidden
+- delegation_policy: forbidden
+- execution_profile: deep
+- reasoning_profile: standard
+- isolation: controller-checkout
+- resource_locks:
+  - tail-contract
+- task_review_depth: focused
+- done_when:
+  - tail evidence passes
+- failure_policy: fix_forward
+
+## Truth Sync Handoff
+
+- required_entry: sync-truth
+- stable_truth_refs:
+  - docs/architecture/runtime.md
+- docs_governance_predicates:
+  - canonical-terminology-across-surfaces
+
+## Review Gate
+
+- required_entry: review-change
+- required_mode: review-only
+
+## Human Gate
+
+- approval_required: true
+- approval_status: approved
+- next_entry: implement-change
+
+## Recovery
+
+- default_failure_policy: fix_forward
+EOF
+}
+
+write_truth_artifact() {
+  local artifact_file="$1"
+  local approval_state="$2"
+  local execution_result_file="$3"
+  local approved_design_ref=""
+  local approved_plan_ref=""
+  local review_gate_ref=""
+  local verification_ref=""
+
+  approved_design_ref="$(jq -r '.approved_design_ref' "$execution_result_file")"
+  approved_plan_ref="$(jq -r '.approved_plan_ref' "$execution_result_file")"
+  review_gate_ref="$(jq -r '.review_gate_ref' "$execution_result_file")"
+  verification_ref="$(jq -r '.verification_ref' "$execution_result_file")"
+
+  cat >"$artifact_file" <<EOF
+# Sample Truth Sync
+
+## Evidence
+
+- approved_design_ref: $approved_design_ref
+- approved_plan_ref: $approved_plan_ref
+- review_gate_ref: $review_gate_ref
+- verification_ref: $verification_ref
+- truth_sync_required: true
+
+## Stable Truth Updates
+
+- stable_truth_refs:
+  - docs/architecture/runtime.md
+- stage_artifact_refs:
+  - $approved_design_ref
+  - $approved_plan_ref
+- summary: Update stable harness tail truth.
+
+## Human Gate
+
+- approval_required: true
+- approval_status: $approval_state
+- next_entry: close-change
+EOF
+}
+
 main() {
-  local tmp_dir pending_artifact approved_artifact invalid_artifact gate_json truth_skill
+  local tmp_dir=""
+  local plan_file=""
+  local simple_plan_file=""
+  local ledger_file=""
+  local execution_result_file=""
+  local tampered_execution_file=""
+  local pending_artifact=""
+  local approved_artifact=""
+  local mismatched_artifact=""
+  local invalid_artifact=""
+  local gate_json=""
+  local predicate_id=""
+  local truth_skill=""
 
   case "$SKILL_SURFACE" in
     generated) truth_skill="$GENERATED_SKILLS_ROOT/sync-truth/SKILL.md" ;;
@@ -47,65 +222,90 @@ main() {
   [[ "$(truth_sync_entry_phase)" == "truth-sync" ]] || fail "truth-sync entry phase should be truth-sync"
 
   tmp_dir="$(mktemp -d)"
+  TEST_TRUTH_SYNC_TMP="$tmp_dir"
+  trap 'rm -rf -- "$TEST_TRUTH_SYNC_TMP"' EXIT
+  write_tail_fixture "$tmp_dir"
+  plan_file="$tmp_dir/plan.md"
+  simple_plan_file="$tmp_dir/simple-plan.md"
+  ledger_file="$tmp_dir/ledger.json"
+  execution_result_file="$tmp_dir/execution.json"
+  tampered_execution_file="$tmp_dir/execution-tampered.json"
   pending_artifact="$tmp_dir/truth-sync-pending.md"
   approved_artifact="$tmp_dir/truth-sync-approved.md"
+  mismatched_artifact="$tmp_dir/truth-sync-mismatch.md"
   invalid_artifact="$tmp_dir/truth-sync-invalid.md"
 
-  cat >"$pending_artifact" <<'EOF'
-# Sample Truth Sync
+  execution_task_ledger "$plan_file" | jq 'map(
+    .status = "done"
+    | .convergence_verified = true
+    | .convergence_actor = "controller"
+    | .oracles_verified = true
+    | .integration_verified = true
+  )' >"$ledger_file"
+  build_execution_result_json "$plan_file" "$ledger_file" "verify" "" "truth_sync_required" "pass" "pass" "sync-truth" "truth-sync" "false" "current-checkout" >"$execution_result_file"
+  assert_json "$(cat "$execution_result_file")" '.lifecycle_state == "truth-sync-pending" and .next_entry == "sync-truth"' "passing truth-affecting execution should route continuously to truth sync"
 
-## Evidence
-
-- approved_design_ref: docs/plans/changes/example-design.md
-- approved_plan_ref: docs/plans/changes/example-plan.md
-- review_gate_ref: artifacts/review.json
-- verification_ref: artifacts/verify.log
-- truth_sync_required: true
-
-## Stable Truth Updates
-
-- stable_truth_refs:
-  - README.md
-  - AGENTS.md
-- stage_artifact_refs:
-  - docs/plans/changes/example-design.md
-- summary: Update stable truth after verified harness behavior change.
-
-## Human Gate
-
-- approval_required: true
-- approval_status: pending
-- next_entry: close-change
-EOF
-
-  cp "$pending_artifact" "$approved_artifact"
-  sed -i 's/approval_status: pending/approval_status: approved/' "$approved_artifact"
-
+  write_truth_artifact "$pending_artifact" pending "$execution_result_file"
+  write_truth_artifact "$approved_artifact" approved "$execution_result_file"
+  cp "$pending_artifact" "$mismatched_artifact"
+  sed -i 's/review:/review-mismatch:/' "$mismatched_artifact"
   cp "$pending_artifact" "$invalid_artifact"
-  sed -i 's#README.md#docs/plans/changes/example-design.md#' "$invalid_artifact"
+  sed -i 's#docs/architecture/runtime.md#docs/plans/changes/runtime.md#' "$invalid_artifact"
 
   validate_truth_sync_artifact "$pending_artifact"
-  [[ "$(truth_sync_approval_status "$pending_artifact")" == "pending" ]] || fail "pending approval status should resolve"
-  [[ "$(truth_sync_approval_status "$approved_artifact")" == "approved" ]] || fail "approved approval status should resolve"
-
+  validate_truth_sync_artifact_against_evidence "$pending_artifact" "$plan_file" "$execution_result_file"
+  [[ "$(truth_sync_approval_status "$pending_artifact")" == "pending" ]] || fail "pending approval state should resolve"
+  [[ "$(truth_sync_approval_status "$approved_artifact")" == "approved" ]] || fail "approved approval state should resolve"
   if validate_truth_sync_artifact "$invalid_artifact" >/dev/null 2>&1; then
     fail "stage artifact refs should be rejected from stable_truth_refs"
   fi
+  if validate_truth_sync_artifact_against_evidence "$mismatched_artifact" "$plan_file" "$execution_result_file" >/dev/null 2>&1; then
+    fail "mismatched review evidence should fail closed"
+  fi
 
-  gate_json="$(build_truth_sync_gate_result "$pending_artifact" "pass" "pass")"
-  assert_json "$gate_json" '.verdict == "pass"' "truth-sync gate should preserve pass verdict"
-  assert_json "$gate_json" '.truth_sync_completed == false' "pending truth-sync should not be complete"
-  assert_json "$gate_json" '.ready_for_close == false' "pending truth-sync should block close"
-  assert_json "$gate_json" '.next_entry == "sync-truth"' "pending truth-sync should remain at truth-sync"
+  gate_json="$(build_truth_sync_gate_result "$pending_artifact" "$plan_file" "$execution_result_file")"
+  assert_json "$gate_json" '.verdict == "pass" and .truth_sync_completed == false and .lifecycle_state == "truth-sync-pending" and .next_entry == "sync-truth"' "pending truth approval should remain at truth sync"
+  gate_json="$(build_truth_sync_gate_result "$approved_artifact" "$plan_file" "$execution_result_file")"
+  assert_json "$gate_json" '.ready_for_close == true and .lifecycle_state == "ready-for-close" and .next_entry == "close-change"' "approved matching truth should become close-ready"
 
-  gate_json="$(build_truth_sync_gate_result "$approved_artifact" "pass" "pass")"
-  assert_json "$gate_json" '.truth_sync_completed == true' "approved truth-sync should be complete"
-  assert_json "$gate_json" '.ready_for_close == true' "approved truth-sync should unlock close"
-  assert_json "$gate_json" '.next_entry == "close-change"' "approved truth-sync should route to close"
+  gate_json="$(truth_sync_mutation_authorization direct true)"
+  assert_json "$gate_json" '.authorized == true and .authority == "direct-explicit-request"' "direct explicit mutation should remain authorized"
+  gate_json="$(truth_sync_mutation_authorization direct false)"
+  assert_json "$gate_json" '.authorized == false' "implicit direct mutation should fail closed"
+  gate_json="$(truth_sync_mutation_authorization controller "$plan_file" "$execution_result_file")"
+  assert_json "$gate_json" '.authorized == true and .authority == "approved-plan-controller"' "complete controller context should authorize truth mutation"
+  jq '.plan_sha256 = "0000000000000000000000000000000000000000000000000000000000000000"' "$execution_result_file" >"$tampered_execution_file"
+  gate_json="$(truth_sync_mutation_authorization controller "$plan_file" "$tampered_execution_file")"
+  assert_json "$gate_json" '.authorized == false' "tampered controller evidence should fail closed"
+  jq '.task_evidence[0].oracles_verified = false' "$execution_result_file" >"$tampered_execution_file"
+  gate_json="$(truth_sync_mutation_authorization controller "$plan_file" "$tampered_execution_file")"
+  assert_json "$gate_json" '.authorized == false' "tampered embedded task evidence should fail closed"
+
+  gate_json="$(build_truth_sync_docs_governance_decision "$plan_file" docs/architecture/runtime.md)"
+  assert_json "$gate_json" '.organize_docs_required == true and .matched_predicates == ["canonical-terminology-across-surfaces"]' "declared terminology alignment should activate bounded organize-docs"
+  cp "$plan_file" "$simple_plan_file"
+  sed -i 's/canonical-terminology-across-surfaces/none/' "$simple_plan_file"
+  gate_json="$(build_truth_sync_docs_governance_decision "$simple_plan_file" docs/architecture/runtime.md)"
+  assert_json "$gate_json" '.organize_docs_required == false and .matched_predicates == []' "simple stable fact updates should skip organize-docs"
+  for predicate_id in \
+    readme-agents-claude-ownership \
+    stable-truth-roots \
+    docs-search-boundaries \
+    stage-artifact-placement \
+    canonical-terminology-across-surfaces \
+    markdown-prose-structure
+  do
+    gate_json="$(truth_sync_docs_governance_decision "$predicate_id" docs/architecture/runtime.md)"
+    if ! jq -e --arg predicate_id "$predicate_id" '.organize_docs_required == true and .matched_predicates == [$predicate_id]' <<<"$gate_json" >/dev/null; then
+      fail "each declared governance predicate should activate only its bounded docs component: $predicate_id"
+    fi
+  done
+  if build_truth_sync_docs_governance_decision "$plan_file" README.md >/dev/null 2>&1; then
+    fail "out-of-scope docs composition should fail closed"
+  fi
 
   assert_contains "$truth_skill" 'scripts/harness/truth-sync-runner\.sh' "sync-truth skill should use its bundled runner"
-  assert_contains "$truth_skill" 'stable_truth_refs' "sync-truth skill should preserve stable truth refs"
-  assert_contains "$truth_skill" 'approval-status|approval_status:' "sync-truth skill should expose approval gate"
+  assert_contains "$truth_skill" 'validate-against' "sync-truth skill should bind its evidence package"
 }
 
 main "$@"

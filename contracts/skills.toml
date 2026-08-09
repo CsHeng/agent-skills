@@ -109,6 +109,7 @@ default_role = "primary"
 may_mutate_repo = true
 may_spawn_agent = false
 requires_explicit_user_request = true
+requires_approved_plan = true
 runtime_bundle = "harness"
 
 [skills.close-change]
@@ -158,6 +159,7 @@ default_role = "primary"
 may_mutate_repo = true
 may_spawn_agent = false
 requires_explicit_user_request = true
+requires_approved_plan = true
 
 [skills.api-contract-strategy]
 source = "src/skills/disciplines/api-contract-strategy"

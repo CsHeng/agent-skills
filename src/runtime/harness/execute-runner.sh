@@ -704,8 +704,176 @@ execution_controller_converge() {
   task_ledger_controller_converge "$@"
 }
 
+execution_artifact_ref() {
+  local file_ref="$1"
+  local repo_root=""
+  local resolved_ref=""
+
+  repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+  resolved_ref="$(realpath "$file_ref")"
+  case "$resolved_ref" in
+    "$repo_root"/*) printf '%s\n' "${resolved_ref#"$repo_root"/}" ;;
+    *) printf '%s\n' "$resolved_ref" ;;
+  esac
+}
+
+execution_stable_truth_refs_json() {
+  local plan_file="$1"
+
+  extract_markdown_list "$plan_file" "Truth Sync Handoff" "stable_truth_refs" \
+    | normalize_plan_metadata_values \
+    | awk 'NF > 0' \
+    | sort -u \
+    | jq -R . \
+    | jq -s .
+}
+
+execution_docs_governance_predicates_json() {
+  local plan_file="$1"
+
+  extract_markdown_list "$plan_file" "Truth Sync Handoff" "docs_governance_predicates" \
+    | normalize_plan_metadata_values \
+    | awk 'NF > 0' \
+    | sort -u \
+    | jq -R . \
+    | jq -s .
+}
+
 build_execution_result_json() {
-  build_execution_result "$@"
+  local plan_file="$1"
+  local ledger_file="$2"
+  local review_state="$6"
+  local verify_state="$7"
+  local base_json=""
+  local design_file=""
+  local approved_plan_ref=""
+  local approved_design_ref=""
+  local plan_digest=""
+  local design_digest=""
+  local ledger_digest=""
+  local truth_required=""
+  local lifecycle_state=""
+  local derived_stop_reason=""
+  local derived_next_entry=""
+  local derived_next_phase=""
+  local derived_human_input=false
+  local remaining_task_count=0
+  local stable_truth_refs_json="[]"
+  local allowed_touch_refs_json="[]"
+  local docs_predicates_json="[]"
+  local task_evidence_json="[]"
+  local drift_evidence_json="[]"
+
+  validate_execution_plan "$plan_file" >/dev/null || return 1
+  [[ -f "$ledger_file" ]] || {
+    printf 'missing execution ledger: %s\n' "$ledger_file" >&2
+    return 1
+  }
+  drift_evidence_json="$(execution_plan_ledger_drift_evidence_json "$plan_file" "$ledger_file")"
+  if [[ "$(jq 'length' <<<"$drift_evidence_json")" -gt 0 ]]; then
+    printf 'execution ledger does not match the approved immutable task projection\n' >&2
+    return 1
+  fi
+
+  base_json="$(build_execution_result "$@")"
+  design_file="$(resolve_execution_design_file "$plan_file")"
+  approved_plan_ref="$(execution_artifact_ref "$plan_file")"
+  approved_design_ref="$(execution_artifact_ref "$design_file")"
+  plan_digest="$(harness_file_sha256 "$plan_file")"
+  design_digest="$(harness_file_sha256 "$design_file")"
+  ledger_digest="$(jq -cS . "$ledger_file" | shasum -a 256 | awk '{print $1}')"
+  truth_required="$(execution_truth_sync_required "$plan_file")"
+  stable_truth_refs_json="$(execution_stable_truth_refs_json "$plan_file")"
+  allowed_touch_refs_json="$(execution_allowed_touch_set "$plan_file" | jq -R . | jq -s 'sort')"
+  docs_predicates_json="$(execution_docs_governance_predicates_json "$plan_file")"
+  task_evidence_json="$(jq '.' "$ledger_file")"
+  remaining_task_count="$(jq -r '.remaining_task_count' <<<"$base_json")"
+
+  if [[ "$remaining_task_count" -eq 0 ]] && ! jq -e '
+    all(.[];
+      .status == "done" and
+      (
+        ((.convergence_required // false) == false) or
+        (.convergence_verified == true and .oracles_verified == true and .integration_verified == true and .convergence_actor == "controller")
+      )
+    )
+  ' "$ledger_file" >/dev/null; then
+    printf 'completed execution evidence requires controller-converged task oracles and integration proof\n' >&2
+    return 1
+  fi
+
+  if [[ "$remaining_task_count" -gt 0 ]]; then
+    lifecycle_state="implementation-pending"
+    derived_stop_reason="$(jq -r '.stop_reason' <<<"$base_json")"
+    derived_next_entry="$(jq -r '.next_entry' <<<"$base_json")"
+    derived_next_phase="$(jq -r '.next_phase' <<<"$base_json")"
+    derived_human_input="$(jq -r '.human_input_required' <<<"$base_json")"
+  elif [[ "$review_state" != "pass" ]]; then
+    lifecycle_state="task-complete"
+    derived_stop_reason="final_review_failed"
+    derived_next_entry="implement-change"
+    derived_next_phase="review"
+  elif [[ "$verify_state" != "pass" ]]; then
+    lifecycle_state="task-complete"
+    derived_stop_reason="final_verification_failed"
+    derived_next_entry="implement-change"
+    derived_next_phase="verify"
+  elif [[ "$truth_required" == "true" && "$(jq 'length' <<<"$stable_truth_refs_json")" -eq 0 ]]; then
+    lifecycle_state="task-complete"
+    derived_stop_reason="truth_sync_scope_required"
+    derived_next_entry="plan-change"
+    derived_next_phase="plan"
+    derived_human_input=true
+  elif [[ "$truth_required" == "true" ]]; then
+    lifecycle_state="truth-sync-pending"
+    derived_stop_reason="truth_sync_required"
+    derived_next_entry="sync-truth"
+    derived_next_phase="truth-sync"
+  else
+    lifecycle_state="ready-for-close"
+    derived_stop_reason="ready_for_close"
+    derived_next_entry="close-change"
+    derived_next_phase="close"
+    derived_human_input=true
+  fi
+
+  jq \
+    --arg approved_plan_ref "$approved_plan_ref" \
+    --arg approved_design_ref "$approved_design_ref" \
+    --arg plan_sha256 "$plan_digest" \
+    --arg design_sha256 "$design_digest" \
+    --arg ledger_sha256 "$ledger_digest" \
+    --arg review_gate_ref "review:$plan_digest:$ledger_digest:$review_state" \
+    --arg verification_ref "verification:$plan_digest:$ledger_digest:$verify_state" \
+    --arg lifecycle_state "$lifecycle_state" \
+    --arg stop_reason "$derived_stop_reason" \
+    --arg next_entry "$derived_next_entry" \
+    --arg next_phase "$derived_next_phase" \
+    --argjson human_input_required "$derived_human_input" \
+    --argjson truth_sync_required "$truth_required" \
+    --argjson stable_truth_refs "$stable_truth_refs_json" \
+    --argjson allowed_touch_refs "$allowed_touch_refs_json" \
+    --argjson docs_governance_predicates "$docs_predicates_json" \
+    --argjson task_evidence "$task_evidence_json" \
+    '. + {
+      approved_plan_ref: $approved_plan_ref,
+      approved_design_ref: $approved_design_ref,
+      plan_sha256: $plan_sha256,
+      design_sha256: $design_sha256,
+      ledger_sha256: $ledger_sha256,
+      review_gate_ref: $review_gate_ref,
+      verification_ref: $verification_ref,
+      truth_sync_required: $truth_sync_required,
+      stable_truth_refs: $stable_truth_refs,
+      allowed_touch_refs: $allowed_touch_refs,
+      docs_governance_predicates: $docs_governance_predicates,
+      task_evidence: $task_evidence,
+      lifecycle_state: $lifecycle_state,
+      stop_reason: $stop_reason,
+      next_entry: $next_entry,
+      next_phase: $next_phase,
+      human_input_required: $human_input_required
+    }' <<<"$base_json"
 }
 
 build_execute_gate_result() {

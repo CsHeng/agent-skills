@@ -28,6 +28,55 @@ declared_repo_path_ref_is_safe() {
   return 0
 }
 
+exact_scalar_values_match() {
+  local expected_value="$1"
+  local observed_value="$2"
+
+  [[ -n "$expected_value" && "$expected_value" == "$observed_value" ]]
+}
+
+exact_ref_sets_match() {
+  local expected_file="$1"
+  local observed_file="$2"
+  local expected_refs=""
+  local observed_refs=""
+
+  [[ -r "$expected_file" && -r "$observed_file" ]] || return 1
+  expected_refs="$(awk 'NF > 0' "$expected_file" | sort -u)"
+  observed_refs="$(awk 'NF > 0' "$observed_file" | sort -u)"
+  [[ "$expected_refs" == "$observed_refs" ]]
+}
+
+harness_file_sha256() {
+  local file_ref="$1"
+
+  [[ -f "$file_ref" ]] || {
+    printf 'missing file for sha256: %s\n' "$file_ref" >&2
+    return 1
+  }
+  shasum -a 256 "$file_ref" | awk '{print $1}'
+}
+
+repo_relative_artifact_ref() {
+  local repo_root="$1"
+  local artifact_ref="$2"
+  local resolved_ref=""
+
+  [[ -n "$repo_root" && -n "$artifact_ref" ]] || return 1
+  if [[ "$artifact_ref" = /* ]]; then
+    resolved_ref="$(realpath "$artifact_ref")"
+  else
+    resolved_ref="$(realpath "$repo_root/$artifact_ref")"
+  fi
+  case "$resolved_ref" in
+    "$repo_root"/*) printf '%s\n' "${resolved_ref#"$repo_root"/}" ;;
+    *)
+      printf 'artifact ref is outside repository: %s\n' "$artifact_ref" >&2
+      return 1
+      ;;
+  esac
+}
+
 extract_markdown_list() {
   local file="$1"
   local section="$2"

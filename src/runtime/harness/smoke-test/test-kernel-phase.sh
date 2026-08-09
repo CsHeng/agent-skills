@@ -45,6 +45,8 @@ main() {
   [[ "$(resolve_next_phase "dependency-freeze" "design-lite" "false" "true")" == "implement-parallel" ]] || fail "parallel should require explicit approval"
   [[ "$(resolve_next_phase "verify" "design-lite" "true" "false")" == "truth-sync" ]] || fail "truth impact should force truth-sync after verify"
   [[ "$(resolve_next_phase "verify" "design-lite" "false" "false")" == "close" ]] || fail "no truth impact should close after verify"
+  [[ "$(resolve_next_phase "close" "design-lite" "true" "false")" == "closed" ]] || fail "an approved close should terminate instead of routing to itself"
+  [[ "$(resolve_next_phase "closed" "design-lite" "true" "false")" == "closed" ]] || fail "closed should remain terminal"
 
   is_valid_model_policy "semantic-routing" || fail "semantic routing should be a portable model policy"
   is_valid_model_policy "inherit-main" || fail "inherit-main should be a portable model policy"

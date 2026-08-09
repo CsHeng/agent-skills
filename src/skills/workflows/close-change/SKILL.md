@@ -29,28 +29,29 @@ RUNNER="$(realpath "$SKILL_ROOT/scripts/harness/close-runner.sh")"
 [[ -f "$RUNNER" ]] || exit 1
 ```
 
-Validate explicit close evidence and emit the deterministic decision:
+Validate the approved evidence package and emit the deterministic decision:
 
 ```bash
 bash "$RUNNER" entry-phase
-bash "$RUNNER" validate "<merge|release|cleanup>" "<review-status>" "<verify-status>" "<truth-sync-required>" "<truth-sync-completed>"
-bash "$RUNNER" decision "<merge|release|cleanup>" "<review-status>" "<verify-status>" "<truth-sync-required>" "<truth-sync-completed>"
+bash "$RUNNER" validate "<merge|release|cleanup>" "<approved-plan>" "<execution-result-json>" "<truth-sync-artifact-if-required>"
+bash "$RUNNER" decision "<merge|release|cleanup>" "<approved-plan>" "<execution-result-json>" "<truth-sync-artifact-if-required>"
 ```
 
-Close mode is `merge`, `release`, or `cleanup`, with `cleanup` as the default when omitted. Closure requires passing review and verification plus completed truth sync whenever it is required. If validation fails, do not merge, release, or clean up; follow the returned `sync-truth` or `implement-change` route.
+Close mode is `merge`, `release`, or `cleanup`, with `cleanup` as the default when omitted. The mode is judgment metadata only: this skill performs none of those external actions. Closure derives review, verification, truth requirement, stable truth refs, and artifact identities from the approved plan and immutable execution result. Caller-supplied status hints are non-authoritative and mismatches fail closed. If validation fails, follow the returned `plan-change`, `implement-change`, or `sync-truth` route.
 
 ## Workflow
 
-1. Check whether review, verification, and truth-sync gates are satisfied as applicable.
+1. Bind the approved plan, immutable execution result, and required truth-sync artifact by exact identity.
 2. Confirm the target close mode: merge, release, or cleanup.
 3. Block closure when required evidence or approvals are missing.
-4. Produce the final close decision and any remaining human actions.
+4. Produce one terminal close decision with `terminal_state: closed` and `next_entry: null`, or one owning blocked route.
 
 ## Operating Rules
 
 - This is the top-level closure gate.
 - Final completion judgment belongs to the harness.
 - Human approval remains final for close.
+- A successful close is terminal and never routes back to `close-change`.
 - No change closes by default just because implementation stopped.
 - Evidence before closure: review status, verification status, requested write/install/deploy/commit status, and truth-sync status must each be proven from current artifacts or command output.
 - Do not infer close readiness from partial checks, previous-session output, or delegated-agent summaries.

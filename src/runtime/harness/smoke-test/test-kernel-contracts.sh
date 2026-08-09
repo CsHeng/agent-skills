@@ -42,6 +42,7 @@ main() {
   local entries phases classes design_strengths verdicts artifact_classes failure_policies failure_kinds
   local plan_contract_versions parallel_policies delegation_policies execution_profiles reasoning_profiles
   local isolation_modes model_policies actor_kinds binding_outcomes execution_stop_reasons
+  local docs_governance_predicates execution_lifecycle_states
 
   entries="$(printf '%s\n' "${HARNESS_ENTRIES[@]}")"
   phases="$(printf '%s\n' "${HARNESS_PHASES[@]}")"
@@ -61,6 +62,8 @@ main() {
   binding_outcomes="$(printf '%s\n' "${HARNESS_RUNTIME_BINDING_OUTCOMES[@]}")"
   failure_kinds="$(printf '%s\n' "${HARNESS_FAILURE_KINDS[@]}")"
   execution_stop_reasons="$(printf '%s\n' "${HARNESS_EXECUTION_STOP_REASONS[@]}")"
+  docs_governance_predicates="$(printf '%s\n' "${HARNESS_DOCS_GOVERNANCE_PREDICATES[@]}")"
+  execution_lifecycle_states="$(printf '%s\n' "${HARNESS_EXECUTION_LIFECYCLE_STATES[@]}")"
 
   assert_sequence "$entries" "$(cat <<'EOF'
 analyze-project
@@ -88,6 +91,7 @@ review
 verify
 truth-sync
 close
+closed
 EOF
 )" "phase order drifted"
 
@@ -275,11 +279,36 @@ guarded_rollback_required
 plan_incomplete
 final_review_failed
 final_verification_failed
+truth_sync_scope_required
 truth_sync_required
 ready_for_close
 EOF
 )" "execution stop reasons drifted"
   is_valid_execution_stop_reason "parallel_capacity_required" || fail "parallel capacity stop should be valid"
+  is_valid_execution_stop_reason "truth_sync_scope_required" || fail "missing truth scope should have a typed stop reason"
+
+  assert_sequence "$docs_governance_predicates" "$(cat <<'EOF'
+none
+readme-agents-claude-ownership
+stable-truth-roots
+docs-search-boundaries
+stage-artifact-placement
+canonical-terminology-across-surfaces
+markdown-prose-structure
+EOF
+)" "docs governance predicates drifted"
+  is_valid_docs_governance_predicate "canonical-terminology-across-surfaces" || fail "canonical terminology should be a supported docs predicate"
+  assert_invalid is_valid_docs_governance_predicate "all-markdown"
+
+  assert_sequence "$execution_lifecycle_states" "$(cat <<'EOF'
+implementation-pending
+task-complete
+truth-sync-pending
+ready-for-close
+closed
+EOF
+)" "execution lifecycle states drifted"
+  is_valid_execution_lifecycle_state "closed" || fail "closed should be a terminal lifecycle state"
 
   assert_eq "$(harness_default_phase)" "intake" "default phase should stay intake"
 }
