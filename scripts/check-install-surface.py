@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import stat
 import sys
 from pathlib import Path
 from typing import Any
@@ -216,6 +217,14 @@ def validate(target: str, dest: Path) -> list[str]:
                 errors.append(
                     f"{target}: generated content differs for {public_id}/{relative_path}"
                 )
+            generated_path = generated_files[relative_path]
+            if generated_path.suffix == ".sh":
+                mode = generated_path.stat().st_mode
+                if not (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)):
+                    errors.append(
+                        f"{target}: generated shell lacks execute bits: "
+                        f"{public_id}/{relative_path}"
+                    )
         errors.extend(validate_portable_content(target, public_id, generated_dir))
 
     for public_id, runtime_contract in selected_runtime_contracts(target).items():

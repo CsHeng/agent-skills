@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import stat
 import sys
 import tempfile
 from pathlib import Path
@@ -87,6 +88,19 @@ def remove_path(path: Path) -> None:
         shutil.rmtree(path)
 
 
+def ensure_shell_executable(path: Path) -> None:
+    """Make shell scripts directly invokable; agents may exec them without bash."""
+    if not path.is_file() or path.suffix != ".sh":
+        return
+    mode = path.stat().st_mode
+    path.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+
+def ensure_tree_shell_executable(root: Path) -> None:
+    for path in root.rglob("*.sh"):
+        ensure_shell_executable(path)
+
+
 def replace_directory(source: Path, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     backup: Path | None = None
@@ -131,6 +145,7 @@ def copy_runtime_bundle(bundle_name: str, dest: Path) -> None:
         destination_file = dest / relative_path
         destination_file.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_file, destination_file)
+        ensure_shell_executable(destination_file)
         copied += 1
 
     if copied == 0:
@@ -200,6 +215,7 @@ def generate_target(target: str, dest: Path) -> None:
                 raise SystemExit(f"missing SKILL.md for {public_id}: {source_rel}")
             generated_skill = skills_dest / public_id
             shutil.copytree(source_path, generated_skill, symlinks=False)
+            ensure_tree_shell_executable(generated_skill)
             metadata_path = generated_skill / "agents" / "openai.yaml"
             try:
                 metadata_source = metadata_path.read_text(encoding="utf-8")

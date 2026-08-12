@@ -14,6 +14,14 @@ if [[ -n "$(git ls-files -- .dist)" ]]; then
   exit 1
 fi
 
+# Agents may exec skill/runtime shells directly; tracked .sh must keep git mode 100755.
+non_exec_shells="$(git ls-files -s -- '*.sh' | awk '$1 != "100755" { print $4 }')"
+if [[ -n "$non_exec_shells" ]]; then
+  echo "ERROR: tracked .sh files must be mode 100755 (git update-index --chmod=+x):" >&2
+  printf '%s\n' "$non_exec_shells" >&2
+  exit 1
+fi
+
 install_surface_tmp="$(mktemp -d "${TMPDIR:-/tmp}/market-csheng-install-surfaces.XXXXXX")"
 trap 'rm -rf "$install_surface_tmp"' EXIT
 
