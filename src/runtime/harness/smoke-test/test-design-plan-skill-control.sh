@@ -48,8 +48,20 @@ main() {
 
   assert_contains "$plan_skill" 'semantic-routing' "plan skill should provide semantic routing advice"
   assert_contains "$plan_skill" 'inherit-main' "plan skill should preserve topology under inherit-main"
+  assert_contains "$plan_skill" 'pure repository search and factual confirmation' "plan skill should bound cheap explorers to pure search"
+  assert_contains "$plan_skill" 'execution_profile: fast' "plan skill should assign fast execution to cheap explorers"
+  assert_contains "$plan_skill" 'reasoning_profile: light' "plan skill should assign light reasoning to cheap explorers"
+  assert_contains "$plan_skill" 'isolation: shared-read-only' "plan skill should require shared read-only explorer isolation"
+  assert_contains "$plan_skill" 'deeper synthesis' "plan skill should keep deep synthesis out of cheap explorers"
   assert_contains "$implement_skill" 'logical topology|task IDs, dependencies' "implementation skill should leave logical topology to planning"
   assert_contains "$implement_skill" 'runtime binding' "implementation skill should own runtime binding"
+  assert_contains "$implement_skill" 'orchestrator' "implementation skill should derive the orchestrator role"
+  assert_contains "$implement_skill" 'reviewer' "implementation skill should derive the reviewer role"
+  assert_contains "$implement_skill" 'explorer' "implementation skill should derive the explorer role"
+  assert_contains "$implement_skill" 'worker' "implementation skill should derive the worker role"
+  assert_contains "$implement_skill" 'concrete CLI' "implementation skill should bind a concrete CLI at runtime"
+  assert_contains "$implement_skill" 'Herdr workspace/tab/pane/agent IDs' "implementation skill should record Herdr binding evidence"
+  assert_contains "$implement_skill" 'main controller alone' "implementation skill should keep controller convergence authority"
 }
 
 main "$@"

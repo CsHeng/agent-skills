@@ -12,7 +12,7 @@ fail() {
 }
 
 main() {
-  local skill="" skill_file="" skills_root=""
+  local skill="" skill_file="" skills_root="" via_herdr_skill=""
   local skill_names=(
     analyze-project
     design-change
@@ -32,8 +32,14 @@ main() {
   )
 
   case "$SKILL_SURFACE" in
-    generated) skills_root="$GENERATED_SKILLS_ROOT" ;;
-    source) skills_root="$ROOT_DIR/src/skills/workflows" ;;
+    generated)
+      skills_root="$GENERATED_SKILLS_ROOT"
+      via_herdr_skill="$skills_root/implement-change-via-herdr/SKILL.md"
+      ;;
+    source)
+      skills_root="$ROOT_DIR/src/skills/workflows"
+      via_herdr_skill="$ROOT_DIR/src/skills/tools/implement-change-via-herdr/SKILL.md"
+      ;;
     *) fail "HARNESS_SKILL_SURFACE must be generated or source" ;;
   esac
 
@@ -43,6 +49,12 @@ main() {
     rg -n '^---$' "$skill_file" >/dev/null || fail "missing frontmatter in $skill"
     rg -n "^name: ${skill}$" "$skill_file" >/dev/null || fail "skill identity drifted: $skill"
   done
+
+  [[ -f "$via_herdr_skill" ]] || fail "missing explicit Herdr overlay: $via_herdr_skill"
+  rg -n 'lower-plane|implement-change controller' "$via_herdr_skill" >/dev/null \
+    || fail "Herdr entry must remain a lower-plane controller overlay"
+  rg -n 'sole `orchestrator`|main controller alone' "$skills_root/implement-change/SKILL.md" >/dev/null \
+    || fail "implement-change must remain the sole controller"
 
   if [[ "$SKILL_SURFACE" == "generated" ]]; then
     for skill in "${runtime_owners[@]}"; do

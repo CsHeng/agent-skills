@@ -696,6 +696,610 @@ execution_runtime_binding() {
   execution_runtime_binding_from_validated_plan "$@"
 }
 
+execution_canonical_json_sha256() {
+  local json_file="$1"
+
+  [[ -f "$json_file" && ! -L "$json_file" ]] || {
+    printf 'controller_binding_invalid: JSON input must be a regular non-symlink file: %s\n' "$json_file" >&2
+    return 1
+  }
+  jq -cS . "$json_file" | shasum -a 256 | awk '{print $1}'
+}
+
+execution_herdr_agent_name() {
+  local runtime_role="$1"
+  local run_id="$2"
+  local task_id="$3"
+  local attempt="$4"
+  local digest=""
+  local animal_index=0
+  local task_fragment=""
+  local candidate=""
+  local -a animal_names=(wolf owl fox otter badger lynx)
+
+  case "$runtime_role" in
+    reviewer|explorer|worker) ;;
+    *)
+      printf 'controller_binding_invalid: unsupported delegated role: %s\n' "$runtime_role" >&2
+      return 1
+      ;;
+  esac
+  [[ "$attempt" =~ ^[1-9][0-9]*$ ]] || {
+    printf 'controller_binding_invalid: task attempt must be a positive integer\n' >&2
+    return 1
+  }
+
+  digest="$(printf '%s' "$run_id:$task_id:$attempt" | shasum -a 256 | awk '{print $1}')"
+  [[ "$digest" =~ ^[0-9a-f]{64}$ ]] || {
+    printf 'controller_binding_invalid: failed to derive agent identity\n' >&2
+    return 1
+  }
+  animal_index=$((16#${digest:0:2} % ${#animal_names[@]}))
+  task_fragment="$(
+    printf '%s' "$task_id" \
+      | tr '[:upper:]' '[:lower:]' \
+      | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//'
+  )"
+  task_fragment="${task_fragment:0:6}"
+  [[ -n "$task_fragment" ]] || task_fragment="task"
+  candidate="$runtime_role-${animal_names[$animal_index]}-${digest:2:2}-t$task_fragment-a$attempt"
+  candidate="${candidate:0:32}"
+  candidate="$(printf '%s' "$candidate" | sed -E 's/-+$//')"
+  [[ "$candidate" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$ ]] || {
+    printf 'controller_binding_invalid: derived agent name is not valid\n' >&2
+    return 1
+  }
+  printf '%s\n' "$candidate"
+}
+
+execution_git_common_directory() {
+  local checkout_root="$1"
+  local common_ref=""
+
+  common_ref="$(git -C "$checkout_root" rev-parse --git-common-dir 2>/dev/null)" || return 1
+  if [[ "$common_ref" = /* ]]; then
+    realpath "$common_ref"
+  else
+    realpath "$checkout_root/$common_ref"
+  fi
+}
+
+execution_git_directory() {
+  local checkout_root="$1"
+  local git_ref=""
+
+  git_ref="$(git -C "$checkout_root" rev-parse --git-dir 2>/dev/null)" || return 1
+  if [[ "$git_ref" = /* ]]; then
+    realpath "$git_ref"
+  else
+    realpath "$checkout_root/$git_ref"
+  fi
+}
+
+execution_controller_binding_envelope() {
+  local plan_file="$1"
+  local ledger_file="$2"
+  local request_file="$3"
+  local repo_root=""
+  local repo_revision=""
+  local repo_common_dir=""
+  local plan_ref=""
+  local ledger_ref=""
+  local plan_digest=""
+  local ledger_digest=""
+  local expected_plan_digest=""
+  local expected_ledger_digest=""
+  local drift_evidence_json="[]"
+  local controller_id=""
+  local binding_kind=""
+  local run_id=""
+  local run_nonce=""
+  local task_id=""
+  local attempt=""
+  local model_policy=""
+  local allowed_model_policy=""
+  local saw_model_policy=false
+  local task_count=0
+  local task_json=""
+  local task_state=""
+  local expected_attempt=0
+  local review_brief_path=""
+  local review_brief_ref=""
+  local review_brief_digest=""
+  local expected_review_brief_digest=""
+  local write_ref_count=0
+  local runtime_role=""
+  local capability_profile=""
+  local sandbox_mode=""
+  local agent_name=""
+  local expected_agent_name=""
+  local checkout_ref=""
+  local checkout_root=""
+  local checkout_common_dir=""
+  local checkout_git_dir=""
+  local physical_json=""
+  local envelope_task_json=""
+  local envelope_json=""
+  local run_state_root=""
+  local run_state_dir=""
+  local output_file=""
+  local temporary_file=""
+
+  validate_execution_plan "$plan_file" >/dev/null || {
+    printf 'controller_binding_unapproved: approved version-2 plan required\n' >&2
+    return 1
+  }
+  plan_uses_v2_contract "$plan_file" || {
+    printf 'controller_binding_invalid: version-2 plan contract required\n' >&2
+    return 1
+  }
+  [[ -f "$ledger_file" && ! -L "$ledger_file" ]] || {
+    printf 'controller_binding_invalid: ledger must be a regular non-symlink file\n' >&2
+    return 1
+  }
+  [[ -f "$request_file" && ! -L "$request_file" ]] || {
+    printf 'controller_binding_invalid: request must be a regular non-symlink file\n' >&2
+    return 1
+  }
+  jq -e . "$ledger_file" >/dev/null || {
+    printf 'controller_binding_invalid: ledger is not valid JSON\n' >&2
+    return 1
+  }
+  jq -e '
+    type == "object"
+    and keys == [
+      "attempt",
+      "binding_kind",
+      "controller_id",
+      "expected_ledger_sha256",
+      "expected_plan_sha256",
+      "model_policy",
+      "physical_binding",
+      "review_brief_path",
+      "review_brief_sha256",
+      "run_id",
+      "run_nonce",
+      "schema_version",
+      "task_id"
+    ]
+    and .schema_version == 1
+    and (.binding_kind == "delegated-task" or .binding_kind == "bounded-review")
+    and (.attempt | type == "number" and floor == . and . >= 1)
+    and ([
+      .controller_id,
+      .binding_kind,
+      .run_id,
+      .run_nonce,
+      .task_id,
+      .model_policy,
+      .expected_plan_sha256,
+      .expected_ledger_sha256
+    ] | all(.[]; type == "string" and length > 0 and (test("[[:cntrl:]]") | not)))
+    and (
+      if .binding_kind == "delegated-task" then
+        .review_brief_path == "" and .review_brief_sha256 == ""
+      else
+        (.review_brief_path | type == "string" and length > 0 and startswith("/") and (test("[[:cntrl:]]") | not))
+        and (.review_brief_sha256 | type == "string" and test("^[0-9a-f]{64}$"))
+      end
+    )
+    and (.physical_binding | type == "object")
+    and (.physical_binding | keys) == [
+      "agent_kind",
+      "agent_name",
+      "capability_profile",
+      "checkout_path",
+      "control_plane_endpoint",
+      "credential_ref",
+      "model",
+      "pane_id",
+      "permission_mode",
+      "reasoning_effort",
+      "sandbox_mode",
+      "tab_id",
+      "terminal_backend",
+      "workspace_id"
+    ]
+    and (.physical_binding | all(.[]; type == "string" and length > 0 and (test("[[:cntrl:]]") | not)))
+  ' "$request_file" >/dev/null || {
+    printf 'controller_binding_invalid: malformed or authority-expanding binding request\n' >&2
+    return 1
+  }
+
+  binding_kind="$(jq -r '.binding_kind' "$request_file")"
+  controller_id="$(jq -r '.controller_id' "$request_file")"
+  run_id="$(jq -r '.run_id' "$request_file")"
+  run_nonce="$(jq -r '.run_nonce' "$request_file")"
+  task_id="$(jq -r '.task_id' "$request_file")"
+  attempt="$(jq -r '.attempt' "$request_file")"
+  model_policy="$(jq -r '.model_policy' "$request_file")"
+  expected_plan_digest="$(jq -r '.expected_plan_sha256' "$request_file")"
+  expected_ledger_digest="$(jq -r '.expected_ledger_sha256' "$request_file")"
+  review_brief_path="$(jq -r '.review_brief_path' "$request_file")"
+  expected_review_brief_digest="$(jq -r '.review_brief_sha256' "$request_file")"
+
+  plan_token_is_safe "$controller_id" && [[ "${#controller_id}" -le 128 ]] || {
+    printf 'controller_binding_invalid: controller ID must be a bounded portable token\n' >&2
+    return 1
+  }
+  plan_token_is_safe "$run_id" && [[ "${#run_id}" -le 128 ]] || {
+    printf 'controller_binding_invalid: run ID must be a bounded portable token\n' >&2
+    return 1
+  }
+  plan_token_is_safe "$run_nonce" && [[ "${#run_nonce}" -le 256 ]] || {
+    printf 'controller_binding_required: controller nonce must be a bounded portable token\n' >&2
+    return 1
+  }
+  plan_token_is_safe "$task_id" && [[ "${#task_id}" -le 128 ]] || {
+    printf 'controller_binding_invalid: task ID must be a bounded portable token\n' >&2
+    return 1
+  }
+  [[ "$expected_plan_digest" =~ ^[0-9a-f]{64}$ && "$expected_ledger_digest" =~ ^[0-9a-f]{64}$ ]] || {
+    printf 'controller_binding_stale: expected digests must be lowercase SHA-256 values\n' >&2
+    return 1
+  }
+  is_valid_model_policy "$model_policy" || {
+    printf 'controller_binding_invalid: unsupported model policy: %s\n' "$model_policy" >&2
+    return 1
+  }
+  while IFS= read -r allowed_model_policy; do
+    allowed_model_policy="$(printf '%s\n' "$allowed_model_policy" | normalize_plan_metadata_values)"
+    if [[ "$allowed_model_policy" == "$model_policy" ]]; then
+      saw_model_policy=true
+      break
+    fi
+  done < <(extract_markdown_list "$plan_file" "Runtime Binding" "allowed_model_policies")
+  [[ "$saw_model_policy" == "true" ]] || {
+    printf 'controller_binding_invalid: model policy is not allowed by the approved plan: %s\n' "$model_policy" >&2
+    return 1
+  }
+
+  repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+    printf 'controller_binding_invalid: controller is not inside a Git repository\n' >&2
+    return 1
+  }
+  repo_root="$(realpath "$repo_root")"
+  repo_revision="$(git -C "$repo_root" rev-parse HEAD 2>/dev/null)" || {
+    printf 'controller_binding_invalid: repository revision is unavailable\n' >&2
+    return 1
+  }
+  repo_common_dir="$(execution_git_common_directory "$repo_root")" || {
+    printf 'controller_binding_invalid: repository common directory is unavailable\n' >&2
+    return 1
+  }
+  plan_ref="$(repo_relative_artifact_ref "$repo_root" "$plan_file")" || {
+    printf 'controller_binding_invalid: plan must be inside the controller repository\n' >&2
+    return 1
+  }
+  ledger_ref="$(execution_artifact_ref "$ledger_file")"
+  plan_digest="$(harness_file_sha256 "$plan_file")"
+  ledger_digest="$(execution_canonical_json_sha256 "$ledger_file")"
+  [[ "$plan_digest" == "$expected_plan_digest" ]] || {
+    printf 'controller_binding_stale: approved plan digest changed\n' >&2
+    return 1
+  }
+  [[ "$ledger_digest" == "$expected_ledger_digest" ]] || {
+    printf 'controller_binding_stale: task ledger digest changed\n' >&2
+    return 1
+  }
+  drift_evidence_json="$(execution_plan_ledger_drift_evidence_json "$plan_file" "$ledger_file")"
+  [[ "$(jq 'length' <<<"$drift_evidence_json")" -eq 0 ]] || {
+    printf 'controller_binding_drift: ledger immutable task projection differs from approved plan\n' >&2
+    return 1
+  }
+
+  if [[ "$binding_kind" == "bounded-review" ]]; then
+    jq -e 'type == "array" and length > 0 and all(.[]; .status == "done")' "$ledger_file" >/dev/null || {
+      printf 'controller_binding_task_not_ready: bounded review requires a fully converged ledger\n' >&2
+      return 1
+    }
+    [[ -f "$review_brief_path" && ! -L "$review_brief_path" ]] || {
+      printf 'controller_binding_invalid: review brief must be a regular non-symlink file\n' >&2
+      return 1
+    }
+    review_brief_digest="$(harness_file_sha256 "$review_brief_path")"
+    [[ "$review_brief_digest" == "$expected_review_brief_digest" ]] || {
+      printf 'controller_binding_stale: bounded review brief digest changed\n' >&2
+      return 1
+    }
+    review_brief_ref="$(execution_artifact_ref "$review_brief_path")"
+    expected_attempt=1
+    [[ "$attempt" -eq "$expected_attempt" ]] || {
+      printf 'controller_binding_stale: bounded review attempt must be 1\n' >&2
+      return 1
+    }
+    runtime_role="reviewer"
+    write_ref_count=0
+    task_json="$(jq -n -c \
+      --arg task_id "$task_id" \
+      --arg review_brief_ref "$review_brief_ref" \
+      --arg review_brief_sha256 "$review_brief_digest" \
+      '{
+        section: "Implementation Review",
+        title: "Bounded implementation review",
+        task_id: $task_id,
+        scope_slice: "Review only the controller-issued bounded implementation brief",
+        depends_on: [],
+        impl_file_refs: [],
+        test_file_refs: [],
+        verification_commands: [$review_brief_ref],
+        executor_mode: "subagent",
+        parallel_group: "none",
+        parallel_policy: "serial",
+        delegation_policy: "preferred",
+        execution_profile: "deep",
+        reasoning_profile: "deep",
+        isolation: "shared-read-only",
+        resource_locks: ["repository-review"],
+        convergence_required: false,
+        task_review_depth: "implementation",
+        done_when: ["candidate findings returned to the main controller"],
+        failure_policy: "stop-and-diagnose",
+        rollback_trigger: "none",
+        rollback_target: "none",
+        rollback_verification: "none",
+        status: "ready",
+        attempt_count: 0,
+        review_brief_ref: $review_brief_ref,
+        review_brief_sha256: $review_brief_sha256
+      }')"
+  else
+    task_count="$(jq --arg task_id "$task_id" '[.[] | select(.task_id == $task_id)] | length' "$ledger_file")"
+    [[ "$task_count" -eq 1 ]] || {
+      printf 'controller_binding_task_unknown: selected task must resolve exactly once: %s\n' "$task_id" >&2
+      return 1
+    }
+    task_json="$(jq -c --arg task_id "$task_id" '.[] | select(.task_id == $task_id)' "$ledger_file")"
+    task_state="$(jq -r '.status' <<<"$task_json")"
+    [[ "$task_state" == "ready" ]] || {
+      printf 'controller_binding_task_not_ready: selected task is %s: %s\n' "$task_state" "$task_id" >&2
+      return 1
+    }
+    expected_attempt="$(jq '(.attempt_count // 0) + 1' <<<"$task_json")"
+    [[ "$attempt" -eq "$expected_attempt" ]] || {
+      printf 'controller_binding_stale: task attempt must be %s: %s\n' "$expected_attempt" "$task_id" >&2
+      return 1
+    }
+    jq -e '.delegation_policy != "forbidden" and .executor_mode == "subagent"' <<<"$task_json" >/dev/null || {
+      printf 'controller_binding_authority_denied: Herdr adapter accepts delegated tasks only: %s\n' "$task_id" >&2
+      return 1
+    }
+    write_ref_count="$(jq '
+      ((.impl_file_refs // []) + (.test_file_refs // []))
+      | map(select(. != "" and . != "none"))
+      | length
+    ' <<<"$task_json")"
+    if [[ "$write_ref_count" -eq 0 ]] \
+      && jq -e '.execution_profile == "fast" and .reasoning_profile == "light" and .isolation == "shared-read-only"' <<<"$task_json" >/dev/null; then
+      runtime_role="explorer"
+    else
+      runtime_role="worker"
+    fi
+  fi
+
+  physical_json="$(jq -c '.physical_binding' "$request_file")"
+  capability_profile="$(jq -r '.capability_profile' <<<"$physical_json")"
+  sandbox_mode="$(jq -r '.sandbox_mode' <<<"$physical_json")"
+  agent_name="$(jq -r '.agent_name' <<<"$physical_json")"
+  checkout_ref="$(jq -r '.checkout_path' <<<"$physical_json")"
+  jq -e --arg runtime_role "$runtime_role" --arg model_policy "$model_policy" '
+    .terminal_backend == "herdr"
+    and (.agent_kind == "codex" or .agent_kind == "grok")
+    and (.permission_mode == "never" or .permission_mode == "always-approve")
+    and (.sandbox_mode == "read-only" or .sandbox_mode == "workspace-write")
+    and (.capability_profile == "delegated-read-only" or .capability_profile == "delegated-local-writer")
+    and (.agent_name | test("^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$"))
+    and (.checkout_path | startswith("/"))
+    and (
+      (.agent_kind == "codex"
+        and (.model | test("^gpt-5\\.6(-(?:sol|terra|luna))?$"))
+        and .control_plane_endpoint == "native://openai"
+        and .credential_ref == "native-login/codex")
+      or
+      (.agent_kind == "grok"
+        and (.model | test("^(grok-4\\.5|gpt-5\\.6(-(?:sol|terra|luna))?)$"))
+        and .control_plane_endpoint == "native://grok"
+        and .credential_ref == "native-login/grok")
+    )
+    and (.reasoning_effort == "low" or .reasoning_effort == "medium" or .reasoning_effort == "high" or .reasoning_effort == "xhigh")
+    and (
+      if .capability_profile == "delegated-read-only" then
+        .permission_mode == "never" and .sandbox_mode == "read-only"
+      else
+        (.permission_mode == "never" or .permission_mode == "always-approve")
+        and .sandbox_mode == "workspace-write"
+      end
+    )
+    and (
+      if $runtime_role == "reviewer" then
+        .agent_kind == "codex"
+        and (.model == "gpt-5.6" or .model == "gpt-5.6-sol")
+        and (.reasoning_effort == "high" or .reasoning_effort == "xhigh")
+      elif $runtime_role == "explorer" and $model_policy == "semantic-routing" then
+        ((.agent_kind == "codex" and .model == "gpt-5.6-luna" and (.reasoning_effort == "low" or .reasoning_effort == "medium" or .reasoning_effort == "high"))
+        or (.agent_kind == "grok" and .model == "grok-4.5" and (.reasoning_effort == "low" or .reasoning_effort == "medium")))
+      else true
+      end
+    )
+  ' <<<"$physical_json" >/dev/null || {
+    printf 'controller_binding_invalid: unsupported physical binding\n' >&2
+    return 1
+  }
+  expected_agent_name="$(execution_herdr_agent_name "$runtime_role" "$run_id" "$task_id" "$attempt")" || return 1
+  [[ "$agent_name" == "$expected_agent_name" ]] || {
+    printf 'controller_binding_invalid: agent name does not match deterministic task projection\n' >&2
+    return 1
+  }
+  [[ -d "$checkout_ref" && ! -L "$checkout_ref" ]] || {
+    printf 'controller_binding_invalid: checkout must be an existing non-symlink directory\n' >&2
+    return 1
+  }
+  checkout_root="$(git -C "$checkout_ref" rev-parse --show-toplevel 2>/dev/null)" || {
+    printf 'controller_binding_invalid: checkout is not a Git worktree\n' >&2
+    return 1
+  }
+  checkout_root="$(realpath "$checkout_root")"
+  checkout_common_dir="$(execution_git_common_directory "$checkout_root")" || {
+    printf 'controller_binding_invalid: checkout common directory is unavailable\n' >&2
+    return 1
+  }
+  [[ "$checkout_common_dir" == "$repo_common_dir" ]] || {
+    printf 'controller_binding_repository_mismatch: checkout belongs to another repository\n' >&2
+    return 1
+  }
+  if [[ "$write_ref_count" -gt 0 ]]; then
+    [[ "$capability_profile" == "delegated-local-writer" && "$sandbox_mode" == "workspace-write" ]] || {
+      printf 'controller_binding_capability_mismatch: writer requires delegated-local-writer and workspace-write\n' >&2
+      return 1
+    }
+    jq -e '.isolation == "isolated-worktree"' <<<"$task_json" >/dev/null || {
+      printf 'controller_binding_capability_mismatch: writer task requires isolated-worktree plan isolation\n' >&2
+      return 1
+    }
+    checkout_git_dir="$(execution_git_directory "$checkout_root")" || {
+      printf 'controller_binding_invalid: checkout Git directory is unavailable\n' >&2
+      return 1
+    }
+    [[ "$checkout_root" != "$repo_root" && "$checkout_git_dir" != "$checkout_common_dir" ]] || {
+      printf 'controller_binding_capability_mismatch: writer checkout must be an isolated worktree\n' >&2
+      return 1
+    }
+  else
+    [[ "$capability_profile" == "delegated-read-only" && "$sandbox_mode" == "read-only" ]] || {
+      printf 'controller_binding_capability_mismatch: read-only task requires delegated-read-only and read-only sandbox\n' >&2
+      return 1
+    }
+  fi
+
+  envelope_task_json="$(jq -c \
+    --arg runtime_role "$runtime_role" \
+    --argjson attempt "$attempt" \
+    '
+    ({
+      section,
+      title,
+      task_id,
+      scope_slice,
+      depends_on,
+      impl_file_refs,
+      test_file_refs,
+      verification_commands,
+      executor_mode,
+      parallel_group,
+      parallel_policy,
+      delegation_policy,
+      execution_profile,
+      reasoning_profile,
+      isolation,
+      resource_locks,
+      convergence_required,
+      task_review_depth,
+      done_when,
+      failure_policy,
+      rollback_trigger,
+      rollback_target,
+      rollback_verification,
+      status,
+      attempt: $attempt,
+      runtime_role: $runtime_role,
+      touch_set: (((.impl_file_refs // []) + (.test_file_refs // [])) | map(select(. != "" and . != "none")) | unique),
+      oracle_refs: (.verification_commands // []),
+      start_state: "ready"
+    } + (if has("review_brief_ref") then {
+      review_brief_ref,
+      review_brief_sha256
+    } else {} end))
+    ' <<<"$task_json")"
+  envelope_json="$(jq -n -cS \
+    --arg binding_kind "$binding_kind" \
+    --arg controller_id "$controller_id" \
+    --arg run_id "$run_id" \
+    --arg run_nonce "$run_nonce" \
+    --arg model_policy "$model_policy" \
+    --arg canonical_repository "$repo_root" \
+    --arg repository_revision "$repo_revision" \
+    --arg plan_ref "$plan_ref" \
+    --arg plan_sha256 "$plan_digest" \
+    --arg ledger_ref "$ledger_ref" \
+    --arg ledger_sha256 "$ledger_digest" \
+    --argjson task "$envelope_task_json" \
+    --argjson physical_binding "$physical_json" \
+    '{
+      schema_version: 1,
+      artifact_kind: "controller-binding-envelope",
+      controller: {
+        controller_id: $controller_id,
+        binding_kind: $binding_kind,
+        run_id: $run_id,
+        run_nonce: $run_nonce,
+        model_policy: $model_policy
+      },
+      provenance: {
+        canonical_repository: $canonical_repository,
+        repository_revision: $repository_revision,
+        plan_ref: $plan_ref,
+        plan_sha256: $plan_sha256,
+        ledger_ref: $ledger_ref,
+        ledger_sha256: $ledger_sha256
+      },
+      task: $task,
+      physical_binding: $physical_binding,
+      authority: {
+        adapter_capabilities: [
+          "consume-binding",
+          "manage-run-owned-terminal-resources",
+          "persist-adapter-state"
+        ],
+        denied_capabilities: [
+          "select-task",
+          "mutate-task-ledger",
+          "converge-task",
+          "invoke-review",
+          "adjudicate-findings",
+          "repair-implementation",
+          "derive-lifecycle-tail"
+        ]
+      }
+    }')"
+  jq -e '
+    [paths(scalars) as $p | ($p[-1] | tostring)]
+    | all(.[]; test("^(secret|token|password|api_key|prompt)$"; "i") | not)
+  ' <<<"$envelope_json" >/dev/null || {
+    printf 'controller_binding_invalid: envelope would persist forbidden secret or prompt fields\n' >&2
+    return 1
+  }
+
+  run_state_root="$repo_root/.herdr-runs"
+  run_state_dir="$run_state_root/$run_id"
+  output_file="$run_state_dir/controller-binding.json"
+  [[ ! -L "$run_state_root" && ( ! -e "$run_state_root" || -d "$run_state_root" ) ]] || {
+    printf 'controller_binding_unsafe_output: run-state root is not a safe directory\n' >&2
+    return 1
+  }
+  [[ ! -L "$run_state_dir" && ( ! -e "$run_state_dir" || -d "$run_state_dir" ) ]] || {
+    printf 'controller_binding_unsafe_output: run directory is not a safe directory\n' >&2
+    return 1
+  }
+
+  (
+    umask 077
+    mkdir -p -- "$run_state_dir"
+    chmod 700 -- "$run_state_root" "$run_state_dir"
+    temporary_file="$(mktemp "$run_state_dir/.controller-binding.XXXXXX")"
+    if ! printf '%s\n' "$envelope_json" >"$temporary_file"; then
+      rm -f -- "$temporary_file"
+      return 1
+    fi
+    chmod 600 -- "$temporary_file"
+    mv -f -- "$temporary_file" "$output_file"
+  ) || {
+    printf 'controller_binding_write_failed: failed to atomically materialize envelope\n' >&2
+    return 1
+  }
+
+  printf '%s\n' "$output_file"
+}
+
 execution_ready_batch() {
   execution_runtime_binding "$@"
 }
@@ -910,6 +1514,7 @@ Usage:
   execute-runner.sh ready-set <ledger-json>
   execute-runner.sh ready-batch <plan-file> <ledger-json> <parallel-group> <runtime-capacity> [semantic-routing|inherit-main|runtime-default]
   execute-runner.sh runtime-binding <plan-file> <ledger-json> <parallel-group> <runtime-capacity> [semantic-routing|inherit-main|runtime-default]
+  execute-runner.sh controller-binding-envelope <plan-file> <ledger-json> <request-json>
   execute-runner.sh controller-converge <plan-file> <ledger-json> <task-id> <controller> <oracles-passed> <integration-passed> [changed-path ...]
   execute-runner.sh execution-result <plan-path> <ledger-json> <current-phase> <active-task-id-or-empty> <stop-reason> <review-status> <verify-status> <next-entry> <next-phase> <human-input-required> [workspace-mode]
   execute-runner.sh gate-result <review-status> <verify-status> <truth-sync-required> <truth-sync-completed>
@@ -979,6 +1584,10 @@ main() {
     runtime-binding)
       [[ $# -ge 5 && $# -le 6 ]] || { usage >&2; return 1; }
       execution_runtime_binding "$2" "$3" "$4" "$5" "${6:-}"
+      ;;
+    controller-binding-envelope)
+      [[ $# -eq 4 ]] || { usage >&2; return 1; }
+      execution_controller_binding_envelope "$2" "$3" "$4"
       ;;
     controller-converge)
       [[ $# -ge 7 ]] || { usage >&2; return 1; }

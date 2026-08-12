@@ -62,6 +62,7 @@ package "Policy Plane" as n_plane_policy {
 package "Tool Plane" as n_plane_tool {
   rectangle "codex-session-recovery" as n_codex_session_recovery
   rectangle "docker-multiarch-build" as n_docker_multiarch_build
+  rectangle "implement-change-via-herdr" as n_implement_change_via_herdr
   rectangle "smart-commit" as n_smart_commit
   rectangle "web-fetch" as n_web_fetch
 }

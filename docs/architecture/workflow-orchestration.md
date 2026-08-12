@@ -67,6 +67,7 @@ The implementation invocation DAG ([rendered SVG](generated/implementation-invoc
 The installed subgraph has one lifecycle controller:
 
 - `implement-change` owns plan-bound execution, verification, repair convergence, truth-sync routing, and close routing.
+- `implement-change-via-herdr` is an explicit lower-plane runtime adapter that can consume controller-issued task and review bindings; it never selects tasks, mutates the ledger, adjudicates findings, repairs implementation, or advances lifecycle state.
 - `review-change` is the agent-native review gate: it constructs a bounded brief, chooses preferred subagent or direct main-agent review, and adjudicates candidate evidence.
 - `review-implementation` is a read-only evaluator and returns candidate evidence only.
 - `sync-truth` owns bounded stable-truth mutation and its human approval gate; controller entry requires the approved plan and immutable passing execution result.
@@ -78,6 +79,20 @@ Reverse calls from evaluators or gates into `implement-change` are forbidden. Th
 After every planned task is controller-converged and implementation review and verification pass, `implement-change` records an immutable execution result bound to the approved design and plan, the canonical task ledger, review and verification references, the allowed touch set, and the declared stable-truth refs. A truth-affecting result continues directly to controller-authorized `sync-truth` preparation and stops at the pending truth approval gate; it does not ask for close first. A non-truth-affecting result may advance directly to close approval.
 
 `close-change` derives eligibility only from the approved plan, immutable execution result, and, when required, the exact approved truth-sync artifact. Pending, missing, invalid, or mismatched evidence routes to its owning upstream phase. Successful judgment produces `terminal_state: closed` with `next_entry: null`; there is no successful `close-change` self-route.
+
+## Explicit Herdr Runtime Adapter
+
+The Herdr path is selected only by an explicit `implement-change-via-herdr` request for an approved plan. It requires the initiating main agent to already be inside Herdr, reuses that pane's project workspace, and composes the existing `implement-change` controller. The controller emits a task- or review-specific binding envelope; the adapter consumes that envelope without reading the plan or mutating the task ledger.
+
+Planning remains provider-neutral. A pure repository-search and factual-confirmation task qualifies as an `explorer` only when the approved metadata is `fast`, `light`, `shared-read-only`, and has no write refs. Every delegated write task and every read-only task needing deeper synthesis is a `worker`. `semantic-routing`, `inherit-main`, and `runtime-default` may change physical model and reasoning selection, but never the approved DAG, isolation, authority, touch set, resource locks, or executable oracles.
+
+Implementation-time binding records the coding-agent kind, concrete model and reasoning effort, permission and sandbox modes, native-login control-plane references, checkout or isolated worktree, and Herdr workspace, tab, pane, terminal, and optional agent-session identities. The first adapter supports Codex CLI and Grok Build CLI through separate exact native capability profiles. Reviewers and explorers are read-only, delegated writers require isolated worktrees, and nested agent delegation is disabled.
+
+The initiating main agent remains the logical `orchestrator` and is never relaunched in a child pane. Managed child agents use the derived roles `reviewer`, `explorer`, or `worker`; their bounded display names are role-first with a stable animal mnemonic and task or attempt fragments. Opaque Herdr IDs, not names or UI focus, remain the ownership authority.
+
+Each run creates only a no-focus background tab and its recorded panes in the caller workspace. Preflight pins the caller hierarchy and identity and acquires one repository-scoped lease. Allocation persists returned opaque resource IDs before fallible process inspection; resume and cleanup revalidate the caller, lease owner, terminal, process argv, and available agent-session identity. Cleanup closes only resources whose ownership remains proven, retains ambiguous residue, and releases the lease only when the owned live set is gone.
+
+Automated acceptance uses the repository's fake Herdr executable and must not connect to a live Herdr server. Live acceptance is a separately authorized user-run operation whose created resources must be recorded and cleaned without touching unrelated workspaces, tabs, or panes. The initial decision horizon is three repository-local trials across at least two supported agent kinds; only their evidence can justify first-class controller integration, a persisted plan role, or a generic second-backend interface.
 
 ## Conditional Parallel Execution
 

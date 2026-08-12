@@ -34,6 +34,8 @@ assert_json() {
 
 main() {
   local tmp_dir design_file approved_plan pending_plan legacy_plan parallel_plan verdict ledger_file execution_result_json workspace_mode worktree_preflight
+  local binding_request_file binding_envelope_file binding_plan_digest binding_ledger_digest binding_worker_dir
+  local binding_ledger_before binding_ledger_after binding_file_mode binding_dir_mode
   local task_ledger_json=""
   local task_catalog_json=""
   local next_ready_task=""
@@ -52,6 +54,8 @@ main() {
   [[ "$(execute_entry_phase)" == "implement-serial" ]] || fail "execute entry phase should stay implement-serial"
 
   tmp_dir="$(mktemp -d)"
+  TEST_EXECUTE_TMP="$tmp_dir"
+  trap 'rm -rf -- "$TEST_EXECUTE_TMP"' EXIT
   design_file="$tmp_dir/design.md"
   approved_plan="$tmp_dir/approved-plan.md"
   pending_plan="$tmp_dir/pending-plan.md"
@@ -449,6 +453,15 @@ EOF
 - default_failure_policy: fix_forward
 EOF
 
+  git -C "$tmp_dir" init -q
+  git -C "$tmp_dir" add .
+  git -C "$tmp_dir" \
+    -c user.name="Harness Fixture" \
+    -c user.email="harness@example.invalid" \
+    commit -qm "fixture"
+  binding_worker_dir="$tmp_dir/.fixture-worker"
+  git -C "$tmp_dir" worktree add --detach "$binding_worker_dir" HEAD >/dev/null
+
   validate_execution_plan "$approved_plan"
   if validate_execution_plan "$pending_plan" >/dev/null 2>&1; then
     fail "pending plan should not pass execution validation"
@@ -556,6 +569,174 @@ EOF
   if execution_runtime_binding_from_validated_plan "$parallel_plan" "$tmp_dir/incomplete-frontier-ledger.json" "P1" 4 "semantic-routing" >/dev/null 2>&1; then
     fail "binding should wait without conflict until the complete frontier is ready"
   fi
+
+  task_ledger_json="$(execution_task_ledger "$parallel_plan")"
+  printf '%s\n' "$task_ledger_json" >"$ledger_file"
+  binding_plan_digest="$(harness_file_sha256 "$parallel_plan")"
+  binding_ledger_digest="$(jq -cS . "$ledger_file" | shasum -a 256 | awk '{print $1}')"
+  binding_request_file="$tmp_dir/controller-binding-request.json"
+  jq -n \
+    --arg plan_sha256 "$binding_plan_digest" \
+    --arg ledger_sha256 "$binding_ledger_digest" \
+    --arg checkout_path "$binding_worker_dir" \
+    '{
+      schema_version: 1,
+      binding_kind: "delegated-task",
+      controller_id: "controller-test",
+      run_id: "run-test-a1",
+      run_nonce: "nonce-test-a1",
+      task_id: "task-1",
+      attempt: 1,
+      model_policy: "semantic-routing",
+      expected_plan_sha256: $plan_sha256,
+      expected_ledger_sha256: $ledger_sha256,
+      review_brief_path: "",
+      review_brief_sha256: "",
+      physical_binding: {
+        terminal_backend: "herdr",
+        agent_kind: "codex",
+        model: "gpt-5.6-luna",
+        reasoning_effort: "high",
+        permission_mode: "never",
+        sandbox_mode: "workspace-write",
+        capability_profile: "delegated-local-writer",
+        control_plane_endpoint: "native://openai",
+        credential_ref: "native-login/codex",
+        workspace_id: "workspace-test",
+        tab_id: "tab-controller-test",
+        pane_id: "pane-controller-test",
+        agent_name: "worker-lynx-cb-ttask-1-a1",
+        checkout_path: $checkout_path
+      }
+    }' >"$binding_request_file"
+
+  [[ "$(execution_herdr_agent_name worker run-test-a1 task-1 1)" == "worker-lynx-cb-ttask-1-a1" ]] \
+    || fail "controller and adapter must share the deterministic agent-name projection"
+
+  jq 'del(.run_nonce) | .run_id = "missing-nonce"' "$binding_request_file" >"$tmp_dir/missing-nonce.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$tmp_dir/missing-nonce.json") >/dev/null 2>&1; then
+    fail "controller binding should reject a forged request without the controller nonce"
+  fi
+  [[ ! -e "$tmp_dir/.herdr-runs/missing-nonce" ]] || fail "missing nonce must fail before output mutation"
+
+  jq '.run_id = "stale-plan" | .expected_plan_sha256 = ("0" * 64)' "$binding_request_file" >"$tmp_dir/stale-plan.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$tmp_dir/stale-plan.json") >/dev/null 2>&1; then
+    fail "controller binding should reject a stale plan digest"
+  fi
+  [[ ! -e "$tmp_dir/.herdr-runs/stale-plan" ]] || fail "stale plan digest must fail before output mutation"
+
+  jq '.run_id = "stale-ledger" | .expected_ledger_sha256 = ("1" * 64)' "$binding_request_file" >"$tmp_dir/stale-ledger.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$tmp_dir/stale-ledger.json") >/dev/null 2>&1; then
+    fail "controller binding should reject a stale ledger digest"
+  fi
+  [[ ! -e "$tmp_dir/.herdr-runs/stale-ledger" ]] || fail "stale ledger digest must fail before output mutation"
+
+  jq '.run_id = "unsafe-secret" | .physical_binding.api_key = "must-not-persist"' "$binding_request_file" >"$tmp_dir/unsafe-secret.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$tmp_dir/unsafe-secret.json") >/dev/null 2>&1; then
+    fail "controller binding should reject undeclared credential material"
+  fi
+  [[ ! -e "$tmp_dir/.herdr-runs/unsafe-secret" ]] || fail "credential material must fail before output mutation"
+
+  jq '.run_id = "malformed-binding" | del(.physical_binding.sandbox_mode)' "$binding_request_file" >"$tmp_dir/malformed-binding.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$tmp_dir/malformed-binding.json") >/dev/null 2>&1; then
+    fail "controller binding should reject malformed physical binding data"
+  fi
+  [[ ! -e "$tmp_dir/.herdr-runs/malformed-binding" ]] || fail "malformed binding must fail before output mutation"
+
+  jq '.physical_binding.agent_name = "worker-wolf-00-ttask-1-a1"' "$binding_request_file" >"$tmp_dir/mismatched-agent-name.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$tmp_dir/mismatched-agent-name.json") >/dev/null 2>&1; then
+    fail "controller binding should reject a non-deterministic agent name"
+  fi
+  [[ ! -e "$tmp_dir/.herdr-runs/run-test-a1" ]] || fail "agent-name mismatch must fail before output mutation"
+
+  jq '.run_id = "../escape"' "$binding_request_file" >"$tmp_dir/unsafe-output.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$tmp_dir/unsafe-output.json") >/dev/null 2>&1; then
+    fail "controller binding should reject unsafe output paths"
+  fi
+  [[ ! -e "$tmp_dir/escape" ]] || fail "unsafe run ID must not escape the run-state root"
+
+  jq '.run_id = "unknown-task" | .task_id = "task-unknown"' "$binding_request_file" >"$tmp_dir/unknown-task.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$tmp_dir/unknown-task.json") >/dev/null 2>&1; then
+    fail "controller binding should reject unknown tasks"
+  fi
+  [[ ! -e "$tmp_dir/.herdr-runs/unknown-task" ]] || fail "unknown task must fail before output mutation"
+
+  jq '.[0].status = "pending"' "$ledger_file" >"$tmp_dir/non-ready-ledger.json"
+  binding_ledger_digest="$(jq -cS . "$tmp_dir/non-ready-ledger.json" | shasum -a 256 | awk '{print $1}')"
+  jq --arg ledger_sha256 "$binding_ledger_digest" '.run_id = "non-ready-task" | .expected_ledger_sha256 = $ledger_sha256' "$binding_request_file" >"$tmp_dir/non-ready-task.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$tmp_dir/non-ready-ledger.json" "$tmp_dir/non-ready-task.json") >/dev/null 2>&1; then
+    fail "controller binding should reject a non-ready task"
+  fi
+  [[ ! -e "$tmp_dir/.herdr-runs/non-ready-task" ]] || fail "non-ready task must fail before output mutation"
+
+  jq '.[0].scope_slice = "drifted task scope"' "$ledger_file" >"$tmp_dir/drifted-ledger.json"
+  binding_ledger_digest="$(jq -cS . "$tmp_dir/drifted-ledger.json" | shasum -a 256 | awk '{print $1}')"
+  jq --arg ledger_sha256 "$binding_ledger_digest" '.run_id = "drifted-ledger" | .expected_ledger_sha256 = $ledger_sha256' "$binding_request_file" >"$tmp_dir/drifted-request.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$tmp_dir/drifted-ledger.json" "$tmp_dir/drifted-request.json") >/dev/null 2>&1; then
+    fail "controller binding should reject plan-ledger drift"
+  fi
+  [[ ! -e "$tmp_dir/.herdr-runs/drifted-ledger" ]] || fail "plan-ledger drift must fail before output mutation"
+
+  binding_plan_digest="$(harness_file_sha256 "$pending_plan")"
+  jq --arg plan_sha256 "$binding_plan_digest" '.run_id = "unapproved-plan" | .expected_plan_sha256 = $plan_sha256' "$binding_request_file" >"$tmp_dir/unapproved-request.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$pending_plan" "$ledger_file" "$tmp_dir/unapproved-request.json") >/dev/null 2>&1; then
+    fail "controller binding should reject an unapproved plan"
+  fi
+  [[ ! -e "$tmp_dir/.herdr-runs/unapproved-plan" ]] || fail "unapproved plan must fail before output mutation"
+
+  binding_ledger_before="$(harness_file_sha256 "$ledger_file")"
+  binding_envelope_file="$(cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$binding_request_file")"
+  binding_ledger_after="$(harness_file_sha256 "$ledger_file")"
+  [[ "$binding_ledger_before" == "$binding_ledger_after" ]] || fail "controller binding must not mutate the task ledger"
+  [[ "$binding_envelope_file" == "$(realpath "$tmp_dir")/.herdr-runs/run-test-a1/controller-binding.json" ]] || fail "controller binding should return the canonical envelope path"
+  [[ -f "$binding_envelope_file" && ! -L "$binding_envelope_file" ]] || fail "controller binding should create a regular non-symlink envelope"
+  binding_file_mode="$(stat -f '%Lp' "$binding_envelope_file" 2>/dev/null || stat -c '%a' "$binding_envelope_file")"
+  binding_dir_mode="$(stat -f '%Lp' "$(dirname "$binding_envelope_file")" 2>/dev/null || stat -c '%a' "$(dirname "$binding_envelope_file")")"
+  binding_file_mode="${binding_file_mode: -3}"
+  binding_dir_mode="${binding_dir_mode: -3}"
+  [[ "$binding_file_mode" == "600" ]] || fail "controller binding envelope should be owner-only"
+  [[ "$binding_dir_mode" == "700" ]] || fail "controller binding run directory should be owner-only"
+  assert_json "$(<"$binding_envelope_file")" '.schema_version == 1 and .artifact_kind == "controller-binding-envelope"' "controller binding should be schema-versioned"
+  assert_json "$(<"$binding_envelope_file")" '.controller.controller_id == "controller-test" and .controller.run_id == "run-test-a1" and .controller.run_nonce == "nonce-test-a1"' "controller identity and nonce should be bound"
+  assert_json "$(<"$binding_envelope_file")" '.provenance.plan_sha256 | length == 64' "controller binding should include the approved plan digest"
+  assert_json "$(<"$binding_envelope_file")" '.provenance.ledger_sha256 | length == 64' "controller binding should include the canonical ledger digest"
+  jq -e --arg repo_root "$(realpath "$tmp_dir")" '.provenance.canonical_repository == $repo_root' "$binding_envelope_file" >/dev/null || fail "controller binding should include the canonical repository"
+  assert_json "$(<"$binding_envelope_file")" '.task.task_id == "task-1" and .task.status == "ready" and .task.attempt == 1 and .task.runtime_role == "worker"' "controller binding should preserve the selected ready task and derived role"
+  assert_json "$(<"$binding_envelope_file")" '.task.touch_set == ["src/example.py", "tests/test_example.py"] and .task.oracle_refs == ["bash test.sh"]' "controller binding should include the immutable touch set and oracle refs"
+  assert_json "$(<"$binding_envelope_file")" '.physical_binding.terminal_backend == "herdr" and .physical_binding.capability_profile == "delegated-local-writer"' "controller binding should preserve the validated physical binding"
+  assert_json "$(<"$binding_envelope_file")" '.physical_binding.agent_name == "worker-lynx-cb-ttask-1-a1"' "controller binding should persist only the deterministic agent name"
+  assert_json "$(<"$binding_envelope_file")" '.authority.adapter_capabilities == ["consume-binding", "manage-run-owned-terminal-resources", "persist-adapter-state"] and (.authority.denied_capabilities | index("mutate-task-ledger")) != null and (.authority.denied_capabilities | index("derive-lifecycle-tail")) != null' "controller binding should deny lifecycle authority"
+  assert_json "$(<"$binding_envelope_file")" '[paths(scalars) as $p | getpath($p) | strings | test("must-not-persist|prompt"; "i")] | all(. == false)' "controller binding should exclude credential material and prompt content"
+
+  jq 'map(.status = "done" | .convergence_verified = true)' "$ledger_file" >"$tmp_dir/review-ready-ledger.json"
+  printf '%s\n' 'Bounded implementation review fixture.' >"$tmp_dir/review-brief.md"
+  chmod 600 "$tmp_dir/review-brief.md"
+  binding_ledger_digest="$(jq -cS . "$tmp_dir/review-ready-ledger.json" | shasum -a 256 | awk '{print $1}')"
+  review_brief_digest="$(harness_file_sha256 "$tmp_dir/review-brief.md")"
+  reviewer_agent_name="$(execution_herdr_agent_name reviewer run-review-a1 implementation-review 1)"
+  jq \
+    --arg ledger_sha256 "$binding_ledger_digest" \
+    --arg review_brief_path "$tmp_dir/review-brief.md" \
+    --arg review_brief_sha256 "$review_brief_digest" \
+    --arg agent_name "$reviewer_agent_name" \
+    --arg checkout_path "$(realpath "$tmp_dir")" \
+    '.binding_kind = "bounded-review"
+      | .run_id = "run-review-a1"
+      | .task_id = "implementation-review"
+      | .expected_ledger_sha256 = $ledger_sha256
+      | .review_brief_path = $review_brief_path
+      | .review_brief_sha256 = $review_brief_sha256
+      | .physical_binding.agent_name = $agent_name
+      | .physical_binding.model = "gpt-5.6-sol"
+      | .physical_binding.reasoning_effort = "high"
+      | .physical_binding.sandbox_mode = "read-only"
+      | .physical_binding.capability_profile = "delegated-read-only"
+      | .physical_binding.checkout_path = $checkout_path' \
+    "$binding_request_file" >"$tmp_dir/reviewer-binding-request.json"
+  reviewer_envelope_file="$(cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$tmp_dir/review-ready-ledger.json" "$tmp_dir/reviewer-binding-request.json")"
+  assert_json "$(<"$reviewer_envelope_file")" '.controller.binding_kind == "bounded-review" and .task.runtime_role == "reviewer" and .task.touch_set == [] and .task.review_brief_sha256 != null' "controller binding should issue a bounded reviewer envelope after convergence"
+
+  declare -F execution_controller_binding_envelope >/dev/null || fail "controller-binding-envelope API should be available"
 
   printf '%s\n' "$(execution_task_ledger "$approved_plan")" >"$ledger_file"
   execution_result_json="$(build_execution_result_json "$approved_plan" "$ledger_file" "implement-serial" "task-1" "task_blocked_requires_human" "pending" "pending" "implement-change" "implement-serial" "true" "$workspace_mode")"

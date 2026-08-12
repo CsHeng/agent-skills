@@ -41,6 +41,7 @@
         "git-worktrees",
         "go-guidelines",
         "implement-change",
+        "implement-change-via-herdr",
         "infrastructure-triage",
         "language-decision-tree",
         "logging-standards",
@@ -542,6 +543,48 @@
         "sync-truth"
       ],
       "source": "src/skills/workflows/implement-change"
+    },
+    {
+      "activation_mode": "explicit",
+      "category": "tool",
+      "default_role": "overlay",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": false,
+          "source": "activation-mode-projection"
+        }
+      },
+      "id": "implement-change-via-herdr",
+      "implicit_invocation": false,
+      "install": [
+        "claude",
+        "codex",
+        "root-flat"
+      ],
+      "lifecycle_owner": false,
+      "may_mutate_repo": true,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "explicit-via-herdr-approved-plan-execution"
+      ],
+      "public_id": "implement-change-via-herdr",
+      "semantic_requires": [
+        "implement-change"
+      ],
+      "semantic_transitive_requires": [
+        "close-change",
+        "implement-change",
+        "review-change",
+        "review-design",
+        "review-implementation",
+        "review-plan",
+        "sync-truth"
+      ],
+      "source": "src/skills/tools/implement-change-via-herdr"
     },
     {
       "activation_mode": "native",
@@ -1361,6 +1404,7 @@
         "git-worktrees",
         "go-guidelines",
         "implement-change",
+        "implement-change-via-herdr",
         "infrastructure-triage",
         "language-decision-tree",
         "logging-standards",
@@ -1399,6 +1443,7 @@
         "git-worktrees",
         "go-guidelines",
         "implement-change",
+        "implement-change-via-herdr",
         "infrastructure-triage",
         "language-decision-tree",
         "logging-standards",

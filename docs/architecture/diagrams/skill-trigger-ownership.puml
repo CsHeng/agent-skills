@@ -55,6 +55,7 @@ package "Activation: explicit" as n_activation_explicit {
   rectangle "clean-architecture\n[helper]\n(compatibility)" as n_skill_clean_architecture <<compatibility>>
   rectangle "codex-session-recovery\n[primary]" as n_skill_codex_session_recovery
   rectangle "git-worktrees\n[primary]" as n_skill_git_worktrees
+  rectangle "implement-change-via-herdr\n[overlay]" as n_skill_implement_change_via_herdr
   rectangle "quality-standards\n[helper]\n(compatibility)" as n_skill_quality_standards <<compatibility>>
   rectangle "security-logging\n[helper]\n(compatibility)" as n_skill_security_logging <<compatibility>>
   rectangle "skill-miner\n[primary]" as n_skill_skill_miner
@@ -70,6 +71,7 @@ package "Semantic trigger cases" as n_trigger_cases {
   rectangle "change-scope-design" as n_case_change_scope_design <<case>>
   rectangle "execution-plan" as n_case_execution_plan <<case>>
   rectangle "approved-plan-execution" as n_case_approved_plan_execution <<case>>
+  rectangle "explicit-via-herdr-approved-plan-execution" as n_case_explicit_via_herdr_approved_plan_execution <<case>>
   rectangle "lifecycle-review-gate" as n_case_lifecycle_review_gate <<case>>
   rectangle "coding-skill-routing" as n_case_coding_skill_routing <<case>>
   rectangle "session-boundary-handoff" as n_case_session_boundary_handoff <<case>>
@@ -104,6 +106,7 @@ n_case_project_truth_audit --> n_skill_analyze_project : case owner
 n_case_change_scope_design --> n_skill_design_change : case owner
 n_case_execution_plan --> n_skill_plan_change : case owner
 n_case_approved_plan_execution --> n_skill_implement_change : case owner
+n_case_explicit_via_herdr_approved_plan_execution --> n_skill_implement_change_via_herdr : case owner
 n_case_lifecycle_review_gate --> n_skill_review_change : case owner
 n_case_coding_skill_routing --> n_skill_use_coding_skills : case owner
 n_case_session_boundary_handoff --> n_skill_use_coding_skills : case owner

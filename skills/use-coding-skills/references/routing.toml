@@ -124,6 +124,19 @@ negative = [
 lexical_hints = ["implement approved plan", "execute plan", "fix forward"]
 
 [[trigger_cases]]
+id = "explicit-via-herdr-approved-plan-execution"
+owner = "implement-change-via-herdr"
+positive = [
+  "Explicitly invoke $coding:implement-change-via-herdr to execute an approved plan through owned Herdr tabs and panes.",
+  "Explicitly ask to run an approved plan through Herdr while retaining the implement-change controller.",
+]
+negative = [
+  "Implement an approved plan through the ordinary controller runtime without requesting Herdr.",
+  "Use Herdr to choose tasks, adjudicate review findings, repair code, or own lifecycle continuation.",
+]
+lexical_hints = ["implement-change-via-herdr", "approved plan through Herdr"]
+
+[[trigger_cases]]
 id = "lifecycle-review-gate"
 owner = "review-change"
 positive = [

@@ -59,6 +59,10 @@ Harness runner coverage:
 
 Lower-plane skills stay available as components the kernel can call, not as competing top-level authorities.
 
+`implement-change-via-herdr` is an explicit Tool-plane overlay for approved-plan execution from an existing Herdr-managed main pane. It composes `implement-change`, which remains the sole lifecycle controller and final judge. Plans keep provider-neutral execution and reasoning profiles; implementation-time binding selects the supported coding-agent CLI, model and effort, permission and sandbox, checkout or worktree, and opaque Herdr location. The adapter may manage only its recorded run-owned background tabs, panes, and agent processes.
+
+This adapter is an experimental path with a decision horizon of three user-run trials across at least two supported agent kinds. Deterministic automated acceptance uses the fake Herdr fixture; live Herdr acceptance is separately authorized, resource-owned evidence and never part of the ordinary automated suite.
+
 ## Optional Session Routing And Style
 
 - `use-coding-skills`: Optional router for ambiguous multi-stage coding work, session boundaries, and compact handoffs. Its installed routing contract owns semantic case boundaries, phase-to-workflow mapping, and support routes; direct workflow and policy matches bypass it.
@@ -102,7 +106,7 @@ Lower-plane skills stay available as components the kernel can call, not as comp
 | Evaluation | Read-only review evaluators coordinated by `review-change` | `review-design`, `review-plan`, `review-implementation` |
 | Discipline | Reusable engineering methods and decision trees | `architecture-patterns`, `testing-strategy`, `language-decision-tree`, `tool-decision-tree`, `skill-miner` |
 | Policy | Language, security, quality, and logging rules | `python-guidelines`, `go-guidelines`, `shell-guidelines`, `security-guardrails`, `sops-age-guardrails`, `development-standards` |
-| Tool | Narrow tool adapters and operational helpers | `web-fetch`, `docker-multiarch-build`, `codex-session-recovery`, `smart-commit` |
+| Tool | Narrow tool adapters and operational helpers | `implement-change-via-herdr`, `web-fetch`, `docker-multiarch-build`, `codex-session-recovery`, `smart-commit` |
 | Manual tools | Explicit user request only, never implicit | `git-worktrees`, `smart-squash` |
 | Compatibility | Explicit retained IDs that hand off to a successor | `clean-architecture`, `quality-standards`, `security-logging` |
 

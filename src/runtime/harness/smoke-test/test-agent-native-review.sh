@@ -54,6 +54,13 @@ main() {
     rg -n -- "$disposition" "$review_change" >/dev/null || fail "missing main-agent disposition: $disposition"
   done
 
+  rg -n -- 'candidate findings only' "$implement_change" >/dev/null \
+    || fail "implementation controller must treat reviewer output as candidate findings only"
+  rg -n -- 'must not delegate recursively' "$implement_change" >/dev/null \
+    || fail "review and worker actors must not delegate recursively"
+  rg -n -- 'main controller alone' "$implement_change" >/dev/null \
+    || fail "implementation controller must retain convergence and repair authority"
+
   assert_absent 'run-review\.sh|review-gate\.sh|review-runner\.sh|same-driver|cross-model|cross-provider|adversarial reviewer|codex exec|claude -p|gemini' \
     "active review surfaces must not invoke or select external reviewers" \
     "$review_change" "$implement_change" "$review_components"

@@ -69,6 +69,16 @@ For each affected task, record enough decision metadata for implementation and r
 
 Require these fields only when a task creates or replaces a persisted implementation boundary. Do not add placeholder language metadata to docs-only work, ordinary existing-language edits, generated-surface refreshes, or agent ad hoc commands.
 
+## Explorer Eligibility
+
+Use the cheap explorer profile only for pure repository search and factual confirmation. Such a task
+must have no implementation or test write refs, use `execution_profile: fast`,
+`reasoning_profile: light`, and `isolation: shared-read-only`; it may return bounded evidence and open
+questions but cannot edit, test-write, or make a design decision. A task that needs deeper synthesis,
+interpretation, or cross-file reasoning is a worker or main task, not a cheap explorer, even when it
+does not write files. Do not infer explorer eligibility from a model or provider name; record the
+semantic profile in the approved plan and leave concrete binding to `implement-change`.
+
 ## Approved Architecture Decisions
 
 When the upstream design contains an approved architecture decision, plan its implementation without rerunning selection. Record:

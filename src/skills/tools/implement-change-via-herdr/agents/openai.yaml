@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implement Change via Herdr"
+  short_description: "Run approved implementation through owned Herdr resources"
+  default_prompt: "Use $implement-change-via-herdr to execute an approved plan through Herdr without changing lifecycle ownership."
