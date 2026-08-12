@@ -19,6 +19,16 @@ assert_contains() {
   rg -n "$pattern" "$file_ref" >/dev/null || fail "$message"
 }
 
+assert_not_contains() {
+  local file_ref="$1"
+  local pattern="$2"
+  local message="$3"
+  [[ "$file_ref" == /* ]] || file_ref="$ROOT_DIR/$file_ref"
+  if rg -n -- "$pattern" "$file_ref" >/dev/null; then
+    fail "$message"
+  fi
+}
+
 main() {
   local design_skill plan_skill implement_skill
   case "$SKILL_SURFACE" in
@@ -49,10 +59,22 @@ main() {
   assert_contains "$plan_skill" 'semantic-routing' "plan skill should provide semantic routing advice"
   assert_contains "$plan_skill" 'inherit-main' "plan skill should preserve topology under inherit-main"
   assert_contains "$plan_skill" 'pure repository search and factual confirmation' "plan skill should bound cheap explorers to pure search"
+  assert_contains "$plan_skill" 'no implementation or test write refs' "plan skill should require no-write explorer refs"
   assert_contains "$plan_skill" 'execution_profile: fast' "plan skill should assign fast execution to cheap explorers"
   assert_contains "$plan_skill" 'reasoning_profile: light' "plan skill should assign light reasoning to cheap explorers"
   assert_contains "$plan_skill" 'isolation: shared-read-only' "plan skill should require shared read-only explorer isolation"
   assert_contains "$plan_skill" 'deeper synthesis' "plan skill should keep deep synthesis out of cheap explorers"
+  assert_contains "$plan_skill" 'absolute low-cost runtime invariant' "plan skill should define explorer cost as absolute"
+  assert_contains "$plan_skill" '[Mm]ixed search-and-judgment work' "plan skill should identify mixed search and judgment"
+  assert_contains "$plan_skill" 'explicit explorer task IDs' "plan skill should split factual search into explorer task IDs"
+  assert_contains "$plan_skill" 'main-owned synthesis task' "plan skill should assign synthesis to the main-owned task"
+  assert_contains "$plan_skill" 'absorb otherwise independent' "plan skill should keep independent fact search out of synthesis"
+  assert_contains "$plan_skill" 'low by default' "plan skill should require low explorer effort by default"
+  assert_contains "$plan_skill" 'medium as the ceiling' "plan skill should cap explorer effort at medium"
+  assert_contains "$plan_skill" 'high/xhigh' "plan skill should reject high and xhigh explorer effort"
+  assert_not_contains "$plan_skill" 'relative.*downgrade|strict downgrade|one provider tier below|worker.?baseline' "plan skill should not define explorer cost relative to a worker"
+  assert_not_contains "$plan_skill" 'high/xhigh.*(allowed|eligible|may use|can be)' "plan skill should reject high and xhigh explorer allowance"
+  assert_not_contains "$plan_skill" 'Codex|Grok|Luna|SOL' "plan skill should keep provider and model names out of portable guidance"
   assert_contains "$implement_skill" 'logical topology|task IDs, dependencies' "implementation skill should leave logical topology to planning"
   assert_contains "$implement_skill" 'runtime binding' "implementation skill should own runtime binding"
   assert_contains "$implement_skill" 'orchestrator' "implementation skill should derive the orchestrator role"

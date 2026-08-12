@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import importlib.util
 import json
@@ -170,6 +171,76 @@ class HerdrAdapterContractTests(unittest.TestCase):
         self.assertEqual(result["error"]["code"], "herdr_executable_invalid")
         self.assertFalse(self.log.exists())
 
+    def test_controller_lease_admits_members_and_rejects_legacy_state(self) -> None:
+        self.assertEqual(self.invoke("preflight")["returncode"], 0)
+        lease = json.loads((self.repo / ".herdr-runs" / "lease.json").read_text())
+        self.assertEqual(lease["schema_version"], 2)
+        self.assertEqual(lease["artifact_kind"], "herdr-controller-lease")
+        self.assertEqual([member["task_id"] for member in lease["members"]], ["T02"])
+        self.assertEqual(lease["selected_task_ids"], ["T02"])
+
+        probe = type(self)(self._testMethodName)
+        probe.setUp()
+        try:
+            legacy = copy.deepcopy(lease)
+            legacy["schema_version"] = 1
+            legacy["artifact_kind"] = "herdr-execution-lease"
+            (probe.repo / ".herdr-runs" / "lease.json").write_text(json.dumps(legacy), encoding="utf-8")
+            (probe.repo / ".herdr-runs" / "lease.json").chmod(0o600)
+            self.assertEqual(probe.invoke("preflight")["error"]["code"], "herdr_execution_conflict")
+            self.assertFalse(probe.log.exists())
+        finally:
+            probe.tearDown()
+
+    def test_shell_readiness_busy_and_unavailable_are_typed_and_start_once(self) -> None:
+        busy = type(self)(self._testMethodName)
+        busy.setUp()
+        try:
+            busy.env["HERDR_FIXTURE_SCENARIO"] = "agent_pane_busy"
+            for command in ("preflight", "allocate"):
+                self.assertEqual(busy.invoke(command)["returncode"], 0)
+            result = busy.invoke("shell-ready", "--timeout-seconds", "1")
+            self.assertEqual(result["error"]["code"], "agent_pane_busy")
+            self.assertFalse(any(json.loads(line)[:2] == ["agent", "start"] for line in busy.log.read_text().splitlines()))
+        finally:
+            busy.tearDown()
+
+        unavailable = type(self)(self._testMethodName)
+        unavailable.setUp()
+        try:
+            unavailable.env["HERDR_FIXTURE_SCENARIO"] = "non-available-shell"
+            for command in ("preflight", "allocate"):
+                self.assertEqual(unavailable.invoke(command)["returncode"], 0)
+            result = unavailable.invoke("shell-ready", "--timeout-seconds", "1")
+            self.assertEqual(result["error"]["code"], "shell_readiness_deadline")
+            state = json.loads((unavailable.run_dir / "state.json").read_text())
+            self.assertEqual(state["phase"], "cleanup-pending")
+            self.assertEqual(state["shell_readiness"]["state"], "deadline")
+        finally:
+            unavailable.tearDown()
+
+        late = type(self)(self._testMethodName)
+        late.setUp()
+        try:
+            late.env["HERDR_FIXTURE_SCENARIO"] = "late-shell"
+            for command in ("preflight", "allocate"):
+                self.assertEqual(late.invoke(command)["returncode"], 0)
+            result = late.invoke("shell-ready", "--timeout-seconds", "1")
+            self.assertEqual(result["error"]["code"], "shell_readiness_deadline")
+        finally:
+            late.tearDown()
+
+        late_poll = type(self)(self._testMethodName)
+        late_poll.setUp()
+        try:
+            late_poll.env["HERDR_FIXTURE_SCENARIO"] = "late-poll-shell"
+            for command in ("preflight", "allocate"):
+                self.assertEqual(late_poll.invoke(command)["returncode"], 0)
+            result = late_poll.invoke("shell-ready", "--timeout-seconds", "1")
+            self.assertEqual(result["error"]["code"], "shell_readiness_deadline")
+        finally:
+            late_poll.tearDown()
+
     def test_full_fake_protocol_persists_bounded_owner_state(self) -> None:
         self.assertEqual(self.invoke("preflight")["returncode"], 0)
         self.assertEqual(self.invoke("allocate")["returncode"], 0)
@@ -330,7 +401,7 @@ class HerdrAdapterContractTests(unittest.TestCase):
         finally:
             timed_out.tearDown()
 
-    def test_grok_binding_and_explorer_downgrade_are_runtime_evidence(self) -> None:
+    def test_grok_binding_and_absolute_explorer_cost_are_runtime_evidence(self) -> None:
         self.envelope["physical_binding"]["agent_kind"] = "grok"
         self.envelope["physical_binding"]["reasoning_effort"] = "medium"
         self.envelope["physical_binding"]["model"] = "grok-4.5"
@@ -340,8 +411,10 @@ class HerdrAdapterContractTests(unittest.TestCase):
         self.assertEqual(self.invoke("preflight")["returncode"], 0)
         state = json.loads((self.run_dir / "state.json").read_text(encoding="utf-8"))
         self.assertEqual(
-            state["physical_binding"]["explorer_downgrade"]["status"], "downgraded"
+            state["physical_binding"]["explorer_cost"]["status"], "absolute-low-cost"
         )
+        self.assertEqual(state["physical_binding"]["explorer_cost"]["default_effort"], "low")
+        self.assertEqual(state["physical_binding"]["explorer_cost"]["max_effort"], "medium")
         for command in ("allocate", "start"):
             self.assertEqual(self.invoke(command)["returncode"], 0)
         calls = [
@@ -357,25 +430,28 @@ class HerdrAdapterContractTests(unittest.TestCase):
         self.assertIn("--no-subagents", native_args)
         self.assertIn("Read,Grep,Glob", native_args)
 
-        codex = type(self)(self._testMethodName)
-        codex.setUp()
-        try:
-            codex.envelope["physical_binding"]["reasoning_effort"] = "xhigh"
-            codex.envelope_path.write_text(json.dumps(codex.envelope), encoding="utf-8")
-            result = codex.invoke("preflight")
-            self.assertEqual(
-                result["error"]["code"], "delegated_capability_unavailable"
-            )
-        finally:
-            codex.tearDown()
+        for disallowed_effort in ("high", "xhigh"):
+            codex = type(self)(self._testMethodName)
+            codex.setUp()
+            try:
+                codex.envelope["physical_binding"]["reasoning_effort"] = disallowed_effort
+                codex.envelope_path.write_text(
+                    json.dumps(codex.envelope), encoding="utf-8"
+                )
+                result = codex.invoke("preflight")
+                self.assertEqual(
+                    result["error"]["code"], "delegated_capability_unavailable"
+                )
+            finally:
+                codex.tearDown()
 
-    def test_explicit_model_policy_exceptions_are_persisted(self) -> None:
+    def test_all_model_policies_preserve_the_absolute_explorer_ceiling(self) -> None:
         for policy in ("inherit-main", "runtime-default"):
             probe = type(self)(self._testMethodName)
             probe.setUp()
             try:
                 probe.envelope["controller"]["model_policy"] = policy
-                probe.envelope["physical_binding"]["reasoning_effort"] = "xhigh"
+                probe.envelope["physical_binding"]["reasoning_effort"] = "medium"
                 probe.envelope_path.write_text(
                     json.dumps(probe.envelope), encoding="utf-8"
                 )
@@ -383,9 +459,17 @@ class HerdrAdapterContractTests(unittest.TestCase):
                 state = json.loads(
                     (probe.run_dir / "state.json").read_text(encoding="utf-8")
                 )
-                evidence = state["physical_binding"]["explorer_downgrade"]
-                self.assertEqual(evidence["status"], "explicit-policy-exception")
+                evidence = state["physical_binding"]["explorer_cost"]
+                self.assertEqual(evidence["status"], "absolute-low-cost")
                 self.assertEqual(evidence["model_policy"], policy)
+                probe.envelope["physical_binding"]["reasoning_effort"] = "high"
+                probe.envelope_path.write_text(
+                    json.dumps(probe.envelope), encoding="utf-8"
+                )
+                self.assertEqual(
+                    probe.invoke("preflight")["error"]["code"],
+                    "delegated_capability_unavailable",
+                )
             finally:
                 probe.tearDown()
 
@@ -734,6 +818,213 @@ class HerdrAdapterContractTests(unittest.TestCase):
         finally:
             stale.tearDown()
 
+    def prepare_command_job(self) -> None:
+        self.envelope["controller"]["binding_kind"] = "command-job"
+        self.envelope["task"].update(
+            {
+                "executor_mode": "main",
+                "touch_set": [],
+                "resource_locks": ["verification-a"],
+            }
+        )
+        self.envelope["physical_binding"] = {
+            key: self.envelope["physical_binding"][key]
+            for key in ("terminal_backend", "workspace_id", "tab_id", "pane_id", "checkout_path")
+        }
+        self.envelope["command_job"] = {
+            "cwd": str(self.repo.resolve()),
+            "argv": ["printf", "ok"],
+            "command": "printf ok",
+            "timeout_seconds": 30,
+            "max_concurrency": 1,
+            "output_bound_bytes": 4096,
+            "resource_locks": ["verification-a"],
+            "provenance": {"kind": "task", "task_id": "T02"},
+        }
+        self.envelope["authority"]["denied_capabilities"].append("claim-task-success")
+        self.envelope_path.write_text(json.dumps(self.envelope), encoding="utf-8")
+        self.envelope_path.chmod(0o600)
+        self.env["HERDR_FIXTURE_CWD"] = str(self.repo.resolve())
+
+    def test_command_job_is_separate_pane_run_and_returns_oracle_evidence(self) -> None:
+        self.prepare_command_job()
+        for command in ("preflight", "allocate", "start", "wait", "collect"):
+            result = self.invoke(command, "--timeout-seconds", "2")
+            self.assertEqual(result["returncode"], 0, command)
+        state = json.loads((self.run_dir / "state.json").read_text(encoding="utf-8"))
+        evidence = state["evidence"][0]
+        self.assertEqual(state["binding_kind"], "command-job")
+        self.assertEqual(evidence["exit_code"], 0)
+        self.assertIsInstance(evidence["process"]["pid"], int)
+        self.assertEqual(
+            evidence["process"]["argv_sha256"],
+            hashlib.sha256(b'["printf","ok"]').hexdigest(),
+        )
+        self.assertTrue(evidence["oracle_judgment_required"])
+        self.assertFalse(evidence["task_success_claim"])
+        self.assertNotIn("fixture-secret", json.dumps(state))
+        self.assertNotIn("fixture-password", json.dumps(state))
+        calls = [json.loads(line) for line in self.log.read_text(encoding="utf-8").splitlines()]
+        run_calls = [call for call in calls if call[:2] == ["pane", "run"]]
+        self.assertEqual(len(run_calls), 1)
+        self.assertEqual(len(run_calls[0]), 4)
+        self.assertEqual(run_calls[0][2], "w-main:p-child")
+        self.assertTrue(run_calls[0][3].startswith("/bin/sh -c "))
+        self.assertNotIn("--pane", run_calls[0][3])
+        self.assertNotIn("--cwd", run_calls[0][3])
+        self.assertFalse(any(call[:2] == ["pane", "run"] and len(call) != 4 for call in calls))
+        wait_calls = [call for call in calls if call[:2] == ["pane", "wait-output"]]
+        self.assertEqual(wait_calls[0][2], "w-main:p-child")
+        self.assertIn("--match", wait_calls[0])
+        self.assertFalse(any(call[:2] == ["agent", "start"] for call in calls))
+        self.assertFalse(any(call[:2] == ["agent", "prompt"] for call in calls))
+        self.assertEqual(self.invoke("cleanup")["returncode"], 0)
+
+    def test_command_gate_capacity_admits_only_the_controller_issued_width(self) -> None:
+        first = self
+        first.prepare_command_job()
+        first.envelope["task"]["resource_locks"] = ["verification-a", "verification-b"]
+        first.envelope["command_job"].update(
+            {
+                "max_concurrency": 2,
+                "provenance": {"kind": "gate", "gate_id": "gate-a"},
+            }
+        )
+        first.envelope_path.write_text(json.dumps(first.envelope), encoding="utf-8")
+        self.assertEqual(first.invoke("preflight")["returncode"], 0)
+
+        second = type(self)(self._testMethodName)
+        second.setUp()
+        try:
+            second.repo = first.repo
+            second.run_dir = first.repo / ".herdr-runs" / "run-k8"
+            second.run_dir.mkdir(parents=True)
+            second.envelope = copy.deepcopy(first.envelope)
+            second.envelope["controller"].update({"run_id": "run-k8", "run_nonce": "nonce-fresh-k8"})
+            second.envelope["command_job"].update(
+                {
+                    "resource_locks": ["verification-b"],
+                    "provenance": {"kind": "gate", "gate_id": "gate-b"},
+                }
+            )
+            second.envelope_path = second.run_dir / "controller-binding.json"
+            second.envelope_path.write_text(json.dumps(second.envelope), encoding="utf-8")
+            second.envelope_path.chmod(0o600)
+            self.assertEqual(second.invoke("preflight")["returncode"], 0)
+
+            third = type(self)(self._testMethodName)
+            third.setUp()
+            try:
+                third.repo = first.repo
+                third.run_dir = first.repo / ".herdr-runs" / "run-k9"
+                third.run_dir.mkdir(parents=True)
+                third.envelope = copy.deepcopy(first.envelope)
+                third.envelope["controller"].update({"run_id": "run-k9", "run_nonce": "nonce-fresh-k9"})
+                third.envelope["command_job"].update(
+                    {
+                        "resource_locks": ["verification-c"],
+                        "provenance": {"kind": "gate", "gate_id": "gate-c"},
+                    }
+                )
+                third.envelope["task"]["resource_locks"].append("verification-c")
+                third.envelope_path = third.run_dir / "controller-binding.json"
+                third.envelope_path.write_text(json.dumps(third.envelope), encoding="utf-8")
+                third.envelope_path.chmod(0o600)
+                self.assertEqual(third.invoke("preflight")["error"]["code"], "batch_width_exhausted")
+            finally:
+                third.tearDown()
+        finally:
+            second.tearDown()
+
+    def test_command_job_rejects_injection_foreign_cwd_and_missing_locks(self) -> None:
+        for mutation, expected in (
+            (
+                lambda envelope: envelope["command_job"].update(
+                    {"command": "printf ok; touch injected"}
+                ),
+                "controller_binding_invalid",
+            ),
+            (
+                lambda envelope: envelope["command_job"].update({"cwd": "/tmp"}),
+                "controller_binding_cwd_mismatch",
+            ),
+            (
+                lambda envelope: envelope["command_job"].update({"resource_locks": []}),
+                "resource_lock_required",
+            ),
+            (
+                lambda envelope: envelope["command_job"].update(
+                    {"argv": ["printf", "ok; touch injected"]}
+                ),
+                "controller_binding_invalid",
+            ),
+            (
+                lambda envelope: envelope["command_job"].update(
+                    {"task_success_claim": True}
+                ),
+                "controller_binding_invalid",
+            ),
+            (
+                lambda envelope: envelope["authority"]["denied_capabilities"].remove(
+                    "claim-task-success"
+                ),
+                "controller_binding_authority_denied",
+            ),
+        ):
+            probe = type(self)(self._testMethodName)
+            probe.setUp()
+            try:
+                probe.prepare_command_job()
+                mutation(probe.envelope)
+                probe.envelope_path.write_text(json.dumps(probe.envelope), encoding="utf-8")
+                result = probe.invoke("preflight")
+                self.assertEqual(result["error"]["code"], expected)
+                self.assertFalse(probe.log.exists())
+            finally:
+                probe.tearDown()
+
+    def test_command_job_nonzero_and_timeout_remain_controller_evidence(self) -> None:
+        nonzero = type(self)(self._testMethodName)
+        nonzero.setUp()
+        try:
+            nonzero.prepare_command_job()
+            nonzero.env["HERDR_FIXTURE_SCENARIO"] = "command-nonzero"
+            for command in ("preflight", "allocate", "start", "wait", "collect"):
+                result = nonzero.invoke(command, "--timeout-seconds", "2")
+                self.assertEqual(result["returncode"], 0, command)
+            state = json.loads((nonzero.run_dir / "state.json").read_text(encoding="utf-8"))
+            self.assertEqual(state["evidence"][0]["exit_code"], 7)
+            self.assertFalse(state["evidence"][0]["task_success_claim"])
+        finally:
+            nonzero.tearDown()
+
+        timed_out = type(self)(self._testMethodName)
+        timed_out.setUp()
+        try:
+            timed_out.prepare_command_job()
+            timed_out.env["HERDR_FIXTURE_SCENARIO"] = "command-timeout"
+            for command in ("preflight", "allocate"):
+                self.assertEqual(timed_out.invoke(command)["returncode"], 0)
+            result = timed_out.invoke("start")
+            self.assertEqual(result["error"]["code"], "command_timeout")
+            state = json.loads((timed_out.run_dir / "state.json").read_text(encoding="utf-8"))
+            self.assertEqual(state["phase"], "cleanup-pending")
+            self.assertEqual(state["lease_state"], "cleanup-pending")
+        finally:
+            timed_out.tearDown()
+
+    def test_command_output_bound_is_bytes_and_preserves_valid_utf8(self) -> None:
+        self.prepare_command_job()
+        self.envelope["command_job"]["output_bound_bytes"] = 5
+        self.envelope_path.write_text(json.dumps(self.envelope), encoding="utf-8")
+        self.env["HERDR_FIXTURE_SCENARIO"] = "command-unicode"
+        for command in ("preflight", "allocate", "start", "collect"):
+            result = self.invoke(command)
+            self.assertEqual(result["returncode"], 0, command)
+        state = json.loads((self.run_dir / "state.json").read_text(encoding="utf-8"))
+        preview = state["evidence"][0]["output_preview"]
+        self.assertLessEqual(len(preview.encode("utf-8")), 5)
+        preview.encode("utf-8").decode("utf-8")
 
 class HerdrWorkflowContractTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -810,7 +1101,7 @@ class HerdrWorkflowContractTests(unittest.TestCase):
             "reasoning_profile: light",
             "isolation: shared-read-only",
             "deeper synthesis",
-            "not a cheap explorer",
+            "not an explorer",
         ):
             self.assertIn(phrase, self.plan_text)
         for provider_name in ("Codex", "Grok", "Claude", "Herdr"):

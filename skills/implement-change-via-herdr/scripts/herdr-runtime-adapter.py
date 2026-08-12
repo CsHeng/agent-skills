@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import stat
 import subprocess
 import tempfile
@@ -22,10 +23,17 @@ JsonValue = JsonPrimitive | list["JsonValue"] | dict[str, "JsonValue"]
 JsonObject = dict[str, JsonValue]
 
 SCHEMA_VERSION: Final = 1
+LEASE_SCHEMA_VERSION: Final = 2
 MAX_PROMPT_CHARS: Final = 200_000
 MAX_COMMAND_OUTPUT_BYTES: Final = 64 * 1024
 MAX_EVIDENCE_CHARS: Final = 8 * 1024
 MAX_WAIT_SECONDS: Final = 15 * 60
+MAX_COMMAND_TIMEOUT_SECONDS: Final = 15 * 60
+MAX_COMMAND_ARG_CHARS: Final = 32 * 1024
+MAX_SHELL_READINESS_SECONDS: Final = 30
+SHELL_POLL_SECONDS: Final = 0.1
+SHELL_STABLE_SECONDS: Final = 0.5
+LEASE_LOCK_WAIT_SECONDS: Final = 2.0
 MAX_AGENT_NAME_CHARS: Final = 32
 ROLE_NAMES: Final = ("wolf", "owl", "fox", "otter", "badger", "lynx")
 ROLE_RE: Final = re.compile(
@@ -39,14 +47,21 @@ SETTLED_STATES: Final = frozenset(
 )
 OBSERVED_STATES: Final = frozenset({"busy", *SETTLED_STATES})
 HERDR_AGENT_STATES: Final = frozenset({"idle", "working", "done", "blocked", "unknown"})
+INTERACTIVE_SHELL_NAMES: Final = frozenset(
+    {"sh", "bash", "zsh", "fish", "ksh", "dash", "tcsh", "csh", "nu"}
+)
 FORBIDDEN_KEY_RE: Final = re.compile(
     r"(?:secret|token|password|api[_-]?key|prompt)", re.IGNORECASE
 )
 REDACTION_RE: Final = re.compile(
-    r"(?i)(?:bearer\s+|token\s+|password\s*[=:]\s*|api[_-]?key\s*[=:]\s*)\S+"
+    r"(?i)(?:bearer\s+|token\s*[=:]?\s*|password\s*[=:]\s*|api[_-]?key\s*[=:]\s*)\S+"
 )
-EFFORT_RANK: Final = {"low": 0, "medium": 1, "high": 2, "xhigh": 3}
-WORKER_BASELINES: Final = {"codex": "xhigh", "grok": "high"}
+COMMAND_SENSITIVE_RE: Final = re.compile(
+    r"(?i)(?:bearer\s+|token\s*[=:]|password\s*[=:]|api[_-]?key\s*[=:])"
+)
+COMMAND_SHELL_META_RE: Final = re.compile(r"[`$;|&<>\n\r\x00]")
+ALLOWED_EFFORTS: Final = {"low", "medium", "high", "xhigh"}
+EXPLORER_EFFORTS: Final = {"low", "medium"}
 MODEL_PATTERNS: Final = {
     "codex": re.compile(r"^gpt-5\.6(?:-(?:sol|terra|luna))?$"),
     "grok": re.compile(r"^(?:grok-4\.5|gpt-5\.6(?:-(?:sol|terra|luna))?)$"),
@@ -267,6 +282,120 @@ def git_common_dir_key(path: Path) -> str:
     return hashlib.sha256(str(path).encode()).hexdigest()
 
 
+def positive_int(value: JsonValue, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise AdapterError("controller_binding_batch_invalid", f"{label} must be positive")
+    return value
+
+
+def string_list(value: JsonValue, label: str) -> list[str]:
+    if not isinstance(value, list) or not value or not all(
+        isinstance(item, str) and item for item in value
+    ):
+        raise AdapterError("controller_binding_batch_invalid", f"{label} must be a non-empty string list")
+    result = cast(list[str], value)
+    if len(set(result)) != len(result):
+        raise AdapterError("controller_binding_batch_invalid", f"{label} contains duplicates")
+    return result
+
+
+def batch_provenance(envelope: JsonObject, task: JsonObject) -> JsonObject:
+    """Return and validate the runner-issued batch projection.
+
+    HBU-010 emits the projection under both ``batch_provenance`` and
+    ``provenance.batch``.  Keeping the adapter tolerant of either location makes
+    restart validation explicit while still rejecting a missing projection for a
+    named parallel group.
+    """
+    group = task.get("parallel_group", "none")
+    if not isinstance(group, str) or not group:
+        raise AdapterError("controller_binding_batch_invalid", "task parallel_group is malformed")
+    supplied = envelope.get("batch_provenance")
+    nested_supplied: JsonValue | None = None
+    provenance_value = envelope.get("provenance")
+    if isinstance(provenance_value, dict):
+        nested_supplied = provenance_value.get("batch")
+    if supplied is None:
+        supplied = nested_supplied
+    elif nested_supplied is not None and digest_json(cast(JsonValue, supplied)) != digest_json(nested_supplied):
+        raise AdapterError(
+            "controller_binding_batch_forged",
+            "top-level and provenance batch projections differ",
+        )
+    if supplied is None:
+        if group != "none":
+            raise AdapterError(
+                "controller_binding_batch_required",
+                "named parallel task requires controller-issued batch provenance",
+            )
+        return {
+            "batch_id": "none",
+            "parallel_group": "none",
+            "parallel_policy": "serial",
+            "batch_task_ids": [string_at(task, "task_id")],
+            "planned_task_ids": [string_at(task, "task_id")],
+            "planned_width": 1,
+            "plan_max_parallelism": 1,
+            "ready_width": 1,
+            "ready_task_ids": [string_at(task, "task_id")],
+            "ready_frontier_task_ids": [string_at(task, "task_id")],
+            "selected_task_ids": [string_at(task, "task_id")],
+            "runtime_capacity": 1,
+            "actor_capacity": 1,
+            "effective_width": 1,
+            "limiting_factors": ["serial"],
+            "serial_fallback_reason": None,
+            "outcome": "serial-fallback",
+            "stop_reason": None,
+        }
+    value = as_object(cast(JsonValue, supplied), "batch provenance")
+    required_lists = {
+        "batch_task_ids": value.get("batch_task_ids", value.get("task_ids")),
+        "planned_task_ids": value.get("planned_task_ids"),
+        "ready_task_ids": value.get("ready_task_ids", value.get("ready_frontier_task_ids")),
+        "selected_task_ids": value.get("selected_task_ids"),
+    }
+    result: JsonObject = {}
+    for key, candidate in required_lists.items():
+        if candidate is None:
+            raise AdapterError("controller_binding_batch_invalid", f"batch provenance missing {key}")
+        result[key] = string_list(candidate, f"batch provenance {key}")
+    for key in (
+        "batch_id",
+        "parallel_group",
+        "parallel_policy",
+        "outcome",
+    ):
+        result[key] = string_at(value, key, f"batch provenance {key}")
+    result["stop_reason"] = value.get("stop_reason")
+    result["serial_fallback_reason"] = value.get("serial_fallback_reason")
+    result["limiting_factors"] = value.get("limiting_factors", [])
+    if not isinstance(result["limiting_factors"], list) or not all(
+        isinstance(item, str) for item in cast(list[JsonValue], result["limiting_factors"])
+    ):
+        raise AdapterError("controller_binding_batch_invalid", "batch limiting_factors is malformed")
+    for key in (
+        "planned_width",
+        "plan_max_parallelism",
+        "ready_width",
+        "runtime_capacity",
+        "actor_capacity",
+        "effective_width",
+    ):
+        result[key] = positive_int(value_at(value, key, f"batch provenance {key}"), f"batch provenance {key}")
+    if result["batch_id"] != group or result["parallel_group"] != group:
+        raise AdapterError("controller_binding_batch_mismatch", "batch identity does not match task group")
+    selected = cast(list[str], result["selected_task_ids"])
+    if len(selected) > cast(int, result["effective_width"]):
+        raise AdapterError("controller_binding_batch_width_exhausted", "selected batch exceeds effective width")
+    task_id = string_at(task, "task_id")
+    if task_id not in selected:
+        raise AdapterError("controller_binding_batch_unselected", f"task is not selected for batch: {task_id}")
+    if cast(list[str], result["batch_task_ids"]) != cast(list[str], result["planned_task_ids"]):
+        raise AdapterError("controller_binding_batch_invalid", "planned and batch task membership differ")
+    return result
+
+
 def validate_lease_file(
     path: Path,
     repository: Path,
@@ -287,9 +416,9 @@ def validate_lease_file(
         )
     try:
         lease = parse_json_file(path, "existing lease")
-        if value_at(lease, "schema_version") != SCHEMA_VERSION:
+        if value_at(lease, "schema_version") != LEASE_SCHEMA_VERSION:
             raise ValueError("schema")
-        if string_at(lease, "artifact_kind") != "herdr-execution-lease":
+        if string_at(lease, "artifact_kind") != "herdr-controller-lease":
             raise ValueError("kind")
         if string_at(lease, "lease_state") not in allowed_states:
             raise ValueError("state")
@@ -298,10 +427,42 @@ def validate_lease_file(
         if string_at(lease, "git_common_dir_sha256") != git_common_dir_key(common_dir):
             raise ValueError("git common directory")
         require_sha256(string_at(lease, "plan_sha256"), "lease plan_sha256")
-        require_sha256(string_at(lease, "run_nonce_sha256"), "lease run_nonce_sha256")
-        string_at(lease, "run_id")
+        string_at(lease, "batch_id")
         string_at(lease, "workspace_id")
         string_at(lease, "controller_id")
+        effective_width = positive_int(value_at(lease, "effective_width"), "lease effective_width")
+        selected_task_ids = string_list(value_at(lease, "selected_task_ids"), "lease selected_task_ids")
+        if len(selected_task_ids) > effective_width:
+            raise ValueError("selected width")
+        lease_locks = lease.get("resource_locks", [])
+        if not isinstance(lease_locks, list) or any(not isinstance(lock, str) for lock in lease_locks):
+            raise ValueError("lease resource locks")
+        if expected_identity is not None and lease_locks != expected_identity.get("resource_locks", lease_locks):
+            raise ValueError("lease resource locks mismatch")
+        members = value_at(lease, "members")
+        if not isinstance(members, list):
+            raise TypeError("members")
+        for member in members:
+            if not isinstance(member, dict):
+                raise TypeError("member")
+            string_at(member, "member_id")
+            string_at(member, "run_id")
+            require_sha256(string_at(member, "run_nonce_sha256"), "member run_nonce_sha256")
+            string_at(member, "task_id")
+            positive_int(member.get("attempt"), "member attempt")
+            if member.get("lease_state") not in {"active", "cleanup-pending", "released"}:
+                raise ValueError("member state")
+            if member.get("task_id") not in selected_task_ids:
+                raise ValueError("member selection")
+            member_locks = member.get("resource_locks", [])
+            if not isinstance(member_locks, list) or any(not isinstance(lock, str) for lock in member_locks):
+                raise ValueError("member resource locks")
+            if (
+                member.get("controller_id") != lease.get("controller_id")
+                or member.get("workspace_id") != lease.get("workspace_id")
+                or member.get("batch_id") != lease.get("batch_id")
+            ):
+                raise ValueError("member scope")
         if expected_identity is not None:
             for key, expected in expected_identity.items():
                 if lease.get(key) != expected:
@@ -312,16 +473,6 @@ def validate_lease_file(
             "existing lease is malformed, stale, active, cleanup-pending, or mismatched",
         ) from exc
     return lease
-
-
-def validate_released_lease(path: Path, repository: Path, common_dir: Path) -> None:
-    """Allow replacing only a complete released lease for this Git identity."""
-    validate_lease_file(
-        path,
-        repository,
-        common_dir,
-        allowed_states=frozenset({"released"}),
-    )
 
 
 def derive_agent_name(role: str, run_id: str, task_id: str, attempt: int) -> str:
@@ -357,7 +508,7 @@ def model_policy_evidence(
             "delegated_capability_unavailable",
             f"unsupported {kind} model for the pinned adapter profile",
         )
-    if effort not in EFFORT_RANK:
+    if effort not in ALLOWED_EFFORTS:
         raise AdapterError(
             "delegated_capability_unavailable",
             f"unsupported {kind} reasoning effort: {effort}",
@@ -375,7 +526,11 @@ def model_policy_evidence(
             )
     if role != "explorer":
         return {"status": "not-applicable", "model_policy": policy}
-    baseline = WORKER_BASELINES[kind]
+    if effort not in EXPLORER_EFFORTS:
+        raise AdapterError(
+            "delegated_capability_unavailable",
+            "explorer reasoning is absolutely bounded to low or medium",
+        )
     if policy == "semantic-routing":
         if kind == "codex" and model != "gpt-5.6-luna":
             raise AdapterError(
@@ -387,23 +542,19 @@ def model_policy_evidence(
                 "delegated_capability_unavailable",
                 "semantic-routing Grok explorer requires grok-4.5",
             )
-        if EFFORT_RANK[effort] >= EFFORT_RANK[baseline]:
-            raise AdapterError(
-                "delegated_capability_unavailable",
-                "semantic-routing explorer effort must be strictly below its worker baseline",
-            )
         return {
-            "status": "downgraded",
+            "status": "absolute-low-cost",
             "model_policy": policy,
             "reasoning_effort": effort,
-            "worker_baseline": baseline,
-            "relative_to": "worker-default",
+            "default_effort": "low",
+            "max_effort": "medium",
         }
     return {
-        "status": "explicit-policy-exception",
+        "status": "absolute-low-cost",
         "model_policy": policy,
         "reasoning_effort": effort,
-        "worker_baseline": baseline,
+        "default_effort": "low",
+        "max_effort": "medium",
     }
 
 
@@ -511,6 +662,28 @@ def role_and_capability(
     controller = as_object(value_at(envelope, "controller"), "controller")
     provenance = as_object(value_at(envelope, "provenance"), "provenance")
     authority = as_object(value_at(envelope, "authority"), "authority")
+    binding_kind = controller.get("binding_kind", "delegated-task")
+    if binding_kind == "command-job":
+        validate_command_job_shape(envelope, task, physical)
+        denied = list_at(authority, "denied_capabilities")
+        required_denied = {
+            "select-task",
+            "mutate-task-ledger",
+            "converge-task",
+            "invoke-review",
+            "adjudicate-findings",
+            "repair-implementation",
+            "derive-lifecycle-tail",
+            "claim-task-success",
+        }
+        if not required_denied.issubset({item for item in denied if isinstance(item, str)}):
+            raise AdapterError(
+                "controller_binding_authority_denied",
+                "command-job envelope does not deny lifecycle and oracle authority",
+            )
+        return "command-job", task, physical, controller, provenance, authority
+    if binding_kind not in {"delegated-task", "bounded-review"}:
+        raise AdapterError("controller_binding_invalid", f"unsupported binding kind: {binding_kind}")
     task_id = string_at(task, "task_id")
     execution_profile = string_at(task, "execution_profile")
     reasoning_profile = string_at(task, "reasoning_profile")
@@ -640,7 +813,6 @@ def validate_envelope(path: Path) -> tuple[JsonObject, str, Path, Path]:
             "schema-versioned controller binding envelope required",
         )
     role, task, physical, controller, provenance, _ = role_and_capability(envelope)
-    del role
     for key in ("controller_id", "run_id", "run_nonce"):
         string_at(controller, key)
     run_id = string_at(controller, "run_id")
@@ -695,7 +867,7 @@ def validate_envelope(path: Path) -> tuple[JsonObject, str, Path, Path]:
         for item in list_at(task, "touch_set")
         if isinstance(item, str) and item not in {"", "none"}
     ]
-    if write_refs and git_dir(checkout) == git_common_directory(checkout):
+    if role != "command-job" and write_refs and git_dir(checkout) == git_common_directory(checkout):
         raise AdapterError(
             "controller_binding_capability_mismatch",
             "writer checkout must be an isolated worktree",
@@ -705,6 +877,19 @@ def validate_envelope(path: Path) -> tuple[JsonObject, str, Path, Path]:
             "controller_binding_task_not_ready", "selected task is not ready"
         )
     expected_cwd = ensure_directory(checkout, "checkout")
+    if role == "command-job":
+        job = validate_command_job_shape(envelope, task, physical)
+        command_cwd = ensure_directory(Path(string_at(job, "cwd")), "command cwd")
+        if command_cwd != expected_cwd:
+            raise AdapterError(
+                "controller_binding_cwd_mismatch",
+                "command cwd must exactly match the controller-bound checkout",
+            )
+        if command_cwd != canonical(Path(string_at(physical, "checkout_path"))):
+            raise AdapterError(
+                "controller_binding_cwd_mismatch",
+                "command cwd is not the declared checkout",
+            )
     return envelope, run_id, repo, expected_cwd
 
 
@@ -765,6 +950,8 @@ def command_failure(
     stderr = completed.stderr.decode("utf-8", errors="replace")
     bounded = safe_preview(stderr.strip())
     lowered = bounded.lower()
+    if "agent_pane_busy" in lowered or "pane_busy" in lowered:
+        return AdapterError("agent_pane_busy", "allocated pane is already occupied by an agent")
     if "agent_prompt_stalled" in lowered:
         return AdapterError("agent_prompt_stalled", "Herdr prompt did not change state")
     if "timeout" in lowered or "timed out" in lowered:
@@ -909,6 +1096,137 @@ def safe_preview(value: str) -> str:
     return redacted[:MAX_EVIDENCE_CHARS]
 
 
+def bounded_utf8_preview(value: str, max_bytes: int) -> str:
+    """Redact first, then return a valid UTF-8 prefix within an exact byte bound."""
+    data = safe_preview(value).encode("utf-8")[:max_bytes]
+    while data:
+        try:
+            return data.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            data = data[: exc.start]
+    return ""
+
+
+def command_job_binding(envelope: JsonObject) -> bool:
+    controller = envelope.get("controller")
+    return isinstance(controller, dict) and controller.get("binding_kind") == "command-job"
+
+
+def validate_command_job_shape(
+    envelope: JsonObject,
+    task: JsonObject,
+    physical: JsonObject,
+) -> JsonObject:
+    """Validate an ordinary controller-issued command without granting agent authority."""
+    allowed_physical = {
+        "checkout_path",
+        "pane_id",
+        "tab_id",
+        "terminal_backend",
+        "workspace_id",
+    }
+    if set(physical) != allowed_physical:
+        raise AdapterError(
+            "controller_binding_invalid",
+            "command-job physical binding must contain only Herdr caller and checkout IDs",
+        )
+    if string_at(physical, "terminal_backend") != "herdr":
+        raise AdapterError("controller_binding_invalid", "command-job terminal backend must be herdr")
+    job_value = envelope.get("command_job")
+    if not isinstance(job_value, dict):
+        raise AdapterError("controller_binding_required", "controller-issued command_job is required")
+    job = cast(JsonObject, job_value)
+    allowed_job = {
+        "argv",
+        "command",
+        "cwd",
+        "max_concurrency",
+        "output_bound_bytes",
+        "provenance",
+        "resource_locks",
+        "timeout_seconds",
+    }
+    if set(job) - allowed_job:
+        raise AdapterError("controller_binding_invalid", "command_job contains unknown or authority-expanding fields")
+    cwd = string_at(job, "cwd", "command cwd")
+    if not cwd.startswith("/"):
+        raise AdapterError("controller_binding_invalid", "command cwd must be an absolute path")
+    argv_value = job.get("argv")
+    if not isinstance(argv_value, list) or not argv_value:
+        raise AdapterError("controller_binding_invalid", "command argv must be a non-empty literal vector")
+    argv: list[str] = []
+    for index, value in enumerate(argv_value):
+        if not isinstance(value, str) or not value or len(value) > MAX_COMMAND_ARG_CHARS:
+            raise AdapterError("controller_binding_invalid", f"command argv[{index}] is not bounded")
+        if any(ord(character) < 32 for character in value) or "\x7f" in value:
+            raise AdapterError("controller_binding_invalid", "command argv contains control characters")
+        if COMMAND_SHELL_META_RE.search(value):
+            raise AdapterError("controller_binding_invalid", "command argv contains shell interpolation or control syntax")
+        if COMMAND_SENSITIVE_RE.search(value):
+            raise AdapterError("controller_binding_secret", "command argv must not contain credential material")
+        argv.append(value)
+    command = job.get("command")
+    if command is not None:
+        if not isinstance(command, str) or not command or len(command) > MAX_COMMAND_ARG_CHARS:
+            raise AdapterError("controller_binding_invalid", "command literal is not bounded")
+        if COMMAND_SHELL_META_RE.search(command):
+            raise AdapterError("controller_binding_invalid", "command literal contains shell interpolation or control syntax")
+        if command != " ".join(argv):
+            raise AdapterError("controller_binding_invalid", "command literal does not exactly match argv")
+    timeout_value = job.get("timeout_seconds")
+    if isinstance(timeout_value, bool) or not isinstance(timeout_value, int) or not 1 <= timeout_value <= MAX_COMMAND_TIMEOUT_SECONDS:
+        raise AdapterError("command_timeout_invalid", "command timeout is outside the bounded range")
+    output_bound = job.get("output_bound_bytes")
+    if isinstance(output_bound, bool) or not isinstance(output_bound, int) or not 1 <= output_bound <= MAX_COMMAND_OUTPUT_BYTES:
+        raise AdapterError("command_output_bound_invalid", "command output bound is outside the bounded range")
+    max_concurrency = job.get("max_concurrency")
+    if isinstance(max_concurrency, bool) or not isinstance(max_concurrency, int) or max_concurrency < 1:
+        raise AdapterError("command_capacity_invalid", "command max_concurrency must be a positive integer")
+    locks = job.get("resource_locks")
+    if not isinstance(locks, list) or not locks or any(
+        not isinstance(lock, str) or not lock or lock == "none" or any(ord(character) < 32 for character in lock)
+        for lock in locks
+    ) or len(set(locks)) != len(locks):
+        raise AdapterError("resource_lock_required", "command-job requires exact non-empty resource locks")
+    task_locks = task.get("resource_locks", [])
+    if not isinstance(task_locks, list):
+        raise AdapterError("resource_lock_mismatch", "approved task locks are malformed")
+    provenance = job.get("provenance")
+    if not isinstance(provenance, dict):
+        raise AdapterError("controller_binding_required", "command-job task-or-gate provenance is required")
+    provenance_kind = provenance.get("kind")
+    if provenance_kind not in {"task", "gate"}:
+        raise AdapterError("controller_binding_invalid", "command provenance kind must be task or gate")
+    if provenance_kind == "task" and provenance.get("task_id") != task.get("task_id"):
+        raise AdapterError("controller_binding_invalid", "command provenance task is not the selected task")
+    if provenance_kind == "task" and sorted(locks) != sorted(task_locks):
+        raise AdapterError("resource_lock_mismatch", "task command locks must exactly match the approved task locks")
+    if provenance_kind == "task" and max_concurrency != 1:
+        raise AdapterError("command_capacity_invalid", "task command max_concurrency must be one")
+    if provenance_kind == "gate":
+        gate_id = provenance.get("gate_id")
+        if not isinstance(gate_id, str) or not gate_id or any(ord(character) < 32 for character in gate_id):
+            raise AdapterError("controller_binding_invalid", "command gate provenance requires a bounded gate ID")
+        if any(lock not in task_locks for lock in locks):
+            raise AdapterError("resource_lock_mismatch", "gate command locks must be an approved task-lock subset")
+        if max_concurrency > len(task_locks):
+            raise AdapterError("command_capacity_invalid", "gate command max_concurrency exceeds approved task locks")
+    for key in ("task_id", "gate_id"):
+        value = provenance.get(key)
+        if value is not None and (not isinstance(value, str) or not value or any(ord(character) < 32 for character in value)):
+            raise AdapterError("controller_binding_invalid", "command provenance identity is malformed")
+    return {
+        "cwd": cwd,
+        "argv": argv,
+        "command": command if isinstance(command, str) else None,
+        "timeout_seconds": timeout_value,
+        "max_concurrency": max_concurrency,
+        "output_bound_bytes": output_bound,
+        "resource_locks": list(locks),
+        "provenance": cast(JsonObject, provenance),
+    }
+
+
 class Adapter:
     """Own one envelope-bound Herdr run and nothing else."""
 
@@ -923,8 +1241,31 @@ class Adapter:
         self.role, self.task, self.physical, self.controller, self.provenance, _ = (
             role_and_capability(self.envelope)
         )
-        self.profile = native_agent_profile(
-            self.role, self.physical, self.controller, self.checkout
+        self.binding_kind = string_at(self.controller, "binding_kind", "binding kind") if self.controller.get("binding_kind") is not None else "delegated-task"
+        self.command_job: JsonObject | None = (
+            validate_command_job_shape(self.envelope, self.task, self.physical)
+            if self.binding_kind == "command-job"
+            else None
+        )
+        self.batch = batch_provenance(self.envelope, self.task)
+        base_member_id = f"{string_at(self.task, 'task_id')}@{positive_int(value_at(self.task, 'attempt'), 'task attempt')}"
+        command_provenance = (
+            as_object(value_at(self.command_job, "provenance"), "command provenance")
+            if self.command_job is not None
+            else None
+        )
+        if command_provenance is not None and command_provenance.get("kind") == "gate":
+            gate_id = string_at(command_provenance, "gate_id", "gate ID")
+            gate_digest = hashlib.sha256(gate_id.encode()).hexdigest()[:12]
+            self.member_id = f"{base_member_id}:gate:{gate_digest}"
+        else:
+            self.member_id = base_member_id
+        self.profile = (
+            {}
+            if self.binding_kind == "command-job"
+            else native_agent_profile(
+                self.role, self.physical, self.controller, self.checkout
+            )
         )
         self.context = caller_context(self.physical)
         self.run_root = self.repo / ".herdr-runs"
@@ -932,16 +1273,32 @@ class Adapter:
         self.state_path = self.run_dir / "state.json"
         self.lease_path = self.run_root / "lease.json"
         self.lease_identity: JsonObject = {
-            "run_id": self.run_id,
             "repository": str(self.repo),
             "workspace_id": self.context["workspace_id"],
             "controller_id": string_at(self.controller, "controller_id"),
             "git_common_dir_sha256": git_common_dir_key(self.common_dir),
             "plan_sha256": string_at(self.provenance, "plan_sha256"),
-            "run_nonce_sha256": hashlib.sha256(
-                string_at(self.controller, "run_nonce").encode()
-            ).hexdigest(),
+            "batch_id": string_at(self.batch, "batch_id"),
+            "parallel_group": string_at(self.batch, "parallel_group"),
+            "effective_width": max(
+                positive_int(
+                    value_at(self.batch, "effective_width"), "batch effective width"
+                ),
+                (
+                    positive_int(
+                        value_at(self.command_job, "max_concurrency"),
+                        "command max concurrency",
+                    )
+                    if self.command_job is not None
+                    else 1
+                ),
+            ),
+            "selected_task_ids": value_at(self.batch, "selected_task_ids"),
         }
+
+    def member_resource_locks(self) -> list[str]:
+        value = self.command_job["resource_locks"] if self.command_job is not None else self.task.get("resource_locks", [])
+        return [lock for lock in value if isinstance(lock, str)] if isinstance(value, list) else []
 
     def command(self, argv: list[str], *, timeout_seconds: int = 10) -> JsonObject:
         return fixture_safe_command(
@@ -962,12 +1319,17 @@ class Adapter:
         self.run_root.mkdir(parents=True, exist_ok=True, mode=0o700)
         os.chmod(self.run_root, 0o700)
         lock = self.run_root / ".lease.lock"
-        try:
-            lock.mkdir(mode=0o700)
-        except FileExistsError as exc:
-            raise AdapterError(
-                "adapter_state_busy", "repository lease is being updated"
-            ) from exc
+        deadline = time.monotonic() + LEASE_LOCK_WAIT_SECONDS
+        while True:
+            try:
+                lock.mkdir(mode=0o700)
+                break
+            except FileExistsError as exc:
+                if time.monotonic() >= deadline:
+                    raise AdapterError(
+                        "adapter_state_busy", "repository lease is being updated"
+                    ) from exc
+                time.sleep(0.05)
         try:
             yield
         finally:
@@ -989,8 +1351,185 @@ class Adapter:
         except AdapterError as exc:
             raise AdapterError(
                 "lease_ownership_mismatch",
-                "repository lease no longer belongs to this run",
+                "controller lease no longer belongs to this controller, plan, workspace, or batch",
             ) from exc
+
+    def lease_member(self, lease: JsonObject) -> JsonObject:
+        members = value_at(lease, "members")
+        if not isinstance(members, list):
+            raise AdapterError("lease_state_invalid", "controller lease members are malformed")
+        for member in members:
+            if isinstance(member, dict) and member.get("member_id") == self.member_id:
+                return member
+        raise AdapterError("lease_member_not_found", f"run member is not in the approved batch: {self.member_id}")
+
+    def lease_scope_matches(self, lease: JsonObject) -> bool:
+        return all(
+            lease.get(key) == value
+            for key, value in {
+                "controller_id": self.lease_identity["controller_id"],
+                "workspace_id": self.lease_identity["workspace_id"],
+                "plan_sha256": self.lease_identity["plan_sha256"],
+                "batch_id": self.lease_identity["batch_id"],
+            }.items()
+        ) and (
+            lease.get("selected_task_ids") == self.batch.get("selected_task_ids")
+            and lease.get("effective_width") == self.lease_identity.get("effective_width")
+            and lease.get("parallel_group") == self.batch.get("parallel_group")
+        )
+
+    def update_lease_member(self, member_state: str, *, phase: str | None = None) -> None:
+        if member_state not in {"active", "cleanup-pending", "released"}:
+            raise AdapterError("lease_state_invalid", f"unsupported member state: {member_state}")
+        with self.lease_lock():
+            lease = self.owned_lease(frozenset({"active", "cleanup-pending", "released"}))
+            member = self.lease_member(lease)
+            if lease.get("lease_state") == "released":
+                if member.get("lease_state") == "released" and member_state == "released":
+                    return
+                raise AdapterError("lease_state_invalid", "released controller lease has no live member")
+            member["lease_state"] = member_state
+            if phase is not None:
+                member["phase"] = phase
+            members = cast(list[JsonValue], value_at(lease, "members"))
+            lease["members"] = members
+            if any(
+                isinstance(item, dict) and item.get("lease_state") == "cleanup-pending"
+                for item in members
+            ):
+                lease["lease_state"] = "cleanup-pending"
+            elif any(
+                isinstance(item, dict) and item.get("lease_state") == "active"
+                for item in members
+            ):
+                lease["lease_state"] = "active"
+            else:
+                lease["lease_state"] = "released"
+            self.write_json(self.lease_path, lease)
+
+    def touch_lease_member(self, phase: str) -> None:
+        with self.lease_lock():
+            lease = self.owned_lease(frozenset({"active", "cleanup-pending"}))
+            member = self.lease_member(lease)
+            if member.get("lease_state") == "active":
+                member["phase"] = phase
+                self.write_json(self.lease_path, lease)
+
+    def register_member(self) -> None:
+        """Atomically admit one approved task attempt into the controller lease."""
+        with self.lease_lock():
+            if self.lease_path.exists() or self.lease_path.is_symlink():
+                try:
+                    lease = validate_lease_file(
+                        self.lease_path,
+                        self.repo,
+                        self.common_dir,
+                        allowed_states=frozenset({"active", "cleanup-pending", "released"}),
+                    )
+                except AdapterError as exc:
+                    raise AdapterError(
+                        "herdr_execution_conflict",
+                        "existing lease is malformed or uses a legacy single-run schema",
+                    ) from exc
+                if not self.lease_scope_matches(lease):
+                    if lease.get("controller_id") != self.lease_identity["controller_id"]:
+                        raise AdapterError(
+                            "herdr_execution_conflict",
+                            "another controller owns the workspace-bound Herdr lease",
+                        )
+                    raise AdapterError(
+                        "lease_scope_mismatch",
+                        "controller lease is bound to a different plan, workspace, or batch",
+                    )
+                if lease.get("lease_state") == "released":
+                    # A released lease can be reused only when all of its members are
+                    # released and the new member is not a duplicate attempt.
+                    members = value_at(lease, "members")
+                    if not isinstance(members, list) or any(
+                        isinstance(item, dict) and item.get("lease_state") != "released"
+                        for item in members
+                    ):
+                        raise AdapterError("herdr_execution_conflict", "lease is not quiescent")
+                    # A completed controller lease is a historical record for the
+                    # previous execution. Start a fresh admission set while retaining
+                    # each prior run's durable state.json evidence.
+                    members = []
+                    lease["members"] = members
+                members_value = value_at(lease, "members")
+                members = cast(list[JsonValue], members_value)
+                for item in members:
+                    if isinstance(item, dict) and item.get("member_id") == self.member_id:
+                        raise AdapterError(
+                            "duplicate_task_attempt",
+                            f"task attempt is already admitted: {self.member_id}",
+                        )
+                member_locks = set(self.member_resource_locks())
+                for item in members:
+                    if not isinstance(item, dict) or item.get("lease_state") == "released":
+                        continue
+                    prior_locks = item.get("resource_locks", [])
+                    if isinstance(prior_locks, list) and member_locks.intersection(
+                        lock for lock in prior_locks if isinstance(lock, str)
+                    ):
+                        raise AdapterError(
+                            "resource_lock_conflict",
+                            "an active controller member already owns one of the exact resource locks",
+                        )
+                width = positive_int(value_at(lease, "effective_width"), "lease effective_width")
+                active_members = [
+                    item
+                    for item in members
+                    if isinstance(item, dict) and item.get("lease_state") != "released"
+                ]
+                if len(active_members) >= width:
+                    raise AdapterError(
+                        "batch_width_exhausted",
+                        f"effective batch width {width} is exhausted by approved members",
+                    )
+            else:
+                members = []
+                lease = {
+                    "schema_version": LEASE_SCHEMA_VERSION,
+                    "artifact_kind": "herdr-controller-lease",
+                    "lease_state": "active",
+                    **self.lease_identity,
+                    "effective_width": positive_int(
+                        value_at(self.lease_identity, "effective_width"), "lease effective_width"
+                    ),
+                    "selected_task_ids": value_at(self.batch, "selected_task_ids"),
+                    "parallel_group": value_at(self.batch, "parallel_group"),
+                    "resource_locks": [],
+                    "members": members,
+                }
+            member: JsonObject = {
+                "member_id": self.member_id,
+                "run_id": self.run_id,
+                "run_nonce_sha256": hashlib.sha256(
+                    string_at(self.controller, "run_nonce").encode()
+                ).hexdigest(),
+                "task_id": string_at(self.task, "task_id"),
+                "attempt": positive_int(value_at(self.task, "attempt"), "task attempt"),
+                "controller_id": self.lease_identity["controller_id"],
+                "workspace_id": self.lease_identity["workspace_id"],
+                "batch_id": self.lease_identity["batch_id"],
+                "lease_state": "active",
+                "phase": "preflight",
+                "binding_kind": self.binding_kind,
+                "resource_locks": self.member_resource_locks(),
+            }
+            members.append(member)
+            lease["members"] = members
+            lease["resource_locks"] = sorted(
+                {
+                    lock
+                    for item in members
+                    if isinstance(item, dict)
+                    for lock in item.get("resource_locks", [])
+                    if isinstance(lock, str)
+                }
+            )
+            lease["lease_state"] = "active"
+            self.write_json(self.lease_path, lease)
 
     def lock(self) -> Path:
         if self.run_root.is_symlink() or self.run_dir.is_symlink():
@@ -1179,26 +1718,23 @@ class Adapter:
         if self.state_path.exists():
             raise AdapterError(
                 "herdr_execution_conflict",
-                "run ID or repository lease already exists; use resume or cleanup",
+                "this approved task attempt already has adapter state; use resume or cleanup",
             )
         if self.lease_path.exists() or self.lease_path.is_symlink():
-            validate_released_lease(self.lease_path, self.repo, self.common_dir)
-        live_caller = self.validate_caller_resources()
-        with self.lease_lock():
-            if self.state_path.exists():
+            try:
+                validate_lease_file(
+                    self.lease_path,
+                    self.repo,
+                    self.common_dir,
+                    allowed_states=frozenset({"active", "cleanup-pending", "released"}),
+                )
+            except AdapterError as exc:
                 raise AdapterError(
                     "herdr_execution_conflict",
-                    "run ID or repository lease already exists; use resume or cleanup",
-                )
-            if self.lease_path.exists() or self.lease_path.is_symlink():
-                validate_released_lease(self.lease_path, self.repo, self.common_dir)
-            lease: JsonObject = {
-                "schema_version": SCHEMA_VERSION,
-                "artifact_kind": "herdr-execution-lease",
-                "lease_state": "active",
-                **self.lease_identity,
-            }
-            self.write_json(self.lease_path, lease)
+                    "existing lease is malformed or uses a legacy single-run schema",
+                ) from exc
+        live_caller = self.validate_caller_resources()
+        self.register_member()
         state: JsonObject = {
             "schema_version": SCHEMA_VERSION,
             "artifact_kind": "herdr-adapter-state",
@@ -1219,7 +1755,11 @@ class Adapter:
                 ),
                 "plan_sha256": string_at(self.provenance, "plan_sha256"),
                 "ledger_sha256": string_at(self.provenance, "ledger_sha256"),
+                "batch": self.batch,
             },
+            "batch": self.batch,
+            "batch_provenance": self.batch,
+            "member_id": self.member_id,
             "caller_context": live_caller,
             "task": {
                 "task_id": string_at(self.task, "task_id"),
@@ -1227,28 +1767,37 @@ class Adapter:
                 "runtime_role": self.role,
                 "touch_set": list_at(self.task, "touch_set"),
                 "oracle_refs": list_at(self.task, "oracle_refs"),
+                "resource_locks": self.member_resource_locks(),
             },
             "physical_binding": {
                 "terminal_backend": string_at(self.physical, "terminal_backend"),
-                "agent_kind": string_at(self.physical, "agent_kind"),
-                "agent_name": string_at(self.physical, "agent_name"),
-                "model": string_at(self.physical, "model"),
-                "reasoning_effort": string_at(self.physical, "reasoning_effort"),
-                "permission_mode": string_at(self.physical, "permission_mode"),
-                "sandbox_mode": string_at(self.physical, "sandbox_mode"),
-                "capability_profile": string_at(self.physical, "capability_profile"),
-                "control_plane_endpoint": string_at(
-                    self.physical, "control_plane_endpoint"
+                **(
+                    {
+                        "agent_kind": string_at(self.physical, "agent_kind"),
+                        "agent_name": string_at(self.physical, "agent_name"),
+                        "model": string_at(self.physical, "model"),
+                        "reasoning_effort": string_at(self.physical, "reasoning_effort"),
+                        "permission_mode": string_at(self.physical, "permission_mode"),
+                        "sandbox_mode": string_at(self.physical, "sandbox_mode"),
+                        "capability_profile": string_at(self.physical, "capability_profile"),
+                        "control_plane_endpoint": string_at(self.physical, "control_plane_endpoint"),
+                        "credential_ref": string_at(self.physical, "credential_ref"),
+                    }
+                    if self.binding_kind != "command-job"
+                    else {}
                 ),
-                "credential_ref": string_at(self.physical, "credential_ref"),
                 "checkout_path": str(self.checkout),
-                "explorer_downgrade": self.explorer_downgrade(),
-                "model_policy": string_at(self.controller, "model_policy"),
-                "profile_id": string_at(self.profile, "profile_id"),
-                "native_argv_sha256": digest_json(
-                    value_at(self.profile, "native_args")
+                **(
+                    {
+                        "explorer_cost": self.explorer_cost(),
+                        "model_policy": string_at(self.controller, "model_policy"),
+                        "profile_id": string_at(self.profile, "profile_id"),
+                        "native_argv_sha256": digest_json(value_at(self.profile, "native_args")),
+                        "environment_policy": string_at(self.profile, "environment_policy"),
+                    }
+                    if self.binding_kind != "command-job"
+                    else {}
                 ),
-                "environment_policy": string_at(self.profile, "environment_policy"),
             },
             "physical_binding_sha256": digest_json(cast(JsonValue, self.physical)),
             "denied_task_capabilities": [
@@ -1271,14 +1820,30 @@ class Adapter:
                 "agent_session_id": None,
             },
             "agent_state": "unknown",
+            "shell_readiness": "pending",
+            "start_attempted": False,
             "prompt_submitted": False,
             "events": [],
             "evidence": [],
         }
+        if self.command_job is not None:
+            state["binding_kind"] = "command-job"
+            state["command_job"] = {
+                "cwd": self.command_job["cwd"],
+                "argv_sha256": digest_json(cast(JsonValue, self.command_job["argv"])),
+                "command_sha256": digest_json(self.command_job.get("command")),
+                "timeout_seconds": self.command_job["timeout_seconds"],
+                "max_concurrency": self.command_job["max_concurrency"],
+                "output_bound_bytes": self.command_job["output_bound_bytes"],
+                "resource_locks": self.command_job["resource_locks"],
+                "provenance": self.command_job["provenance"],
+                "oracle_judgment_required": True,
+            }
         self.save_state(state)
+        self.touch_lease_member("preflight")
         return self.output(state)
 
-    def explorer_downgrade(self) -> JsonObject:
+    def explorer_cost(self) -> JsonObject:
         return as_object(
             value_at(self.profile, "model_policy_evidence"),
             "model policy evidence",
@@ -1320,7 +1885,11 @@ class Adapter:
         resources = as_object(value_at(state, "resources"), "state resources")
         resources["owned_tab_id"] = tab_id
         resources["owned_panes"] = []
-        resources["agent_name"] = string_at(self.physical, "agent_name")
+        resources["agent_name"] = (
+            string_at(self.physical, "agent_name")
+            if self.binding_kind != "command-job"
+            else None
+        )
         state["resources"] = resources
         state["phase"] = "allocated"
         self.event(
@@ -1366,6 +1935,148 @@ class Adapter:
             raise
         return self.output(state)
 
+    def shell_ready(self, timeout_seconds: int = MAX_SHELL_READINESS_SECONDS) -> JsonObject:
+        """Prove an allocated pane has an interactive shell before starting an agent."""
+        state = self.state()
+        if state.get("phase") == "shell-ready":
+            return self.output(state)
+        if state.get("phase") != "allocated":
+            raise AdapterError("adapter_state_invalid", "shell readiness requires allocated state")
+        if not 1 <= timeout_seconds <= MAX_SHELL_READINESS_SECONDS:
+            raise AdapterError(
+                "shell_readiness_timeout_invalid",
+                f"shell readiness timeout must be between 1 and {MAX_SHELL_READINESS_SECONDS} seconds",
+            )
+        _, child = self.active_child(state)
+        pane_id = string_at(child, "pane_id")
+        deadline = time.monotonic() + timeout_seconds
+        attempts = 0
+        stable_shell_pid: int | None = None
+        stable_shell_since: float | None = None
+        last_reason = "interactive shell not available"
+        while True:
+            attempts += 1
+            try:
+                process_info = self.pane_process_info(pane_id)
+            except AdapterError as exc:
+                if exc.code == "agent_pane_busy":
+                    state["shell_readiness"] = "blocked"
+                    self.mark_cleanup_pending(state, "agent_pane_busy")
+                    raise
+                last_reason = exc.message
+            else:
+                processes = process_info.get("foreground_processes")
+                shell_pid = process_info.get("shell_pid")
+                if isinstance(processes, list) and isinstance(shell_pid, int) and not isinstance(shell_pid, bool):
+                    agent_process = any(
+                        isinstance(item, dict)
+                        and (
+                            item.get("name") in {"codex", "grok", "claude"}
+                            or item.get("agent") in {"codex", "grok", "claude"}
+                        )
+                        for item in processes
+                    )
+                    if agent_process:
+                        state["shell_readiness"] = "blocked"
+                        self.mark_cleanup_pending(state, "agent_pane_busy")
+                        raise AdapterError(
+                            "agent_pane_busy",
+                            f"allocated pane {pane_id} already has an agent process",
+                        )
+                    shell = next(
+                        (
+                            item
+                            for item in processes
+                            if isinstance(item, dict)
+                            and item.get("pid") == shell_pid
+                            and (
+                                item.get("name") in INTERACTIVE_SHELL_NAMES
+                                or item.get("argv0") in INTERACTIVE_SHELL_NAMES
+                                or (
+                                    isinstance(item.get("argv"), list)
+                                    and str(item.get("argv", [""])[0]).lstrip("-")
+                                    in INTERACTIVE_SHELL_NAMES
+                                )
+                            )
+                        ),
+                        None,
+                    )
+                    if shell is not None and shell.get("interactive", True) is not False:
+                        shell_pid_value = shell.get("pid")
+                        if shell_pid_value != stable_shell_pid:
+                            stable_shell_pid = cast(int, shell_pid_value)
+                            stable_shell_since = time.monotonic()
+                            last_reason = "interactive shell has not remained stable across observations"
+                        if (
+                            stable_shell_since is not None
+                            and stable_shell_since + SHELL_STABLE_SECONDS > deadline
+                        ):
+                            state["shell_readiness"] = {
+                                "state": "deadline",
+                                "pane_id": pane_id,
+                                "attempts": attempts,
+                                "timeout_seconds": timeout_seconds,
+                                "last_reason": safe_preview(last_reason),
+                            }
+                            self.mark_cleanup_pending(state, "shell_readiness_deadline")
+                            raise AdapterError(
+                                "shell_readiness_deadline",
+                                f"interactive shell cannot complete its stable interval in pane {pane_id} before the {timeout_seconds}s deadline; inspect or cleanup the owned member",
+                            )
+                        if (
+                            stable_shell_since is not None
+                            and time.monotonic() - stable_shell_since < SHELL_STABLE_SECONDS
+                        ):
+                            if time.monotonic() >= deadline:
+                                state["shell_readiness"] = {
+                                    "state": "deadline",
+                                    "pane_id": pane_id,
+                                    "attempts": attempts,
+                                    "timeout_seconds": timeout_seconds,
+                                    "last_reason": safe_preview(last_reason),
+                                }
+                                self.mark_cleanup_pending(state, "shell_readiness_deadline")
+                                raise AdapterError(
+                                    "shell_readiness_deadline",
+                                    f"interactive shell was not stable in pane {pane_id} before the {timeout_seconds}s deadline; inspect or cleanup the owned member",
+                                )
+                            time.sleep(SHELL_POLL_SECONDS)
+                            continue
+                        child["shell_pid"] = shell_pid_value
+                        state["shell_readiness"] = {
+                            "state": "ready",
+                            "pane_id": pane_id,
+                            "shell_pid": shell_pid_value,
+                            "attempts": attempts,
+                            "timeout_seconds": timeout_seconds,
+                        }
+                        state["phase"] = "shell-ready"
+                        self.event(
+                            state,
+                            "shell-ready",
+                            {"pane_id": pane_id, "shell_pid": shell_pid_value, "attempts": attempts},
+                        )
+                        self.save_state(state)
+                        self.touch_lease_member("shell-ready")
+                        return self.output(state)
+                    last_reason = "foreground process is not an interactive shell"
+                else:
+                    last_reason = "pane process information has no shell identity"
+            if time.monotonic() >= deadline:
+                state["shell_readiness"] = {
+                    "state": "deadline",
+                    "pane_id": pane_id,
+                    "attempts": attempts,
+                    "timeout_seconds": timeout_seconds,
+                    "last_reason": safe_preview(last_reason),
+                }
+                self.mark_cleanup_pending(state, "shell_readiness_deadline")
+                raise AdapterError(
+                    "shell_readiness_deadline",
+                    f"interactive shell was not available in pane {pane_id} before the {timeout_seconds}s deadline; inspect or cleanup the owned member",
+                )
+            time.sleep(SHELL_POLL_SECONDS)
+
     def event(self, state: JsonObject, action: str, details: JsonObject) -> None:
         events = list_at(state, "events")
         events.append({"action": action, "at": int(time.time()), "details": details})
@@ -1377,7 +2088,7 @@ class Adapter:
         self.event(state, "cleanup-pending", {"reason": reason})
         self.save_state(state)
         if self.lease_path.exists():
-            self.update_lease_state("cleanup-pending")
+            self.update_lease_member("cleanup-pending", phase="cleanup-pending")
 
     def active_child(self, state: JsonObject) -> tuple[JsonObject, JsonObject]:
         resources = as_object(value_at(state, "resources"), "state resources")
@@ -1427,10 +2138,22 @@ class Adapter:
         return agent
 
     def start(self) -> JsonObject:
+        if self.binding_kind == "command-job":
+            return self.command_start()
         state = self.state()
-        if state.get("phase") != "allocated":
+        if state.get("start_attempted") is True:
             raise AdapterError(
-                "adapter_state_invalid", "start requires allocated state"
+                "agent_start_already_attempted",
+                "agent startup is single-submit; use resume or cleanup for this member",
+            )
+        if state.get("phase") == "allocated":
+            # Keep the readiness transition explicit in persisted state while
+            # allowing callers of the original sequence to converge through it.
+            self.shell_ready()
+            state = self.state()
+        if state.get("phase") != "shell-ready":
+            raise AdapterError(
+                "adapter_state_invalid", "start requires a proven shell-readiness transition"
             )
         resources = as_object(value_at(state, "resources"), "state resources")
         panes = [
@@ -1456,6 +2179,12 @@ class Adapter:
             )
         native_args = cast(list[str], native_values)
         child_pane_id = string_at(cast(JsonObject, child), "pane_id")
+        state["start_attempted"] = True
+        self.event(state, "start-attempt", {"pane_id": child_pane_id, "agent_name": agent_name})
+        self.save_state(state)
+        kind = string_at(self.physical, "agent_kind")
+        argv: JsonValue = None
+        matching_process: JsonObject | None = None
         try:
             response = self.command(
                 [
@@ -1463,7 +2192,7 @@ class Adapter:
                     "start",
                     agent_name,
                     "--kind",
-                    string_at(self.physical, "agent_kind"),
+                    kind,
                     "--pane",
                     child_pane_id,
                     "--timeout",
@@ -1476,45 +2205,41 @@ class Adapter:
         except AdapterError:
             self.mark_cleanup_pending(state, "agent_start_failed")
             raise
-        result = result_object(response)
-        agent = result_entity(response, "agent")
-        kind = string_at(self.physical, "agent_kind")
-        if (
-            agent.get("agent") != kind
-            or agent.get("name") != agent_name
-            or agent.get("pane_id") != child_pane_id
-            or agent.get("tab_id") != resources.get("owned_tab_id")
-            or agent.get("workspace_id") != self.context["workspace_id"]
-            or agent.get("terminal_id") != child.get("terminal_id")
-        ):
-            self.mark_cleanup_pending(state, "agent_identity_mismatch")
-            raise AdapterError(
-                "herdr_identity_mismatch", "started agent identity differs"
-            )
-        argv = result.get("argv")
-        if argv != [kind, *native_args]:
-            self.mark_cleanup_pending(state, "agent_argv_mismatch")
-            raise AdapterError(
-                "delegated_capability_unavailable",
-                "Herdr did not start the exact validated native argv",
-            )
-        process_info = self.pane_process_info(child_pane_id)
-        processes = process_info.get("foreground_processes")
-        matching_process: JsonObject | None = None
-        if isinstance(processes, list):
-            for item in processes:
-                if (
-                    isinstance(item, dict)
-                    and item.get("name") == kind
-                    and item.get("argv") == [kind, *native_args]
-                ):
-                    matching_process = item
-                    break
-        if matching_process is None:
-            self.mark_cleanup_pending(state, "agent_process_mismatch")
-            raise AdapterError(
-                "herdr_identity_mismatch", "started agent process cannot be proven"
-            )
+        try:
+            result = result_object(response)
+            agent = result_entity(response, "agent")
+            if (
+                agent.get("agent") != kind
+                or agent.get("name") != agent_name
+                or agent.get("pane_id") != child_pane_id
+                or agent.get("tab_id") != resources.get("owned_tab_id")
+                or agent.get("workspace_id") != self.context["workspace_id"]
+                or agent.get("terminal_id") != child.get("terminal_id")
+            ):
+                raise AdapterError("herdr_identity_mismatch", "started agent identity differs")
+            argv = result.get("argv")
+            if argv != [kind, *native_args]:
+                raise AdapterError(
+                    "delegated_capability_unavailable",
+                    "Herdr did not start the exact validated native argv",
+                )
+            process_info = self.pane_process_info(child_pane_id)
+            processes = process_info.get("foreground_processes")
+            matching_process = None
+            if isinstance(processes, list):
+                for item in processes:
+                    if (
+                        isinstance(item, dict)
+                        and item.get("name") == kind
+                        and item.get("argv") == [kind, *native_args]
+                    ):
+                        matching_process = item
+                        break
+            if matching_process is None:
+                raise AdapterError("herdr_identity_mismatch", "started agent process cannot be proven")
+        except AdapterError:
+            self.mark_cleanup_pending(state, "agent_start_identity_failed")
+            raise
         session_id = result_agent_session(response)
         state["phase"] = "started"
         state["agent_state"] = result_state(response)
@@ -1535,9 +2260,12 @@ class Adapter:
             },
         )
         self.save_state(state)
+        self.touch_lease_member("started")
         return self.output(state)
 
     def prompt(self, prompt: str) -> JsonObject:
+        if self.binding_kind == "command-job":
+            raise AdapterError("command_prompt_denied", "ordinary command jobs have no agent prompt lifecycle")
         state = self.state()
         if state.get("prompt_submitted") is True:
             raise AdapterError(
@@ -1603,9 +2331,12 @@ class Adapter:
         state["resources"] = resources
         self.event(state, "prompt", {"prompt_sha256": state["prompt_sha256"]})
         self.save_state(state)
+        self.touch_lease_member("prompted")
         return self.output(state)
 
     def wait(self, timeout_seconds: int) -> JsonObject:
+        if self.binding_kind == "command-job":
+            return self.command_wait(timeout_seconds)
         state = self.state()
         if state.get("phase") not in {"prompted", "waiting"}:
             raise AdapterError(
@@ -1660,9 +2391,12 @@ class Adapter:
             self.mark_cleanup_pending(state, f"agent_{observation}")
         else:
             self.save_state(state)
+            self.touch_lease_member("waiting")
         return self.output(state)
 
     def collect(self) -> JsonObject:
+        if self.binding_kind == "command-job":
+            return self.command_collect()
         state = self.state()
         if state.get("phase") not in {"waiting", "collected"}:
             raise AdapterError(
@@ -1710,9 +2444,325 @@ class Adapter:
                 "agent_state": state.get("agent_state", "unknown"),
             },
         )
-        if state.get("agent_state") in {"blocked", "unknown", "stalled", "timeout"}:
+        needs_cleanup = state.get("agent_state") in {"blocked", "unknown", "stalled", "timeout"}
+        if needs_cleanup:
             state["lease_state"] = "cleanup-pending"
         self.save_state(state)
+        if needs_cleanup:
+            self.update_lease_member("cleanup-pending", phase="cleanup-pending")
+        else:
+            self.touch_lease_member("collected")
+        return self.output(state)
+
+    def active_command_child(self, state: JsonObject) -> tuple[JsonObject, JsonObject]:
+        if self.binding_kind != "command-job":
+            raise AdapterError("adapter_state_invalid", "ordinary command state is unavailable for an agent binding")
+        return self.active_child(state)
+
+    def command_run_result(self, response: JsonObject) -> JsonObject:
+        result = result_object(response)
+        candidate = result.get("command_job", result.get("run", result.get("process", result)))
+        if not isinstance(candidate, dict):
+            raise AdapterError("herdr_protocol_invalid", "pane run did not return a command observation")
+        return cast(JsonObject, candidate)
+
+    def command_markers(self) -> tuple[str, str]:
+        nonce = string_at(self.controller, "run_nonce")
+        digest = hashlib.sha256(f"{self.run_id}:{nonce}".encode()).hexdigest()[:20]
+        return f"HBU040_{digest}_START:", f"HBU040_{digest}_DONE:"
+
+    def command_text(
+        self, argv: list[str], start_marker: str, done_marker: str
+    ) -> tuple[str, list[str]]:
+        if not argv:
+            raise AdapterError("controller_binding_invalid", "ordinary command argv is empty")
+        command = " ".join(shlex.quote(value) for value in argv)
+        start_split = start_marker.index("_") + 1
+        done_split = done_marker.index("_") + 1
+        body = (
+            "printf '\\n%s%s%d%s\\n' "
+            f"{shlex.quote(start_marker[:start_split])} {shlex.quote(start_marker[start_split:])} "
+            "\"$$\" ':PID'; "
+            f"{command}; __hbu_rc=$?; "
+            "printf '\\n%s%s%d%s\\n' "
+            f"{shlex.quote(done_marker[:done_split])} {shlex.quote(done_marker[done_split:])} "
+            "\"$__hbu_rc\" ':END'; exit \"$__hbu_rc\""
+        )
+        wrapper_argv = ["/bin/sh", "-c", body]
+        return " ".join(shlex.quote(value) for value in wrapper_argv), wrapper_argv
+
+    def command_start_pid(self, pane_id: str, marker: str) -> int:
+        snapshot = self.text_command(
+            [
+                "pane", "read", pane_id, "--source", "recent-unwrapped",
+                "--lines", "120", "--format", "text",
+            ],
+            timeout_seconds=10,
+        )
+        match = re.search(rf"{re.escape(marker)}(\d+):PID", snapshot)
+        if match is None:
+            raise AdapterError(
+                "command_process_missing",
+                "pane output did not contain the unique ordinary-command process marker",
+            )
+        return positive_int(int(match.group(1)), "command process pid")
+
+    def command_exit_code(self, pane_id: str, marker: str) -> int:
+        snapshot = self.text_command(
+            [
+                "pane",
+                "read",
+                pane_id,
+                "--source",
+                "recent-unwrapped",
+                "--lines",
+                "120",
+                "--format",
+                "text",
+            ],
+            timeout_seconds=10,
+        )
+        match = re.search(rf"{re.escape(marker)}(-?\d+):END", snapshot)
+        if match is None:
+            raise AdapterError(
+                "command_exit_missing",
+                "pane output did not contain the unique ordinary-command completion marker",
+            )
+        return int(match.group(1))
+
+    def command_observation(self, state: JsonObject, observation: JsonObject) -> None:
+        _, child = self.active_command_child(state)
+        pane_id = string_at(child, "pane_id")
+        job = self.command_job
+        if job is None:
+            raise AdapterError("controller_binding_required", "ordinary command projection is unavailable")
+        if observation.get("pane_id", pane_id) != pane_id:
+            raise AdapterError("herdr_identity_mismatch", "ordinary command observation targets another pane")
+        if observation.get("cwd", job["cwd"]) != job["cwd"]:
+            raise AdapterError("controller_binding_cwd_mismatch", "ordinary command observation cwd changed")
+        expected_argv = job["argv"]
+        observed_argv = observation.get("argv", expected_argv)
+        if observed_argv != expected_argv:
+            raise AdapterError("herdr_identity_mismatch", "pane run did not execute the exact controller argv")
+        exit_value = observation.get("exit_code")
+        if exit_value is not None and (
+            isinstance(exit_value, bool) or not isinstance(exit_value, int) or not -255 <= exit_value <= 255
+        ):
+            raise AdapterError("herdr_protocol_invalid", "ordinary command exit code is malformed")
+        process = observation.get("process")
+        if process is not None and not isinstance(process, dict):
+            raise AdapterError("herdr_protocol_invalid", "ordinary command process evidence is malformed")
+        if isinstance(process, dict):
+            process_pane = process.get("pane_id", pane_id)
+            if process_pane != pane_id:
+                raise AdapterError("herdr_identity_mismatch", "ordinary command process moved panes")
+            process_argv = process.get("argv", expected_argv)
+            if process_argv != expected_argv:
+                raise AdapterError("herdr_identity_mismatch", "ordinary command process argv changed")
+            if isinstance(process.get("pid"), bool) or (process.get("pid") is not None and not isinstance(process.get("pid"), int)):
+                raise AdapterError("herdr_protocol_invalid", "ordinary command process pid is malformed")
+            child["command_pid"] = process.get("pid")
+        child["command_argv_sha256"] = digest_json(cast(JsonValue, expected_argv))
+        child["command_cwd"] = job["cwd"]
+        state["resources"] = as_object(value_at(state, "resources"), "state resources")
+        state["command_observation"] = {
+            "state": observation.get("state", "exited" if exit_value is not None else "running"),
+            "exit_code": exit_value,
+            "process": process if isinstance(process, dict) else None,
+            "output": safe_preview(str(observation.get("output", ""))) if observation.get("output") is not None else "",
+            "stderr": safe_preview(str(observation.get("stderr", ""))) if observation.get("stderr") is not None else "",
+        }
+
+    def command_start(self) -> JsonObject:
+        state = self.state()
+        if state.get("phase") == "allocated":
+            self.shell_ready()
+            state = self.state()
+        if state.get("phase") not in {"shell-ready"}:
+            raise AdapterError("adapter_state_invalid", "command start requires a proven shell-readiness transition")
+        if state.get("command_started") is True:
+            raise AdapterError("command_start_already_attempted", "ordinary command startup is single-submit; use resume or cleanup")
+        resources, child = self.active_command_child(state)
+        pane_id = string_at(child, "pane_id")
+        job = self.command_job
+        if job is None:
+            raise AdapterError("controller_binding_required", "ordinary command projection is unavailable")
+        state["command_started"] = True
+        state["phase"] = "command-start-attempted"
+        start_marker, marker = self.command_markers()
+        command_text, wrapper_argv = self.command_text(
+            cast(list[str], job["argv"]), start_marker, marker
+        )
+        state["command_start_marker"] = start_marker
+        state["command_marker"] = marker
+        state["command_text_sha256"] = hashlib.sha256(command_text.encode()).hexdigest()
+        self.event(
+            state,
+            "command-start-attempt",
+            {"pane_id": pane_id, "argv_sha256": digest_json(cast(JsonValue, job["argv"]))},
+        )
+        self.save_state(state)
+        try:
+            timeout_seconds = positive_int(value_at(job, "timeout_seconds"), "command timeout")
+            self.text_command(
+                ["pane", "run", pane_id, command_text],
+                timeout_seconds=10,
+            )
+            self.text_command(
+                [
+                    "pane", "wait-output", pane_id, "--match", start_marker,
+                    "--source", "recent-unwrapped", "--timeout",
+                    str(min(timeout_seconds, 5) * 1000),
+                ],
+                timeout_seconds=min(timeout_seconds, 5) + 5,
+            )
+            command_pid = self.command_start_pid(pane_id, start_marker)
+            child["command_pid"] = command_pid
+            child["command_process_argv_sha256"] = digest_json(
+                cast(JsonValue, wrapper_argv)
+            )
+            state["command_observation"] = {
+                "state": "running",
+                "exit_code": None,
+                "process": {
+                    "pane_id": pane_id,
+                    "pid": command_pid,
+                    "argv": job["argv"],
+                    "argv_sha256": digest_json(cast(JsonValue, job["argv"])),
+                    "wrapper_argv_sha256": child["command_process_argv_sha256"],
+                },
+                "output": "",
+                "stderr": "",
+            }
+            state["resources"] = resources
+            self.save_state(state)
+            self.text_command(
+                [
+                    "pane",
+                    "wait-output",
+                    pane_id,
+                    "--match",
+                    marker,
+                    "--source",
+                    "recent-unwrapped",
+                    "--timeout",
+                    str(timeout_seconds * 1000),
+                ],
+                timeout_seconds=timeout_seconds + 5,
+            )
+        except AdapterError as exc:
+            state["command_state"] = "timeout" if exc.code in {"herdr_command_timeout", "command_timeout"} else "unknown"
+            self.mark_cleanup_pending(state, "command_run_failed")
+            if exc.code == "herdr_command_timeout":
+                raise AdapterError("command_timeout", "bounded ordinary command run timed out") from exc
+            raise
+        try:
+            exit_code = self.command_exit_code(pane_id, marker)
+        except AdapterError:
+            self.mark_cleanup_pending(state, "command_exit_observation_failed")
+            raise
+        observation: JsonObject = {
+            "pane_id": pane_id,
+            "cwd": string_at(job, "cwd"),
+            "argv": job["argv"],
+            "state": "exited",
+            "exit_code": exit_code,
+            "process": {
+                "pane_id": pane_id,
+                "pid": child.get("command_pid"),
+                "argv": job["argv"],
+                "argv_sha256": digest_json(cast(JsonValue, job["argv"])),
+                "wrapper_argv_sha256": child.get("command_process_argv_sha256"),
+            },
+        }
+        try:
+            self.command_observation(state, observation)
+        except AdapterError:
+            self.mark_cleanup_pending(state, "command_identity_failed")
+            raise
+        state["phase"] = "command-started"
+        command_observation = as_object(
+            value_at(state, "command_observation"), "command observation"
+        )
+        state["command_state"] = str(command_observation.get("state", "running"))
+        state["resources"] = resources
+        self.event(state, "command-start", {"pane_id": pane_id, "state": state["command_state"]})
+        self.save_state(state)
+        self.touch_lease_member("command-started")
+        return self.output(state)
+
+    def command_wait(self, timeout_seconds: int) -> JsonObject:
+        state = self.state()
+        if state.get("phase") not in {"command-started", "command-waiting"}:
+            raise AdapterError("adapter_state_invalid", "command wait requires a submitted command")
+        if not 1 <= timeout_seconds <= MAX_COMMAND_TIMEOUT_SECONDS:
+            raise AdapterError("command_timeout_invalid", "command wait timeout is outside bounded range")
+        _, child = self.active_command_child(state)
+        pane_id = string_at(child, "pane_id")
+        try:
+            process_info = self.pane_process_info(pane_id)
+        except AdapterError:
+            state["command_state"] = "unknown"
+            self.mark_cleanup_pending(state, "command_observation_failed")
+            raise
+        process_values = process_info.get("foreground_processes", [])
+        processes = process_values if isinstance(process_values, list) else []
+        command_pid = child.get("command_pid")
+        running = isinstance(command_pid, int) and any(
+            isinstance(item, dict) and item.get("pid") == command_pid for item in processes
+        )
+        observation = as_object(state.get("command_observation", {}), "command observation")
+        if running:
+            observation["state"] = "running"
+            state["command_state"] = "running"
+        else:
+            observation["state"] = "exited"
+            state["command_state"] = "exited"
+        state["command_observation"] = observation
+        state["phase"] = "command-waiting"
+        self.event(state, "command-wait", {"pane_id": pane_id, "state": state["command_state"], "timeout_seconds": timeout_seconds})
+        self.save_state(state)
+        self.touch_lease_member("command-waiting")
+        return self.output(state)
+
+    def command_collect(self) -> JsonObject:
+        state = self.state()
+        if state.get("phase") not in {"command-started", "command-waiting", "command-collected"}:
+            raise AdapterError("adapter_state_invalid", "command collect requires an observed command")
+        _, child = self.active_command_child(state)
+        pane_id = string_at(child, "pane_id")
+        raw_output = self.text_command(
+            ["pane", "read", pane_id, "--source", "recent-unwrapped", "--lines", "120", "--format", "text"],
+            timeout_seconds=10,
+        )
+        job = self.command_job
+        if job is None:
+            raise AdapterError("controller_binding_required", "ordinary command projection is unavailable")
+        output_bound_bytes = positive_int(
+            value_at(job, "output_bound_bytes"), "command output bound"
+        )
+        bound_output = bounded_utf8_preview(raw_output, output_bound_bytes)
+        observation = as_object(state.get("command_observation", {}), "command observation")
+        exit_code = observation.get("exit_code")
+        process = observation.get("process")
+        evidence: JsonObject = {
+            "kind": "ordinary-command",
+            "pane_id": pane_id,
+            "process": process if isinstance(process, dict) else None,
+            "process_argv_sha256": child.get("command_argv_sha256"),
+            "output_sha256": hashlib.sha256(raw_output.encode()).hexdigest(),
+            "output_preview": bound_output,
+            "output_bound_bytes": output_bound_bytes,
+            "exit_code": exit_code,
+            "oracle_judgment_required": True,
+            "task_success_claim": False,
+        }
+        state["phase"] = "command-collected"
+        state["command_state"] = "exited" if exit_code is not None else state.get("command_state", "unknown")
+        state["evidence"] = [evidence]
+        self.event(state, "command-collect", {"pane_id": pane_id, "exit_code": exit_code, "output_sha256": evidence["output_sha256"]})
+        self.save_state(state)
+        self.touch_lease_member("command-collected")
         return self.output(state)
 
     def pane_inventory(self) -> list[JsonObject]:
@@ -1744,6 +2794,19 @@ class Adapter:
         processes = process_info.get("foreground_processes")
         if not isinstance(processes, list):
             return False
+        command_pid = record.get("command_pid")
+        command_digest = record.get("command_process_argv_sha256")
+        command_seen = False
+        if isinstance(command_pid, int) and isinstance(command_digest, str):
+            for process in processes:
+                if (
+                    isinstance(process, dict)
+                    and process.get("pid") == command_pid
+                    and isinstance(process.get("argv"), list)
+                    and digest_json(cast(JsonValue, process["argv"])) == command_digest
+                ):
+                    command_seen = True
+                    break
         expected_kind = record.get("agent_kind")
         expected_argv_sha256 = record.get("agent_argv_sha256")
         if isinstance(expected_kind, str) and isinstance(expected_argv_sha256, str):
@@ -1778,6 +2841,7 @@ class Adapter:
             isinstance(process, dict)
             and (
                 process.get("pid") == expected_shell_pid
+                or (command_seen and process.get("pid") == command_pid)
                 or (
                     process.get("name") in {"starship", "mise"}
                     and isinstance(process.get("argv"), list)
@@ -1810,10 +2874,31 @@ class Adapter:
             self.task, "task_id"
         ) or state_task.get("attempt") != self.task.get("attempt"):
             raise AdapterError("restart_mismatch", "task projection changed")
+        if state_task.get("resource_locks", []) != self.member_resource_locks():
+            raise AdapterError("restart_mismatch", "resource lock projection changed")
+        if self.binding_kind == "command-job":
+            state_command = as_object(value_at(state, "command_job"), "state command job")
+            current_command = self.command_job
+            if current_command is None or state_command.get("cwd") != current_command.get("cwd"):
+                raise AdapterError("restart_mismatch", "command cwd changed")
+            if state_command.get("argv_sha256") != digest_json(cast(JsonValue, current_command["argv"])):
+                raise AdapterError("restart_mismatch", "command argv changed")
+            if state_command.get("resource_locks") != current_command.get("resource_locks"):
+                raise AdapterError("restart_mismatch", "command resource locks changed")
+        state_batch = as_object(value_at(state, "batch"), "state batch")
+        if digest_json(cast(JsonValue, state_batch)) != digest_json(cast(JsonValue, self.batch)):
+            raise AdapterError("restart_mismatch", "batch projection changed")
+        if state.get("member_id") != self.member_id:
+            raise AdapterError("restart_mismatch", "run-member identity changed")
         if state.get("physical_binding_sha256") != digest_json(
             cast(JsonValue, self.physical)
         ):
             raise AdapterError("restart_mismatch", "physical binding changed")
+        readiness = state.get("shell_readiness")
+        if state.get("phase") in {"shell-ready", "started", "prompted", "waiting", "collected", "command-start-attempted", "command-started", "command-waiting", "command-collected"} and (
+            not isinstance(readiness, dict) or readiness.get("state") != "ready"
+        ):
+            raise AdapterError("restart_mismatch", "shell-readiness proof is missing")
         resources = as_object(value_at(state, "resources"), "state resources")
         if (
             resources.get("workspace_id") != self.context["workspace_id"]
@@ -1828,16 +2913,13 @@ class Adapter:
         if live_caller != state_caller:
             raise AdapterError("restart_mismatch", "live caller identity changed")
         expected_lease_state = state.get("lease_state")
-        allowed_lease_states = (
-            frozenset({"released"})
-            if expected_lease_state == "released"
-            else frozenset({"active", "cleanup-pending"})
-        )
+        allowed_lease_states = frozenset({"active", "cleanup-pending", "released"})
         with self.lease_lock():
             lease = self.owned_lease(allowed_lease_states)
-            if lease.get("lease_state") != expected_lease_state:
+            member = self.lease_member(lease)
+            if member.get("lease_state") != expected_lease_state:
                 raise AdapterError(
-                    "restart_mismatch", "lease state differs from adapter state"
+                    "restart_mismatch", "run-member lease state differs from adapter state"
                 )
         if state.get("phase") == "released":
             return self.output(state)
@@ -2008,22 +3090,10 @@ class Adapter:
         return self.output(state)
 
     def update_lease_state(self, lease_state: str) -> None:
-        if lease_state not in {"cleanup-pending", "released"}:
-            raise AdapterError(
-                "adapter_state_invalid", f"unsupported lease state: {lease_state}"
-            )
-        allowed = (
-            frozenset({"active", "cleanup-pending"})
-            if lease_state == "cleanup-pending"
-            else frozenset({"active", "cleanup-pending", "released"})
-        )
-        with self.lease_lock():
-            lease = self.owned_lease(allowed)
-            lease["lease_state"] = lease_state
-            self.write_json(self.lease_path, lease)
+        self.update_lease_member(lease_state)
 
     def release_lease(self) -> None:
-        self.update_lease_state("released")
+        self.update_lease_member("released", phase="released")
 
 
 def parser() -> argparse.ArgumentParser:
@@ -2033,10 +3103,18 @@ def parser() -> argparse.ArgumentParser:
         choices=(
             "preflight",
             "allocate",
+            "shell-ready",
+            "shell-readiness",
+            "ready",
             "start",
+            "run",
+            "command-start",
+            "command-run",
             "prompt",
             "wait",
+            "command-wait",
             "collect",
+            "command-collect",
             "resume",
             "recover",
             "cleanup",
@@ -2057,15 +3135,17 @@ def main(argv: list[str] | None = None) -> int:
             result = adapter.preflight()
         elif args.command == "allocate":
             result = adapter.allocate()
-        elif args.command == "start":
+        elif args.command in {"shell-ready", "shell-readiness", "ready"}:
+            result = adapter.shell_ready(args.timeout_seconds)
+        elif args.command in {"start", "run", "command-start", "command-run"}:
             result = adapter.start()
         elif args.command == "prompt":
             if not isinstance(args.prompt, str):
                 raise AdapterError("prompt_invalid", "--prompt is required")
             result = adapter.prompt(args.prompt)
-        elif args.command == "wait":
+        elif args.command in {"wait", "command-wait"}:
             result = adapter.wait(args.timeout_seconds)
-        elif args.command == "collect":
+        elif args.command in {"collect", "command-collect"}:
             result = adapter.collect()
         elif args.command in {"resume", "recover"}:
             result = adapter.resume()

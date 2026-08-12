@@ -71,13 +71,10 @@ Require these fields only when a task creates or replaces a persisted implementa
 
 ## Explorer Eligibility
 
-Use the cheap explorer profile only for pure repository search and factual confirmation. Such a task
-must have no implementation or test write refs, use `execution_profile: fast`,
-`reasoning_profile: light`, and `isolation: shared-read-only`; it may return bounded evidence and open
-questions but cannot edit, test-write, or make a design decision. A task that needs deeper synthesis,
-interpretation, or cross-file reasoning is a worker or main task, not a cheap explorer, even when it
-does not write files. Do not infer explorer eligibility from a model or provider name; record the
-semantic profile in the approved plan and leave concrete binding to `implement-change`.
+Use the low-cost explorer profile only for pure repository search and factual confirmation. Explorer
+eligibility is a portable no-write contract: such a task must have no implementation or test write refs, use `execution_profile: fast`, `reasoning_profile: light`, and `isolation: shared-read-only`; it may return bounded evidence and open questions but cannot edit, test-write, or make a design decision. A task that needs deeper synthesis, interpretation, or cross-file reasoning is a worker or main task, not an explorer, even when it does not write files.
+
+Explorer cost is an absolute low-cost runtime invariant, independent of worker cost. Under semantic routing, explorer effort is low by default and medium as the ceiling; high/xhigh cannot be labeled explorer. Mixed search-and-judgment work must be decomposed into explicit explorer task IDs that return bounded facts and open questions, followed by a main-owned synthesis task. Do not let that synthesis task absorb otherwise independent fact-search slices. If the work needs interpretation or cross-file reasoning beyond the bounded facts, keep that reasoning in the synthesis task. Do not infer explorer eligibility from a model or provider name; record the semantic profile in the approved plan and leave concrete binding to `implement-change`.
 
 ## Approved Architecture Decisions
 

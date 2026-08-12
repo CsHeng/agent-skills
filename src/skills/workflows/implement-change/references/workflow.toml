@@ -17,6 +17,18 @@ allowed_parallel_may_serialize = true
 required_parallel_capacity_exit = "parallel_capacity_required"
 controller_converges_batches = true
 
+[explorer]
+role_cost = "absolute"
+portable_eligibility = ["fast", "light", "shared-read-only", "no-write"]
+requires_no_write_refs = true
+default_effort = "low"
+max_effort = "medium"
+semantic_routing_default_effort = "low"
+semantic_routing_max_effort = "medium"
+rejected_efforts = ["high", "xhigh"]
+requires_explicit_search_synthesis_split = true
+synthesis_owner = "main"
+
 [workers]
 default_eligible_delegation = "approved-policy"
 requires_isolated_worktree_for_writes = true

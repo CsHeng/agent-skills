@@ -5,7 +5,10 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import shlex
 import sys
+import time
 from pathlib import Path
 
 
@@ -57,6 +60,43 @@ def agent_state() -> str:
     if selected in {"idle", "done", "blocked", "unknown"}:
         return selected
     return "done"
+
+
+def owned_tab_id() -> str:
+    return os.environ.get("HERDR_FIXTURE_OWNED_TAB_ID", "w-main:t-run")
+
+
+def root_pane_id() -> str:
+    return os.environ.get("HERDR_FIXTURE_ROOT_PANE_ID", "w-main:p-root")
+
+
+def child_pane_id() -> str:
+    return os.environ.get("HERDR_FIXTURE_CHILD_PANE_ID", "w-main:p-child")
+
+
+def command_run_call() -> list[str] | None:
+    for call in reversed(prior_calls()):
+        if call[:2] == ["pane", "run"]:
+            return call
+    return None
+
+
+def command_marker() -> str:
+    call = command_run_call()
+    if call is None:
+        return ""
+    command = call[3] if len(call) > 3 else ""
+    match = re.search(r"(?P<left>HBU040_)\s+(?P<right>[a-f0-9]+_DONE:)", command)
+    return f"{match.group('left')}{match.group('right')}" if match else ""
+
+
+def command_start_marker() -> str:
+    call = command_run_call()
+    if call is None:
+        return ""
+    command = call[3] if len(call) > 3 else ""
+    match = re.search(r"(?P<left>HBU040_)\s+(?P<right>[a-f0-9]+_START:)", command)
+    return f"{match.group('left')}{match.group('right')}" if match else ""
 
 
 def pane(
@@ -123,11 +163,11 @@ def main() -> int:
                 "type": "tab_created",
                 "tab": {
                     "workspace_id": workspace_id,
-                    "tab_id": "w-main:t-run",
+                    "tab_id": owned_tab_id(),
                     "label": "fixture-run",
                     "pane_count": 1,
                 },
-                "root_pane": pane("w-main:p-root", "w-main:t-run", "term-root"),
+                "root_pane": pane(root_pane_id(), owned_tab_id(), "term-root"),
             }
         )
     elif argv[:2] == ["tab", "get"]:
@@ -147,7 +187,7 @@ def main() -> int:
         result(
             {
                 "type": "pane_info",
-                "pane": pane("w-main:p-child", "w-main:t-run", "term-child"),
+                "pane": pane(child_pane_id(), owned_tab_id(), "term-child"),
             }
         )
     elif argv[:2] == ["pane", "get"]:
@@ -157,23 +197,25 @@ def main() -> int:
             selected["name"] = "orchestrator-fixture"
             if os.environ.get("HERDR_FIXTURE_CONTEXT_MISMATCH") == "tab":
                 selected["tab_id"] = "w-main:t-other"
-        elif pane_id == "w-main:p-root":
-            selected = pane(pane_id, "w-main:t-run", "term-root")
+        elif pane_id == root_pane_id():
+            selected = pane(pane_id, owned_tab_id(), "term-root")
         else:
             selected = pane(
                 pane_id,
-                "w-main:t-run",
+                owned_tab_id(),
                 "term-child",
                 agent=was_called(["agent", "start"]),
             )
         result({"type": "pane_info", "pane": selected})
     elif argv[:2] == ["pane", "process-info"]:
         pane_id = argv[argv.index("--pane") + 1]
+        if scenario() == "late-poll-shell" and pane_id == child_pane_id():
+            time.sleep(1.1)
         failure_target = os.environ.get("HERDR_FIXTURE_PROCESS_INFO_FAILURE")
         if failure_target == pane_id:
             print("fixture process-info failure", file=sys.stderr)
             return 1
-        shell_pid = 101 if pane_id == "w-main:p-root" else 102
+        shell_pid = 101 if pane_id == root_pane_id() else 102
         processes: list[dict[str, object]] = [
             {
                 "argv": ["-zsh"],
@@ -183,7 +225,46 @@ def main() -> int:
                 "pid": shell_pid,
             }
         ]
-        if pane_id == "w-main:p-child" and was_called(["agent", "start"]):
+        if pane_id == child_pane_id() and scenario() in {
+            "agent_pane_busy",
+            "pane_busy",
+        } and not was_called(["agent", "start"]):
+            processes = [
+                {
+                    "argv": ["codex"],
+                    "argv0": "codex",
+                    "cmdline": "codex --existing-turn",
+                    "name": "codex",
+                    "pid": 202,
+                }
+            ]
+        elif pane_id == child_pane_id() and (
+            scenario() in {
+                "non-available-shell",
+                "shell-unavailable",
+                "reviewer-no-shell",
+            }
+            and not was_called(["agent", "start"])
+            or scenario() == "late-shell"
+            and len(
+                [
+                    call
+                    for call in prior_calls()
+                    if call[:2] == ["pane", "process-info"]
+                ]
+            )
+            <= 7
+        ):
+            processes = [
+                {
+                    "argv": ["login"],
+                    "argv0": "login",
+                    "cmdline": "login",
+                    "name": "login",
+                    "pid": 202,
+                }
+            ]
+        elif pane_id == child_pane_id() and was_called(["agent", "start"]):
             start = next(
                 call
                 for call in reversed(prior_calls())
@@ -200,6 +281,19 @@ def main() -> int:
                     "pid": 202,
                 }
             ]
+        elif pane_id == child_pane_id() and command_run_call() is not None and scenario() in {"command-running", "command_running", "long-command"}:
+            run_call = command_run_call()
+            assert run_call is not None
+            command_argv = shlex.split(run_call[3])
+            processes = [
+                {
+                    "argv": command_argv,
+                    "argv0": command_argv[0],
+                    "cmdline": " ".join(command_argv),
+                    "name": command_argv[0],
+                    "pid": 303,
+                }
+            ]
         result(
             {
                 "type": "pane_process_info",
@@ -212,28 +306,38 @@ def main() -> int:
         )
     elif argv[:2] == ["pane", "list"]:
         panes: list[dict[str, object]] = []
-        if not was_called(["tab", "close", "w-main:t-run"]):
-            if not was_called(["pane", "close", "w-main:p-root"]):
-                panes.append(pane("w-main:p-root", "w-main:t-run", "term-root"))
-            if not was_called(["pane", "close", "w-main:p-child"]):
+        if not was_called(["tab", "close", owned_tab_id()]):
+            if not was_called(["pane", "close", root_pane_id()]):
+                panes.append(pane(root_pane_id(), owned_tab_id(), "term-root"))
+            if not was_called(["pane", "close", child_pane_id()]):
                 panes.append(
                     pane(
-                        "w-main:p-child",
-                        "w-main:t-run",
+                        child_pane_id(),
+                        owned_tab_id(),
                         "term-child",
                         agent=was_called(["agent", "start"]),
                     )
                 )
             if scenario() == "mixed":
-                unowned = pane("w-main:p-unowned", "w-main:t-run", "term-unowned")
+                unowned = pane("w-main:p-unowned", owned_tab_id(), "term-unowned")
                 unowned["agent"] = "claude"
                 unowned["name"] = "unowned-agent"
                 panes.append(unowned)
         result({"type": "pane_list", "panes": panes})
+    elif argv[:2] == ["pane", "run"]:
+        if len(argv) != 4:
+            print("legacy pane run flags are unsupported", file=sys.stderr)
+            return 1
+    elif argv[:2] == ["pane", "wait-output"]:
+        match_value = argv[argv.index("--match") + 1]
+        if scenario() in {"command-timeout", "command_timeout"} and match_value == command_marker():
+            print("timeout", file=sys.stderr)
+            return 1
+        print()
     elif argv[:2] == ["agent", "start"]:
         kind = argv[argv.index("--kind") + 1]
         native = argv[argv.index("--") + 1 :]
-        selected = pane("w-main:p-child", "w-main:t-run", "term-child", agent=True)
+        selected = pane(child_pane_id(), owned_tab_id(), "term-child", agent=True)
         selected["agent"] = kind
         selected["name"] = argv[2]
         selected.pop("agent_session", None)
@@ -249,7 +353,7 @@ def main() -> int:
         if scenario() == "stalled":
             print("agent_prompt_stalled", file=sys.stderr)
             return 1
-        selected = pane("w-main:p-child", "w-main:t-run", "term-child", agent=True)
+        selected = pane(child_pane_id(), owned_tab_id(), "term-child", agent=True)
         selected["agent_status"] = "working"
         result({"type": "agent_prompted", "agent": selected})
     elif argv[:2] == ["agent", "wait"]:
@@ -260,7 +364,7 @@ def main() -> int:
             {
                 "type": "agent_info",
                 "agent": pane(
-                    "w-main:p-child", "w-main:t-run", "term-child", agent=True
+                    child_pane_id(), owned_tab_id(), "term-child", agent=True
                 ),
             }
         )
@@ -269,12 +373,19 @@ def main() -> int:
             {
                 "type": "agent_info",
                 "agent": pane(
-                    "w-main:p-child", "w-main:t-run", "term-child", agent=True
+                    child_pane_id(), owned_tab_id(), "term-child", agent=True
                 ),
             }
         )
     elif argv[:2] == ["agent", "read"]:
         print("fixture completion evidence")
+    elif argv[:2] == ["pane", "read"]:
+        exit_code = 7 if scenario() in {"command-nonzero", "command_nonzero"} else 0
+        command_output = "🙂🙂" if scenario() == "command-unicode" else "fixture command output token=fixture-secret"
+        print(
+            f"{command_output}\n"
+            f"{command_start_marker()}303:PID\n{command_marker()}{exit_code}:END"
+        )
     elif argv[:2] == ["pane", "close"]:
         result({"type": "pane_closed", "pane_id": argv[2]})
     elif argv[:2] == ["tab", "close"]:

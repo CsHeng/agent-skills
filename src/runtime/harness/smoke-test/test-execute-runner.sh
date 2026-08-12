@@ -35,11 +35,14 @@ assert_json() {
 main() {
   local tmp_dir design_file approved_plan pending_plan legacy_plan parallel_plan verdict ledger_file execution_result_json workspace_mode worktree_preflight
   local binding_request_file binding_envelope_file binding_plan_digest binding_ledger_digest binding_worker_dir
+  local command_request_file command_envelope_file
   local binding_ledger_before binding_ledger_after binding_file_mode binding_dir_mode
   local task_ledger_json=""
   local task_catalog_json=""
   local next_ready_task=""
   local binding_json=""
+  local batch_provenance_json=""
+  local batch_binding_json=""
   local inherited_binding_json=""
   local topology_json=""
   local -a verification_commands allowed_touch_set
@@ -508,6 +511,9 @@ EOF
 
   binding_json="$(execution_runtime_binding "$parallel_plan" "$ledger_file" "P1" 4 "semantic-routing")"
   assert_json "$binding_json" '.outcome == "bound" and .effective_width == 2 and .selected_task_ids == ["task-1", "task-2"]' "semantic routing should bind the complete safe frontier"
+  assert_json "$binding_json" '.batch_id == "P1" and .planned_width == 2 and .ready_width == 3 and .runtime_capacity == 4 and .actor_capacity == 3 and .effective_width == 2' "parallel binding should expose immutable batch capacity evidence"
+  assert_json "$binding_json" '.batch_identity.task_ids == ["task-1", "task-2", "task-3"] and .limiting_factors == ["batch_limit"] and .serial_fallback_reason == null' "parallel binding should expose batch identity and limiting factors"
+  assert_json "$binding_json" 'any(.evidence[]; .kind == "effective-capacity" and .planned_width == 2 and .ready_width == 3 and .selected_task_ids == ["task-1", "task-2"])' "parallel binding evidence should be adapter-ready"
   assert_json "$binding_json" '.bindings[0].actor_kind == "subagent" and .bindings[0].model_instruction == "bind-runtime-equivalent-for-execution-profile"' "preferred delegation should use portable semantic binding instructions"
   declare -F execution_ready_batch >/dev/null || fail "ready-batch API should be available"
 
@@ -522,6 +528,7 @@ EOF
   binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$ledger_file" "P1" 1 "semantic-routing")"
   assert_json "$binding_json" '.outcome == "serial-fallback" and .effective_width == 1 and .stop_reason == null' "allowed work should serialize with capacity evidence"
   assert_json "$binding_json" '.evidence[0].kind == "effective-capacity" and .evidence[0].runtime_capacity == 1' "serial fallback should record explicit capacity evidence"
+  assert_json "$binding_json" '.serial_fallback_reason == "runtime_capacity" and .limiting_factors == ["runtime_capacity"]' "allowed serialization should record the exact fallback reason"
 
   jq 'map(.parallel_policy = "required")' "$ledger_file" >"$tmp_dir/required-ledger.json"
   binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$tmp_dir/required-ledger.json" "P1" 1 "semantic-routing")"
@@ -574,10 +581,33 @@ EOF
   printf '%s\n' "$task_ledger_json" >"$ledger_file"
   binding_plan_digest="$(harness_file_sha256 "$parallel_plan")"
   binding_ledger_digest="$(jq -cS . "$ledger_file" | shasum -a 256 | awk '{print $1}')"
+  batch_binding_json="$(execution_runtime_binding_from_validated_plan "$parallel_plan" "$ledger_file" "P1" 4 "semantic-routing")"
+  batch_provenance_json="$(jq -cS '
+    {
+      batch_id,
+      parallel_group: .batch_identity.parallel_group,
+      parallel_policy: .batch_identity.parallel_policy,
+      batch_task_ids: .batch_identity.task_ids,
+      planned_width,
+      ready_width,
+      ready_task_ids: .ready_task_ids,
+      selected_task_ids,
+      runtime_capacity,
+      actor_capacity,
+      effective_width,
+      limiting_factors,
+      serial_fallback_reason,
+      outcome,
+      stop_reason
+    }
+  ' <<<"$batch_binding_json")"
   binding_request_file="$tmp_dir/controller-binding-request.json"
   jq -n \
     --arg plan_sha256 "$binding_plan_digest" \
     --arg ledger_sha256 "$binding_ledger_digest" \
+    --arg batch_id "P1" \
+    --argjson batch_runtime_capacity 4 \
+    --argjson batch_provenance "$batch_provenance_json" \
     --arg checkout_path "$binding_worker_dir" \
     '{
       schema_version: 1,
@@ -590,6 +620,9 @@ EOF
       model_policy: "semantic-routing",
       expected_plan_sha256: $plan_sha256,
       expected_ledger_sha256: $ledger_sha256,
+      batch_id: $batch_id,
+      batch_runtime_capacity: $batch_runtime_capacity,
+      batch_provenance: $batch_provenance,
       review_brief_path: "",
       review_brief_sha256: "",
       physical_binding: {
@@ -700,6 +733,8 @@ EOF
   assert_json "$(<"$binding_envelope_file")" '.controller.controller_id == "controller-test" and .controller.run_id == "run-test-a1" and .controller.run_nonce == "nonce-test-a1"' "controller identity and nonce should be bound"
   assert_json "$(<"$binding_envelope_file")" '.provenance.plan_sha256 | length == 64' "controller binding should include the approved plan digest"
   assert_json "$(<"$binding_envelope_file")" '.provenance.ledger_sha256 | length == 64' "controller binding should include the canonical ledger digest"
+  assert_json "$(<"$binding_envelope_file")" '.provenance.batch.batch_id == "P1" and .provenance.batch.selected_task_ids == ["task-1", "task-2"] and .provenance.batch.effective_width == 2' "controller binding should carry immutable batch provenance"
+  assert_json "$(<"$binding_envelope_file")" '.batch_provenance == .provenance.batch and .batch_provenance.limiting_factors == ["batch_limit"]' "controller binding should expose complete capacity evidence"
   jq -e --arg repo_root "$(realpath "$tmp_dir")" '.provenance.canonical_repository == $repo_root' "$binding_envelope_file" >/dev/null || fail "controller binding should include the canonical repository"
   assert_json "$(<"$binding_envelope_file")" '.task.task_id == "task-1" and .task.status == "ready" and .task.attempt == 1 and .task.runtime_role == "worker"' "controller binding should preserve the selected ready task and derived role"
   assert_json "$(<"$binding_envelope_file")" '.task.touch_set == ["src/example.py", "tests/test_example.py"] and .task.oracle_refs == ["bash test.sh"]' "controller binding should include the immutable touch set and oracle refs"
@@ -707,6 +742,77 @@ EOF
   assert_json "$(<"$binding_envelope_file")" '.physical_binding.agent_name == "worker-lynx-cb-ttask-1-a1"' "controller binding should persist only the deterministic agent name"
   assert_json "$(<"$binding_envelope_file")" '.authority.adapter_capabilities == ["consume-binding", "manage-run-owned-terminal-resources", "persist-adapter-state"] and (.authority.denied_capabilities | index("mutate-task-ledger")) != null and (.authority.denied_capabilities | index("derive-lifecycle-tail")) != null' "controller binding should deny lifecycle authority"
   assert_json "$(<"$binding_envelope_file")" '[paths(scalars) as $p | getpath($p) | strings | test("must-not-persist|prompt"; "i")] | all(. == false)' "controller binding should exclude credential material and prompt content"
+
+  command_request_file="$tmp_dir/command-job-request.json"
+  jq --arg cwd "$(realpath "$tmp_dir")" '
+    .binding_kind = "command-job"
+    | .run_id = "command-run-a1"
+    | .physical_binding = {
+        terminal_backend: "herdr",
+        workspace_id: "workspace-test",
+        tab_id: "tab-controller-test",
+        pane_id: "pane-controller-test",
+        checkout_path: $cwd
+      }
+    | .command_job = {
+        cwd: $cwd,
+        argv: ["bash", "test.sh"],
+        command: "bash test.sh",
+        timeout_seconds: 60,
+        max_concurrency: 1,
+        output_bound_bytes: 8192,
+        resource_locks: ["example-state"],
+        provenance: {kind: "task", task_id: "task-1"}
+      }
+  ' "$binding_request_file" >"$command_request_file"
+  command_envelope_file="$(cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$command_request_file")"
+  jq -e --arg cwd "$(realpath "$tmp_dir")" '.controller.binding_kind == "command-job" and .command_job.cwd == $cwd and .command_job.argv == ["bash", "test.sh"] and .command_job.resource_locks == ["example-state"]' "$command_envelope_file" >/dev/null || fail "command-job envelope should pin cwd, argv, and exact locks"
+  jq -e '.authority.denied_capabilities | index("claim-task-success") != null' "$command_envelope_file" >/dev/null || fail "command-job envelope must deny task-success claims for adapter compatibility"
+  HERDR_ENV=1 \
+    HERDR_WORKSPACE_ID="workspace-test" \
+    HERDR_TAB_ID="tab-controller-test" \
+    HERDR_PANE_ID="pane-controller-test" \
+    python3 "$ROOT_DIR/src/skills/tools/implement-change-via-herdr/scripts/herdr-runtime-adapter.py" \
+      preflight \
+      --envelope "$command_envelope_file" \
+      --herdr-executable "$ROOT_DIR/tests/fixtures/herdr/fake-herdr.py" \
+      >/dev/null || fail "runner-issued command envelope must be accepted by the Herdr adapter"
+  assert_json "$(<"$command_envelope_file")" '.physical_binding | keys == ["checkout_path", "pane_id", "tab_id", "terminal_backend", "workspace_id"]' "command-job envelope must not invent agent binding content"
+  if jq '.run_id = "command-injection" | .command_job.command = "bash test.sh; touch injected"' "$command_request_file" >"$tmp_dir/command-injection.json" \
+    && (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$tmp_dir/command-injection.json") >/dev/null 2>&1; then
+    fail "command-job should reject shell interpolation"
+  fi
+  [[ ! -e "$tmp_dir/injected" ]] || fail "command-job rejection must not execute untrusted interpolation"
+  if jq '.run_id = "command-foreign-cwd" | .command_job.cwd = "/tmp"' "$command_request_file" >"$tmp_dir/command-foreign-cwd.json" \
+    && (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$tmp_dir/command-foreign-cwd.json") >/dev/null 2>&1; then
+    fail "command-job should reject foreign cwd"
+  fi
+
+  jq '.run_id = "forged-batch-membership" | .batch_provenance.selected_task_ids = ["task-1", "task-3"]' "$binding_request_file" >"$tmp_dir/forged-batch-membership.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$tmp_dir/forged-batch-membership.json") >/dev/null 2>&1; then
+    fail "controller binding should reject forged selected task membership"
+  fi
+  [[ ! -e "$tmp_dir/.herdr-runs/forged-batch-membership" ]] || fail "forged batch membership must fail before output mutation"
+
+  jq '.run_id = "forged-effective-width" | .batch_provenance.effective_width = 1' "$binding_request_file" >"$tmp_dir/forged-effective-width.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$tmp_dir/forged-effective-width.json") >/dev/null 2>&1; then
+    fail "controller binding should reject forged effective width"
+  fi
+  [[ ! -e "$tmp_dir/.herdr-runs/forged-effective-width" ]] || fail "forged effective width must fail before output mutation"
+
+  jq '.run_id = "forged-batch-identity" | .batch_id = "P2" | .batch_provenance.batch_id = "P2" | .batch_provenance.parallel_group = "P2"' "$binding_request_file" >"$tmp_dir/forged-batch-identity.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$tmp_dir/forged-batch-identity.json") >/dev/null 2>&1; then
+    fail "controller binding should reject forged batch identity"
+  fi
+  [[ ! -e "$tmp_dir/.herdr-runs/forged-batch-identity" ]] || fail "forged batch identity must fail before output mutation"
+
+  jq '.run_id = "forged-unselected-task" | .task_id = "task-3"' "$binding_request_file" \
+    | jq --arg agent_name "$(execution_herdr_agent_name worker forged-unselected-task task-3 1)" '.physical_binding.agent_name = $agent_name' \
+    >"$tmp_dir/forged-unselected-task.json"
+  if (cd "$tmp_dir" && execution_controller_binding_envelope "$parallel_plan" "$ledger_file" "$tmp_dir/forged-unselected-task.json") >/dev/null 2>&1; then
+    fail "controller binding should reject an unselected task from the approved batch"
+  fi
+  [[ ! -e "$tmp_dir/.herdr-runs/forged-unselected-task" ]] || fail "unselected task must fail before output mutation"
 
   jq 'map(.status = "done" | .convergence_verified = true)' "$ledger_file" >"$tmp_dir/review-ready-ledger.json"
   printf '%s\n' 'Bounded implementation review fixture.' >"$tmp_dir/review-brief.md"

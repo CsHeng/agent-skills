@@ -64,36 +64,19 @@ After every task is converged, record `task-complete`, `truth-sync-pending`, or 
 
 ## Herdr Runtime Binding Overlay
 
-An explicit `implement-change-via-herdr` request is a lower-plane adapter composition, not a second
-lifecycle controller. Keep the initiating main agent as the sole `orchestrator`; it is never launched
-again in a Herdr child pane. Derive runtime roles from the approved task and gate context: a bounded
-review brief uses a `reviewer`, a pure `fast`/`light`/`shared-read-only` search or factual-confirmation
-task may use an `explorer`, and every other delegated task is a `worker`. A reviewer is read-only and
-returns candidate findings only; reviewers and workers must not delegate recursively. An explorer is
-bounded read-only and reports evidence and open questions instead of synthesizing a design. A writer
-uses only its assigned isolated, task-scoped worktree.
+An explicit `implement-change-via-herdr` request is a lower-plane adapter composition, not a second lifecycle controller. Keep the initiating main agent as the sole `orchestrator`; it is never launched again in a Herdr child pane. Derive runtime roles from the approved task and gate context: a bounded review brief uses a `reviewer`, a pure `fast`/`light`/`shared-read-only` search or factual-confirmation task with no implementation or test write refs may use an `explorer`, and every other delegated task is a `worker`. A reviewer is read-only and returns candidate findings only. Reviewers and workers must not delegate recursively. An explorer is bounded read-only and reports evidence and open questions instead of synthesizing a design. A writer uses only its assigned isolated, task-scoped worktree.
 
-At runtime, `implement-change` binds each actor to concrete CLI, model, reasoning effort, permission mode,
-sandbox mode, checkout or worktree, Herdr workspace/tab/pane/agent IDs, and corresponding
-evidence. These physical bindings are runtime evidence and must not rewrite the approved task IDs,
-dependencies, serial or parallel DAG topology, delegation policy, isolation, locks, touch set, or
-oracles. `semantic-routing` is the default; an explicit `inherit-main` or `runtime-default` choice
-may change model or reasoning binding only and must be recorded without changing topology. Herdr
-owns only resources created by the current adapter run and cannot choose tasks or grant external authority.
+For mixed search-and-judgment work, bind only explicit explorer task IDs to the explorer role, then return their bounded facts and open questions to the main-owned synthesis task. Do not merge independent fact-search slices into that synthesis delegation.
 
-Use `controller-binding-envelope` with `binding_kind=delegated-task` only for one ledger-selected
-ready task. After every task has converged, the same controller operation may use
-`binding_kind=bounded-review` with an independently hashed review brief to bind the reviewer; that
-path cannot reopen task selection or mutate the ledger. Pin Codex and Grok through their native
-argument profiles, sanitize sensitive child environment names, target live agents by pane ID, and
-retain opaque terminal and available agent-session identities as runtime evidence. Under
-`semantic-routing`, explorer effort must be a known strict downgrade; `inherit-main` and
-`runtime-default` are recorded exceptions rather than inferred downgrades.
+The explorer is an absolute low-cost explorer role: under semantic routing, effort is low by default and medium as the ceiling. High/xhigh cannot be labeled explorer; this bound is independent of worker cost or comparison. A binding policy that cannot supply the ceiling must reject the explorer role or use the approved main fallback, never silently promote the child to high effort.
 
-The main controller alone validates changed paths and oracles, converges batches, adjudicates review findings,
-repairs accepted findings, continues the approved plan, and routes truth sync or close. No
-delegated actor may integrate peer work, widen scope, push, deploy, invoke provider actions, repair,
-decide continuation, sync truth, or close.
+At runtime, `implement-change` binds each actor to concrete CLI, model, reasoning effort, permission mode, sandbox mode, checkout or worktree, Herdr workspace/tab/pane/agent IDs, and corresponding evidence. These physical bindings are runtime evidence and must not rewrite the approved task IDs, dependencies, serial or parallel DAG topology, delegation policy, isolation, locks, touch set, or oracles. `semantic-routing` is the default; an explicit `inherit-main` or `runtime-default` choice may change model or reasoning binding only and must be recorded without changing topology. Herdr owns only resources created by the current adapter run and cannot choose tasks or grant external authority.
+
+Use `controller-binding-envelope` with `binding_kind=delegated-task` only for one ledger-selected ready task. After every task has converged, the same controller operation may use `binding_kind=bounded-review` with an independently hashed review brief to bind the reviewer; that path cannot reopen task selection or mutate the ledger. Pin Codex and Grok through their native argument profiles, sanitize sensitive child environment names, target live agents by pane ID, and retain opaque terminal and available agent-session identities as runtime evidence. Under `semantic-routing`, apply the absolute low-default/medium-ceiling explorer rule. `inherit-main` and `runtime-default` may change model or reasoning binding only when the resulting explorer remains at or below that ceiling; otherwise return the typed capability result or use the approved main fallback.
+
+For long local verification commands, the controller may issue a separate `binding_kind=command-job` envelope only for an approved task or gate. It pins the exact checkout cwd, literal argv/command, provenance, bounded timeout/output, validated maximum concurrency, and exact task resource locks. The Herdr adapter runs it with `pane run` in an owned non-agent pane, shares lease/member capacity and lock ownership with delegated work, and returns redacted process/output/exit evidence. Ordinary command jobs have no agent lifecycle and never claim task success from exit zero; the main controller retains oracle judgment.
+
+The main controller alone validates changed paths and oracles, converges batches, adjudicates review findings, repairs accepted findings, continues the approved plan, and routes truth sync or close. No delegated actor may integrate peer work, widen scope, push, deploy, invoke provider actions, repair, decide continuation, sync truth, or close.
 
 ## Repair Ownership
 
