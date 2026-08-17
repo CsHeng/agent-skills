@@ -86,20 +86,17 @@ Claude Code and Codex retain their repository-owned plugin marketplaces. Other c
 - Prefer `src/skills/` plus direct references for reusable behavior. Keep agent-specific manifests, hooks, and install notes thin.
 - Treat `use-coding-skills` as an optional router for ambiguous multi-stage work and session-boundary guidance; directly matched workflow and policy skills do not require it first.
 - Keep discovery, phase-to-owner mapping, review evaluator selection, support routes, and host-wrapper limits in the installed `use-coding-skills/references/routing.toml` contract. User- or host-level AGENTS files may keep thin public-skill hints but must not become parallel harness truth.
+- Positive trigger boundaries live in each skill's frontmatter `description`; routing trigger cases carry negative boundaries, overlays, and lexical hints, and keep explicit positive overrides only for explicit-invocation cases.
 - Keep skills thin and operational.
 - Treat `src/skills/` and `contracts/skills.toml` as the source of truth for behavior and exposure; generated `skills/` should be refreshed, not edited by hand.
 - Author activation only through `activation_mode` and `default_role` in `contracts/skills.toml`; derive provider metadata through the contract-level projection table, and do not restore per-skill invocation booleans or source-authored Codex invocation policy.
-- Keep semantic case ownership, positive and negative boundaries, optional overlays, and non-authoritative lexical hints in the installed routing contract; do not duplicate them in host wrappers or prose.
+- Keep semantic case ownership, case boundaries, optional overlays, and non-authoritative lexical hints in the installed routing contract; do not duplicate them in host wrappers or prose.
 - Prefer explicit validation and deterministic workflows over vague prompt guidance.
 - Use `output-styles` as the shared conversational rendering baseline. Select one primary skill to own domain order and treat other matched skills as semantic overlays rather than independent report generators.
 - Keep fixed output schemas inside the skill that owns a durable artifact or machine-consumed result; ordinary conversational skills should render only decision-relevant parts of their internal checklist.
 - When documenting shell examples, do not teach interpolation of untrusted input.
-- For review flows, keep reviewer, main-agent judge, and controller-owned fixer responsibilities separate.
-- Review is agent-native: prefer a reviewer subagent for non-trivial bounded review, allow direct main-agent review for small mechanical work, and never delegate recursively.
-- Give reviewers a bounded brief containing the approved task slice, exact diff, oracles, touch set, and justified supporting files; do not invite repository-wide discovery.
-- Treat reviewer findings as candidates. Only main-agent `accepted` dispositions may enter repair, and every accepted candidate must have qualifying change causality plus an approved-contract violation.
+- For review flows, keep reviewer, main-agent judge, and controller-owned fixer responsibilities separate; the Review System section below owns the detailed review defaults.
 - Route review through `review-change` at the harness layer; treat `review-*` skills as lower-plane evaluators.
-- Keep execution serial-first unless a versioned plan defines a dependency-frozen named batch with explicit human approval. Bound effective width by approved batch maximum, ready tasks, runtime capacity, safe isolation, and disjoint writes and resource locks.
 - Require delegated writers to use isolated worktrees from one dependency-frozen snapshot. Shared checkout is read-only only, and the main controller alone may integrate a batch and advance dependents after group convergence.
 - Treat model policy as a runtime binding concern. `semantic-routing`, `inherit-main`, and `runtime-default` may change actor model/reasoning selection but must not change task IDs, dependencies, groups, limits, touch sets, isolation, locks, or oracles.
 - Do not assume unattended execution.
@@ -167,7 +164,6 @@ The aggregate check generates and validates Claude and Codex install surfaces in
 Before considering review-system changes done, run:
 
 ```bash
-bash src/runtime/harness/smoke-test/test-agent-native-review.sh
 bash src/runtime/harness/smoke-test/test-artifact-dag.sh
 ```
 
@@ -183,12 +179,9 @@ For sovereign harness surface changes, also run:
 bash src/runtime/harness/smoke-test/test-sovereign-skill-surface.sh
 bash src/runtime/harness/smoke-test/test-design-runner.sh
 bash src/runtime/harness/smoke-test/test-plan-runner.sh
-bash src/runtime/harness/smoke-test/test-design-plan-skill-control.sh
-bash src/runtime/harness/smoke-test/test-agent-native-review.sh
 bash src/runtime/harness/smoke-test/test-artifact-dag.sh
 bash src/runtime/harness/smoke-test/test-recovery-routing.sh
 bash src/runtime/harness/smoke-test/test-execute-runner.sh
-bash src/runtime/harness/smoke-test/test-review-execute-skill-control.sh
 ```
 
 ## Versioning

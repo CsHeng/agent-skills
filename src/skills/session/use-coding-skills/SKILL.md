@@ -23,7 +23,7 @@ Optional routing and session-boundary guidance for local coding work. Keep this 
 Use these rules only after this skill has matched an explicit routing or ambiguous multi-stage request:
 
 - Read `references/routing.toml` as the machine-readable discovery, semantic trigger-case, phase-to-owner, review-evaluator, support-route, composition, and host-wrapper contract.
-- Match cases by their positive and negative semantic boundaries. Treat lexical hints as examples only; they are not a keyword router or a second owner map.
+- Match cases by the owner skill's frontmatter description and each case's negative boundaries; explicit-invocation cases keep positive overrides. Treat lexical hints as examples only; they are not a keyword router or a second owner map.
 - Let an explicitly named skill or confident direct workflow or policy match bypass this router.
 - Route ambiguous multi-stage work through this skill, then select the lifecycle mode before invoking a phase owner.
 - Keep exactly one primary response or lifecycle owner. Compose matching session, discipline, policy, tool, or review-component skills only as lower-plane overlays.

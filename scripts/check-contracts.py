@@ -610,9 +610,12 @@ def validate_trigger_cases(
                         f"trigger case {label}: compatibility helper cannot own a trigger case: {owner}"
                     )
 
+        # The owner skill's frontmatter description owns the positive boundary by
+        # default; an explicit positive override is reserved for explicit-invocation
+        # cases and, when present, must stay non-empty.
         positives = raw_case.get("positive")
         negatives = raw_case.get("negative")
-        positive_valid = (
+        positive_valid = positives is None or (
             isinstance(positives, list)
             and bool(positives)
             and all(isinstance(value, str) and value.strip() for value in positives)
