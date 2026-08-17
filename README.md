@@ -53,15 +53,15 @@ Kernel defaults:
 Harness runner coverage:
 - `design-runner.sh`: design artifact pathing, validation, classification, and approval status
 - `plan-runner.sh`: plan artifact pathing, upstream design linkage, versioned DAG and named-batch validation, and approval status
-- `execute-runner.sh`: approved-plan validation, immutable plan-ledger checks, bounded runtime binding, typed serial fallback or capacity/conflict stops, touch set, verification scope, truth-sync requirement, and evidence-based recovery route
+- `execute-runner.sh`: approved-plan validation, immutable plan-ledger checks, bounded runtime binding through one backend-neutral controller envelope core projected onto the codex-native (`schema_version: 2`) or byte-compatible Herdr (`schema_version: 1`) backend, typed serial fallback or capacity/conflict stops, touch set, verification scope, truth-sync requirement, and evidence-based recovery route
   - task-ledger ready-set and group-convergence helpers, workspace-mode detection, and deterministic execution-result reporting
 - `recovery-routing.sh`: evidence-class routing that never widens lifecycle phase from failure count alone
 
 Lower-plane skills stay available as components the kernel can call, not as competing top-level authorities.
 
-`implement-change-via-herdr` is an explicit Tool-plane overlay for approved-plan execution from an existing Herdr-managed main pane. It composes `implement-change`, which remains the sole lifecycle controller and final judge. Plans keep provider-neutral execution and reasoning profiles; implementation-time binding selects the supported coding-agent CLI, model and effort, permission and sandbox, checkout or worktree, and opaque Herdr location. The adapter may manage only its recorded run-owned background tabs, panes, and agent processes.
+Runtime binding offers two backends under the same controller. The codex-native backend binds delegated reviewer, explorer, and worker roles through user-owned, untracked Codex Multi-Agent role agent files with pre-emission capability validation and distinct typed stops; the Herdr backend is `implement-change-via-herdr`, an explicit Tool-plane overlay for approved-plan execution from an existing Herdr-managed main pane. Both compose `implement-change`, which remains the sole lifecycle controller and final judge. Plans keep provider-neutral execution and reasoning profiles; implementation-time binding selects the concrete model, effort, permission and sandbox, checkout or worktree, and backend-specific location evidence. The Herdr adapter may manage only its recorded run-owned background tabs, panes, and agent processes.
 
-This adapter is an experimental path with a decision horizon of three user-run trials across at least two supported agent kinds. Deterministic automated acceptance uses the fake Herdr fixture; live Herdr acceptance is separately authorized, resource-owned evidence and never part of the ordinary automated suite.
+Delegated execution is an experimental path with a three-way decision horizon: the codex-native backend, the Herdr adapter, and plain main-agent serial execution are compared on the same three-trial user-run evidence standard before any first-class integration decision. Deterministic automated acceptance uses repository fixtures (the fake Herdr executable and the codex-agents fixture matrix); live acceptance is separately authorized, resource-owned evidence and never part of the ordinary automated suite.
 
 ## Optional Session Routing And Style
 

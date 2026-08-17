@@ -5,7 +5,7 @@ description: "Execute an already approved delegated implementation task through 
 
 # Implement Change Via Herdr
 
-This is an explicit lower-plane adapter. It consumes the immutable controller-binding envelope created by `implement-change`; it never selects tasks, changes the ledger, converges work, reviews, repairs, or derives a lifecycle tail.
+This is an explicit lower-plane adapter. It consumes the immutable controller-binding envelope created by `implement-change` for the Herdr backend — the `schema_version: 1` wire shape emitted by `controller-binding-envelope` with `--backend herdr` or with no backend flag; codex-native `schema_version: 2` envelopes are not for this adapter. It never selects tasks, changes the ledger, converges work, reviews, repairs, or derives a lifecycle tail.
 
 Use the bundled adapter for the bounded agent sequence:
 

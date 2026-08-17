@@ -10,6 +10,8 @@ topology_owner = "plan-change"
 runtime_binding_owner = "implement-change"
 default_model_policy = "semantic-routing"
 allowed_model_policies = ["semantic-routing", "inherit-main", "runtime-default"]
+runtime_binding_backends = ["codex-native", "herdr"]
+flag_absent_binding_backend = "herdr"
 execution_profiles = ["deep", "balanced", "fast"]
 reasoning_profiles = ["deep", "standard", "light"]
 inherit_main_preserves_topology = true
@@ -28,6 +30,24 @@ semantic_routing_max_effort = "medium"
 rejected_efforts = ["high", "xhigh"]
 requires_explicit_search_synthesis_split = true
 synthesis_owner = "main"
+
+[runtime_binding.codex_native]
+envelope_schema_version = 2
+role_agent_files_user_owned = true
+role_file_precedence = ["project", "user"]
+role_files_tracked_in_repository = false
+all_policies_spawn_through_role_file = true
+required_max_depth = 1
+unconfigured_max_depth_evidence = "instruction-only"
+command_job_supported = false
+delegated_writer_requires_spawn_cwd = true
+fallback_on_typed_stop = "main-serial"
+
+[runtime_binding.herdr]
+envelope_schema_version = 1
+wire_shape = "byte-compatible"
+command_job_supported = true
+adapter_skill = "implement-change-via-herdr"
 
 [workers]
 default_eligible_delegation = "approved-policy"
