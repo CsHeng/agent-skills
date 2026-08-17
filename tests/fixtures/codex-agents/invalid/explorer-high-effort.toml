@@ -1,0 +1,4 @@
+name = "explorer"
+sandbox_mode = "read-only"
+model_reasoning_effort = "high"
+developer_instructions = "Return bounded facts and open questions only."

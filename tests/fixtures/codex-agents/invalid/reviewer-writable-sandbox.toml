@@ -1,0 +1,3 @@
+name = "reviewer"
+sandbox_mode = "workspace-write"
+developer_instructions = "Return candidate findings only."

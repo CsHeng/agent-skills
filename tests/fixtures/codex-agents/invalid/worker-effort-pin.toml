@@ -1,0 +1,4 @@
+name = "worker"
+sandbox_mode = "workspace-write"
+model_reasoning_effort = "high"
+developer_instructions = "Implement only the assigned task slice."

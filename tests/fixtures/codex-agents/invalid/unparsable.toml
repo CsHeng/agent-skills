@@ -1,0 +1,3 @@
+name = "broken
+sandbox_mode = read-only ===
+this is not valid TOML [

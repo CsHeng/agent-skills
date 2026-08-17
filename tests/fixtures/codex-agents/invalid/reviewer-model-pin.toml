@@ -1,0 +1,4 @@
+name = "reviewer"
+sandbox_mode = "read-only"
+model = "example-model"
+developer_instructions = "Return candidate findings only."

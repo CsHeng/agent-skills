@@ -867,6 +867,23 @@ execution_git_common_directory() {
   fi
 }
 
+execution_codex_home() {
+  printf '%s\n' "${CODEX_HOME:-$HOME/.codex}"
+}
+
+execution_toml_file_json() {
+  local toml_file="$1"
+
+  python3 - "$toml_file" <<'PY'
+import json
+import sys
+import tomllib
+
+with open(sys.argv[1], "rb") as handle:
+    print(json.dumps(tomllib.load(handle)))
+PY
+}
+
 execution_git_directory() {
   local checkout_root="$1"
   local git_ref=""
@@ -883,6 +900,7 @@ execution_controller_binding_envelope() {
   local plan_file="$1"
   local ledger_file="$2"
   local request_file="$3"
+  local binding_backend="${4:-herdr}"
   local repo_root=""
   local repo_revision=""
   local repo_common_dir=""
@@ -933,11 +951,36 @@ execution_controller_binding_envelope() {
   local checkout_git_dir=""
   local physical_json=""
   local envelope_task_json=""
+  local neutral_core_json=""
+  local backend_extension_json=""
   local envelope_json=""
   local run_state_root=""
   local run_state_dir=""
   local output_file=""
   local temporary_file=""
+  local codex_home=""
+  local codex_config_file=""
+  local codex_config_json="null"
+  local codex_max_depth=""
+  local codex_max_depth_json="null"
+  local codex_depth_enforcement=""
+  local codex_ceiling_json="null"
+  local codex_role_file=""
+  local codex_role_source=""
+  local codex_role_json=""
+  local codex_sandbox_mode=""
+  local codex_requested_model=""
+  local codex_requested_effort=""
+  local codex_resolution_source=""
+  local codex_spawn_cwd=""
+
+  case "$binding_backend" in
+    herdr|codex-native) ;;
+    *)
+      printf 'controller_binding_backend_unsupported: unknown runtime binding backend: %s\n' "$binding_backend" >&2
+      return 1
+      ;;
+  esac
 
   validate_execution_plan "$plan_file" >/dev/null || {
     printf 'controller_binding_unapproved: approved version-2 plan required\n' >&2
@@ -959,7 +1002,12 @@ execution_controller_binding_envelope() {
     printf 'controller_binding_invalid: ledger is not valid JSON\n' >&2
     return 1
   }
-  jq -e '
+  if [[ "$binding_backend" == "codex-native" ]] \
+    && [[ "$(jq -r '.binding_kind // ""' "$request_file" 2>/dev/null)" == "command-job" ]]; then
+    printf 'controller_binding_unsupported_combination: command-job envelopes are not available on the codex-native backend; run local verification directly from the controller\n' >&2
+    return 1
+  fi
+  jq -e --arg backend "$binding_backend" '
     type == "object"
     and ((keys - [
       "attempt",
@@ -1024,6 +1072,14 @@ execution_controller_binding_envelope() {
     and (
       if .binding_kind == "command-job" then
         (.physical_binding | keys) == ["checkout_path", "pane_id", "tab_id", "terminal_backend", "workspace_id"]
+      elif $backend == "codex-native" then
+        (.physical_binding | keys) == [
+      "checkout_path",
+      "requested_model",
+      "requested_reasoning_effort",
+      "resolution_source",
+      "spawn_cwd_supported"
+        ]
       else
         (.physical_binding | keys) == [
       "agent_kind",
@@ -1043,7 +1099,23 @@ execution_controller_binding_envelope() {
         ]
       end
     )
-    and (.physical_binding | all(.[]; type == "string" and length > 0 and (test("[[:cntrl:]]") | not)))
+    and (
+      if $backend == "codex-native" and .binding_kind != "command-job" then
+        (.physical_binding.checkout_path | type == "string" and length > 0 and (test("[[:cntrl:]]") | not))
+        and (.physical_binding.spawn_cwd_supported == "true" or .physical_binding.spawn_cwd_supported == "false")
+        and (.physical_binding.resolution_source == "per-spawn"
+          or .physical_binding.resolution_source == "parent-inherit"
+          or .physical_binding.resolution_source == "agents-defaults")
+        and (.physical_binding.requested_model | type == "string" and (test("[[:cntrl:]]") | not))
+        and (.physical_binding.requested_reasoning_effort == ""
+          or .physical_binding.requested_reasoning_effort == "low"
+          or .physical_binding.requested_reasoning_effort == "medium"
+          or .physical_binding.requested_reasoning_effort == "high"
+          or .physical_binding.requested_reasoning_effort == "xhigh")
+      else
+        (.physical_binding | all(.[]; type == "string" and length > 0 and (test("[[:cntrl:]]") | not)))
+      end
+    )
     and (if .binding_kind == "command-job" then
       (.command_job | type == "object")
       and ((.command_job | keys) - ["argv", "command", "cwd", "max_concurrency", "output_bound_bytes", "provenance", "resource_locks", "timeout_seconds"] | length) == 0
@@ -1354,7 +1426,7 @@ execution_controller_binding_envelope() {
       return 1
     }
     jq -e '.delegation_policy != "forbidden" and .executor_mode == "subagent"' <<<"$task_json" >/dev/null || {
-      printf 'controller_binding_authority_denied: Herdr adapter accepts delegated tasks only: %s\n' "$task_id" >&2
+      printf 'controller_binding_authority_denied: runtime binding backends accept delegated tasks only: %s\n' "$task_id" >&2
       return 1
     }
     write_ref_count="$(jq '
@@ -1449,7 +1521,7 @@ execution_controller_binding_envelope() {
 
   physical_json="$(jq -c '.physical_binding' "$request_file")"
   checkout_ref="$(jq -r '.checkout_path' <<<"$physical_json")"
-  if [[ "$binding_kind" != "command-job" ]]; then
+  if [[ "$binding_backend" == "herdr" && "$binding_kind" != "command-job" ]]; then
     capability_profile="$(jq -r '.capability_profile' <<<"$physical_json")"
     sandbox_mode="$(jq -r '.sandbox_mode' <<<"$physical_json")"
     agent_name="$(jq -r '.agent_name' <<<"$physical_json")"
@@ -1530,6 +1602,144 @@ execution_controller_binding_envelope() {
       printf 'controller_binding_invalid: command checkout must be an existing non-symlink directory\n' >&2
       return 1
     }
+  elif [[ "$binding_backend" == "codex-native" ]]; then
+    codex_home="$(execution_codex_home)"
+    codex_config_file="$codex_home/config.toml"
+    codex_config_json="null"
+    if [[ -f "$codex_config_file" && ! -L "$codex_config_file" ]]; then
+      codex_config_json="$(execution_toml_file_json "$codex_config_file" 2>/dev/null)" || codex_config_json="null"
+    fi
+    jq -e '
+      (.features.multi_agent_v2 == true)
+      or ((.features.multi_agent_v2 | type == "object") and .features.multi_agent_v2.enabled == true)
+    ' <<<"$codex_config_json" >/dev/null || {
+      printf 'controller_binding_multi_agent_disabled: Codex multi-agent support must be enabled in %s\n' "$codex_config_file" >&2
+      return 1
+    }
+    codex_max_depth="$(jq -r 'if (.agents // {}) | has("max_depth") then (.agents.max_depth | tojson) else "unset" end' <<<"$codex_config_json")"
+    if [[ "$codex_max_depth" == "unset" ]]; then
+      codex_max_depth_json="null"
+      codex_depth_enforcement="instruction-only"
+    elif [[ "$codex_max_depth" == "1" ]]; then
+      codex_max_depth_json="1"
+      codex_depth_enforcement="validated"
+    else
+      printf 'controller_binding_max_depth_invalid: agents.max_depth must equal 1 for non-recursive delegation, found %s\n' "$codex_max_depth" >&2
+      return 1
+    fi
+    codex_ceiling_json="$(jq -c '
+      .agents.max_concurrent_threads_per_session as $ceiling
+      | if ($ceiling | type) == "number" and ($ceiling | floor) == $ceiling and $ceiling >= 1 then $ceiling else null end
+    ' <<<"$codex_config_json")"
+
+    codex_role_file="$repo_root/.codex/agents/$runtime_role.toml"
+    codex_role_source="project"
+    if [[ -L "$codex_role_file" ]]; then
+      printf 'controller_binding_role_file_missing: symlinked role agent files are not accepted: %s\n' "$codex_role_file" >&2
+      return 1
+    fi
+    if [[ ! -f "$codex_role_file" ]]; then
+      codex_role_file="$codex_home/agents/$runtime_role.toml"
+      codex_role_source="user"
+    fi
+    [[ -f "$codex_role_file" && ! -L "$codex_role_file" ]] || {
+      printf 'controller_binding_role_file_missing: no %s role agent file in %s/.codex/agents or %s/agents\n' "$runtime_role" "$repo_root" "$codex_home" >&2
+      return 1
+    }
+    codex_role_json="$(execution_toml_file_json "$codex_role_file" 2>/dev/null)" || {
+      printf 'controller_binding_role_file_unparsable: role agent file is not valid TOML: %s\n' "$codex_role_file" >&2
+      return 1
+    }
+    jq -e '
+      type == "object"
+      and (has("sandbox_mode") and (.sandbox_mode | type == "string" and length > 0))
+      and (has("developer_instructions") and (.developer_instructions | type == "string" and length > 0))
+    ' <<<"$codex_role_json" >/dev/null || {
+      printf 'controller_binding_role_file_missing_required_field: %s role file must declare sandbox_mode and developer_instructions: %s\n' "$runtime_role" "$codex_role_file" >&2
+      return 1
+    }
+    jq -e 'has("model") | not' <<<"$codex_role_json" >/dev/null || {
+      printf 'controller_binding_role_file_forbidden_pin: %s role file must not pin a concrete model: %s\n' "$runtime_role" "$codex_role_file" >&2
+      return 1
+    }
+    if [[ "$runtime_role" == "explorer" ]]; then
+      jq -e '.model_reasoning_effort == "low" or .model_reasoning_effort == "medium"' <<<"$codex_role_json" >/dev/null || {
+        printf 'controller_binding_explorer_pin_invalid: explorer role file must pin model_reasoning_effort to low or medium: %s\n' "$codex_role_file" >&2
+        return 1
+      }
+    else
+      jq -e 'has("model_reasoning_effort") | not' <<<"$codex_role_json" >/dev/null || {
+        printf 'controller_binding_role_file_forbidden_pin: %s role file must not pin model_reasoning_effort: %s\n' "$runtime_role" "$codex_role_file" >&2
+        return 1
+      }
+    fi
+    codex_sandbox_mode="$(jq -r '.sandbox_mode' <<<"$codex_role_json")"
+    if [[ "$runtime_role" == "reviewer" || "$runtime_role" == "explorer" ]]; then
+      [[ "$codex_sandbox_mode" == "read-only" ]] || {
+        printf 'controller_binding_role_file_sandbox_writable: %s role file must declare a read-only sandbox: %s\n' "$runtime_role" "$codex_role_file" >&2
+        return 1
+      }
+    elif [[ "$write_ref_count" -gt 0 ]]; then
+      [[ "$codex_sandbox_mode" == "workspace-write" ]] || {
+        printf 'controller_binding_isolation_conflict: worker role file sandbox must be workspace-write so the spawn working directory bounds writes: %s\n' "$codex_role_file" >&2
+        return 1
+      }
+    else
+      [[ "$codex_sandbox_mode" == "read-only" ]] || {
+        printf 'controller_binding_isolation_conflict: a delegated task without write refs must bind a read-only sandbox on the shared checkout: %s\n' "$codex_role_file" >&2
+        return 1
+      }
+    fi
+
+    codex_requested_model="$(jq -r '.requested_model' <<<"$physical_json")"
+    codex_requested_effort="$(jq -r '.requested_reasoning_effort' <<<"$physical_json")"
+    codex_resolution_source="$(jq -r '.resolution_source' <<<"$physical_json")"
+    codex_spawn_cwd="$(jq -r '.spawn_cwd_supported' <<<"$physical_json")"
+    case "$model_policy" in
+      semantic-routing)
+        [[ -n "$codex_requested_model" && -n "$codex_requested_effort" && "$codex_resolution_source" == "per-spawn" ]] || {
+          printf 'controller_binding_model_policy_mismatch: semantic-routing requires per-spawn model and reasoning values\n' >&2
+          return 1
+        }
+        ;;
+      inherit-main)
+        [[ -z "$codex_requested_model" && -z "$codex_requested_effort" && "$codex_resolution_source" == "parent-inherit" ]] || {
+          printf 'controller_binding_model_policy_mismatch: inherit-main must not supply per-spawn model or reasoning values\n' >&2
+          return 1
+        }
+        ;;
+      runtime-default)
+        [[ -z "$codex_requested_model" && -z "$codex_requested_effort" && "$codex_resolution_source" == "agents-defaults" ]] || {
+          printf 'controller_binding_model_policy_mismatch: runtime-default must not supply per-spawn model or reasoning values\n' >&2
+          return 1
+        }
+        ;;
+    esac
+    if [[ "$runtime_role" == "explorer" && -n "$codex_requested_effort" ]]; then
+      [[ "$codex_requested_effort" == "low" || "$codex_requested_effort" == "medium" ]] || {
+        printf 'controller_binding_explorer_ceiling: requested per-spawn effort exceeds the absolute low-default/medium-ceiling explorer bound\n' >&2
+        return 1
+      }
+    fi
+
+    if [[ "$write_ref_count" -gt 0 ]]; then
+      jq -e '.isolation == "isolated-worktree"' <<<"$task_json" >/dev/null || {
+        printf 'controller_binding_isolation_conflict: delegated writer task requires isolated-worktree plan isolation\n' >&2
+        return 1
+      }
+      checkout_git_dir="$(execution_git_directory "$checkout_root")" || {
+        printf 'controller_binding_invalid: checkout Git directory is unavailable\n' >&2
+        return 1
+      }
+      [[ "$checkout_root" != "$repo_root" && "$checkout_git_dir" != "$checkout_common_dir" ]] || {
+        printf 'controller_binding_isolation_conflict: writer checkout must be an isolated worktree\n' >&2
+        return 1
+      }
+      [[ "$codex_spawn_cwd" == "true" ]] || {
+        printf 'controller_binding_spawn_cwd_unsupported: delegated writers require per-spawn working-directory support to bound writes to the assigned worktree\n' >&2
+        return 1
+      }
+    fi
   elif [[ "$write_ref_count" -gt 0 ]]; then
     [[ "$capability_profile" == "delegated-local-writer" && "$sandbox_mode" == "workspace-write" ]] || {
       printf 'controller_binding_capability_mismatch: writer requires delegated-local-writer and workspace-write\n' >&2
@@ -1593,7 +1803,10 @@ execution_controller_binding_envelope() {
       review_brief_sha256
     } else {} end))
     ' <<<"$task_json")"
-  envelope_json="$(jq -n -cS \
+  # Backend-neutral envelope core: controller identity, provenance, immutable
+  # task projection, batch evidence, and command-job payload. Backends add an
+  # extension and project the pair onto their own wire shape.
+  neutral_core_json="$(jq -n -c \
     --arg binding_kind "$binding_kind" \
     --arg controller_id "$controller_id" \
     --arg run_id "$run_id" \
@@ -1608,10 +1821,7 @@ execution_controller_binding_envelope() {
     --argjson batch_provenance "$canonical_batch_provenance_json" \
     --argjson task "$envelope_task_json" \
     --argjson command_job "$command_job_json" \
-    --argjson physical_binding "$physical_json" \
     '{
-      schema_version: 1,
-      artifact_kind: "controller-binding-envelope",
       controller: {
         controller_id: $controller_id,
         binding_kind: $binding_kind,
@@ -1630,26 +1840,80 @@ execution_controller_binding_envelope() {
       },
       batch_provenance: $batch_provenance,
       task: $task,
-      command_job: (if $binding_kind == "command-job" then $command_job else null end),
-      physical_binding: $physical_binding,
-      authority: {
-        adapter_capabilities: [
-          "consume-binding",
-          "manage-run-owned-terminal-resources",
-          "persist-adapter-state"
-        ],
-        denied_capabilities: [
-          "select-task",
-          "mutate-task-ledger",
-          "converge-task",
-          "invoke-review",
-          "adjudicate-findings",
-          "repair-implementation",
-          "derive-lifecycle-tail",
-          "claim-task-success"
-        ]
-      }
+      command_job: (if $binding_kind == "command-job" then $command_job else null end)
     }')"
+  if [[ "$binding_backend" == "codex-native" ]]; then
+    backend_extension_json="$(jq -n -c \
+      --arg role "$runtime_role" \
+      --arg role_agent_file "$(basename "$codex_role_file")" \
+      --arg role_agent_file_source "$codex_role_source" \
+      --arg expected_sandbox_mode "$codex_sandbox_mode" \
+      --arg requested_model "$codex_requested_model" \
+      --arg requested_reasoning_effort "$codex_requested_effort" \
+      --arg resolution_source "$codex_resolution_source" \
+      --arg max_depth_enforcement "$codex_depth_enforcement" \
+      --argjson max_depth "$codex_max_depth_json" \
+      --argjson concurrency_ceiling "$codex_ceiling_json" \
+      --argjson spawn_cwd_supported "$([[ "$codex_spawn_cwd" == "true" ]] && printf 'true' || printf 'false')" \
+      '{
+        role: $role,
+        role_agent_file: $role_agent_file,
+        role_agent_file_source: $role_agent_file_source,
+        expected_sandbox_mode: $expected_sandbox_mode,
+        concurrency_ceiling: $concurrency_ceiling,
+        max_depth: $max_depth,
+        max_depth_enforcement: $max_depth_enforcement,
+        requested_model: (if $requested_model == "" then null else $requested_model end),
+        requested_reasoning_effort: (if $requested_reasoning_effort == "" then null else $requested_reasoning_effort end),
+        resolution_source: $resolution_source,
+        spawn_cwd_supported: $spawn_cwd_supported
+      }')"
+    envelope_json="$(jq -n -cS \
+      --argjson core "$neutral_core_json" \
+      --argjson extension "$backend_extension_json" \
+      '{
+        schema_version: 2,
+        artifact_kind: "controller-binding-envelope",
+        core: $core,
+        backend: {
+          backend_kind: "codex-native",
+          extension: $extension
+        }
+      }')"
+  else
+    backend_extension_json="$(jq -n -c \
+      --argjson physical_binding "$physical_json" \
+      '{
+        physical_binding: $physical_binding,
+        authority: {
+          adapter_capabilities: [
+            "consume-binding",
+            "manage-run-owned-terminal-resources",
+            "persist-adapter-state"
+          ],
+          denied_capabilities: [
+            "select-task",
+            "mutate-task-ledger",
+            "converge-task",
+            "invoke-review",
+            "adjudicate-findings",
+            "repair-implementation",
+            "derive-lifecycle-tail",
+            "claim-task-success"
+          ]
+        }
+      }')"
+    # Herdr wire projection: the byte-compatible schema_version-1 flat envelope.
+    # Migrating this shape to the version-2 core-plus-extension wire is an
+    # explicit upgrade trigger, not part of this milestone.
+    envelope_json="$(jq -n -cS \
+      --argjson core "$neutral_core_json" \
+      --argjson extension "$backend_extension_json" \
+      '{
+        schema_version: 1,
+        artifact_kind: "controller-binding-envelope"
+      } + $core + $extension')"
+  fi
   jq -e '
     [paths(scalars) as $p | ($p[-1] | tostring)]
     | all(.[]; test("^(secret|token|password|api_key|prompt)$"; "i") | not)
@@ -1658,7 +1922,11 @@ execution_controller_binding_envelope() {
     return 1
   }
 
-  run_state_root="$repo_root/.herdr-runs"
+  if [[ "$binding_backend" == "codex-native" ]]; then
+    run_state_root="$repo_root/.codex-native-runs"
+  else
+    run_state_root="$repo_root/.herdr-runs"
+  fi
   run_state_dir="$run_state_root/$run_id"
   output_file="$run_state_dir/controller-binding.json"
   [[ ! -L "$run_state_root" && ( ! -e "$run_state_root" || -d "$run_state_root" ) ]] || {
@@ -1903,7 +2171,7 @@ Usage:
   execute-runner.sh ready-set <ledger-json>
   execute-runner.sh ready-batch <plan-file> <ledger-json> <parallel-group> <runtime-capacity> [semantic-routing|inherit-main|runtime-default]
   execute-runner.sh runtime-binding <plan-file> <ledger-json> <parallel-group> <runtime-capacity> [semantic-routing|inherit-main|runtime-default]
-  execute-runner.sh controller-binding-envelope <plan-file> <ledger-json> <request-json>
+  execute-runner.sh controller-binding-envelope <plan-file> <ledger-json> <request-json> [--backend herdr|codex-native]
   execute-runner.sh controller-converge <plan-file> <ledger-json> <task-id> <controller> <oracles-passed> <integration-passed> [changed-path ...]
   execute-runner.sh execution-result <plan-path> <ledger-json> <current-phase> <active-task-id-or-empty> <stop-reason> <review-status> <verify-status> <next-entry> <next-phase> <human-input-required> [workspace-mode]
   execute-runner.sh gate-result <review-status> <verify-status> <truth-sync-required> <truth-sync-completed>
@@ -1975,8 +2243,14 @@ main() {
       execution_runtime_binding "$2" "$3" "$4" "$5" "${6:-}"
       ;;
     controller-binding-envelope)
-      [[ $# -eq 4 ]] || { usage >&2; return 1; }
-      execution_controller_binding_envelope "$2" "$3" "$4"
+      if [[ $# -eq 4 ]]; then
+        execution_controller_binding_envelope "$2" "$3" "$4"
+      elif [[ $# -eq 6 && "$5" == "--backend" ]]; then
+        execution_controller_binding_envelope "$2" "$3" "$4" "$6"
+      else
+        usage >&2
+        return 1
+      fi
       ;;
     controller-converge)
       [[ $# -ge 7 ]] || { usage >&2; return 1; }

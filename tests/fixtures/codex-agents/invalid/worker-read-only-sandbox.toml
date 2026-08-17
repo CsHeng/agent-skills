@@ -1,0 +1,3 @@
+name = "worker"
+sandbox_mode = "read-only"
+developer_instructions = "Implement only the assigned task slice."
