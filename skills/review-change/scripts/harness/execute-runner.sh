@@ -26,6 +26,18 @@ execution_plan_approval_status() {
   plan_approval_status "$1"
 }
 
+execution_reasoning_effort_rank() {
+  case "$1" in
+    low) printf '0\n' ;;
+    medium) printf '1\n' ;;
+    high) printf '2\n' ;;
+    xhigh) printf '3\n' ;;
+    max) printf '4\n' ;;
+    ultra) printf '5\n' ;;
+    *) return 1 ;;
+  esac
+}
+
 validate_execution_plan() {
   local plan_file="$1"
   local approval_status=""
@@ -147,6 +159,15 @@ execution_allowed_touch_set() {
   validate_execution_plan "$plan_file" >/dev/null
   design_file="$(resolve_execution_design_file "$plan_file")"
   build_allowed_touch_set "$plan_file" "$design_file"
+}
+
+execution_allowed_external_touch_set() {
+  local plan_file="$1"
+  local design_file=""
+
+  validate_execution_plan "$plan_file" >/dev/null
+  design_file="$(resolve_execution_design_file "$plan_file")"
+  build_allowed_external_touch_set "$plan_file" "$design_file"
 }
 
 execution_truth_sync_required() {
@@ -575,89 +596,7 @@ execution_runtime_binding_from_validated_plan() {
 }
 
 execution_plan_ledger_drift_evidence_json() {
-  local plan_file="$1"
-  local ledger_file="$2"
-  local catalog_json=""
-  local approved_projection=""
-  local observed_projection=""
-
-  catalog_json="$(task_catalog_json "$plan_file")"
-  approved_projection="$(jq -cS '
-    [.[] | {
-      section,
-      title,
-      task_id,
-      scope_slice,
-      depends_on,
-      impl_file_refs,
-      test_file_refs,
-      verification_commands,
-      executor_mode,
-      parallel_group,
-      parallel_policy,
-      delegation_policy,
-      execution_profile,
-      reasoning_profile,
-      isolation,
-      resource_locks,
-      convergence_required,
-      task_review_depth,
-      done_when,
-      failure_policy,
-      rollback_trigger,
-      rollback_target,
-      rollback_verification
-    }]
-  ' <<<"$catalog_json")"
-  observed_projection="$(jq -cS '
-    [.[] | {
-      section,
-      title,
-      task_id,
-      scope_slice,
-      depends_on,
-      impl_file_refs,
-      test_file_refs,
-      verification_commands,
-      executor_mode,
-      parallel_group,
-      parallel_policy,
-      delegation_policy,
-      execution_profile,
-      reasoning_profile,
-      isolation,
-      resource_locks,
-      convergence_required,
-      task_review_depth,
-      done_when,
-      failure_policy,
-      rollback_trigger,
-      rollback_target,
-      rollback_verification
-    }]
-  ' "$ledger_file")"
-
-  if [[ "$approved_projection" == "$observed_projection" ]]; then
-    printf '[]\n'
-    return
-  fi
-
-  jq -n \
-    --argjson approved "$approved_projection" \
-    --argjson observed "$observed_projection" \
-    '[
-      range(0; ([$approved | length, $observed | length] | max))
-      | select($approved[.] != $observed[.])
-      | {
-          approved_task_id: ($approved[.].task_id // null),
-          observed_task_id: ($observed[.].task_id // null)
-        }
-    ] as $differing_tasks
-    | [{
-        kind: "plan-ledger-drift",
-        requirement: "ledger immutable task projection must match the approved plan",
-        differing_tasks: $differing_tasks
-      }]'
+  task_ledger_plan_drift_evidence_json "$@"
 }
 
 execution_plan_ledger_conflict_binding() {
@@ -973,6 +912,15 @@ execution_controller_binding_envelope() {
   local codex_requested_effort=""
   local codex_resolution_source=""
   local codex_spawn_cwd=""
+  local codex_required_uplift_supported=""
+  local codex_defaults_present="false"
+  local codex_parent_effort=""
+  local codex_required_minimum_effort=""
+  local codex_effective_default_effort=""
+  local codex_parent_effort_rank=""
+  local codex_required_minimum_effort_rank=""
+  local codex_requested_effort_rank=""
+  local codex_effective_default_effort_rank=""
 
   case "$binding_backend" in
     herdr|codex-native) ;;
@@ -1075,8 +1023,11 @@ execution_controller_binding_envelope() {
       elif $backend == "codex-native" then
         (.physical_binding | keys) == [
       "checkout_path",
+      "parent_reasoning_effort",
       "requested_model",
       "requested_reasoning_effort",
+      "required_minimum_reasoning_effort",
+      "required_uplift_supported",
       "resolution_source",
       "spawn_cwd_supported"
         ]
@@ -1103,6 +1054,19 @@ execution_controller_binding_envelope() {
       if $backend == "codex-native" and .binding_kind != "command-job" then
         (.physical_binding.checkout_path | type == "string" and length > 0 and (test("[[:cntrl:]]") | not))
         and (.physical_binding.spawn_cwd_supported == "true" or .physical_binding.spawn_cwd_supported == "false")
+        and (.physical_binding.required_uplift_supported == "true" or .physical_binding.required_uplift_supported == "false")
+        and (.physical_binding.parent_reasoning_effort == "low"
+          or .physical_binding.parent_reasoning_effort == "medium"
+          or .physical_binding.parent_reasoning_effort == "high"
+          or .physical_binding.parent_reasoning_effort == "xhigh"
+          or .physical_binding.parent_reasoning_effort == "max"
+          or .physical_binding.parent_reasoning_effort == "ultra")
+        and (.physical_binding.required_minimum_reasoning_effort == "low"
+          or .physical_binding.required_minimum_reasoning_effort == "medium"
+          or .physical_binding.required_minimum_reasoning_effort == "high"
+          or .physical_binding.required_minimum_reasoning_effort == "xhigh"
+          or .physical_binding.required_minimum_reasoning_effort == "max"
+          or .physical_binding.required_minimum_reasoning_effort == "ultra")
         and (.physical_binding.resolution_source == "per-spawn"
           or .physical_binding.resolution_source == "parent-inherit"
           or .physical_binding.resolution_source == "agents-defaults")
@@ -1111,7 +1075,9 @@ execution_controller_binding_envelope() {
           or .physical_binding.requested_reasoning_effort == "low"
           or .physical_binding.requested_reasoning_effort == "medium"
           or .physical_binding.requested_reasoning_effort == "high"
-          or .physical_binding.requested_reasoning_effort == "xhigh")
+          or .physical_binding.requested_reasoning_effort == "xhigh"
+          or .physical_binding.requested_reasoning_effort == "max"
+          or .physical_binding.requested_reasoning_effort == "ultra")
       else
         (.physical_binding | all(.[]; type == "string" and length > 0 and (test("[[:cntrl:]]") | not)))
       end
@@ -1662,17 +1628,10 @@ execution_controller_binding_envelope() {
       printf 'controller_binding_role_file_forbidden_pin: %s role file must not pin a concrete model: %s\n' "$runtime_role" "$codex_role_file" >&2
       return 1
     }
-    if [[ "$runtime_role" == "explorer" ]]; then
-      jq -e '.model_reasoning_effort == "low" or .model_reasoning_effort == "medium"' <<<"$codex_role_json" >/dev/null || {
-        printf 'controller_binding_explorer_pin_invalid: explorer role file must pin model_reasoning_effort to low or medium: %s\n' "$codex_role_file" >&2
-        return 1
-      }
-    else
-      jq -e 'has("model_reasoning_effort") | not' <<<"$codex_role_json" >/dev/null || {
-        printf 'controller_binding_role_file_forbidden_pin: %s role file must not pin model_reasoning_effort: %s\n' "$runtime_role" "$codex_role_file" >&2
-        return 1
-      }
-    fi
+    jq -e 'has("model_reasoning_effort") | not' <<<"$codex_role_json" >/dev/null || {
+      printf 'controller_binding_role_file_forbidden_pin: %s role file must not pin model_reasoning_effort: %s\n' "$runtime_role" "$codex_role_file" >&2
+      return 1
+    }
     codex_sandbox_mode="$(jq -r '.sandbox_mode' <<<"$codex_role_json")"
     if [[ "$runtime_role" == "reviewer" || "$runtime_role" == "explorer" ]]; then
       [[ "$codex_sandbox_mode" == "read-only" ]] || {
@@ -1695,32 +1654,94 @@ execution_controller_binding_envelope() {
     codex_requested_effort="$(jq -r '.requested_reasoning_effort' <<<"$physical_json")"
     codex_resolution_source="$(jq -r '.resolution_source' <<<"$physical_json")"
     codex_spawn_cwd="$(jq -r '.spawn_cwd_supported' <<<"$physical_json")"
+    codex_required_uplift_supported="$(jq -r '.required_uplift_supported' <<<"$physical_json")"
+    codex_defaults_present="$(jq -r '((.agents // {}) | has("default_subagent_model") or has("default_subagent_reasoning_effort"))' <<<"$codex_config_json")"
+    codex_parent_effort="$(jq -r '.parent_reasoning_effort' <<<"$physical_json")"
+    codex_required_minimum_effort="$(jq -r '.required_minimum_reasoning_effort' <<<"$physical_json")"
+    codex_parent_effort_rank="$(execution_reasoning_effort_rank "$codex_parent_effort")" || return 1
+    codex_required_minimum_effort_rank="$(execution_reasoning_effort_rank "$codex_required_minimum_effort")" || return 1
+    if [[ -n "$codex_requested_effort" ]]; then
+      codex_requested_effort_rank="$(execution_reasoning_effort_rank "$codex_requested_effort")" || return 1
+    fi
     case "$model_policy" in
       semantic-routing)
-        [[ -n "$codex_requested_model" && -n "$codex_requested_effort" && "$codex_resolution_source" == "per-spawn" ]] || {
-          printf 'controller_binding_model_policy_mismatch: semantic-routing requires per-spawn model and reasoning values\n' >&2
+        if [[ -z "$codex_requested_model" && -z "$codex_requested_effort" ]]; then
+          [[ "$codex_resolution_source" == "parent-inherit" ]] || {
+            printf 'controller_binding_model_policy_mismatch: semantic-routing without an uplift must record parent inheritance\n' >&2
+            return 1
+          }
+          if [[ "$codex_parent_effort_rank" -lt "$codex_required_minimum_effort_rank" ]]; then
+            printf 'controller_binding_required_uplift_below_floor: inherited reasoning is below the required minimum and cannot be emitted without an uplift\n' >&2
+            return 1
+          fi
+        elif [[ -z "$codex_requested_model" && -n "$codex_requested_effort" ]]; then
+          [[ "$codex_resolution_source" == "per-spawn" ]] || {
+            printf 'controller_binding_model_policy_mismatch: semantic-routing effort-only uplift must record per-spawn resolution\n' >&2
+            return 1
+          }
+        elif [[ -n "$codex_requested_model" && -n "$codex_requested_effort" && "$codex_resolution_source" == "per-spawn" ]]; then
+          :
+        else
+          printf 'controller_binding_model_policy_mismatch: semantic-routing model changes require an explicit reasoning effort\n' >&2
           return 1
-        }
+        fi
+        if [[ -n "$codex_requested_effort" ]] \
+          && { [[ "$codex_requested_effort_rank" -lt "$codex_parent_effort_rank" ]] \
+            || [[ "$codex_requested_effort_rank" -lt "$codex_required_minimum_effort_rank" ]]; }; then
+          printf 'controller_binding_required_uplift_below_floor: requested reasoning must not be below the inherited parent or active minimum\n' >&2
+          return 1
+        fi
+        if [[ -n "$codex_requested_effort" && "$codex_required_uplift_supported" != "true" ]]; then
+          printf 'controller_binding_required_uplift_unsupported: runtime rejected the required semantic-routing uplift; do not retry through defaults or below the required profile\n' >&2
+          return 1
+        fi
         ;;
       inherit-main)
         [[ -z "$codex_requested_model" && -z "$codex_requested_effort" && "$codex_resolution_source" == "parent-inherit" ]] || {
           printf 'controller_binding_model_policy_mismatch: inherit-main must not supply per-spawn model or reasoning values\n' >&2
           return 1
         }
+        if [[ "$codex_parent_effort_rank" -lt "$codex_required_minimum_effort_rank" ]]; then
+          printf 'controller_binding_required_uplift_below_floor: inherit-main reasoning is below the active minimum\n' >&2
+          return 1
+        fi
         ;;
       runtime-default)
-        [[ -z "$codex_requested_model" && -z "$codex_requested_effort" && "$codex_resolution_source" == "agents-defaults" ]] || {
+        [[ -z "$codex_requested_model" && -z "$codex_requested_effort" ]] || {
           printf 'controller_binding_model_policy_mismatch: runtime-default must not supply per-spawn model or reasoning values\n' >&2
           return 1
         }
+        if [[ "$codex_defaults_present" == "true" ]]; then
+          [[ "$codex_resolution_source" == "agents-defaults" ]] || {
+            printf 'controller_binding_model_policy_mismatch: runtime-default must record configured agents defaults\n' >&2
+            return 1
+          }
+          codex_effective_default_effort="$(jq -r '(.agents // {}).default_subagent_reasoning_effort // ""' <<<"$codex_config_json")"
+          if [[ -z "$codex_effective_default_effort" ]]; then
+            printf 'controller_binding_model_policy_mismatch: runtime-default with configured agents model requires explicit default reasoning evidence\n' >&2
+            return 1
+          fi
+          codex_effective_default_effort_rank="$(execution_reasoning_effort_rank "$codex_effective_default_effort")" || {
+            printf 'controller_binding_model_policy_mismatch: configured default reasoning effort is unsupported\n' >&2
+            return 1
+          }
+          if [[ "$codex_effective_default_effort_rank" -lt "$codex_parent_effort_rank" ]] \
+            || [[ "$codex_effective_default_effort_rank" -lt "$codex_required_minimum_effort_rank" ]]; then
+            printf 'controller_binding_required_uplift_below_floor: runtime defaults must not be below the inherited parent or active minimum\n' >&2
+            return 1
+          fi
+        else
+          [[ "$codex_resolution_source" == "parent-inherit" ]] || {
+            printf 'controller_binding_model_policy_mismatch: runtime-default without agents defaults must record parent inheritance\n' >&2
+            return 1
+          }
+          if [[ "$codex_parent_effort_rank" -lt "$codex_required_minimum_effort_rank" ]]; then
+            printf 'controller_binding_required_uplift_below_floor: runtime-default inherited reasoning is below the active minimum\n' >&2
+            return 1
+          fi
+        fi
         ;;
     esac
-    if [[ "$runtime_role" == "explorer" && -n "$codex_requested_effort" ]]; then
-      [[ "$codex_requested_effort" == "low" || "$codex_requested_effort" == "medium" ]] || {
-        printf 'controller_binding_explorer_ceiling: requested per-spawn effort exceeds the absolute low-default/medium-ceiling explorer bound\n' >&2
-        return 1
-      }
-    fi
 
     if [[ "$write_ref_count" -gt 0 ]]; then
       jq -e '.isolation == "isolated-worktree"' <<<"$task_json" >/dev/null || {
@@ -1850,7 +1871,10 @@ execution_controller_binding_envelope() {
       --arg expected_sandbox_mode "$codex_sandbox_mode" \
       --arg requested_model "$codex_requested_model" \
       --arg requested_reasoning_effort "$codex_requested_effort" \
+      --arg parent_reasoning_effort "$codex_parent_effort" \
+      --arg required_minimum_reasoning_effort "$codex_required_minimum_effort" \
       --arg resolution_source "$codex_resolution_source" \
+      --argjson required_uplift_supported "$([[ "$codex_required_uplift_supported" == "true" ]] && printf 'true' || printf 'false')" \
       --arg max_depth_enforcement "$codex_depth_enforcement" \
       --argjson max_depth "$codex_max_depth_json" \
       --argjson concurrency_ceiling "$codex_ceiling_json" \
@@ -1865,7 +1889,10 @@ execution_controller_binding_envelope() {
         max_depth_enforcement: $max_depth_enforcement,
         requested_model: (if $requested_model == "" then null else $requested_model end),
         requested_reasoning_effort: (if $requested_reasoning_effort == "" then null else $requested_reasoning_effort end),
+        parent_reasoning_effort: $parent_reasoning_effort,
+        required_minimum_reasoning_effort: $required_minimum_reasoning_effort,
         resolution_source: $resolution_source,
+        required_uplift_supported: $required_uplift_supported,
         spawn_cwd_supported: $spawn_cwd_supported
       }')"
     envelope_json="$(jq -n -cS \
@@ -1965,6 +1992,22 @@ execution_controller_converge() {
   task_ledger_controller_converge "$@"
 }
 
+execution_external_baseline() {
+  task_ledger_external_baseline "$@"
+}
+
+execution_external_prepare() {
+  task_ledger_external_prepare "$@"
+}
+
+execution_external_apply() {
+  task_ledger_external_apply "$@"
+}
+
+execution_external_cleanup() {
+  task_ledger_external_cleanup "$@"
+}
+
 execution_artifact_ref() {
   local file_ref="$1"
   local repo_root=""
@@ -2021,9 +2064,11 @@ build_execution_result_json() {
   local remaining_task_count=0
   local stable_truth_refs_json="[]"
   local allowed_touch_refs_json="[]"
+  local allowed_external_touch_refs_json="[]"
   local docs_predicates_json="[]"
   local task_evidence_json="[]"
   local drift_evidence_json="[]"
+  local verified_external_changes_json="[]"
 
   validate_execution_plan "$plan_file" >/dev/null || return 1
   [[ -f "$ledger_file" ]] || {
@@ -2046,8 +2091,14 @@ build_execution_result_json() {
   truth_required="$(execution_truth_sync_required "$plan_file")"
   stable_truth_refs_json="$(execution_stable_truth_refs_json "$plan_file")"
   allowed_touch_refs_json="$(execution_allowed_touch_set "$plan_file" | jq -R . | jq -s 'sort')"
+  allowed_external_touch_refs_json="$(execution_allowed_external_touch_set "$plan_file" | jq -R . | jq -s 'map(select(length > 0)) | sort')"
   docs_predicates_json="$(execution_docs_governance_predicates_json "$plan_file")"
   task_evidence_json="$(jq '.' "$ledger_file")"
+  verified_external_changes_json="$(jq '[
+    .[]
+    | select((.external_impl_file_refs // []) | length > 0)
+    | {task_id, manifest: .verified_external_changes}
+  ]' "$ledger_file")"
   remaining_task_count="$(jq -r '.remaining_task_count' <<<"$base_json")"
 
   if [[ "$remaining_task_count" -eq 0 ]] && ! jq -e '
@@ -2056,6 +2107,10 @@ build_execution_result_json() {
       (
         ((.convergence_required // false) == false) or
         (.convergence_verified == true and .oracles_verified == true and .integration_verified == true and .convergence_actor == "controller")
+      ) and
+      (
+        ((.external_impl_file_refs // []) | length == 0) or
+        ((.verified_external_changes // null) | type == "object")
       )
     )
   ' "$ledger_file" >/dev/null; then
@@ -2114,8 +2169,10 @@ build_execution_result_json() {
     --argjson truth_sync_required "$truth_required" \
     --argjson stable_truth_refs "$stable_truth_refs_json" \
     --argjson allowed_touch_refs "$allowed_touch_refs_json" \
+    --argjson allowed_external_touch_refs "$allowed_external_touch_refs_json" \
     --argjson docs_governance_predicates "$docs_predicates_json" \
     --argjson task_evidence "$task_evidence_json" \
+    --argjson verified_external_changes "$verified_external_changes_json" \
     '. + {
       approved_plan_ref: $approved_plan_ref,
       approved_design_ref: $approved_design_ref,
@@ -2127,8 +2184,10 @@ build_execution_result_json() {
       truth_sync_required: $truth_sync_required,
       stable_truth_refs: $stable_truth_refs,
       allowed_touch_refs: $allowed_touch_refs,
+      allowed_external_touch_refs: $allowed_external_touch_refs,
       docs_governance_predicates: $docs_governance_predicates,
       task_evidence: $task_evidence,
+      verified_external_changes: $verified_external_changes,
       lifecycle_state: $lifecycle_state,
       stop_reason: $stop_reason,
       next_entry: $next_entry,
@@ -2164,6 +2223,7 @@ Usage:
   execute-runner.sh worktree-preflight-required <current-checkout|isolated-worktree> <decision-recorded>
   execute-runner.sh verification-commands <plan-file>
   execute-runner.sh allowed-touch-set <plan-file>
+  execute-runner.sh allowed-external-touch-set <plan-file>
   execute-runner.sh truth-sync-required <plan-file>
   execute-runner.sh task-catalog <plan-file>
   execute-runner.sh task-ledger <plan-file>
@@ -2173,6 +2233,10 @@ Usage:
   execute-runner.sh runtime-binding <plan-file> <ledger-json> <parallel-group> <runtime-capacity> [semantic-routing|inherit-main|runtime-default]
   execute-runner.sh controller-binding-envelope <plan-file> <ledger-json> <request-json> [--backend herdr|codex-native]
   execute-runner.sh controller-converge <plan-file> <ledger-json> <task-id> <controller> <oracles-passed> <integration-passed> [changed-path ...]
+  execute-runner.sh external-baseline <plan-file> <ledger-json> <task-id> <run-id>
+  execute-runner.sh external-prepare <plan-file> <ledger-json> <task-id> <run-dir> <external-ref> <intent-id> <source-file>
+  execute-runner.sh external-apply <plan-file> <ledger-json> <task-id> <intent-id>
+  execute-runner.sh external-cleanup <ledger-json> <task-id> <intent-id>
   execute-runner.sh execution-result <plan-path> <ledger-json> <current-phase> <active-task-id-or-empty> <stop-reason> <review-status> <verify-status> <next-entry> <next-phase> <human-input-required> [workspace-mode]
   execute-runner.sh gate-result <review-status> <verify-status> <truth-sync-required> <truth-sync-completed>
   execute-runner.sh recovery-route <failure-kind> <failure-count>
@@ -2213,6 +2277,10 @@ main() {
     allowed-touch-set)
       [[ $# -eq 2 ]] || { usage >&2; return 1; }
       execution_allowed_touch_set "$2"
+      ;;
+    allowed-external-touch-set)
+      [[ $# -eq 2 ]] || { usage >&2; return 1; }
+      execution_allowed_external_touch_set "$2"
       ;;
     truth-sync-required)
       [[ $# -eq 2 ]] || { usage >&2; return 1; }
@@ -2255,6 +2323,22 @@ main() {
     controller-converge)
       [[ $# -ge 7 ]] || { usage >&2; return 1; }
       execution_controller_converge "$2" "$3" "$4" "$5" "$6" "$7" "${@:8}"
+      ;;
+    external-baseline)
+      [[ $# -eq 5 ]] || { usage >&2; return 1; }
+      execution_external_baseline "$2" "$3" "$4" "$5"
+      ;;
+    external-prepare)
+      [[ $# -eq 8 ]] || { usage >&2; return 1; }
+      execution_external_prepare "$2" "$3" "$4" "$5" "$6" "$7" "$8"
+      ;;
+    external-apply)
+      [[ $# -eq 5 ]] || { usage >&2; return 1; }
+      execution_external_apply "$2" "$3" "$4" "$5"
+      ;;
+    external-cleanup)
+      [[ $# -eq 4 ]] || { usage >&2; return 1; }
+      execution_external_cleanup "$2" "$3" "$4"
       ;;
     execution-result)
       [[ $# -ge 11 ]] || { usage >&2; return 1; }

@@ -1,7 +1,6 @@
 name = "explorer"
-description = "Bounded low-cost read-only fact finder"
+description = "Bounded read-only fact finder"
 sandbox_mode = "read-only"
-model_reasoning_effort = "low"
 developer_instructions = """
 Perform only the bounded factual search described by the controller.
 Return facts and open questions; do not synthesize decisions, edit files,

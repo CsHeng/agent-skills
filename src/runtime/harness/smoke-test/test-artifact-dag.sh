@@ -16,13 +16,15 @@ fail() {
 TEST_ARTIFACT_DAG_TMP=""
 
 main() {
-  local tmp design plan bad_plan resolved allowed
+  local tmp design plan bad_plan external_target resolved allowed
   tmp="$(mktemp -d)"
   TEST_ARTIFACT_DAG_TMP="$tmp"
   trap 'rm -rf -- "$TEST_ARTIFACT_DAG_TMP"' EXIT
   design="$tmp/design.md"
   plan="$tmp/plan.md"
   bad_plan="$tmp/bad-plan.md"
+  external_target="$tmp/user-config.toml"
+  printf 'model = "inherit"\n' >"$external_target"
 
   cat >"$design" <<'EOF'
 # Design
@@ -31,9 +33,12 @@ main() {
 
 - impl_file_refs:
   - src/app
+- external_impl_file_refs:
+  - __EXTERNAL_TARGET__
 - test_file_refs:
   - tests/app
 EOF
+  sed -i "s|__EXTERNAL_TARGET__|$external_target|" "$design"
 
   cat >"$plan" <<'EOF'
 # Plan
@@ -47,6 +52,8 @@ EOF
 
 - impl_file_refs:
   - src/app/main.go
+- external_impl_file_refs:
+  - __EXTERNAL_TARGET__
 - test_file_refs:
   - tests/app/main_test.go
 
@@ -55,9 +62,12 @@ EOF
 - task_id: app-task
 - impl_file_refs:
   - src/app/main.go
+- external_impl_file_refs:
+  - __EXTERNAL_TARGET__
 - test_file_refs:
   - tests/app/main_test.go
 EOF
+  sed -i "s|__EXTERNAL_TARGET__|$external_target|g" "$plan"
 
   cat >"$bad_plan" <<'EOF'
 # Bad Plan
@@ -79,6 +89,9 @@ EOF
   harness_bash_version_supported 3 && fail "Bash 3 should be rejected"
   declared_repo_path_ref_is_safe "src/app" || fail "safe path rejected"
   declared_repo_path_ref_is_safe "../outside" && fail "parent traversal accepted"
+  declared_external_path_ref_is_safe "$external_target" || fail "safe external path rejected"
+  declared_external_path_ref_is_safe "relative/config.toml" && fail "relative external path accepted"
+  declared_external_path_ref_is_safe "$tmp/../outside.toml" && fail "external parent traversal accepted"
 
   resolved="$(resolve_plan_design_ref "$tmp" "$plan")"
   [[ "$(printf '%s\n' "$resolved" | sed -n '1p')" == "$(realpath "$design")" ]] || fail "design path resolution mismatch"
@@ -87,11 +100,17 @@ EOF
   allowed="$(build_allowed_touch_set "$plan" "$design")"
   printf '%s\n' "$allowed" | rg -x 'src/app/main.go' >/dev/null || fail "implementation ref missing"
   printf '%s\n' "$allowed" | rg -x 'tests/app/main_test.go' >/dev/null || fail "test ref missing"
+  printf '%s\n' "$allowed" | rg -F -x "$external_target" >/dev/null && fail "external ref leaked into repository touch set"
   build_allowed_touch_set "$bad_plan" "$design" >/dev/null 2>&1 && fail "out-of-design path accepted"
+
+  allowed="$(build_allowed_external_touch_set "$plan" "$design")"
+  printf '%s\n' "$allowed" | rg -F -x "$external_target" >/dev/null || fail "external ref missing"
 
   allowed="$(build_task_allowed_touch_set "$plan" "app-task")"
   printf '%s\n' "$allowed" | rg -x 'src/app/main.go' >/dev/null || fail "task implementation ref missing"
   printf '%s\n' "$allowed" | rg -x 'tests/app/main_test.go' >/dev/null || fail "task test ref missing"
+  allowed="$(build_task_allowed_external_touch_set "$plan" "app-task")"
+  printf '%s\n' "$allowed" | rg -F -x "$external_target" >/dev/null || fail "task external ref missing"
   assert_task_change_boundary "$plan" "app-task" "src/app/main.go" "tests/app/main_test.go" || fail "declared task changes should pass"
   assert_task_change_boundary "$plan" "app-task" "src/other.go" >/dev/null 2>&1 && fail "out-of-task change accepted"
 

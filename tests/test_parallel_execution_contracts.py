@@ -14,6 +14,7 @@ PORTABLE_PLAN_SURFACES = (
     CONTRACTS,
     REPO_ROOT / "src/runtime/harness/plan-runner.sh",
 )
+EXTERNAL_TOUCH_POLICY = "exact-existing-files-v1"
 CONCRETE_PROVIDER_MODEL = re.compile(
     r"\b(?:gpt-\d|claude-(?:\d|opus|sonnet|haiku)|gemini-(?:\d|pro|flash))",
     re.IGNORECASE,
@@ -54,6 +55,21 @@ class ParallelExecutionContractTests(unittest.TestCase):
             if CONCRETE_PROVIDER_MODEL.search(content):
                 violations.append(str(file_ref.relative_to(REPO_ROOT)))
         self.assertEqual([], violations)
+
+    def test_portable_planning_keeps_difficulty_separate_from_physical_ceiling(self) -> None:
+        plan_text = PORTABLE_PLAN_SURFACES[0].read_text(encoding="utf-8")
+        self.assertIn("parent", plan_text)
+        self.assertIn("minimum", plan_text)
+        self.assertIn("no physical reasoning ceiling", plan_text)
+        self.assertNotIn("absolute low-cost", plan_text)
+        self.assertNotIn("medium as the ceiling", plan_text)
+
+    def test_external_touch_policy_remains_provider_neutral(self) -> None:
+        plan_runner = (REPO_ROOT / "src/runtime/harness/plan-runner.sh").read_text(encoding="utf-8")
+        artifact_dag = (REPO_ROOT / "src/runtime/harness/artifact-dag.sh").read_text(encoding="utf-8")
+        self.assertIn(EXTERNAL_TOUCH_POLICY, plan_runner)
+        self.assertIn("external_impl_file_refs", artifact_dag)
+        self.assertNotRegex(plan_runner, CONCRETE_PROVIDER_MODEL)
 
 
 if __name__ == "__main__":

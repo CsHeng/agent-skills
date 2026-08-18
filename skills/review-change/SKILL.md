@@ -52,6 +52,7 @@ The main agent constructs:
 - exact artifact diff or changed files
 - declared executable oracles and current verification evidence
 - approved touch set
+- exact approved external refs, when present, plus metadata-only baseline and ordered intent evidence; no raw external content, preimage, or staged payload
 - explicitly allowed supporting files, each with a reason
 
 Route the brief to `review-design`, `review-plan`, or `review-implementation`. The evaluator returns candidate evidence only.
@@ -69,6 +70,8 @@ For every material candidate, verify the evidence, causal connection, approved-c
 - `needs_plan_change`
 
 Severity and reviewer-recommended scope never authorize repair by themselves. Only `accepted` candidates can become local repair work. Record a concise reason for each accepted candidate and each materially rejected candidate.
+
+External evidence grants review authority only over the supplied metadata and redacted conformance output. A reviewer remains read-only, cannot reread a live external target, cannot request its raw contents, and cannot mutate or append intents. The main `implement-change` controller adjudicates any candidate and owns the next parent-linked broker intent for an accepted repair.
 
 ## Verdicts
 

@@ -28,6 +28,33 @@ declared_repo_path_ref_is_safe() {
   return 0
 }
 
+declared_external_path_ref_is_safe() {
+  local ref="$1"
+
+  [[ -n "$ref" && "$ref" == /* && "$ref" != */ ]] || return 1
+  if printf '%s' "$ref" | grep -q '[[:cntrl:]*?\[\]{}]'; then
+    return 1
+  fi
+
+  case "$ref/" in
+    *'/./'*|*'/../'*|*'//'*) return 1 ;;
+  esac
+
+  return 0
+}
+
+external_ref_is_outside_repository() {
+  local ref="$1"
+  local repo_root=""
+
+  declared_external_path_ref_is_safe "$ref" || return 1
+  repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)"
+  case "$ref" in
+    "$repo_root"|"$repo_root"/*) return 1 ;;
+  esac
+  return 0
+}
+
 exact_scalar_values_match() {
   local expected_value="$1"
   local observed_value="$2"
@@ -179,6 +206,16 @@ build_allowed_touch_set() {
   } | awk 'NF > 0' | sort -u
 }
 
+build_allowed_external_touch_set() {
+  local plan_file="$1"
+  local design_file="$2"
+
+  assert_plan_refs_within_design "$plan_file" "$design_file" || return 1
+  extract_markdown_list "$plan_file" "Implementation Scope" "external_impl_file_refs" \
+    | awk 'NF > 0 && $0 != "none"' \
+    | sort -u
+}
+
 task_section_for_id() {
   local plan_file="$1"
   local wanted_task_id="$2"
@@ -242,6 +279,38 @@ build_task_allowed_touch_set() {
     extract_markdown_list "$plan_file" "$task_section" "impl_file_refs"
     extract_markdown_list "$plan_file" "$task_section" "test_file_refs"
   } | awk 'NF > 0' | sort -u)
+}
+
+build_task_allowed_external_touch_set() {
+  local plan_file="$1"
+  local wanted_task_id="$2"
+  local task_section=""
+  local declared_ref=""
+  local -A plan_refs=()
+
+  task_section="$(task_section_for_id "$plan_file" "$wanted_task_id")"
+  [[ -n "$task_section" ]] || {
+    printf 'task not found in plan: %s\n' "$wanted_task_id" >&2
+    return 1
+  }
+
+  while IFS= read -r declared_ref; do
+    [[ -n "$declared_ref" && "$declared_ref" != "none" ]] || continue
+    plan_refs["$declared_ref"]=1
+  done < <(extract_markdown_list "$plan_file" "Implementation Scope" "external_impl_file_refs" | awk 'NF > 0' | sort -u)
+
+  while IFS= read -r declared_ref; do
+    [[ -n "$declared_ref" && "$declared_ref" != "none" ]] || continue
+    if ! external_ref_is_outside_repository "$declared_ref"; then
+      printf 'unsafe task external touch ref (%s): %s\n' "$wanted_task_id" "$declared_ref" >&2
+      return 1
+    fi
+    if [[ -z "${plan_refs[$declared_ref]+present}" ]]; then
+      printf 'task external touch ref not declared in implementation scope (%s): %s\n' "$wanted_task_id" "$declared_ref" >&2
+      return 1
+    fi
+    printf '%s\n' "$declared_ref"
+  done < <(extract_markdown_list "$plan_file" "$task_section" "external_impl_file_refs" | awk 'NF > 0' | sort -u)
 }
 
 assert_task_change_boundary() {
@@ -434,4 +503,26 @@ assert_plan_refs_within_design() {
       fi
     done <<<"$plan_refs"
   done
+
+  local -A design_external_refs=()
+  while IFS= read -r ref; do
+    [[ -n "$ref" && "$ref" != "none" ]] || continue
+    if ! external_ref_is_outside_repository "$ref"; then
+      printf 'unsafe design external_impl_file_refs ref: %s\n' "$ref" >&2
+      return 1
+    fi
+    design_external_refs["$ref"]=1
+  done < <(extract_markdown_list "$design_file" "Implementation Surface" "external_impl_file_refs" | awk 'NF > 0' | sort -u)
+
+  while IFS= read -r ref; do
+    [[ -n "$ref" && "$ref" != "none" ]] || continue
+    if ! external_ref_is_outside_repository "$ref"; then
+      printf 'unsafe plan external_impl_file_refs ref: %s\n' "$ref" >&2
+      return 1
+    fi
+    if [[ -z "${design_external_refs[$ref]+present}" ]]; then
+      printf 'plan external_impl_file_refs ref not declared in design: %s\n' "$ref" >&2
+      return 1
+    fi
+  done < <(extract_markdown_list "$plan_file" "Implementation Scope" "external_impl_file_refs" | awk 'NF > 0' | sort -u)
 }

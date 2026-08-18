@@ -179,6 +179,35 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertTrue(execution["allowed_parallel_may_serialize"])
         self.assertEqual("parallel_capacity_required", execution["required_parallel_capacity_exit"])
 
+    def test_native_routing_uses_parent_baseline_without_an_explorer_ceiling(self) -> None:
+        contract_path = REPO_ROOT / "src/skills/workflows/implement-change/references/workflow.toml"
+        with contract_path.open("rb") as handle:
+            contract = tomllib.load(handle)
+
+        explorer = contract["explorer"]
+        self.assertEqual("parent-session", explorer["physical_baseline"])
+        self.assertEqual("minimum-only-no-ceiling", explorer["reasoning_policy"])
+        self.assertEqual(
+            ["parent-inherit", "effort-only-uplift", "model-plus-effort-uplift"],
+            explorer["semantic_routing_shapes"],
+        )
+        self.assertEqual("typed-stop-no-downgrade", explorer["required_uplift_rejection"])
+        native = contract["runtime_binding"]["codex_native"]
+        self.assertEqual(
+            ["parent_reasoning_effort", "required_minimum_reasoning_effort"],
+            native["reasoning_evidence"],
+        )
+        self.assertTrue(native["monotonic_reasoning_required"])
+        for removed in (
+            "role_cost",
+            "default_effort",
+            "max_effort",
+            "semantic_routing_default_effort",
+            "semantic_routing_max_effort",
+            "rejected_efforts",
+        ):
+            self.assertNotIn(removed, explorer)
+
     def test_workers_cannot_recursively_delegate_or_assume_controller_ownership(self) -> None:
         contract_path = REPO_ROOT / "src/skills/workflows/implement-change/references/workflow.toml"
         with contract_path.open("rb") as handle:
@@ -201,6 +230,38 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertEqual(["implement-change"], [node["id"] for node in controller_nodes])
         self.assertEqual(["implement-change"], [node["id"] for node in repair_nodes])
         self.assertEqual("implement-change", contract["repair"]["owner"])
+
+    def test_external_touch_contract_is_main_owned_and_backend_excluded(self) -> None:
+        contract_path = REPO_ROOT / "src/skills/workflows/implement-change/references/workflow.toml"
+        with contract_path.open("rb") as handle:
+            contract = tomllib.load(handle)
+
+        external = contract["external_touch"]
+        self.assertEqual("exact-existing-files-v1", external["policy"])
+        self.assertEqual("main", external["actor"])
+        self.assertEqual("forbidden", external["delegation"])
+        self.assertEqual("forbidden", external["parallel"])
+        self.assertTrue(external["broker_only"])
+        self.assertTrue(external["immutable_baseline"])
+        self.assertFalse(external["automatic_rollback"])
+        self.assertFalse(external["backend_envelope_exposure"])
+
+    def test_external_touch_workflow_surfaces_preserve_lifecycle_ownership(self) -> None:
+        surfaces = {
+            "plan": REPO_ROOT / "src/skills/workflows/plan-change/SKILL.md",
+            "implement": REPO_ROOT / "src/skills/workflows/implement-change/SKILL.md",
+            "review": REPO_ROOT / "src/skills/workflows/review-change/SKILL.md",
+            "review_impl": REPO_ROOT / "src/skills/review-components/review-implementation/SKILL.md",
+            "truth": REPO_ROOT / "src/skills/workflows/sync-truth/SKILL.md",
+        }
+        content = {name: path.read_text(encoding="utf-8") for name, path in surfaces.items()}
+        self.assertIn("external_impl_file_refs", content["plan"])
+        self.assertIn("repository-only bootstrap plan", content["plan"])
+        self.assertIn("external-baseline", content["implement"])
+        self.assertIn("parent-linked broker intent", content["implement"])
+        self.assertIn("reviewer remains read-only", content["review"])
+        self.assertIn("metadata-only", content["review_impl"])
+        self.assertIn("without rereading the current external file", content["truth"])
 
 
 if __name__ == "__main__":

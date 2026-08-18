@@ -23,7 +23,10 @@ Require:
 - exact changed files and diff for the task slice
 - task-scoped tests and verification evidence
 - approved touch set
+- exact external refs and metadata-only root-before/final-after, ordered intent, preserved-mode/owner/identity, and redacted conformance evidence when the task used the external channel
 - a small supporting-file allowlist, with one reason per file
+
+Do not read a live external target, request raw external configuration or preimages, inspect staged payloads, or suggest a generic editor. External review is limited to the controller-supplied metadata-only evidence. The evaluator remains read-only; an accepted repair can only be adjudicated by the main controller and executed as the next parent-linked broker intent within the same exact ref set.
 
 Review changed behavior and the supplied tests. Read an unchanged file only when it is a direct dependency of changed behavior and is necessary to decide whether the diff is correct. Record that reason in `review_surface`. Do not follow references recursively, inspect future plan tasks, or search the repository for adjacent debt.
 

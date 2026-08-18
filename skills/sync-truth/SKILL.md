@@ -49,6 +49,7 @@ The truth-sync artifact contains `## Evidence`, `## Stable Truth Updates`, and `
 
 - Evidence records `approved_design_ref`, `approved_plan_ref`, `review_gate_ref`, `verification_ref`, and `truth_sync_required: true`; every value must exactly match the approved plan and immutable execution result.
 - Stable truth updates record `stable_truth_refs`, `stage_artifact_refs`, and `summary`. Stable refs point only at long-lived truth roots and never at `docs/plans/`.
+- `stable_truth_refs` remain repository-relative even when implementation used exact external files. Validate `allowed_external_touch_refs` and metadata-only `verified_external_changes` against the approved plan and embedded task ledger; never copy external paths into stable truth scope.
 - The human gate records `approval_required: true`, `approval_status: pending`, and `next_entry: close-change`.
 - Keep approval pending until the user explicitly approves the truth sync. A passing review and verification gate plus approved truth sync is required before close; otherwise route to the machine-selected current entry.
 
@@ -56,6 +57,7 @@ The truth-sync artifact contains `## Evidence`, `## Stable Truth Updates`, and `
 
 1. Validate direct explicit-request authority or the complete approved-plan controller context.
 2. Confirm from the approved plan and immutable execution result that truth sync is required, and reject missing, stale, or mismatched evidence.
+   For external evidence, validate exact set, plan/design/task binding, contiguous parent-linked applied chains, and metadata-only manifests without rereading the current external file. Later legitimate user edits do not invalidate historical execution evidence.
 3. Update stable truth artifacts with the minimum required changes.
 4. Compose `organize-docs` only when a structured approved docs-governance predicate matches and every changed ref remains inside the stable truth touch set.
 5. Stop for explicit human truth-sync approval before close.

@@ -1084,7 +1084,7 @@ class HerdrWorkflowContractTests(unittest.TestCase):
         )
         self.assertTrue(any("choose tasks" in value for value in case["negative"]))
 
-    def test_plan_keeps_provider_neutral_profiles_and_cheap_explorer_boundary(
+    def test_plan_keeps_provider_neutral_profiles_and_bounded_explorer_authority(
         self,
     ) -> None:
         for field in (
@@ -1102,6 +1102,8 @@ class HerdrWorkflowContractTests(unittest.TestCase):
             "isolation: shared-read-only",
             "deeper synthesis",
             "not an explorer",
+            "parent",
+            "no physical reasoning ceiling",
         ):
             self.assertIn(phrase, self.plan_text)
         for provider_name in ("Codex", "Grok", "Claude", "Herdr"):

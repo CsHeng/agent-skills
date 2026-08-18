@@ -106,6 +106,7 @@ task_catalog_json() {
   local rollback_target=""
   local depends_on_json="[]"
   local impl_refs_json="[]"
+  local external_impl_refs_json="[]"
   local test_refs_json="[]"
   local verification_json="[]"
   local done_when_json="[]"
@@ -135,6 +136,7 @@ task_catalog_json() {
     rollback_target="$(extract_markdown_scalar "$plan_file" "$section" "rollback_target")"
     depends_on_json="$(task_depends_on_json "$plan_file" "$section")"
     impl_refs_json="$(task_list_field_json "$plan_file" "$section" "impl_file_refs")"
+    external_impl_refs_json="$(task_list_field_json "$plan_file" "$section" "external_impl_file_refs" | jq 'map(select(. != "none")) | sort | unique')"
     test_refs_json="$(task_list_field_json "$plan_file" "$section" "test_file_refs")"
     verification_json="$(task_list_field_json "$plan_file" "$section" "verification_scope")"
     done_when_json="$(task_list_field_json "$plan_file" "$section" "done_when")"
@@ -159,6 +161,7 @@ task_catalog_json() {
       --arg rollback_target "$rollback_target" \
       --argjson depends_on "$depends_on_json" \
       --argjson impl_file_refs "$impl_refs_json" \
+      --argjson external_impl_file_refs "$external_impl_refs_json" \
       --argjson test_file_refs "$test_refs_json" \
       --argjson verification_commands "$verification_json" \
       --argjson done_when "$done_when_json" \
@@ -173,6 +176,7 @@ task_catalog_json() {
         depends_on: $depends_on,
         scope_slice: $scope_slice,
         impl_file_refs: $impl_file_refs,
+        external_impl_file_refs: $external_impl_file_refs,
         test_file_refs: $test_file_refs,
         verification_commands: $verification_commands,
         executor_mode: $executor_mode,
@@ -217,12 +221,16 @@ task_ledger_json() {
           failure_count: 0,
           last_failure_kind: "",
           active_impl_file_refs: $task.impl_file_refs,
+          active_external_impl_file_refs: $task.external_impl_file_refs,
           active_test_file_refs: $task.test_file_refs,
           started_at: null,
           completed_at: null,
           convergence_verified: false,
           convergence_actor: null,
           verified_changed_paths: [],
+          external_touch_baseline: null,
+          external_write_intents: [],
+          verified_external_changes: null,
           oracles_verified: false,
           integration_verified: false,
           notes: ""
@@ -355,8 +363,15 @@ task_ledger_controller_converge() {
   local current_task_state=""
   local changed_refs_json="[]"
   local converged_json=""
+  local external_refs_json="[]"
+  local external_manifest_json="null"
+  local task_temp_dir=""
+  local design_file=""
+  local design_digest=""
+  local plan_digest=""
 
   validate_execution_grade_plan_artifact "$plan_file" >/dev/null || return 1
+  task_ledger_assert_plan_projection "$plan_file" "$ledger_file" || return 1
   [[ "$convergence_actor" == "controller" ]] || {
     printf 'only the controller may converge task results: %s\n' "$task_id" >&2
     return 1
@@ -377,12 +392,59 @@ task_ledger_controller_converge() {
 
   assert_task_change_boundary "$plan_file" "$task_id" "$@" || return 1
   changed_refs_json="$(printf '%s\n' "$@" | awk 'NF > 0' | jq -R . | jq -s .)"
+  local task_section=""
+  task_section="$(task_section_for_id "$plan_file" "$task_id")"
+  external_refs_json="$(task_list_field_json "$plan_file" "$task_section" "external_impl_file_refs" | jq -c 'map(select(. != "none")) | sort | unique')"
+  if [[ "$(jq 'length' <<<"$external_refs_json")" -gt 0 ]]; then
+    design_file="$(resolve_plan_design_ref "$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)" "$plan_file" | sed -n '1p')"
+    design_digest="$(harness_file_sha256 "$design_file")"
+    plan_digest="$(harness_file_sha256 "$plan_file")"
+    jq -e \
+      --arg task_id "$task_id" \
+      --arg design_sha256 "$design_digest" \
+      --arg plan_sha256 "$plan_digest" \
+      --argjson external_refs "$external_refs_json" \
+      '
+      .[]
+      | select(.task_id == $task_id)
+      | (.external_touch_baseline | type == "object") and
+        (.external_touch_baseline.task_id == $task_id) and
+        (.external_touch_baseline.design_sha256 == $design_sha256) and
+        (.external_touch_baseline.plan_sha256 == $plan_sha256) and
+        ((.external_touch_baseline.refs | map(.ref) | sort) == ($external_refs | sort)) and
+        ((.external_write_intents // []) | all(
+          .state == "applied" and
+          .cleanup == {
+            state: "completed",
+            staged_path_absent: true,
+            broker_candidate_path_absent: true
+          }
+        ))
+    ' "$ledger_file" >/dev/null || {
+      printf 'external touch convergence requires a baseline and only applied intents: %s\n' "$task_id" >&2
+      return 1
+    }
+    task_ledger_validate_external_state "$plan_file" "$ledger_file" "$task_id" true true true || return 1
+    task_temp_dir="$(mktemp -d)"
+    chmod 700 "$task_temp_dir"
+    jq --arg task_id "$task_id" '.[] | select(.task_id == $task_id) | .external_touch_baseline' "$ledger_file" >"$task_temp_dir/baseline.json"
+    jq --arg task_id "$task_id" '.[] | select(.task_id == $task_id) | (.external_write_intents // [])' "$ledger_file" >"$task_temp_dir/intents.json"
+    if ! external_manifest_json="$(python3 "$SCRIPT_DIR/external-touch-evidence.py" compare \
+      --repo-root "$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)" \
+      --baseline-file "$task_temp_dir/baseline.json" \
+      --intents-file "$task_temp_dir/intents.json")"; then
+      rm -rf -- "$task_temp_dir"
+      return 1
+    fi
+    rm -rf -- "$task_temp_dir"
+  fi
   timestamp="$(date -u +%FT%TZ)"
 
   converged_json="$(jq \
     --arg task_id "$task_id" \
     --arg timestamp "$timestamp" \
     --argjson changed_refs "$changed_refs_json" \
+    --argjson external_manifest "$external_manifest_json" \
     '
     map(
       if .task_id == $task_id then
@@ -391,6 +453,7 @@ task_ledger_controller_converge() {
         | .convergence_verified = true
         | .convergence_actor = "controller"
         | .verified_changed_paths = $changed_refs
+        | .verified_external_changes = $external_manifest
         | .oracles_verified = true
         | .integration_verified = true
       else
@@ -400,6 +463,352 @@ task_ledger_controller_converge() {
     ' "$ledger_file")"
 
   task_ledger_refresh_ready_states <(printf '%s\n' "$converged_json")
+}
+
+task_ledger_plan_drift_evidence_json() {
+  local plan_file="$1"
+  local ledger_file="$2"
+  local catalog_json=""
+  local approved_projection=""
+  local observed_projection=""
+
+  catalog_json="$(task_catalog_json "$plan_file")"
+  approved_projection="$(jq -cS '
+    [.[] | {
+      section, title, task_id, scope_slice, depends_on, impl_file_refs,
+      external_impl_file_refs: (.external_impl_file_refs // []), test_file_refs, verification_commands,
+      executor_mode, parallel_group, parallel_policy, delegation_policy,
+      execution_profile, reasoning_profile, isolation, resource_locks,
+      convergence_required, task_review_depth, done_when, failure_policy,
+      rollback_trigger, rollback_target, rollback_verification
+    }]
+  ' <<<"$catalog_json")"
+  observed_projection="$(jq -cS '
+    [.[] | {
+      section, title, task_id, scope_slice, depends_on, impl_file_refs,
+      external_impl_file_refs: (.external_impl_file_refs // []), test_file_refs, verification_commands,
+      executor_mode, parallel_group, parallel_policy, delegation_policy,
+      execution_profile, reasoning_profile, isolation, resource_locks,
+      convergence_required, task_review_depth, done_when, failure_policy,
+      rollback_trigger, rollback_target, rollback_verification
+    }]
+  ' "$ledger_file")"
+
+  if [[ "$approved_projection" == "$observed_projection" ]]; then
+    printf '[]\n'
+    return
+  fi
+  jq -n \
+    --argjson approved "$approved_projection" \
+    --argjson observed "$observed_projection" \
+    '[
+      range(0; ([$approved | length, $observed | length] | max))
+      | select($approved[.] != $observed[.])
+      | {approved_task_id: ($approved[.].task_id // null), observed_task_id: ($observed[.].task_id // null)}
+    ] as $differing_tasks
+    | [{kind: "plan-ledger-drift", requirement: "ledger immutable task projection must match the approved plan", differing_tasks: $differing_tasks}]'
+}
+
+task_ledger_assert_plan_projection() {
+  local plan_file="$1"
+  local ledger_file="$2"
+  local drift_json=""
+
+  drift_json="$(task_ledger_plan_drift_evidence_json "$plan_file" "$ledger_file")" || return 1
+  if [[ "$(jq 'length' <<<"$drift_json")" -gt 0 ]]; then
+    printf 'external_touch_plan_ledger_drift: ledger immutable task projection differs from approved plan\n' >&2
+    return 1
+  fi
+}
+
+task_ledger_atomic_replace() {
+  local ledger_file="$1"
+  local ledger_json="$2"
+  local ledger_dir=""
+  local temporary_file=""
+
+  ledger_dir="$(cd -- "$(dirname -- "$ledger_file")" && pwd -P)"
+  temporary_file="$(mktemp "$ledger_dir/.task-ledger.XXXXXX")"
+  chmod 600 "$temporary_file"
+  if ! printf '%s\n' "$ledger_json" >"$temporary_file"; then
+    rm -f -- "$temporary_file"
+    return 1
+  fi
+  if ! python3 "$SCRIPT_DIR/external-touch-evidence.py" durable-replace \
+    --staged-file "$temporary_file" \
+    --destination-file "$ledger_file" >/dev/null; then
+    rm -f -- "$temporary_file"
+    return 1
+  fi
+}
+
+task_ledger_validate_external_state() {
+  local plan_file="$1"
+  local ledger_file="$2"
+  local task_id="$3"
+  local require_applied="${4:-false}"
+  local require_cleanup="${5:-false}"
+  local check_cleanup_paths="${6:-false}"
+  local task_temp_dir=""
+  local baseline_run_id=""
+  local design_file=""
+  local design_digest=""
+  local plan_digest=""
+  local -a helper_args=()
+  local -a external_refs=()
+
+  task_temp_dir="$(mktemp -d)"
+  chmod 700 "$task_temp_dir"
+  jq --arg task_id "$task_id" '.[] | select(.task_id == $task_id) | .external_touch_baseline' "$ledger_file" >"$task_temp_dir/baseline.json"
+  jq --arg task_id "$task_id" '.[] | select(.task_id == $task_id) | (.external_write_intents // [])' "$ledger_file" >"$task_temp_dir/intents.json"
+  baseline_run_id="$(jq -r '.run_id // empty' "$task_temp_dir/baseline.json")"
+  design_file="$(resolve_plan_design_ref "$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)" "$plan_file" | sed -n '1p')"
+  design_digest="$(harness_file_sha256 "$design_file")"
+  plan_digest="$(harness_file_sha256 "$plan_file")"
+  local task_section=""
+  task_section="$(task_section_for_id "$plan_file" "$task_id")"
+  mapfile -t external_refs < <(task_list_field_json "$plan_file" "$task_section" "external_impl_file_refs" | jq -r '.[]' | sort -u)
+  helper_args=(
+    python3 "$SCRIPT_DIR/external-touch-evidence.py" validate-state
+    --baseline-file "$task_temp_dir/baseline.json"
+    --intents-file "$task_temp_dir/intents.json"
+    --expected-task-id "$task_id"
+    --expected-run-id "$baseline_run_id"
+    --expected-design-sha256 "$design_digest"
+    --expected-plan-sha256 "$plan_digest"
+  )
+  local external_ref=""
+  for external_ref in "${external_refs[@]}"; do
+    helper_args+=(--expected-ref "$external_ref")
+  done
+  [[ "$require_applied" == "true" ]] && helper_args+=(--require-applied)
+  [[ "$require_cleanup" == "true" ]] && helper_args+=(--require-cleanup)
+  [[ "$check_cleanup_paths" == "true" ]] && helper_args+=(--check-cleanup-paths)
+  if ! "${helper_args[@]}" >/dev/null; then
+    rm -rf -- "$task_temp_dir"
+    return 1
+  fi
+  rm -rf -- "$task_temp_dir"
+}
+
+task_ledger_external_baseline() {
+  local plan_file="$1"
+  local ledger_file="$2"
+  local task_id="$3"
+  local run_id="$4"
+  local design_file=""
+  local design_digest=""
+  local plan_digest=""
+  local baseline_json=""
+  local existing_baseline=""
+  local -a helper_args=()
+  local -a external_refs=()
+
+  validate_execution_grade_plan_artifact "$plan_file" >/dev/null || return 1
+  task_ledger_assert_plan_projection "$plan_file" "$ledger_file" || return 1
+  jq -e --arg task_id "$task_id" '.[] | select(.task_id == $task_id and .status == "in_progress")' "$ledger_file" >/dev/null || {
+    printf 'external touch baseline requires an in_progress task: %s\n' "$task_id" >&2
+    return 1
+  }
+  jq -e --arg task_id "$task_id" '
+    .[]
+    | select(.task_id == $task_id)
+    | (.external_touch_baseline != null) or
+      ((((.external_write_intents // []) | length) == 0) and .verified_external_changes == null)
+  ' "$ledger_file" >/dev/null || {
+    printf 'external touch baseline cannot initialize over existing dynamic evidence: %s\n' "$task_id" >&2
+    return 1
+  }
+  local task_section=""
+  task_section="$(task_section_for_id "$plan_file" "$task_id")"
+  mapfile -t external_refs < <(task_list_field_json "$plan_file" "$task_section" "external_impl_file_refs" | jq -r '.[]' | sort -u)
+  [[ "${#external_refs[@]}" -gt 0 ]] || {
+    printf 'task has no external refs: %s\n' "$task_id" >&2
+    return 1
+  }
+  design_file="$(resolve_plan_design_ref "$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)" "$plan_file" | sed -n '1p')"
+  design_digest="$(harness_file_sha256 "$design_file")"
+  plan_digest="$(harness_file_sha256 "$plan_file")"
+  helper_args=(
+    python3 "$SCRIPT_DIR/external-touch-evidence.py" baseline
+    --repo-root "$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)"
+    --run-id "$run_id"
+    --task-id "$task_id"
+    --design-sha256 "$design_digest"
+    --plan-sha256 "$plan_digest"
+  )
+  local external_ref=""
+  for external_ref in "${external_refs[@]}"; do
+    helper_args+=(--ref "$external_ref")
+  done
+  baseline_json="$("${helper_args[@]}")" || return 1
+  existing_baseline="$(jq -cS --arg task_id "$task_id" '.[] | select(.task_id == $task_id) | .external_touch_baseline' "$ledger_file")"
+  if [[ "$existing_baseline" != "null" && "$existing_baseline" != "$(jq -cS . <<<"$baseline_json")" ]]; then
+    printf 'external_touch_baseline_drift: existing baseline cannot be refreshed: %s\n' "$task_id" >&2
+    return 1
+  fi
+  jq --arg task_id "$task_id" --argjson baseline "$baseline_json" '
+    map(if .task_id == $task_id then .external_touch_baseline = $baseline else . end)
+  ' "$ledger_file"
+}
+
+task_ledger_external_prepare() {
+  local plan_file="$1"
+  local ledger_file="$2"
+  local task_id="$3"
+  local run_dir="$4"
+  local external_ref="$5"
+  local intent_id="$6"
+  local source_file="$7"
+  local task_temp_dir=""
+  local declared_json=""
+  local ledger_with_declaration=""
+  local staged_json=""
+  local prepared_json=""
+  local finalized_ledger=""
+  local existing_intent_count="0"
+
+  validate_execution_grade_plan_artifact "$plan_file" >/dev/null || return 1
+  task_ledger_assert_plan_projection "$plan_file" "$ledger_file" || return 1
+  jq -e --arg task_id "$task_id" --arg ref "$external_ref" --arg intent_id "$intent_id" '
+    .[]
+    | select(.task_id == $task_id and .status == "in_progress")
+    | (.external_touch_baseline | type == "object") and
+      ((.external_impl_file_refs // []) | index($ref) != null) and
+      (
+        ((.external_write_intents // []) | map(select(.intent_id == $intent_id)) | length) == 0 or
+        ((.external_write_intents // []) | map(select(.intent_id == $intent_id and .ref == $ref and .state == "staging")) | length) == 1
+      )
+  ' "$ledger_file" >/dev/null || {
+    printf 'external touch prepare rejected by ledger state: %s\n' "$task_id" >&2
+    return 1
+  }
+  task_ledger_validate_external_state "$plan_file" "$ledger_file" "$task_id" false true false || return 1
+  task_temp_dir="$(mktemp -d)"
+  chmod 700 "$task_temp_dir"
+  jq --arg task_id "$task_id" '.[] | select(.task_id == $task_id) | .external_touch_baseline' "$ledger_file" >"$task_temp_dir/baseline.json"
+  jq --arg task_id "$task_id" '.[] | select(.task_id == $task_id) | (.external_write_intents // [])' "$ledger_file" >"$task_temp_dir/intents.json"
+  existing_intent_count="$(jq --arg intent_id "$intent_id" '[.[] | select(.intent_id == $intent_id)] | length' "$task_temp_dir/intents.json")"
+  if [[ "$existing_intent_count" -eq 0 ]]; then
+    if ! declared_json="$(python3 "$SCRIPT_DIR/external-touch-evidence.py" declare \
+      --repo-root "$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)" \
+      --baseline-file "$task_temp_dir/baseline.json" \
+      --intents-file "$task_temp_dir/intents.json" \
+      --ref "$external_ref" \
+      --intent-id "$intent_id" \
+      --run-dir "$run_dir" \
+      --source-file "$source_file")"; then
+      rm -rf -- "$task_temp_dir"
+      return 1
+    fi
+    ledger_with_declaration="$(jq --arg task_id "$task_id" --argjson intent "$declared_json" '
+      map(if .task_id == $task_id then .external_write_intents += [$intent] else . end)
+    ' "$ledger_file")"
+    task_ledger_atomic_replace "$ledger_file" "$ledger_with_declaration" || {
+      rm -rf -- "$task_temp_dir"
+      return 1
+    }
+  else
+    declared_json="$(jq -c --arg intent_id "$intent_id" '.[] | select(.intent_id == $intent_id)' "$task_temp_dir/intents.json")"
+  fi
+  printf '%s\n' "$declared_json" >"$task_temp_dir/intent.json"
+  if ! staged_json="$(python3 "$SCRIPT_DIR/external-touch-evidence.py" stage-declared \
+    --intent-file "$task_temp_dir/intent.json" --source-file "$source_file")"; then
+    rm -rf -- "$task_temp_dir"
+    return 1
+  fi
+  printf '%s\n' "$staged_json" >"$task_temp_dir/staged.json"
+  if ! prepared_json="$(python3 "$SCRIPT_DIR/external-touch-evidence.py" finalize \
+    --intent-file "$task_temp_dir/intent.json" \
+    --staged-file "$task_temp_dir/staged.json")"; then
+    rm -rf -- "$task_temp_dir"
+    return 1
+  fi
+  rm -rf -- "$task_temp_dir"
+  finalized_ledger="$(jq --arg task_id "$task_id" --arg intent_id "$intent_id" --argjson intent "$prepared_json" '
+    map(
+      if .task_id == $task_id then
+        .external_write_intents |= map(if .intent_id == $intent_id then $intent else . end)
+      else . end
+    )
+  ' "$ledger_file")"
+  task_ledger_atomic_replace "$ledger_file" "$finalized_ledger" || return 1
+  printf '%s\n' "$finalized_ledger"
+}
+
+task_ledger_external_apply() {
+  local plan_file="$1"
+  local ledger_file="$2"
+  local task_id="$3"
+  local intent_id="$4"
+  local task_temp_dir=""
+  local applied_json=""
+  local applied_ledger=""
+
+  validate_execution_grade_plan_artifact "$plan_file" >/dev/null || return 1
+  task_ledger_assert_plan_projection "$plan_file" "$ledger_file" || return 1
+  jq -e --arg task_id "$task_id" --arg intent_id "$intent_id" '
+    .[]
+    | select(.task_id == $task_id and .status == "in_progress")
+    | [.external_write_intents[] | select(.intent_id == $intent_id and .state == "prepared")] | length == 1
+  ' "$ledger_file" >/dev/null || {
+    printf 'external touch apply requires one prepared intent: %s\n' "$intent_id" >&2
+    return 1
+  }
+  task_ledger_validate_external_state "$plan_file" "$ledger_file" "$task_id" false true false || return 1
+  task_temp_dir="$(mktemp -d)"
+  chmod 700 "$task_temp_dir"
+  jq --arg task_id "$task_id" --arg intent_id "$intent_id" '.[] | select(.task_id == $task_id) | .external_write_intents[] | select(.intent_id == $intent_id)' "$ledger_file" >"$task_temp_dir/intent.json"
+  if ! applied_json="$(python3 "$SCRIPT_DIR/external-touch-evidence.py" apply-and-cleanup \
+    --repo-root "$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)" \
+    --intent-file "$task_temp_dir/intent.json")"; then
+    rm -rf -- "$task_temp_dir"
+    return 1
+  fi
+  rm -rf -- "$task_temp_dir"
+  applied_ledger="$(jq --arg task_id "$task_id" --arg intent_id "$intent_id" --argjson applied "$applied_json" '
+    map(
+      if .task_id == $task_id then
+        .external_write_intents |= map(if .intent_id == $intent_id then $applied else . end)
+      else . end
+    )
+  ' "$ledger_file")"
+  task_ledger_atomic_replace "$ledger_file" "$applied_ledger" || return 1
+  printf '%s\n' "$applied_ledger"
+}
+
+task_ledger_external_cleanup() {
+  local ledger_file="$1"
+  local task_id="$2"
+  local intent_id="$3"
+  local task_temp_dir=""
+
+  task_temp_dir="$(mktemp -d)"
+  chmod 700 "$task_temp_dir"
+  jq -e --arg task_id "$task_id" --arg intent_id "$intent_id" '
+    .[] | select(.task_id == $task_id) | .external_write_intents[] | select(.intent_id == $intent_id and .state == "applied")
+  ' "$ledger_file" >"$task_temp_dir/intent.json" || {
+    rm -rf -- "$task_temp_dir"
+    printf 'external touch cleanup requires an applied intent: %s\n' "$intent_id" >&2
+    return 1
+  }
+  python3 "$SCRIPT_DIR/external-touch-evidence.py" cleanup --intent-file "$task_temp_dir/intent.json" >/dev/null
+  rm -rf -- "$task_temp_dir"
+  jq --arg task_id "$task_id" --arg intent_id "$intent_id" '
+    map(
+      if .task_id == $task_id then
+        .external_write_intents |= map(
+          if .intent_id == $intent_id then
+            .cleanup = {
+              state: "completed",
+              staged_path_absent: true,
+              broker_candidate_path_absent: true
+            }
+          else . end
+        )
+      else . end
+    )
+  ' "$ledger_file"
 }
 
 build_execution_result() {

@@ -32,6 +32,18 @@ assert_json() {
   fi
 }
 
+assert_json_arg() {
+  local json="$1"
+  local arg_name="$2"
+  local arg_value="$3"
+  local expr="$4"
+  local message="$5"
+
+  if ! jq -e --arg "$arg_name" "$arg_value" "$expr" <<<"$json" >/dev/null; then
+    fail "$message"
+  fi
+}
+
 # Golden schema_version-1 wire shapes captured from the pre-refactor emitter.
 # Placeholders are substituted with live fixture values before byte comparison.
 GOLDEN_HERDR_DELEGATED_TEMPLATE='{"artifact_kind":"controller-binding-envelope","authority":{"adapter_capabilities":["consume-binding","manage-run-owned-terminal-resources","persist-adapter-state"],"denied_capabilities":["select-task","mutate-task-ledger","converge-task","invoke-review","adjudicate-findings","repair-implementation","derive-lifecycle-tail","claim-task-success"]},"batch_provenance":{"actor_capacity":3,"batch_id":"P1","batch_task_ids":["task-1","task-2","task-3"],"effective_width":2,"limiting_factors":["batch_limit"],"outcome":"bound","parallel_group":"P1","parallel_policy":"allowed","plan_max_parallelism":2,"planned_task_ids":["task-1","task-2","task-3"],"planned_width":2,"ready_frontier_task_ids":["task-1","task-2","task-3"],"ready_task_ids":["task-1","task-2","task-3"],"ready_width":3,"runtime_capacity":4,"selected_task_ids":["task-1","task-2"],"serial_fallback_reason":null,"stop_reason":null},"command_job":null,"controller":{"binding_kind":"delegated-task","controller_id":"controller-test","model_policy":"semantic-routing","run_id":"run-test-a1","run_nonce":"nonce-test-a1"},"physical_binding":{"agent_kind":"codex","agent_name":"worker-lynx-cb-ttask-1-a1","capability_profile":"delegated-local-writer","checkout_path":"__RAW_TMP__/.fixture-worker","control_plane_endpoint":"native://openai","credential_ref":"native-login/codex","model":"gpt-5.6-luna","pane_id":"pane-controller-test","permission_mode":"never","reasoning_effort":"high","sandbox_mode":"workspace-write","tab_id":"tab-controller-test","terminal_backend":"herdr","workspace_id":"workspace-test"},"provenance":{"batch":{"actor_capacity":3,"batch_id":"P1","batch_task_ids":["task-1","task-2","task-3"],"effective_width":2,"limiting_factors":["batch_limit"],"outcome":"bound","parallel_group":"P1","parallel_policy":"allowed","plan_max_parallelism":2,"planned_task_ids":["task-1","task-2","task-3"],"planned_width":2,"ready_frontier_task_ids":["task-1","task-2","task-3"],"ready_task_ids":["task-1","task-2","task-3"],"ready_width":3,"runtime_capacity":4,"selected_task_ids":["task-1","task-2"],"serial_fallback_reason":null,"stop_reason":null},"canonical_repository":"__REPO__","ledger_ref":"task-ledger.json","ledger_sha256":"__LEDGER_SHA__","plan_ref":"parallel-plan.md","plan_sha256":"__PLAN_SHA__","repository_revision":"__REV__"},"schema_version":1,"task":{"attempt":1,"convergence_required":true,"delegation_policy":"preferred","depends_on":["root"],"done_when":["example verification passes"],"execution_profile":"deep","executor_mode":"subagent","failure_policy":"fix_forward","impl_file_refs":["src/example.py"],"isolation":"isolated-worktree","oracle_refs":["bash test.sh"],"parallel_group":"P1","parallel_policy":"allowed","reasoning_profile":"deep","resource_locks":["example-state"],"rollback_target":"","rollback_trigger":[],"rollback_verification":[],"runtime_role":"worker","scope_slice":"example implementation","section":"Task 1: Example","start_state":"ready","status":"ready","task_id":"task-1","task_review_depth":"full","test_file_refs":["tests/test_example.py"],"title":"Example","touch_set":["src/example.py","tests/test_example.py"],"verification_commands":["bash test.sh"]}}'
@@ -53,6 +65,9 @@ write_codex_request() {
   local binding_kind="${12:-delegated-task}"
   local brief_path="${13:-}"
   local brief_sha="${14:-}"
+  local required_uplift_supported="${15:-true}"
+  local parent_reasoning_effort="${16:-medium}"
+  local required_minimum_reasoning_effort="${17:-medium}"
 
   jq -n \
     --arg run_id "$run_id" \
@@ -68,6 +83,9 @@ write_codex_request() {
     --arg binding_kind "$binding_kind" \
     --arg brief_path "$brief_path" \
     --arg brief_sha "$brief_sha" \
+    --arg required_uplift_supported "$required_uplift_supported" \
+    --arg parent_reasoning_effort "$parent_reasoning_effort" \
+    --arg required_minimum_reasoning_effort "$required_minimum_reasoning_effort" \
     '{
       schema_version: 1,
       binding_kind: $binding_kind,
@@ -83,10 +101,13 @@ write_codex_request() {
       review_brief_sha256: $brief_sha,
       physical_binding: {
         checkout_path: $checkout_path,
+        parent_reasoning_effort: $parent_reasoning_effort,
         requested_model: $requested_model,
         requested_reasoning_effort: $requested_effort,
+        required_minimum_reasoning_effort: $required_minimum_reasoning_effort,
         resolution_source: $resolution_source,
-        spawn_cwd_supported: $spawn_cwd_supported
+        spawn_cwd_supported: $spawn_cwd_supported,
+        required_uplift_supported: $required_uplift_supported
       }
     }' >"$out_file"
 }
@@ -112,7 +133,8 @@ render_golden_envelope() {
 }
 
 main() {
-  local tmp_dir design_file approved_plan pending_plan legacy_plan parallel_plan verdict ledger_file execution_result_json workspace_mode worktree_preflight
+  local tmp_dir design_file approved_plan pending_plan legacy_plan parallel_plan external_plan verdict ledger_file execution_result_json workspace_mode worktree_preflight
+  local external_tmp external_target external_payload external_run_dir external_ledger
   local binding_request_file binding_envelope_file binding_plan_digest binding_ledger_digest binding_worker_dir
   local command_request_file command_envelope_file
   local golden_repo golden_revision golden_plan_sha golden_ledger_sha golden_expected backend_stop
@@ -140,13 +162,23 @@ main() {
   [[ "$(execute_entry_phase)" == "implement-serial" ]] || fail "execute entry phase should stay implement-serial"
 
   tmp_dir="$(mktemp -d)"
+  external_tmp="$(realpath "$(mktemp -d)")"
   TEST_EXECUTE_TMP="$tmp_dir"
-  trap 'rm -rf -- "$TEST_EXECUTE_TMP"' EXIT
+  TEST_EXECUTE_EXTERNAL_TMP="$external_tmp"
+  trap 'rm -rf -- "$TEST_EXECUTE_TMP" "$TEST_EXECUTE_EXTERNAL_TMP"' EXIT
   design_file="$tmp_dir/design.md"
   approved_plan="$tmp_dir/approved-plan.md"
   pending_plan="$tmp_dir/pending-plan.md"
   legacy_plan="$tmp_dir/legacy-plan.md"
   parallel_plan="$tmp_dir/parallel-plan.md"
+  external_plan="$tmp_dir/external-plan.md"
+  external_target="$external_tmp/user-config.toml"
+  external_payload="$external_tmp/payload.toml"
+  external_run_dir="$external_tmp/run"
+  external_ledger="$external_tmp/ledger.json"
+  mkdir -m 700 "$external_run_dir"
+  printf 'model = "before"\n' >"$external_target"
+  printf 'model = "after"\n' >"$external_payload"
 
   cat >"$design_file" <<'EOF'
 # Sample Design
@@ -195,11 +227,14 @@ Problem text.
   - src/example.py
   - src/helper.py
   - src/third.py
+- external_impl_file_refs:
+  - __EXTERNAL_TARGET__
 - test_file_refs:
   - tests/test_example.py
   - tests/test_helper.py
   - tests/test_third.py
 EOF
+  sed -i "s|__EXTERNAL_TARGET__|$external_target|" "$design_file"
 
   cat >"$approved_plan" <<'EOF'
 # Approved Plan
@@ -539,6 +574,105 @@ EOF
 - default_failure_policy: fix_forward
 EOF
 
+  cat >"$external_plan" <<'EOF'
+# External Execution Plan
+
+## Upstream Design
+
+- design_ref: design.md
+- design_version: 2026-08-18-v1
+
+## Implementation Scope
+
+- plan_contract_version: 2
+- parallel_execution_approved: false
+- truth_sync_required: true
+- external_touch_policy: exact-existing-files-v1
+- impl_file_refs:
+  - src/example.py
+- external_impl_file_refs:
+  - __EXTERNAL_TARGET__
+- test_file_refs:
+  - tests/test_example.py
+- verification_scope:
+  - `bash test.sh`
+
+## Work Package Readiness
+
+- milestone_objective: verify exact external execution evidence
+- non_goals:
+  - no delegated external writer
+- future_phase:
+  - no follow-up phase
+- decision_status: ready_for_review
+- oracle_strategy: state-transition smoke tests
+- acceptance_oracles:
+  - exact baseline-rooted evidence converges
+- execution_continuity: continuous_after_plan_approval
+- max_review_batches: 2
+- subagent_ready: false
+
+## Runtime Binding
+
+- default_model_policy: inherit-main
+- allowed_model_policies:
+  - semantic-routing
+  - inherit-main
+  - runtime-default
+- effective_concurrency: 1
+
+## Truth Sync Handoff
+
+- stable_truth_refs:
+  - src/example.py
+- docs_governance_predicates:
+  - none
+
+## Review Gate
+
+- required_entry: review-change
+- required_mode: review-only
+
+## Human Gate
+
+- approval_required: true
+- approval_status: approved
+- next_entry: implement-change
+
+## Task 1: External Configuration
+
+- task_id: external-task
+- depends_on:
+  - root
+- scope_slice: exact external configuration update
+- impl_file_refs:
+  - src/example.py
+- external_impl_file_refs:
+  - __EXTERNAL_TARGET__
+- test_file_refs:
+  - tests/test_example.py
+- verification_scope:
+  - `bash test.sh`
+- executor_mode: main
+- parallel_group: none
+- parallel_policy: forbidden
+- delegation_policy: forbidden
+- execution_profile: balanced
+- reasoning_profile: deep
+- isolation: controller-checkout
+- resource_locks:
+  - external-config
+- task_review_depth: full
+- done_when:
+  - external evidence converges
+- failure_policy: fix_forward
+
+## Recovery
+
+- default_failure_policy: fix_forward
+EOF
+  sed -i "s|__EXTERNAL_TARGET__|$external_target|g" "$external_plan"
+
   git -C "$tmp_dir" init -q
   git -C "$tmp_dir" add .
   git -C "$tmp_dir" \
@@ -556,6 +690,7 @@ EOF
     fail "legacy prose-only plan should not pass execution validation"
   fi
   validate_execution_plan "$parallel_plan"
+  validate_execution_plan "$external_plan"
 
   [[ "$(execution_plan_approval_status "$approved_plan")" == "approved" ]] || fail "approved plan status should resolve"
   [[ "$(execution_plan_mode "$approved_plan")" == "serial-first" ]] || fail "execution should default to serial-first"
@@ -575,6 +710,7 @@ EOF
   [[ "${#allowed_touch_set[@]}" -eq 2 ]] || fail "allowed touch set should come from approved plan"
   [[ " ${allowed_touch_set[*]} " == *" src/example.py "* ]] || fail "allowed touch set should include impl refs"
   [[ " ${allowed_touch_set[*]} " == *" tests/test_example.py "* ]] || fail "allowed touch set should include test refs"
+  [[ "$(execution_allowed_external_touch_set "$external_plan")" == "$external_target" ]] || fail "allowed external touch set should remain separate and exact"
 
   task_catalog_json="$(execution_task_catalog "$approved_plan")"
   assert_json "$task_catalog_json" 'length == 1 and .[0].task_id == "task-1"' "task catalog should materialize approved task metadata"
@@ -1190,9 +1326,19 @@ EOF
   codex_envelope_file="$(cd "$tmp_dir" && CODEX_HOME="$codex_home_valid" bash "$HARNESS_LIB_ROOT/execute-runner.sh" controller-binding-envelope "$codex_plan" "$codex_ledger" "$codex_request" --backend codex-native)"
   assert_json "$(<"$codex_envelope_file")" '.schema_version == 2 and .backend.backend_kind == "codex-native"' "CLI --backend codex-native dispatch should emit the schema-version 2 envelope"
 
-  write_codex_request "$codex_request" codex-e1 task-e semantic-routing example-model low per-spawn true "$(realpath "$tmp_dir")" "$codex_plan_sha" "$codex_ledger_sha"
+  write_codex_request "$codex_request" codex-e1 task-e semantic-routing "" "" parent-inherit true "$(realpath "$tmp_dir")" "$codex_plan_sha" "$codex_ledger_sha"
   codex_envelope_file="$(run_codex_envelope "$codex_home_valid" "$codex_ledger" "$codex_request")"
-  assert_json "$(<"$codex_envelope_file")" '.core.task.runtime_role == "explorer" and .backend.extension.role_agent_file == "explorer.toml" and .backend.extension.expected_sandbox_mode == "read-only"' "codex-native explorer should bind through the pinned read-only explorer role file"
+  assert_json "$(<"$codex_envelope_file")" '.core.task.runtime_role == "explorer" and .backend.extension.role_agent_file == "explorer.toml" and .backend.extension.expected_sandbox_mode == "read-only" and .backend.extension.requested_model == null and .backend.extension.requested_reasoning_effort == null and .backend.extension.resolution_source == "parent-inherit"' "codex-native explorer should inherit through the pin-free read-only explorer role file"
+
+  write_codex_request "$codex_request" codex-e2 task-e semantic-routing "" high per-spawn true "$(realpath "$tmp_dir")" "$codex_plan_sha" "$codex_ledger_sha"
+  codex_envelope_file="$(run_codex_envelope "$codex_home_valid" "$codex_ledger" "$codex_request")"
+  assert_json "$(<"$codex_envelope_file")" '.backend.extension.requested_model == null and .backend.extension.requested_reasoning_effort == "high" and .backend.extension.resolution_source == "per-spawn"' "semantic routing should accept an effort-only uplift"
+
+  for supported_effort in max ultra; do
+    write_codex_request "$codex_request" "codex-e-$supported_effort" task-e semantic-routing example-model "$supported_effort" per-spawn true "$(realpath "$tmp_dir")" "$codex_plan_sha" "$codex_ledger_sha"
+    codex_envelope_file="$(run_codex_envelope "$codex_home_valid" "$codex_ledger" "$codex_request")"
+    assert_json_arg "$(<"$codex_envelope_file")" effort "$supported_effort" '.backend.extension.requested_reasoning_effort == $effort' "semantic routing should accept supported effort above the role floor"
+  done
 
   printf '%s\n' 'Bounded codex review brief.' >"$tmp_dir/codex-review-brief.md"
   chmod 600 "$tmp_dir/codex-review-brief.md"
@@ -1205,22 +1351,35 @@ EOF
   codex_envelope_file="$(run_codex_envelope "$codex_home_valid" "$codex_ledger" "$codex_request")"
   assert_json "$(<"$codex_envelope_file")" '.backend.extension.requested_model == null and .backend.extension.requested_reasoning_effort == null and .backend.extension.resolution_source == "parent-inherit" and .backend.extension.role_agent_file == "worker.toml"' "inherit-main must spawn through the same validated role file without per-spawn values"
 
-  write_codex_request "$codex_request" codex-w3 task-w runtime-default "" "" agents-defaults true "$binding_worker_dir" "$codex_plan_sha" "$codex_ledger_sha"
+  write_codex_request "$codex_request" codex-w3 task-w runtime-default "" "" parent-inherit true "$binding_worker_dir" "$codex_plan_sha" "$codex_ledger_sha"
   codex_envelope_file="$(run_codex_envelope "$codex_home_valid" "$codex_ledger" "$codex_request")"
-  assert_json "$(<"$codex_envelope_file")" '.backend.extension.resolution_source == "agents-defaults" and .backend.extension.role_agent_file == "worker.toml"' "runtime-default must spawn through the same validated role file with agents defaults"
+  assert_json "$(<"$codex_envelope_file")" '.backend.extension.resolution_source == "parent-inherit" and .backend.extension.role_agent_file == "worker.toml"' "runtime-default should record parent inheritance when both agents defaults are absent"
+
+  write_codex_request "$codex_request" codex-w4 task-w runtime-default "" "" agents-defaults true "$binding_worker_dir" "$codex_plan_sha" "$codex_ledger_sha"
+  codex_envelope_file="$(run_codex_envelope "$codex_fixtures/codex-home-defaults" "$codex_ledger" "$codex_request")"
+  assert_json "$(<"$codex_envelope_file")" '.backend.extension.resolution_source == "agents-defaults"' "runtime-default should record agents defaults when configured"
+
+  write_codex_request "$codex_request" codex-w4-lower task-w runtime-default "" "" parent-inherit true "$binding_worker_dir" "$codex_plan_sha" "$codex_ledger_sha" delegated-task "" "" true low high
+  expect_codex_stop "$codex_home_valid" "$codex_ledger" "$codex_request" "controller_binding_required_uplift_below_floor:" "runtime-default without agents defaults must reject parent reasoning below the active minimum"
 
   write_codex_request "$codex_request" codex-nd1 task-w semantic-routing example-model high per-spawn true "$binding_worker_dir" "$codex_plan_sha" "$codex_ledger_sha"
   codex_envelope_file="$(run_codex_envelope "$codex_fixtures/codex-home-no-depth" "$codex_ledger" "$codex_request")"
   assert_json "$(<"$codex_envelope_file")" '.backend.extension.max_depth == null and .backend.extension.max_depth_enforcement == "instruction-only" and .backend.extension.concurrency_ceiling == null' "unconfigured max_depth must be recorded as residual instruction-only enforcement"
 
-  write_codex_request "$codex_request" codex-s1 task-w semantic-routing "" "" per-spawn true "$binding_worker_dir" "$codex_plan_sha" "$codex_ledger_sha"
-  expect_codex_stop "$codex_home_valid" "$codex_ledger" "$codex_request" "controller_binding_model_policy_mismatch:" "semantic-routing without per-spawn values must return the typed model-policy mismatch"
+  write_codex_request "$codex_request" codex-s1 task-w semantic-routing example-model "" per-spawn true "$binding_worker_dir" "$codex_plan_sha" "$codex_ledger_sha"
+  expect_codex_stop "$codex_home_valid" "$codex_ledger" "$codex_request" "controller_binding_model_policy_mismatch:" "semantic-routing model change without explicit effort must return the typed model-policy mismatch"
 
   write_codex_request "$codex_request" codex-s2 task-w inherit-main example-model high per-spawn true "$binding_worker_dir" "$codex_plan_sha" "$codex_ledger_sha"
   expect_codex_stop "$codex_home_valid" "$codex_ledger" "$codex_request" "controller_binding_model_policy_mismatch:" "inherit-main with per-spawn values must return the typed model-policy mismatch"
 
-  write_codex_request "$codex_request" codex-s3 task-e semantic-routing example-model high per-spawn true "$(realpath "$tmp_dir")" "$codex_plan_sha" "$codex_ledger_sha"
-  expect_codex_stop "$codex_home_valid" "$codex_ledger" "$codex_request" "controller_binding_explorer_ceiling:" "per-spawn explorer effort above medium must return the typed explorer ceiling stop"
+  write_codex_request "$codex_request" codex-s3 task-e semantic-routing "" high per-spawn true "$(realpath "$tmp_dir")" "$codex_plan_sha" "$codex_ledger_sha" delegated-task "" "" false
+  expect_codex_stop "$codex_home_valid" "$codex_ledger" "$codex_request" "controller_binding_required_uplift_unsupported:" "rejected effort-only uplift must stop without downgrade or output"
+
+  write_codex_request "$codex_request" codex-s3-model task-e semantic-routing example-model high per-spawn true "$(realpath "$tmp_dir")" "$codex_plan_sha" "$codex_ledger_sha" delegated-task "" "" false
+  expect_codex_stop "$codex_home_valid" "$codex_ledger" "$codex_request" "controller_binding_required_uplift_unsupported:" "rejected model-plus-effort uplift must stop without downgrade or output"
+
+  write_codex_request "$codex_request" codex-s3-lower task-e semantic-routing "" low per-spawn true "$(realpath "$tmp_dir")" "$codex_plan_sha" "$codex_ledger_sha" delegated-task "" "" true high medium
+  expect_codex_stop "$codex_home_valid" "$codex_ledger" "$codex_request" "controller_binding_required_uplift_below_floor:" "an effort-only request below the inherited parent must stop before output"
 
   write_codex_request "$codex_request" codex-s4 task-w semantic-routing example-model high per-spawn true "$binding_worker_dir" "$codex_plan_sha" "$codex_ledger_sha"
   expect_codex_stop "$codex_fixtures/codex-home-disabled" "$codex_ledger" "$codex_request" "controller_binding_multi_agent_disabled:" "a disabled multi-agent feature must return the typed capability stop"
@@ -1268,11 +1427,9 @@ EOF
   expect_codex_stop "$codex_home_valid" "$tmp_dir/codex-done-ledger.json" "$codex_request" "controller_binding_role_file_sandbox_writable:" "a writable reviewer sandbox must return the typed writable-sandbox stop"
   cp "$codex_fixtures/valid/agents/reviewer.toml" "$tmp_dir/.codex/agents/reviewer.toml"
 
-  write_codex_request "$codex_request" codex-s9 task-e semantic-routing example-model low per-spawn true "$(realpath "$tmp_dir")" "$codex_plan_sha" "$codex_ledger_sha"
-  cp "$codex_fixtures/invalid/explorer-missing-effort.toml" "$tmp_dir/.codex/agents/explorer.toml"
-  expect_codex_stop "$codex_home_valid" "$codex_ledger" "$codex_request" "controller_binding_explorer_pin_invalid:" "an explorer file without an effort pin must return the typed explorer-pin stop"
-  cp "$codex_fixtures/invalid/explorer-high-effort.toml" "$tmp_dir/.codex/agents/explorer.toml"
-  expect_codex_stop "$codex_home_valid" "$codex_ledger" "$codex_request" "controller_binding_explorer_pin_invalid:" "an explorer file pinned above medium must return the typed explorer-pin stop"
+  write_codex_request "$codex_request" codex-s9 task-e semantic-routing "" "" parent-inherit true "$(realpath "$tmp_dir")" "$codex_plan_sha" "$codex_ledger_sha"
+  cp "$codex_fixtures/invalid/explorer-effort-pin.toml" "$tmp_dir/.codex/agents/explorer.toml"
+  expect_codex_stop "$codex_home_valid" "$codex_ledger" "$codex_request" "controller_binding_role_file_forbidden_pin:" "an explorer effort pin must return the generic typed forbidden-pin stop"
   cp "$codex_fixtures/valid/agents/explorer.toml" "$tmp_dir/.codex/agents/explorer.toml"
 
   codex_user_home="$tmp_dir/.fixture-codex-home"
@@ -1292,10 +1449,29 @@ EOF
   codex_envelope_file="$(run_codex_envelope "$codex_user_home" "$codex_ledger" "$codex_request")"
   assert_json "$(<"$codex_envelope_file")" '.backend.extension.role_agent_file_source == "project"' "a project role file must take precedence over a user-level role file"
 
-  [[ ! -e "$tmp_dir/.codex-native-runs/codex-s1" && ! -e "$tmp_dir/.codex-native-runs/codex-s7" ]] \
+  [[ ! -e "$tmp_dir/.codex-native-runs/codex-w4-lower" && ! -e "$tmp_dir/.codex-native-runs/codex-s1" && ! -e "$tmp_dir/.codex-native-runs/codex-s3" && ! -e "$tmp_dir/.codex-native-runs/codex-s3-model" && ! -e "$tmp_dir/.codex-native-runs/codex-s3-lower" && ! -e "$tmp_dir/.codex-native-runs/codex-s7" ]] \
     || fail "typed codex-native stops must fail before output mutation"
 
   declare -F execution_controller_binding_envelope >/dev/null || fail "controller-binding-envelope API should be available"
+
+  printf '%s\n' "$(execution_task_ledger "$external_plan")" >"$external_ledger"
+  jq 'map(.status = "in_progress")' "$external_ledger" >"$external_tmp/ledger-next.json"
+  mv "$external_tmp/ledger-next.json" "$external_ledger"
+  execution_external_baseline "$external_plan" "$external_ledger" "external-task" "external-run-1" >"$external_tmp/ledger-next.json"
+  mv "$external_tmp/ledger-next.json" "$external_ledger"
+  execution_external_prepare "$external_plan" "$external_ledger" "external-task" "$external_run_dir" "$external_target" "intent-1" "$external_payload" >"$external_tmp/ledger-next.json"
+  mv "$external_tmp/ledger-next.json" "$external_ledger"
+  execution_external_apply "$external_plan" "$external_ledger" "external-task" "intent-1" >"$external_tmp/ledger-next.json"
+  mv "$external_tmp/ledger-next.json" "$external_ledger"
+  jq 'map(.status = "in_review")' "$external_ledger" >"$external_tmp/ledger-next.json"
+  mv "$external_tmp/ledger-next.json" "$external_ledger"
+  execution_controller_converge "$external_plan" "$external_ledger" "external-task" "controller" "true" "true" >"$external_tmp/ledger-next.json"
+  mv "$external_tmp/ledger-next.json" "$external_ledger"
+  execution_result_json="$(build_execution_result_json "$external_plan" "$external_ledger" "verify" "" "truth_sync_required" "pass" "pass" "sync-truth" "truth-sync" "false" "$workspace_mode")"
+  assert_json_arg "$execution_result_json" ref "$external_target" '.allowed_external_touch_refs == [$ref]' "execution result should bind the exact external touch set"
+  assert_json "$execution_result_json" '.verified_external_changes[0].task_id == "external-task" and .verified_external_changes[0].manifest.refs[0].changed == true' "execution result should expose metadata-only verified external changes separately"
+  assert_json "$execution_result_json" '[.task_evidence[] | .verified_changed_paths[]?] | all(startswith("/") | not)' "repository changed-path evidence must not contain external refs"
+  execution_external_cleanup "$external_ledger" "external-task" "intent-1" >/dev/null
 
   printf '%s\n' "$(execution_task_ledger "$approved_plan")" >"$ledger_file"
   execution_result_json="$(build_execution_result_json "$approved_plan" "$ledger_file" "implement-serial" "task-1" "task_blocked_requires_human" "pending" "pending" "implement-change" "implement-serial" "true" "$workspace_mode")"

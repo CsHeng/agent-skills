@@ -83,6 +83,7 @@ main() {
   local v2_plan invalid_version_plan invalid_profile_plan invalid_model_plan dependent_group_plan overlap_ref_plan overlap_lock_plan
   local read_only_plan invalid_shared_write_plan invalid_serial_worker_plan unknown_batch_plan mismatched_batch_plan invalid_convergence_plan
   local batch_catalog_fixture truth_design truth_scope_plan missing_truth_scope_plan invalid_truth_ref_plan invalid_docs_predicate_plan false_truth_scope_plan
+  local external_target external_plan missing_external_policy_plan delegated_external_plan parallel_external_plan unlocked_external_plan unsafe_external_plan
   local -a fixture_batch_ids=()
   local plan_skill=""
 
@@ -123,6 +124,14 @@ main() {
   invalid_docs_predicate_plan="$tmp_dir/invalid-docs-predicate-plan.md"
   false_truth_scope_plan="$tmp_dir/false-truth-scope-plan.md"
   design_file="$tmp_dir/design.md"
+  external_target="$tmp_dir/user-config.toml"
+  external_plan="$tmp_dir/external-plan.md"
+  missing_external_policy_plan="$tmp_dir/missing-external-policy-plan.md"
+  delegated_external_plan="$tmp_dir/delegated-external-plan.md"
+  parallel_external_plan="$tmp_dir/parallel-external-plan.md"
+  unlocked_external_plan="$tmp_dir/unlocked-external-plan.md"
+  unsafe_external_plan="$tmp_dir/unsafe-external-plan.md"
+  printf 'model = "inherit"\n' >"$external_target"
 
   cat >"$design_file" <<'EOF'
 # Sample Design
@@ -133,11 +142,14 @@ main() {
   - src/example
   - src/example-helper
   - src/converge
+- external_impl_file_refs:
+  - __EXTERNAL_TARGET__
 - test_file_refs:
   - tests/example
   - tests/example-integration
   - tests/converge
 EOF
+  sed -i "s|__EXTERNAL_TARGET__|$external_target|" "$design_file"
 
   cat >"$batch_catalog_fixture" <<'EOF'
 # Batch Catalog Fixture
@@ -662,10 +674,34 @@ EOF
   cp "$v2_plan" "$invalid_convergence_plan"
   replace_once "$invalid_convergence_plan" '- convergence_task: parallel-converge' '- convergence_task: parallel-core'
 
+  cp "$v2_plan" "$external_plan"
+  replace_once "$external_plan" '- parallel_execution_approved: true' $'- parallel_execution_approved: true\n- external_touch_policy: exact-existing-files-v1'
+  replace_once "$external_plan" '- test_file_refs:' $'- external_impl_file_refs:\n  - __EXTERNAL_TARGET__\n- test_file_refs:'
+  replace_nth "$external_plan" '- test_file_refs:' $'- external_impl_file_refs:\n  - __EXTERNAL_TARGET__\n- test_file_refs:' 4
+  sed -i "s|__EXTERNAL_TARGET__|$external_target|g" "$external_plan"
+
+  cp "$external_plan" "$missing_external_policy_plan"
+  sed -i '/^- external_touch_policy: exact-existing-files-v1$/d' "$missing_external_policy_plan"
+
+  cp "$external_plan" "$delegated_external_plan"
+  replace_nth "$delegated_external_plan" '- executor_mode: main' '- executor_mode: subagent' 1
+
+  cp "$external_plan" "$parallel_external_plan"
+  replace_once "$parallel_external_plan" '- task_id: parallel-converge' '- task_id: external-converge'
+  replace_nth "$parallel_external_plan" '- parallel_group: none' '- parallel_group: sample-parallel' 1
+  replace_nth "$parallel_external_plan" '- parallel_policy: forbidden' '- parallel_policy: allowed' 1
+
+  cp "$external_plan" "$unlocked_external_plan"
+  replace_once "$unlocked_external_plan" '  - convergence-contract' '  - none'
+
+  cp "$external_plan" "$unsafe_external_plan"
+  sed -i "s|$external_target|relative/user-config.toml|g" "$unsafe_external_plan"
+
   validate_plan_artifact "$legacy_plan"
   validate_plan_artifact "$strict_plan"
   validate_plan_artifact "$v2_plan"
   validate_plan_artifact "$read_only_plan"
+  validate_execution_grade_plan_artifact "$external_plan"
   validate_execution_grade_plan_artifact "$strict_plan"
   validate_execution_grade_plan_artifact "$v2_plan"
   validate_execution_grade_plan_artifact "$read_only_plan"
@@ -728,6 +764,21 @@ EOF
   fi
   if validate_execution_grade_plan_artifact "$invalid_convergence_plan" >/dev/null 2>&1; then
     fail "batch convergence tasks cannot be batch members"
+  fi
+  if validate_execution_grade_plan_artifact "$missing_external_policy_plan" >/dev/null 2>&1; then
+    fail "external refs should require the exact external touch policy"
+  fi
+  if validate_execution_grade_plan_artifact "$delegated_external_plan" >/dev/null 2>&1; then
+    fail "external tasks cannot be delegated"
+  fi
+  if validate_execution_grade_plan_artifact "$parallel_external_plan" >/dev/null 2>&1; then
+    fail "external tasks cannot be parallelized"
+  fi
+  if validate_execution_grade_plan_artifact "$unlocked_external_plan" >/dev/null 2>&1; then
+    fail "external tasks require a named resource lock"
+  fi
+  if validate_execution_grade_plan_artifact "$unsafe_external_plan" >/dev/null 2>&1; then
+    fail "external refs must be exact absolute paths"
   fi
 
   assert_contains "$plan_skill" 'scripts/harness/plan-runner\.sh' "plan skill should use its bundled runner"

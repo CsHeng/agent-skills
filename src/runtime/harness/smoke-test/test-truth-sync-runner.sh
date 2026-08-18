@@ -154,6 +154,25 @@ EOF
 EOF
 }
 
+add_external_fixture_contract() {
+  local fixture_root="$1"
+  local external_ref="$2"
+  local file_ref=""
+
+  for file_ref in "$fixture_root/design.md" "$fixture_root/plan.md"; do
+    awk -v external_ref="$external_ref" '
+      /^-[[:space:]]*test_file_refs:/ {
+        print "- external_impl_file_refs:"
+        print "  - " external_ref
+      }
+      { print }
+    ' "$file_ref" >"$file_ref.next"
+    mv "$file_ref.next" "$file_ref"
+  done
+  sed -i '/^- parallel_execution_approved: false$/a\
+- external_touch_policy: exact-existing-files-v1' "$fixture_root/plan.md"
+}
+
 write_truth_artifact() {
   local artifact_file="$1"
   local approval_state="$2"
@@ -210,6 +229,7 @@ main() {
   local gate_json=""
   local predicate_id=""
   local truth_skill=""
+  local external_fixture external_target external_payload external_run_dir external_ledger external_execution
 
   case "$SKILL_SURFACE" in
     generated) truth_skill="$GENERATED_SKILLS_ROOT/sync-truth/SKILL.md" ;;
@@ -221,7 +241,7 @@ main() {
     || fail "default truth-sync path drifted"
   [[ "$(truth_sync_entry_phase)" == "truth-sync" ]] || fail "truth-sync entry phase should be truth-sync"
 
-  tmp_dir="$(mktemp -d)"
+  tmp_dir="$(realpath "$(mktemp -d)")"
   TEST_TRUTH_SYNC_TMP="$tmp_dir"
   trap 'rm -rf -- "$TEST_TRUTH_SYNC_TMP"' EXIT
   write_tail_fixture "$tmp_dir"
@@ -234,6 +254,12 @@ main() {
   approved_artifact="$tmp_dir/truth-sync-approved.md"
   mismatched_artifact="$tmp_dir/truth-sync-mismatch.md"
   invalid_artifact="$tmp_dir/truth-sync-invalid.md"
+  external_fixture="$tmp_dir/external-fixture"
+  external_target="$tmp_dir/user-config.toml"
+  external_payload="$tmp_dir/payload.toml"
+  external_run_dir="$tmp_dir/external-run"
+  external_ledger="$tmp_dir/external-ledger.json"
+  external_execution="$tmp_dir/external-execution.json"
 
   execution_task_ledger "$plan_file" | jq 'map(
     .status = "done"
@@ -262,6 +288,71 @@ main() {
   if validate_truth_sync_artifact_against_evidence "$mismatched_artifact" "$plan_file" "$execution_result_file" >/dev/null 2>&1; then
     fail "mismatched review evidence should fail closed"
   fi
+
+  mkdir "$external_fixture"
+  mkdir -m 700 "$external_run_dir"
+  printf 'model = "before"\n' >"$external_target"
+  printf 'model = "after"\n' >"$external_payload"
+  write_tail_fixture "$external_fixture"
+  add_external_fixture_contract "$external_fixture" "$external_target"
+  execution_task_ledger "$external_fixture/plan.md" | jq 'map(.status = "in_progress")' >"$external_ledger"
+  execution_external_baseline "$external_fixture/plan.md" "$external_ledger" tail-task tail-run >"$tmp_dir/external-next.json"
+  mv "$tmp_dir/external-next.json" "$external_ledger"
+  execution_external_prepare "$external_fixture/plan.md" "$external_ledger" tail-task "$external_run_dir" "$external_target" tail-intent "$external_payload" >"$tmp_dir/external-next.json"
+  mv "$tmp_dir/external-next.json" "$external_ledger"
+  execution_external_apply "$external_fixture/plan.md" "$external_ledger" tail-task tail-intent >"$tmp_dir/external-next.json"
+  mv "$tmp_dir/external-next.json" "$external_ledger"
+  jq 'map(.status = "in_review")' "$external_ledger" >"$tmp_dir/external-next.json"
+  mv "$tmp_dir/external-next.json" "$external_ledger"
+  execution_controller_converge "$external_fixture/plan.md" "$external_ledger" tail-task controller true true >"$tmp_dir/external-next.json"
+  mv "$tmp_dir/external-next.json" "$external_ledger"
+  build_execution_result_json "$external_fixture/plan.md" "$external_ledger" verify "" truth_sync_required pass pass sync-truth truth-sync false current-checkout >"$external_execution"
+  validate_execution_evidence_binding "$external_fixture/plan.md" "$external_execution"
+
+  printf 'model = "later-user-edit"\n' >"$external_target"
+  validate_execution_evidence_binding "$external_fixture/plan.md" "$external_execution" \
+    || fail "historical external evidence should not reread or freeze the live target"
+  jq '.allowed_external_touch_refs += ["/tmp/widened.toml"]' "$external_execution" >"$tampered_execution_file"
+  if validate_execution_evidence_binding "$external_fixture/plan.md" "$tampered_execution_file" >/dev/null 2>&1; then
+    fail "widened external touch evidence should fail closed"
+  fi
+  jq '.task_evidence[0].verified_external_changes.refs[0].content = "secret"' "$external_execution" >"$tampered_execution_file"
+  if validate_execution_evidence_binding "$external_fixture/plan.md" "$tampered_execution_file" >/dev/null 2>&1; then
+    fail "content-bearing external evidence should fail closed"
+  fi
+  jq '.verified_external_changes[0].task_id = "other-task"' "$external_execution" >"$tampered_execution_file"
+  if validate_execution_evidence_binding "$external_fixture/plan.md" "$tampered_execution_file" >/dev/null 2>&1; then
+    fail "mismatched external task evidence should fail closed"
+  fi
+  jq '.task_evidence[0].external_write_intents[0].ref = "/tmp/undeclared.toml"' "$external_execution" >"$tampered_execution_file"
+  if validate_execution_evidence_binding "$external_fixture/plan.md" "$tampered_execution_file" >/dev/null 2>&1; then
+    fail "stray undeclared intent evidence should fail closed"
+  fi
+  jq '.task_evidence[0].external_write_intents += [.task_evidence[0].external_write_intents[0]]' "$external_execution" >"$tampered_execution_file"
+  if validate_execution_evidence_binding "$external_fixture/plan.md" "$tampered_execution_file" >/dev/null 2>&1; then
+    fail "duplicate intent identity should fail closed"
+  fi
+  jq '.task_evidence[0].external_write_intents[0].after.sha256 = "0000000000000000000000000000000000000000000000000000000000000000"' "$external_execution" >"$tampered_execution_file"
+  if validate_execution_evidence_binding "$external_fixture/plan.md" "$tampered_execution_file" >/dev/null 2>&1; then
+    fail "after evidence not bound to the candidate should fail closed"
+  fi
+  jq '.task_evidence[0].external_write_intents[0].after.ref = "/tmp/other.toml"' "$external_execution" >"$tampered_execution_file"
+  if validate_execution_evidence_binding "$external_fixture/plan.md" "$tampered_execution_file" >/dev/null 2>&1; then
+    fail "after evidence not bound to the declared ref should fail closed"
+  fi
+  jq '.task_evidence[0].external_write_intents[0].after.mode = "0644"' "$external_execution" >"$tampered_execution_file"
+  if validate_execution_evidence_binding "$external_fixture/plan.md" "$tampered_execution_file" >/dev/null 2>&1; then
+    fail "after metadata not preserved from the parent should fail closed"
+  fi
+  jq '.task_evidence[0].external_write_intents[0].after.st_dev = (.task_evidence[0].external_write_intents[0].parent.st_dev + 1)' "$external_execution" >"$tampered_execution_file"
+  if validate_execution_evidence_binding "$external_fixture/plan.md" "$tampered_execution_file" >/dev/null 2>&1; then
+    fail "after device not bound to the parent filesystem should fail closed"
+  fi
+  jq '.task_evidence[0].external_write_intents[0].after.st_ino = .task_evidence[0].external_write_intents[0].parent.st_ino' "$external_execution" >"$tampered_execution_file"
+  if validate_execution_evidence_binding "$external_fixture/plan.md" "$tampered_execution_file" >/dev/null 2>&1; then
+    fail "after inode without an authorized transition should fail closed"
+  fi
+  execution_external_cleanup "$external_ledger" tail-task tail-intent >/dev/null
 
   gate_json="$(build_truth_sync_gate_result "$pending_artifact" "$plan_file" "$execution_result_file")"
   assert_json "$gate_json" '.verdict == "pass" and .truth_sync_completed == false and .lifecycle_state == "truth-sync-pending" and .next_entry == "sync-truth"' "pending truth approval should remain at truth sync"

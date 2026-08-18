@@ -19,15 +19,32 @@ allowed_parallel_may_serialize = true
 required_parallel_capacity_exit = "parallel_capacity_required"
 controller_converges_batches = true
 
+[external_touch]
+policy = "exact-existing-files-v1"
+projection_field = "external_impl_file_refs"
+actor = "main"
+delegation = "forbidden"
+parallel = "forbidden"
+isolation = "controller-checkout"
+mutation_owner = "implement-change"
+broker_only = true
+immutable_baseline = true
+repair_chain = "parent-linked"
+staging_checkpoint = "ledger-before-payload"
+apply_cleanup_checkpoint = "applied-and-cleaned"
+automatic_rollback = false
+backend_envelope_exposure = false
+execution_result_fields = ["allowed_external_touch_refs", "verified_external_changes"]
+
 [explorer]
-role_cost = "absolute"
 portable_eligibility = ["fast", "light", "shared-read-only", "no-write"]
 requires_no_write_refs = true
-default_effort = "low"
-max_effort = "medium"
-semantic_routing_default_effort = "low"
-semantic_routing_max_effort = "medium"
-rejected_efforts = ["high", "xhigh"]
+physical_baseline = "parent-session"
+reasoning_policy = "minimum-only-no-ceiling"
+semantic_routing_shapes = ["parent-inherit", "effort-only-uplift", "model-plus-effort-uplift"]
+required_uplift_rejection = "typed-stop-no-downgrade"
+role_file_model_pin = "forbidden"
+role_file_reasoning_pin = "forbidden"
 requires_explicit_search_synthesis_split = true
 synthesis_owner = "main"
 
@@ -42,12 +59,15 @@ unconfigured_max_depth_evidence = "instruction-only"
 command_job_supported = false
 delegated_writer_requires_spawn_cwd = true
 fallback_on_typed_stop = "main-serial"
+reasoning_evidence = ["parent_reasoning_effort", "required_minimum_reasoning_effort"]
+monotonic_reasoning_required = true
 
 [runtime_binding.herdr]
 envelope_schema_version = 1
 wire_shape = "byte-compatible"
 command_job_supported = true
 adapter_skill = "implement-change-via-herdr"
+explorer_cost_policy = "backend-specific-unchanged"
 
 [workers]
 default_eligible_delegation = "approved-policy"

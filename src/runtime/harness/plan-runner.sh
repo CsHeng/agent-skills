@@ -72,6 +72,7 @@ task_section_has_any_metadata() {
     depends_on \
     scope_slice \
     impl_file_refs \
+    external_impl_file_refs \
     test_file_refs \
     verification_scope \
     executor_mode \
@@ -545,6 +546,102 @@ validate_v2_plan_header() {
       return 1
     }
   fi
+}
+
+validate_external_touch_contract() {
+  local plan_file="$1"
+  local external_touch_policy=""
+  local design_link=""
+  local design_file=""
+  local section=""
+  local task_id=""
+  local task_external_refs=""
+  local executor_mode=""
+  local delegation_policy=""
+  local parallel_policy=""
+  local parallel_group=""
+  local isolation_mode=""
+  local resource_locks=""
+  local plan_external_refs=""
+  local -a task_sections=()
+
+  plan_external_refs="$(
+    extract_markdown_list "$plan_file" "Implementation Scope" "external_impl_file_refs" \
+      | normalize_plan_metadata_values \
+      | awk 'NF > 0 && $0 != "none"' \
+      | sort -u
+  )"
+  external_touch_policy="$(
+    extract_markdown_scalar "$plan_file" "Implementation Scope" "external_touch_policy" \
+      | normalize_plan_metadata_values
+  )"
+
+  if [[ -z "$plan_external_refs" ]]; then
+    [[ -z "$external_touch_policy" ]] || {
+      printf 'external_touch_policy requires nonempty external_impl_file_refs\n' >&2
+      return 1
+    }
+    return 0
+  fi
+
+  plan_uses_v2_contract "$plan_file" || {
+    printf 'external_impl_file_refs require plan_contract_version 2\n' >&2
+    return 1
+  }
+  [[ "$external_touch_policy" == "exact-existing-files-v1" ]] || {
+    printf 'external_impl_file_refs require external_touch_policy: exact-existing-files-v1\n' >&2
+    return 1
+  }
+
+  design_link="$(resolve_plan_design_ref "$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)" "$plan_file")" || return 1
+  design_file="$(printf '%s\n' "$design_link" | sed -n '1p')"
+  assert_plan_refs_within_design "$plan_file" "$design_file" || return 1
+
+  mapfile -t task_sections < <(list_plan_task_sections "$plan_file")
+  for section in "${task_sections[@]}"; do
+    task_external_refs="$(
+      extract_markdown_list "$plan_file" "$section" "external_impl_file_refs" \
+        | normalize_plan_metadata_values \
+        | awk 'NF > 0 && $0 != "none"' \
+        | sort -u
+    )"
+    [[ -n "$task_external_refs" ]] || continue
+
+    task_id="$(extract_markdown_scalar "$plan_file" "$section" "task_id" | normalize_plan_metadata_values)"
+    build_task_allowed_external_touch_set "$plan_file" "$task_id" >/dev/null || return 1
+    executor_mode="$(extract_markdown_scalar "$plan_file" "$section" "executor_mode" | normalize_plan_metadata_values)"
+    delegation_policy="$(extract_markdown_scalar "$plan_file" "$section" "delegation_policy" | normalize_plan_metadata_values)"
+    parallel_policy="$(extract_markdown_scalar "$plan_file" "$section" "parallel_policy" | normalize_plan_metadata_values)"
+    parallel_group="$(extract_markdown_scalar "$plan_file" "$section" "parallel_group" | normalize_plan_metadata_values)"
+    isolation_mode="$(extract_markdown_scalar "$plan_file" "$section" "isolation" | normalize_plan_metadata_values)"
+    resource_locks="$(
+      extract_markdown_list "$plan_file" "$section" "resource_locks" \
+        | normalize_plan_metadata_values \
+        | awk 'NF > 0 && $0 != "none"' \
+        | sort -u
+    )"
+
+    [[ "$executor_mode" == "main" ]] || {
+      printf 'external touch task must use executor_mode main: %s\n' "$task_id" >&2
+      return 1
+    }
+    [[ "$delegation_policy" == "forbidden" ]] || {
+      printf 'external touch task must forbid delegation: %s\n' "$task_id" >&2
+      return 1
+    }
+    [[ "$parallel_policy" == "forbidden" && "$parallel_group" == "none" ]] || {
+      printf 'external touch task must forbid parallel execution: %s\n' "$task_id" >&2
+      return 1
+    }
+    [[ "$isolation_mode" == "controller-checkout" ]] || {
+      printf 'external touch task must use controller-checkout isolation: %s\n' "$task_id" >&2
+      return 1
+    }
+    [[ -n "$resource_locks" ]] || {
+      printf 'external touch task requires a named resource lock: %s\n' "$task_id" >&2
+      return 1
+    }
+  done
 }
 
 validate_v2_task_contracts() {
@@ -1234,7 +1331,14 @@ validate_plan_artifact() {
     return 1
   }
 
+  local design_link=""
+  local design_file=""
+  design_link="$(resolve_plan_design_ref "$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)" "$plan_file")" || return 1
+  design_file="$(printf '%s\n' "$design_link" | sed -n '1p')"
+  assert_plan_refs_within_design "$plan_file" "$design_file" || return 1
+
   validate_v2_plan_header "$plan_file" || return 1
+  validate_external_touch_contract "$plan_file" || return 1
   validate_plan_truth_sync_contract "$plan_file" || return 1
   validate_plan_task_contracts "$plan_file" || return 1
   validate_v2_task_contracts "$plan_file" || return 1

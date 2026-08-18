@@ -136,6 +136,152 @@ validate_truth_sync_artifact() {
   validate_stable_truth_refs "$artifact_file"
 }
 
+validate_external_execution_evidence_binding() {
+  local execution_result_file="$1"
+  local expected_external_refs_json="$2"
+  local expected_plan_digest="$3"
+  local expected_design_digest="$4"
+  local task_id=""
+  local run_id=""
+  local task_temp_dir=""
+  local -a helper_args=()
+  local -a task_external_refs=()
+
+  while IFS= read -r task_id; do
+    [[ -n "$task_id" ]] || continue
+    task_temp_dir="$(mktemp -d)"
+    chmod 700 "$task_temp_dir"
+    jq --arg task_id "$task_id" '.task_evidence[] | select(.task_id == $task_id) | .external_touch_baseline' "$execution_result_file" >"$task_temp_dir/baseline.json"
+    jq --arg task_id "$task_id" '.task_evidence[] | select(.task_id == $task_id) | (.external_write_intents // [])' "$execution_result_file" >"$task_temp_dir/intents.json"
+    run_id="$(jq -r '.run_id // empty' "$task_temp_dir/baseline.json")"
+    mapfile -t task_external_refs < <(jq -r --arg task_id "$task_id" '.task_evidence[] | select(.task_id == $task_id) | (.external_impl_file_refs // [])[]' "$execution_result_file" | sort -u)
+    helper_args=(
+      python3 "$SCRIPT_DIR/external-touch-evidence.py" validate-state
+      --baseline-file "$task_temp_dir/baseline.json"
+      --intents-file "$task_temp_dir/intents.json"
+      --expected-task-id "$task_id"
+      --expected-run-id "$run_id"
+      --expected-design-sha256 "$expected_design_digest"
+      --expected-plan-sha256 "$expected_plan_digest"
+      --require-applied
+      --require-cleanup
+    )
+    local external_ref=""
+    for external_ref in "${task_external_refs[@]}"; do
+      helper_args+=(--expected-ref "$external_ref")
+    done
+    if ! "${helper_args[@]}" >/dev/null; then
+      rm -rf -- "$task_temp_dir"
+      printf 'external execution intent evidence is malformed or forked: %s\n' "$task_id" >&2
+      return 1
+    fi
+    rm -rf -- "$task_temp_dir"
+  done < <(jq -r '.task_evidence[] | select(((.external_impl_file_refs // []) | length) > 0) | .task_id' "$execution_result_file")
+
+  jq -e \
+    --argjson expected_external_refs "$expected_external_refs_json" \
+    --arg expected_plan_digest "$expected_plan_digest" \
+    --arg expected_design_digest "$expected_design_digest" \
+    '
+      def sha256: type == "string" and test("^[0-9a-f]{64}$");
+      def file_evidence:
+        type == "object" and
+        (keys | sort) == (["file_type", "gid", "mode", "ref", "sha256", "size", "st_dev", "st_ino", "st_nlink", "uid"] | sort) and
+        (.ref | type == "string" and startswith("/")) and
+        (.sha256 | sha256) and (.size | type == "number") and
+        .file_type == "regular" and (.mode | test("^[0-7]{4}$")) and
+        ([.uid, .gid, .st_dev, .st_ino, .st_nlink] | all(type == "number")) and
+        .st_nlink == 1;
+      def private_candidate:
+        type == "object" and
+        (keys | sort) == (["gid", "mode", "path", "run_dir", "sha256", "size", "st_dev", "st_ino", "st_nlink", "uid"] | sort) and
+        (.path | type == "string" and startswith("/")) and
+        (.run_dir | type == "string" and startswith("/")) and
+        (.sha256 | sha256) and (.size | type == "number") and
+        .mode == "0600" and
+        ([.uid, .gid, .st_dev, .st_ino, .st_nlink] | all(type == "number")) and
+        .st_nlink == 1;
+      def valid_chain($task; $baseline; $ref):
+        ($baseline.refs | map(select(.ref == $ref)) | .[0]) as $root |
+        ([$task.external_write_intents[] | select(.ref == $ref)] | sort_by(.sequence)) as $chain |
+        ($chain | map(.sequence)) == [range(1; ($chain | length) + 1)] and
+        all($chain[];
+          .schema_version == 1 and .run_id == $baseline.run_id and .task_id == $task.task_id and
+          (.intent_id | type == "string" and length > 0) and
+          .root_baseline == $root and .state == "applied" and
+          (.candidate | private_candidate) and (.after | file_evidence) and
+          (.preserved_metadata | keys | sort) == (["file_type", "gid", "mode", "uid"] | sort) and
+          .preserved_metadata.file_type == "regular" and
+          (.broker_candidate_basename | type == "string") and
+          (.broker_candidate_path | type == "string" and startswith("/")) and
+          (.replay_state == "applied_now" or .replay_state == "already_applied")
+        ) and
+        all(range(0; ($chain | length));
+          if . == 0 then $chain[.].parent == $root
+          else $chain[.].parent == $chain[. - 1].after
+          end
+        );
+      def valid_manifest_ref($task; $baseline; $manifest_ref):
+        ($baseline.refs | map(select(.ref == $manifest_ref.ref)) | .[0]) as $root |
+        ([$task.external_write_intents[] | select(.ref == $manifest_ref.ref)] | sort_by(.sequence)) as $chain |
+        ($manifest_ref | keys | sort) == (["after", "applied_intent_count", "before", "changed", "ref"] | sort) and
+        $manifest_ref.before == $root and
+        $manifest_ref.applied_intent_count == ($chain | length) and
+        $manifest_ref.after == (if ($chain | length) == 0 then $root else $chain[-1].after end) and
+        $manifest_ref.changed == ($manifest_ref.after.sha256 != $root.sha256);
+      def valid_external_task:
+        . as $task |
+        ((.external_impl_file_refs // []) | sort | unique) as $refs |
+        if ($refs | length) == 0 then
+          .external_touch_baseline == null and
+          (.external_write_intents // []) == [] and
+          .verified_external_changes == null
+        else
+          (.external_touch_baseline | type == "object") and
+          (.external_touch_baseline.schema_version == 1) and
+          (.external_touch_baseline.task_id == .task_id) and
+          (.external_touch_baseline.plan_sha256 == $expected_plan_digest) and
+          (.external_touch_baseline.design_sha256 == $expected_design_digest) and
+          (.external_touch_baseline.run_id | type == "string" and length > 0) and
+          ((.external_touch_baseline.refs | map(.ref) | sort) == $refs) and
+          all(.external_touch_baseline.refs[]; file_evidence) and
+          ((.external_write_intents // []) | type == "array") and
+          all((.external_write_intents // [])[]; (.ref as $intent_ref | $refs | index($intent_ref)) != null) and
+          all($refs[]; valid_chain($task; $task.external_touch_baseline; .)) and
+          (.verified_external_changes | type == "object") and
+          ((.verified_external_changes | keys | sort) == (["design_sha256", "plan_sha256", "refs", "run_id", "schema_version", "task_id"] | sort)) and
+          (.verified_external_changes.schema_version == 1) and
+          (.verified_external_changes.run_id == .external_touch_baseline.run_id) and
+          (.verified_external_changes.task_id == .task_id) and
+          (.verified_external_changes.plan_sha256 == $expected_plan_digest) and
+          (.verified_external_changes.design_sha256 == $expected_design_digest) and
+          ((.verified_external_changes.refs | map(.ref) | sort) == $refs) and
+          all(.verified_external_changes.refs[]; valid_manifest_ref($task; $task.external_touch_baseline; .))
+        end;
+
+      ((.allowed_external_touch_refs // []) | sort | unique) == ($expected_external_refs | sort | unique) and
+      ([.task_evidence[] | (.external_impl_file_refs // [])[]] | sort | unique) == ($expected_external_refs | sort | unique) and
+      ([.task_evidence[] | (.external_write_intents // [])[] | .intent_id] | length) ==
+        ([.task_evidence[] | (.external_write_intents // [])[] | .intent_id] | unique | length) and
+      all(.task_evidence[]; valid_external_task) and
+      (.verified_external_changes == [
+        .task_evidence[]
+        | select((.external_impl_file_refs // []) | length > 0)
+        | {task_id, manifest: .verified_external_changes}
+      ]) and
+      ([
+        [.task_evidence, .verified_external_changes]
+        | ..
+        | objects
+        | keys[]
+        | select(. == "content" or . == "raw_content" or . == "preimage")
+      ] | length) == 0
+    ' "$execution_result_file" >/dev/null || {
+      printf 'external execution evidence does not match the approved metadata-only contract\n' >&2
+      return 1
+    }
+}
+
 validate_execution_evidence_binding() {
   local plan_file="$1"
   local execution_result_file="$2"
@@ -149,6 +295,7 @@ validate_execution_evidence_binding() {
   local expected_truth_required=""
   local expected_stable_refs_json="[]"
   local expected_touch_refs_json="[]"
+  local expected_external_refs_json="[]"
   local expected_docs_predicates_json="[]"
 
   validate_execution_plan "$plan_file" >/dev/null || return 1
@@ -165,6 +312,7 @@ validate_execution_evidence_binding() {
   expected_truth_required="$(execution_truth_sync_required "$plan_file")"
   expected_stable_refs_json="$(execution_stable_truth_refs_json "$plan_file")"
   expected_touch_refs_json="$(execution_allowed_touch_set "$plan_file" | jq -R . | jq -s 'sort')"
+  expected_external_refs_json="$(execution_allowed_external_touch_set "$plan_file" | jq -R . | jq -s 'map(select(length > 0)) | sort')"
   expected_docs_predicates_json="$(execution_docs_governance_predicates_json "$plan_file")"
   embedded_ledger_digest="$(jq -cS '.task_evidence' "$execution_result_file" | shasum -a 256 | awk '{print $1}')"
   embedded_drift_json="$(execution_plan_ledger_drift_evidence_json "$plan_file" <(jq '.task_evidence' "$execution_result_file"))"
@@ -172,6 +320,11 @@ validate_execution_evidence_binding() {
     printf 'embedded execution task evidence does not match the approved plan projection\n' >&2
     return 1
   fi
+  validate_external_execution_evidence_binding \
+    "$execution_result_file" \
+    "$expected_external_refs_json" \
+    "$expected_plan_digest" \
+    "$expected_design_digest" || return 1
 
   jq -e \
     --arg expected_plan_ref "$expected_plan_ref" \
