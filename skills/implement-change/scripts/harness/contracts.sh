@@ -51,6 +51,7 @@ readonly HARNESS_DOCS_GOVERNANCE_PREDICATES=(
   none
   readme-agents-claude-ownership
   stable-truth-roots
+  decision-record-lifecycle
   docs-search-boundaries
   stage-artifact-placement
   canonical-terminology-across-surfaces

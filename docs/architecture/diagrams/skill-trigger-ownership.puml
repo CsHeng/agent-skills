@@ -14,6 +14,7 @@ package "Activation: native" as n_activation_native {
   rectangle "analyze-project\n[primary]" as n_skill_analyze_project
   rectangle "api-contract-strategy\n[primary]" as n_skill_api_contract_strategy
   rectangle "architecture-patterns\n[primary]" as n_skill_architecture_patterns
+  rectangle "code-simplification\n[primary]" as n_skill_code_simplification
   rectangle "design-change\n[primary]" as n_skill_design_change
   rectangle "docker-multiarch-build\n[primary]" as n_skill_docker_multiarch_build
   rectangle "error-patterns\n[primary]" as n_skill_error_patterns
@@ -70,6 +71,7 @@ package "Semantic trigger cases" as n_trigger_cases {
   rectangle "project-truth-audit" as n_case_project_truth_audit <<case>>
   rectangle "change-scope-design" as n_case_change_scope_design <<case>>
   rectangle "execution-plan" as n_case_execution_plan <<case>>
+  rectangle "code-simplification-audit" as n_case_code_simplification_audit <<case>>
   rectangle "approved-plan-execution" as n_case_approved_plan_execution <<case>>
   rectangle "explicit-via-herdr-approved-plan-execution" as n_case_explicit_via_herdr_approved_plan_execution <<case>>
   rectangle "lifecycle-review-gate" as n_case_lifecycle_review_gate <<case>>
@@ -105,6 +107,7 @@ package "Semantic trigger cases" as n_trigger_cases {
 n_case_project_truth_audit --> n_skill_analyze_project : case owner
 n_case_change_scope_design --> n_skill_design_change : case owner
 n_case_execution_plan --> n_skill_plan_change : case owner
+n_case_code_simplification_audit --> n_skill_code_simplification : case owner
 n_case_approved_plan_execution --> n_skill_implement_change : case owner
 n_case_explicit_via_herdr_approved_plan_execution --> n_skill_implement_change_via_herdr : case owner
 n_case_lifecycle_review_gate --> n_skill_review_change : case owner

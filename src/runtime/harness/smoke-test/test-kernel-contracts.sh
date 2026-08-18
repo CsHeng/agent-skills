@@ -291,6 +291,7 @@ EOF
 none
 readme-agents-claude-ownership
 stable-truth-roots
+decision-record-lifecycle
 docs-search-boundaries
 stage-artifact-placement
 canonical-terminology-across-surfaces
@@ -298,6 +299,7 @@ markdown-prose-structure
 EOF
 )" "docs governance predicates drifted"
   is_valid_docs_governance_predicate "canonical-terminology-across-surfaces" || fail "canonical terminology should be a supported docs predicate"
+  is_valid_docs_governance_predicate "decision-record-lifecycle" || fail "decision record lifecycle should be a supported docs predicate"
   assert_invalid is_valid_docs_governance_predicate "all-markdown"
 
   assert_sequence "$execution_lifecycle_states" "$(cat <<'EOF'

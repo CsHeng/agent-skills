@@ -52,6 +52,11 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 - Keep functions and modules cohesive; split by responsibility, authority, state, or failure boundary rather than arbitrary line limits.
 - Create interfaces for proven variation or caller-visible contracts, not hypothetical substitution.
 - Comment why a non-obvious constraint exists; do not narrate obvious code.
+- Write persisted prose for the current repository state. A reader at current HEAD must be able to resolve its internal references and verify its claims without an authoring session, review thread, temporary branch, or uncommitted draft.
+- Preserve complete propositions when editing comments, docstrings, prompts, diagnostics, help text, examples, configuration comments, and other durable prose: retain the actor, action, conditions, order, modality, negative guarantees, exceptions, ownership transfers, side effects, failure modes, and consequences that affect behavior.
+- Remove review choreography, dead phase labels, reviewer arguments, and temporary change narration once they no longer explain the current state. Preserve exact durable issues, decisions, standards, and measured evidence at their repository-owned truth location.
+- Treat model-visible and user-visible strings as behavior when wording affects routing, interpretation, diagnosis, safety, or compatibility. Protect such changes with the narrowest owned snapshot, contract, or runtime oracle; do not normalize prose repository-wide without an approved scope.
+- Update authored sources before generated projections and regenerate through the repository-owned workflow.
 - Validate external input at the owned boundary and handle failures that can occur under the declared runtime contract.
 - Measure before optimizing and keep performance work tied to an observed bottleneck or explicit objective.
 

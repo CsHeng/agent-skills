@@ -202,6 +202,7 @@ EOF
   - docs/architecture/runtime.md
 - docs_governance_predicates:
   - canonical-terminology-across-surfaces
+  - decision-record-lifecycle
 EOF
 
   cp "$truth_scope_plan" "$missing_truth_scope_plan"

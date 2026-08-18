@@ -35,6 +35,7 @@ package "Discipline Plane" as n_plane_discipline {
   rectangle "api-contract-strategy" as n_api_contract_strategy
   rectangle "architecture-patterns" as n_architecture_patterns
   rectangle "clean-architecture" as n_clean_architecture
+  rectangle "code-simplification" as n_code_simplification
   rectangle "error-patterns" as n_error_patterns
   rectangle "executable-oracle-architecture-selector" as n_executable_oracle_architecture_selector
   rectangle "infrastructure-triage" as n_infrastructure_triage

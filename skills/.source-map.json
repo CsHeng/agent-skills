@@ -4,6 +4,7 @@
   "architecture-patterns": "src/skills/disciplines/architecture-patterns",
   "clean-architecture": "src/skills/disciplines/clean-architecture",
   "close-change": "src/skills/workflows/close-change",
+  "code-simplification": "src/skills/disciplines/code-simplification",
   "codex-session-recovery": "src/skills/tools/codex-session-recovery",
   "design-change": "src/skills/workflows/design-change",
   "development-standards": "src/skills/policies/development-standards",

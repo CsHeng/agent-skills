@@ -265,7 +265,7 @@ class ExtractSessionSignalsCliTest(unittest.TestCase):
             root = Path(tmp)
             codex_home = root / "codex"
             repo_root = root / "repo"
-            skill_root = root / "mattpocock-skills"
+            skill_root = root / "sample-skill-pack"
             repo_root.mkdir()
             skill_dir = skill_root / "skills" / "engineering" / "tdd"
             skill_dir.mkdir(parents=True)
@@ -290,7 +290,7 @@ description: Test-driven development.
                             "id": "codex-skills",
                             "timestamp": "2026-01-04T00:00:00Z",
                             "base_instructions": {
-                                "text": "### Available skills\n- mattpocock-skills:tdd " + ("x" * 1200)
+                                "text": "### Available skills\n- sample-skill-pack:tdd " + ("x" * 1200)
                             },
                         },
                     },
@@ -299,7 +299,7 @@ description: Test-driven development.
                         "payload": {
                             "type": "message",
                             "role": "user",
-                            "content": [{"text": "$mattpocock-skills:tdd"}],
+                            "content": [{"text": "$sample-skill-pack:tdd"}],
                         },
                     },
                     {
@@ -337,7 +337,7 @@ description: Test-driven development.
                     "--skill-usage-root",
                     str(skill_root),
                     "--skill-usage-prefix",
-                    "mattpocock-skills",
+                    "sample-skill-pack",
                 ],
                 check=True,
                 text=True,

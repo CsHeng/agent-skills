@@ -32,6 +32,7 @@
         "architecture-patterns",
         "clean-architecture",
         "close-change",
+        "code-simplification",
         "codex-session-recovery",
         "design-change",
         "development-standards",
@@ -234,6 +235,38 @@
       "semantic_requires": [],
       "semantic_transitive_requires": [],
       "source": "src/skills/workflows/close-change"
+    },
+    {
+      "activation_mode": "native",
+      "category": "discipline",
+      "default_role": "primary",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
+      "id": "code-simplification",
+      "implicit_invocation": true,
+      "install": [
+        "claude",
+        "codex",
+        "root-flat"
+      ],
+      "lifecycle_owner": false,
+      "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "code-simplification-audit"
+      ],
+      "public_id": "code-simplification",
+      "semantic_requires": [],
+      "semantic_transitive_requires": [],
+      "source": "src/skills/disciplines/code-simplification"
     },
     {
       "activation_mode": "explicit",
@@ -1395,6 +1428,7 @@
         "api-contract-strategy",
         "architecture-patterns",
         "close-change",
+        "code-simplification",
         "codex-session-recovery",
         "design-change",
         "development-standards",
@@ -1434,6 +1468,7 @@
         "api-contract-strategy",
         "architecture-patterns",
         "close-change",
+        "code-simplification",
         "codex-session-recovery",
         "design-change",
         "development-standards",

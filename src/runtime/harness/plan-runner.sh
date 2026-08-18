@@ -240,7 +240,7 @@ plan_truth_sync_required() {
 
 is_supported_plan_docs_governance_predicate() {
   case "$1" in
-    none|readme-agents-claude-ownership|stable-truth-roots|docs-search-boundaries|stage-artifact-placement|canonical-terminology-across-surfaces|markdown-prose-structure) return 0 ;;
+    none|readme-agents-claude-ownership|stable-truth-roots|decision-record-lifecycle|docs-search-boundaries|stage-artifact-placement|canonical-terminology-across-surfaces|markdown-prose-structure) return 0 ;;
     *) return 1 ;;
   esac
 }

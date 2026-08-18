@@ -340,7 +340,14 @@ main() {
   if validate_execution_evidence_binding "$external_fixture/plan.md" "$tampered_execution_file" >/dev/null 2>&1; then
     fail "after evidence not bound to the declared ref should fail closed"
   fi
-  jq '.task_evidence[0].external_write_intents[0].after.mode = "0644"' "$external_execution" >"$tampered_execution_file"
+  jq '
+    .task_evidence[0].external_write_intents[0].after.mode = (
+      if .task_evidence[0].external_write_intents[0].parent.mode == "0600"
+      then "0644"
+      else "0600"
+      end
+    )
+  ' "$external_execution" >"$tampered_execution_file"
   if validate_execution_evidence_binding "$external_fixture/plan.md" "$tampered_execution_file" >/dev/null 2>&1; then
     fail "after metadata not preserved from the parent should fail closed"
   fi
@@ -375,12 +382,16 @@ main() {
   gate_json="$(build_truth_sync_docs_governance_decision "$plan_file" docs/architecture/runtime.md)"
   assert_json "$gate_json" '.organize_docs_required == true and .matched_predicates == ["canonical-terminology-across-surfaces"]' "declared terminology alignment should activate bounded organize-docs"
   cp "$plan_file" "$simple_plan_file"
-  sed -i 's/canonical-terminology-across-surfaces/none/' "$simple_plan_file"
+  sed -i 's/canonical-terminology-across-surfaces/decision-record-lifecycle/' "$simple_plan_file"
+  gate_json="$(build_truth_sync_docs_governance_decision "$simple_plan_file" docs/architecture/runtime.md)"
+  assert_json "$gate_json" '.organize_docs_required == true and .matched_predicates == ["decision-record-lifecycle"]' "declared decision lifecycle should activate bounded organize-docs"
+  sed -i 's/decision-record-lifecycle/none/' "$simple_plan_file"
   gate_json="$(build_truth_sync_docs_governance_decision "$simple_plan_file" docs/architecture/runtime.md)"
   assert_json "$gate_json" '.organize_docs_required == false and .matched_predicates == []' "simple stable fact updates should skip organize-docs"
   for predicate_id in \
     readme-agents-claude-ownership \
     stable-truth-roots \
+    decision-record-lifecycle \
     docs-search-boundaries \
     stage-artifact-placement \
     canonical-terminology-across-surfaces \

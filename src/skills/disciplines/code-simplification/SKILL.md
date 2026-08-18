@@ -1,0 +1,59 @@
+---
+name: code-simplification
+description: "Use for read-only, evidence-first audits that identify behavior-preserving code simplifications from current repository truth, consumer evidence, compatibility history, and trust or durability boundaries. Do not use for applying refactors, ordinary implementation cleanup, performance-only tuning, or review limited to the current diff."
+---
+
+# Code Simplification
+
+Identify code that can become smaller or clearer without changing owned behavior. Return audit evidence only; do not edit files, create a plan implicitly, or delegate the audit.
+
+## Authority Boundary
+
+- Keep the audit read-only. Do not mutate the repository, generate files, run destructive commands, or spawn another agent.
+- Treat behavior, public contracts, compatibility, persisted data, security, auditability, and operational recovery as protected boundaries rather than removable complexity.
+- Route requests to apply a candidate or accept a product tradeoff through `design-change`. Route review of an exact current diff through `review-change`.
+- Do not turn ordinary task-local cleanup, performance work, or style preferences into a repository simplification audit.
+
+## Workflow
+
+1. Bound the audit to the requested repository, module, or subsystem and state what is outside scope.
+2. Map the current behavior before proposing removal: entry points, consumers, data flow, failure handling, persisted state, public surfaces, and generated ownership.
+3. Identify generated, vendored, migration, fixture, public-package, and dynamic-loader surfaces before classifying consumers. Trace evidence from current code, tests, repository history, configuration, callers, adapters, and stable documentation. Absence from one search is not proof that a boundary is unused.
+4. Identify candidates where indirection, duplication, parallel paths, compatibility layers, or defensive state exceed current demonstrated needs.
+5. Evaluate each candidate with [Candidate Evidence](references/candidate-evidence.md). Preserve uncertainty explicitly; a valid audit may conclude `no-safe-cut`.
+6. Report candidates and verification needs without changing code or promising that deletion is safe.
+
+## Candidate Dispositions
+
+- `recommend-design`: affirmative evidence supports a smaller shape and names the verification required before implementation.
+- `reject`: the proposed cut would remove required behavior or cost more to maintain after replacement glue, tests, docs, and generated surfaces are counted.
+- `defer-for-evidence`: one named consumer, compatibility promise, migration, or ownership question prevents a safe conclusion.
+- `no-safe-cut`: evidence is insufficient, protected boundaries are coupled, or the apparent complexity carries required behavior.
+
+Do not rank candidates by line count alone. Prefer high-confidence removal of an unnecessary concept over broad cosmetic churn.
+
+## Output
+
+For each material candidate, record:
+
+- a stable candidate ID, candidate class, exact scope, and current owner
+- current responsibility, complexity signal, and the exact proposed cut or collapse
+- production, test, documentation, generated, dynamic-entrypoint, public API, persisted-data, wire-format, migration, and compatibility consumers as applicable
+- observable behavior or guarantees lost by the cut and whether accepting that loss requires a product decision
+- rationale and history evidence that protects, defeats, or preserves the current surface
+- invariants and protected boundaries that must remain true
+- compatibility, persistence, security, audit, and recovery impact
+- net maintenance reduction after replacement glue, tests, documentation, generated artifacts, and dependency lifecycle are counted
+- confidence, risk, and unresolved evidence
+- disposition
+- smallest decisive executable oracle or substitute verification required before implementation
+
+Lead with the strongest candidates. Keep `no-safe-cut` conclusions when they prevent unsafe deletion; do not manufacture a quota of findings.
+
+## Operating Rules
+
+- Prefer concrete repository evidence over generic simplicity principles.
+- Preserve generated-source ownership: audit authored sources before generated projections.
+- Do not describe a compatibility path as dead merely because current first-party code does not call it.
+- Do not remove validation, observability, recovery, or explicit failure handling unless equivalent owned behavior is proven elsewhere.
+- Keep uncertainty and rejected candidates in the report when they explain why the current structure is justified.

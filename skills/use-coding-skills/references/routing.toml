@@ -99,6 +99,17 @@ negative = [
 lexical_hints = ["implementation plan", "task DAG", "plan change"]
 
 [[trigger_cases]]
+id = "code-simplification-audit"
+owner = "code-simplification"
+negative = [
+  "Perform ordinary cleanup while implementing an approved task.",
+  "Tune performance without a repository simplification audit.",
+  "Apply or refactor a candidate instead of routing mutation intent through design-change.",
+  "Review only the current diff instead of auditing current repository structure.",
+]
+lexical_hints = ["simplify codebase", "code entropy", "remove accidental complexity"]
+
+[[trigger_cases]]
 id = "approved-plan-execution"
 owner = "implement-change"
 negative = [

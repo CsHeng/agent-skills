@@ -1,5 +1,25 @@
 # Design Decisions
 
+## 2026-08-18 - Bounded Long-Horizon Maintenance Guidance
+
+### Failure Mode
+
+Long-running agent work had no native read-only owner for evidence-first simplification audits, decision records could persist after their future guidance value ended, and durable prose could retain authoring-session context that a reader at the current repository state could not resolve.
+
+### Change
+
+- Add a read-only `code-simplification` discipline that requires consumer, compatibility, durability, trust, and executable-oracle evidence before recommending a smaller design.
+- Add an exact `decision-record-lifecycle` documentation predicate with an owner-local decision matrix for preserving, archiving, or deleting lifecycle records according to future guidance value.
+- Extend development and skill-authoring standards so persisted prose states complete current-repository propositions and treats user-visible or model-visible wording as behavior when the repository owns an oracle for it.
+- Keep human-facing inspiration attribution in the repository root overview, outside distributed skill instructions and stable architecture decisions.
+
+### Operational Impact
+
+- Simplification audits cannot mutate code or bypass design approval, and may conclude that no safe reduction is supported.
+- Decision records are not archived to satisfy quotas; partial supersession remains visible until the surviving guidance is durably owned elsewhere.
+- Durable prose remains resolvable from the current repository state without review-thread, branch, or authoring-session context.
+- Authored skill sources remain authoritative over generated projections.
+
 ## 2026-08-09 - Evidence-Bound Truth Sync Before Terminal Close
 
 ### Failure Mode
@@ -40,7 +60,6 @@ Extending repository-owned install, update, removal, symlink, destination, dupli
 - Repository acceptance covers public identities, semantic requirements, package closure, owner-local runtime, both native plugins, and command retirement. It does not execute or police external installation state.
 - Consumers and the upstream CLI own optional external selection, installation, updates, removal, cleanup, duplicates, and coexistence.
 - Portable skill resources use skill-relative paths; a universal provider-supplied `$PLUGIN_ROOT` or `$SKILL_ROOT` environment variable is not part of the contract.
-- The approach follows the [Agent Skills](https://agentskills.io/) shape and learned from [mattpocock/skills](https://github.com/mattpocock/skills), the [`skills` CLI](https://github.com/vercel-labs/skills), [Codex Skills](https://developers.openai.com/codex/skills/), and [Superpowers](https://github.com/obra/superpowers). Local contracts remain authoritative.
 
 ## 2026-08-01 - Repo-Owned Harness Routing And User-Specific Host Wrapper
 

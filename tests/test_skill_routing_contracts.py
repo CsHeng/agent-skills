@@ -89,6 +89,31 @@ class RoutingContractTests(unittest.TestCase):
 
         self.assertTrue(any("native discovery" in error for error in errors))
 
+    def test_code_simplification_owns_read_only_audit_route(self) -> None:
+        self.assertIn("code-simplification", self.skills)
+        skill = self.skills["code-simplification"]
+        self.assertEqual(
+            "src/skills/disciplines/code-simplification", skill["source"]
+        )
+        self.assertEqual("discipline", skill["category"])
+        self.assertEqual("native", skill["activation_mode"])
+        self.assertEqual("primary", skill["default_role"])
+        self.assertFalse(skill["may_mutate_repo"])
+        self.assertFalse(skill["may_spawn_agent"])
+
+        router = self.skills["use-coding-skills"]
+        self.assertIn("code-simplification", router["semantic_requires"])
+        cases = [
+            case
+            for case in self.routing_contract["trigger_cases"]
+            if case["id"] == "code-simplification-audit"
+        ]
+        self.assertEqual(1, len(cases))
+        self.assertEqual("code-simplification", cases[0]["owner"])
+        negative_contract = " ".join(cases[0]["negative"]).lower()
+        for boundary in ("ordinary", "performance", "apply", "current diff"):
+            self.assertIn(boundary, negative_contract)
+
     def test_every_workflow_mode_phase_requires_a_route(self) -> None:
         self.rewrite('verify = "implement-change"\n', "")
 

@@ -34,6 +34,9 @@ Write or update long-lived project truth after an explicit user request, an expl
 - Stable truth roots and stage artifact roots must be explicit.
 - Default docs search should avoid stage artifacts when the repository needs that search-boundary.
 - Stage artifacts can support history, but they do not become default truth automatically.
+- When durable decision truth is created, promoted, superseded, compacted, or retired, read [Decision Record Lifecycle](references/decision-record-lifecycle.md) and classify current status together with future value. Do not apply this lifecycle to every docs edit.
+- Write stable prose from the current repository state. A reader at `HEAD` must be able to resolve internal references and verify claims without the authoring session, review thread, branch stack, or an uncommitted draft.
+- Move change narration, review choreography, temporary phase labels, and historical argument to stage or historical owners unless they are still an exact durable reference. Preserve complete factual propositions, non-obvious rationale, conditions, exceptions, failure modes, and consequences.
 - Plan artifact consolidation is optional. Do it only when the user explicitly asks, or when repository-local search-boundary drift makes scattered plan roots part of the requested docs cleanup.
 - When consolidating plan artifacts, organize final paths by durable domain rather than source harness, and use date-first names such as `YYYY-MM-DD-topic-kind.md`.
 - After moving plan artifacts, update stable-doc references and in-file path references to the new paths. Preserve historical content unless a path reference is objectively stale because of the move.
@@ -55,9 +58,10 @@ Write or update long-lived project truth after an explicit user request, an expl
 4. Keep human-facing guidance in `README.md` and AI-operational rules in `AGENTS.md`.
 5. Align canonical terminology across stable docs, path names, test names, and code references when the task is terminology cleanup.
 6. Move or summarize content into stable docs domains without treating plans, drafts, or other stage artifacts as default truth.
-7. When explicitly consolidating plan artifacts, inventory all source plan roots, choose domain-based target directories under the canonical stage root, move files with date-first names, and update references after the move.
-8. Normalize Markdown prose wrapping with the bundled processing workflow: unwrap fixed-width paragraphs and list-item continuations across stable, stage, and archived docs that are in the requested scope, then decompose genuinely over-broad content at semantic boundaries.
-9. Update stable docs only after explicit user approval, explicit drift follow-up from `analyze-project`, or a validated approved-plan `sync-truth` controller handoff.
+7. For durable decision work, apply the owner-local lifecycle reference before promoting or retiring truth and preserve stage history by default.
+8. When explicitly consolidating plan artifacts, inventory all source plan roots, choose domain-based target directories under the canonical stage root, move files with date-first names, and update references after the move.
+9. Normalize Markdown prose wrapping with the bundled processing workflow: unwrap fixed-width paragraphs and list-item continuations across stable, stage, and archived docs that are in the requested scope, then decompose genuinely over-broad content at semantic boundaries.
+10. Update stable docs only after explicit user approval, explicit drift follow-up from `analyze-project`, or a validated approved-plan `sync-truth` controller handoff.
 
 ## Markdown Prose Processing
 

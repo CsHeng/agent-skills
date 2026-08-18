@@ -60,6 +60,7 @@ The truth-sync artifact contains `## Evidence`, `## Stable Truth Updates`, and `
    For external evidence, validate exact set, plan/design/task binding, contiguous parent-linked applied chains, and metadata-only manifests without rereading the current external file. Later legitimate user edits do not invalidate historical execution evidence.
 3. Update stable truth artifacts with the minimum required changes.
 4. Compose `organize-docs` only when a structured approved docs-governance predicate matches and every changed ref remains inside the stable truth touch set.
+   Use `decision-record-lifecycle` only when the approved truth sync creates, promotes, supersedes, compacts, or retires stable decision truth; a simple stable fact update does not match it.
 5. Stop for explicit human truth-sync approval before close.
 
 ## Operating Rules
@@ -68,4 +69,5 @@ The truth-sync artifact contains `## Evidence`, `## Stable Truth Updates`, and `
 - `analyze-project` remains the read-only truth query entry.
 - `organize-docs` remains a lower-plane truth maintenance component.
 - Markdown files do not activate `organize-docs` by suffix alone, and controller composition never widens the approved touch set.
+- `decision-record-lifecycle` never promotes `docs/plans/` into stable truth and never authorizes quota-driven archive or deletion.
 - Truth sync does not rediscover the project from zero.

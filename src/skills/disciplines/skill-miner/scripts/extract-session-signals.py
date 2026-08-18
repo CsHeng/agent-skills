@@ -158,7 +158,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--skill-usage-prefix",
         default="",
-        help="Skill namespace prefix to count, for example mattpocock-skills.",
+        help="Skill namespace prefix to count, for example sample-skill-pack.",
     )
     parser.add_argument(
         "--skill-usage-contract",

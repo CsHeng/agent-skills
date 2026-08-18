@@ -1,0 +1,6 @@
+interface:
+  display_name: "Code Simplification"
+  short_description: "Audit code for evidence-backed simplifications"
+  default_prompt: "Use $code-simplification to audit this codebase for behavior-preserving simplification candidates."
+policy:
+  allow_implicit_invocation: true

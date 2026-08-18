@@ -83,7 +83,6 @@ class InstallTargetContractTests(unittest.TestCase):
         self.assertIn("does not restrict selected agents", readme)
         self.assertIn("does not inspect duplicate exposure", readme)
         self.assertIn("promise that independently installed copies coexist", readme)
-        self.assertIn("https://github.com/obra/superpowers", readme)
         self.assertIn("contracts and lifecycle rules", readme.lower())
         self.assertNotIn("~/.agents/skills/coding", readme)
 
