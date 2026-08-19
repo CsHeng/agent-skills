@@ -1,269 +1,63 @@
 #!/usr/bin/env python3
-"""Validate a generated flat skill install surface."""
+"""Validate exact root-flat parity and independently copied runtime owners."""
 
 from __future__ import annotations
 
-import argparse
-import json
-import stat
+import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
-from typing import Any
-
-import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-from skill_activation import derived_implicit_invocation, project_openai_metadata
-
-CONTRACT_PATH = REPO_ROOT / "contracts" / "skills.toml"
-TARGETS_PATH = REPO_ROOT / "contracts" / "install-targets.toml"
-RUNTIME_BUNDLES = {"harness": REPO_ROOT / "src/runtime/harness"}
-RUNTIME_EXCLUDED_ROOTS = {"agents", "smoke-test"}
-
-
-def load_toml(path: Path) -> dict[str, Any]:
-    with path.open("rb") as handle:
-        return tomllib.load(handle)
+from scripts.skill_distribution import (  # noqa: E402, I001
+    RUNTIME_OWNERS,
+    compare_trees,
+    render_surface,
+    validate_portability,
+)
 
 
-def target_dest(target: str, override: str | None) -> Path:
-    if override:
-        return (REPO_ROOT / override).resolve()
-    targets = load_toml(TARGETS_PATH)["targets"]
-    return (REPO_ROOT / targets[target]["dest"]).resolve()
 
-
-def selected_entries(target: str) -> dict[str, str]:
-    data = load_toml(CONTRACT_PATH)
-    expected: dict[str, str] = {}
-    for skill_name, entry in sorted(data["skills"].items()):
-        if target not in entry.get("install", []):
-            continue
-        if entry.get("category") == "internal" and target != "root-flat":
-            raise ValueError(f"{skill_name}: internal skill cannot be installed for {target}")
-        public_id = entry["public_id"]
-        if public_id in expected:
-            raise ValueError(f"duplicate public_id for {target}: {public_id}")
-        expected[public_id] = entry["source"]
-    return expected
-
-
-def selected_runtime_contracts(target: str) -> dict[str, str]:
-    data = load_toml(CONTRACT_PATH)
-    expected: dict[str, str] = {}
-    for entry in data["skills"].values():
-        if target not in entry.get("install", []):
-            continue
-        runtime_contract = entry.get("runtime_contract")
-        if runtime_contract:
-            expected[entry["public_id"]] = runtime_contract
-    return expected
-
-
-def selected_runtime_bundles(target: str) -> dict[str, str]:
-    data = load_toml(CONTRACT_PATH)
-    expected: dict[str, str] = {}
-    for entry in data["skills"].values():
-        if target not in entry.get("install", []):
-            continue
-        runtime_bundle = entry.get("runtime_bundle")
-        if runtime_bundle:
-            expected[entry["public_id"]] = runtime_bundle
-    return expected
-
-
-def selected_activation_policies(target: str) -> dict[str, bool]:
-    contract = load_toml(CONTRACT_PATH)
-    expected: dict[str, bool] = {}
-    for entry in contract["skills"].values():
-        if target not in entry.get("install", []):
-            continue
-        expected[entry["public_id"]] = derived_implicit_invocation(
-            contract, entry
-        )
-    return expected
-
-
-def runtime_bundle_files(bundle_name: str) -> dict[str, Path]:
-    source = RUNTIME_BUNDLES.get(bundle_name)
-    if source is None or not source.is_dir():
-        raise ValueError(f"unknown or missing runtime bundle: {bundle_name}")
-    return {
-        path.relative_to(source).as_posix(): path
-        for path in source.rglob("*")
-        if path.is_file()
-        and path.relative_to(source).parts[0] not in RUNTIME_EXCLUDED_ROOTS
-        and path.name != "SKILL.md"
-        and "__pycache__" not in path.relative_to(source).parts
-    }
-
-
-def validate_portable_content(target: str, public_id: str, generated_dir: Path) -> list[str]:
+def standalone_errors(surface: Path) -> list[str]:
+    """Exercise each runtime owner after copying it away from the repository."""
     errors: list[str] = []
-    for path in generated_dir.rglob("*"):
-        if not path.is_file():
-            continue
-        try:
-            content = path.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
-            continue
-        relative_path = path.relative_to(generated_dir).as_posix()
-        if "_harness-libs" in content:
-            errors.append(
-                f"{target}: {public_id}/{relative_path} references retired sibling runtime"
+    with tempfile.TemporaryDirectory(prefix="skill-standalone-") as temporary:
+        root = Path(temporary)
+        for skill_id in sorted(RUNTIME_OWNERS):
+            copied = root / skill_id
+            shutil.copytree(surface / skill_id, copied)
+            result = subprocess.run(
+                [sys.executable, str(copied / "scripts" / "harness" / "cli.py"), "--help"],
+                cwd=root,
+                text=True,
+                capture_output=True,
+                check=False,
+                env={"PATH": "/usr/bin:/bin:/usr/sbin:/sbin"},
             )
-        provider_roots = (
-            "$PLUGIN_ROOT",
-            "${PLUGIN_ROOT",
-            "$CLAUDE_PLUGIN_ROOT",
-            "${CLAUDE_PLUGIN_ROOT",
-        )
-        for provider_root in provider_roots:
-            if provider_root in content:
-                errors.append(
-                    f"{target}: {public_id}/{relative_path} assumes provider root {provider_root}"
-                )
-        first_use = min(
-            (position for token in ("$SKILL_ROOT", "${SKILL_ROOT") if (position := content.find(token)) >= 0),
-            default=-1,
-        )
-        if first_use >= 0:
-            assignment = content.find("SKILL_ROOT=")
-            if assignment < 0 or assignment > first_use:
-                errors.append(
-                    f"{target}: {public_id}/{relative_path} uses SKILL_ROOT before assigning it"
-                )
+            if result.returncode != 0:
+                errors.append(f"{skill_id}: standalone CLI failed: {result.stderr.strip()}")
     return errors
 
 
-def validate(target: str, dest: Path) -> list[str]:
-    errors: list[str] = []
-    skills_dir = dest if target == "root-flat" else dest / "skills"
-    if not skills_dir.is_dir():
-        return [f"missing skills directory: {skills_dir.relative_to(REPO_ROOT)}"]
-
-    try:
-        expected = selected_entries(target)
-        runtime_bundles = selected_runtime_bundles(target)
-        activation_policies = selected_activation_policies(target)
-    except (KeyError, ValueError) as exc:
-        return [str(exc)]
-
-    actual = sorted(path.name for path in skills_dir.iterdir() if path.is_dir())
-    expected_ids = sorted(expected)
-    if actual != expected_ids:
-        errors.append(f"{target}: skill directories differ; expected={expected_ids} actual={actual}")
-
-    for public_id in expected_ids:
-        skill_file = skills_dir / public_id / "SKILL.md"
-        if not skill_file.is_file():
-            errors.append(f"{target}: missing SKILL.md for {public_id}")
-            continue
-
-        source_dir = REPO_ROOT / expected[public_id]
-        generated_dir = skills_dir / public_id
-        source_files: dict[str, Path | None] = {
-            path.relative_to(source_dir).as_posix(): path
-            for path in source_dir.rglob("*")
-            if path.is_file()
-        }
-        source_files.setdefault("agents/openai.yaml", None)
-        runtime_bundle = runtime_bundles.get(public_id)
-        if runtime_bundle:
-            try:
-                bundle_files = runtime_bundle_files(runtime_bundle)
-            except ValueError as exc:
-                errors.append(f"{target}: {public_id}: {exc}")
-                continue
-            for relative_path, source_file in bundle_files.items():
-                bundled_path = f"scripts/harness/{relative_path}"
-                if bundled_path in source_files:
-                    errors.append(
-                        f"{target}: runtime bundle collides with authored file for "
-                        f"{public_id}/{bundled_path}"
-                    )
-                    continue
-                source_files[bundled_path] = source_file
-        generated_files = {
-            path.relative_to(generated_dir).as_posix(): path
-            for path in generated_dir.rglob("*")
-            if path.is_file()
-        }
-        if set(source_files) != set(generated_files):
-            errors.append(
-                f"{target}: generated files differ for {public_id}; "
-                f"expected={sorted(source_files)} actual={sorted(generated_files)}"
-            )
-            continue
-        for relative_path, source_file in source_files.items():
-            if relative_path == "agents/openai.yaml":
-                source_text = (
-                    source_file.read_text(encoding="utf-8")
-                    if source_file is not None
-                    else ""
-                )
-                expected_bytes = project_openai_metadata(
-                    source_text, activation_policies[public_id]
-                ).encode("utf-8")
-            elif source_file is not None:
-                expected_bytes = source_file.read_bytes()
-            else:
-                raise AssertionError(f"unexpected generated-only file: {relative_path}")
-            if expected_bytes != generated_files[relative_path].read_bytes():
-                errors.append(
-                    f"{target}: generated content differs for {public_id}/{relative_path}"
-                )
-            generated_path = generated_files[relative_path]
-            if generated_path.suffix == ".sh":
-                mode = generated_path.stat().st_mode
-                if not (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)):
-                    errors.append(
-                        f"{target}: generated shell lacks execute bits: "
-                        f"{public_id}/{relative_path}"
-                    )
-        errors.extend(validate_portable_content(target, public_id, generated_dir))
-
-    for public_id, runtime_contract in selected_runtime_contracts(target).items():
-        contract_file = skills_dir / public_id / runtime_contract
-        if not contract_file.is_file():
-            errors.append(f"{target}: missing runtime contract for {public_id}: {runtime_contract}")
-
-    source_map_path = skills_dir / ".source-map.json"
-    if not source_map_path.is_file():
-        errors.append(f"{target}: missing .source-map.json")
-    else:
-        try:
-            source_map = json.loads(source_map_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            errors.append(f"{target}: invalid .source-map.json: {exc}")
-        else:
-            if source_map != expected:
-                errors.append(f"{target}: .source-map.json differs from manifest selection")
-
-    return errors
-
-
-def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--target", choices=["claude", "codex", "root-flat"], required=True)
-    parser.add_argument("--dest", help="Override destination")
-    return parser.parse_args(argv)
-
-
-def main(argv: list[str]) -> int:
-    args = parse_args(argv)
-    errors = validate(args.target, target_dest(args.target, args.dest))
+def main() -> int:
+    surface = REPO_ROOT / "skills"
+    with tempfile.TemporaryDirectory(prefix="skill-expected-", dir=REPO_ROOT) as temporary:
+        expected = Path(temporary) / "skills"
+        render_surface(REPO_ROOT, expected)
+        errors = [*compare_trees(expected, surface), *validate_portability(surface)]
+    if not errors:
+        errors.extend(standalone_errors(surface))
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
         return 1
-    print(f"{args.target} install surface ok")
+    print("root-flat install surface ok")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv[1:]))
+    raise SystemExit(main())

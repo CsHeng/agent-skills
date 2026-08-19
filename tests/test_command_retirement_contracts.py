@@ -53,7 +53,7 @@ class CommandRetirementContractTests(unittest.TestCase):
         self.assertEqual(["check-secrets"], retirement["archive_only"])
         self.assertNotIn(
             "check-secrets",
-            {entry["public_id"] for entry in contract["skills"].values()},
+            set(contract["skills"]),
         )
         self.assertEqual(
             [],
@@ -82,7 +82,6 @@ class CommandRetirementContractTests(unittest.TestCase):
             ".codex-marketplace/plugins/coding",
             "install.sh",
             "install-codex.sh",
-            "scripts/install.sh",
             "hooks/post-edit-check.sh",
         )
         for relative_path in retained_paths:
@@ -117,24 +116,23 @@ class CommandRetirementContractTests(unittest.TestCase):
                 for retired_entry in retired_entries:
                     self.assertNotIn(retired_entry, content)
 
-    def test_absorbed_workflows_own_their_runner_semantics(self) -> None:
-        expected_runners = {
-            "close-change": "close-runner.sh",
-            "design-change": "design-runner.sh",
-            "implement-change": "execute-runner.sh",
-            "plan-change": "plan-runner.sh",
-            "review-change": "design-runner.sh",
-            "sync-truth": "truth-sync-runner.sh",
-        }
-        for public_id, runner in expected_runners.items():
+    def test_absorbed_workflows_use_skill_local_generated_runtime(self) -> None:
+        for public_id in (
+            "close-change",
+            "design-change",
+            "implement-change",
+            "plan-change",
+            "review-change",
+            "sync-truth",
+        ):
             with self.subTest(skill=public_id):
-                skill = (
-                    REPO_ROOT
-                    / "src/skills/workflows"
-                    / public_id
-                    / "SKILL.md"
-                ).read_text(encoding="utf-8")
-                self.assertIn(f"scripts/harness/{runner}", skill)
+                skill = (REPO_ROOT / "skills" / public_id / "SKILL.md").read_text(
+                    encoding="utf-8"
+                )
+                self.assertIn("$SKILL_ROOT/scripts/harness/cli.py", skill)
+                self.assertTrue(
+                    (REPO_ROOT / "skills" / public_id / "scripts" / "harness" / "cli.py").is_file()
+                )
 
     def test_active_command_adapters_use_owner_local_runners(self) -> None:
         command_root = REPO_ROOT / "commands"
@@ -154,39 +152,24 @@ class CommandRetirementContractTests(unittest.TestCase):
                 self.assertIn(runner_path, command)
                 self.assertNotIn("skills/_harness-libs", command)
 
-    def test_command_adapter_runners_execute_from_unrelated_directory(self) -> None:
-        runners = {
-            "close-change": ("close-runner.sh", "close"),
-            "design-change": ("design-runner.sh", "clarify"),
-            "implement-change": ("execute-runner.sh", "implement-serial"),
-            "plan-change": ("plan-runner.sh", "plan"),
-            "sync-truth": ("truth-sync-runner.sh", "truth-sync"),
-        }
-        env = os.environ | {"CLAUDE_PLUGIN_ROOT": str(REPO_ROOT)}
+    def test_authored_runtime_executes_from_unrelated_directory(self) -> None:
+        runtime = REPO_ROOT / "src/runtime/harness/cli.py"
         with tempfile.TemporaryDirectory() as unrelated_cwd:
-            for public_id, (runner_name, expected_phase) in runners.items():
-                with self.subTest(command=public_id):
-                    runner = (
-                        Path(env["CLAUDE_PLUGIN_ROOT"])
-                        / "skills"
-                        / public_id
-                        / "scripts/harness"
-                        / runner_name
-                    )
-                    result = subprocess.run(
-                        ["bash", str(runner), "entry-phase"],
-                        cwd=unrelated_cwd,
-                        check=True,
-                        capture_output=True,
-                        text=True,
-                        env=env,
-                    )
-                    self.assertEqual(expected_phase, result.stdout.strip())
+            result = subprocess.run(
+                ["python3", str(runtime), "--help"],
+                cwd=unrelated_cwd,
+                check=True,
+                capture_output=True,
+                text=True,
+                env=os.environ,
+            )
+        for namespace in ("design", "plan", "ledger", "execute", "truth-sync", "close"):
+            self.assertIn(namespace, result.stdout)
 
     def test_smart_commit_already_owns_target_repository_binding(self) -> None:
-        skill = (
-            REPO_ROOT / "src/skills/git/smart-commit/SKILL.md"
-        ).read_text(encoding="utf-8")
+        skill = (REPO_ROOT / "skills/smart-commit/SKILL.md").read_text(
+            encoding="utf-8"
+        )
 
         self.assertIn('TARGET_REPO="$(git -C "$INVOCATION_CWD"', skill)
         self.assertIn('git -C "$TARGET_REPO"', skill)

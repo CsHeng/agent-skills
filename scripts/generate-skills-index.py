@@ -57,20 +57,22 @@ def trigger_case_index(
     manifest: dict[str, Any],
 ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
     owned: dict[str, list[str]] = {
-        entry["public_id"]: [] for entry in manifest.values()
+        skill_id: [] for skill_id in manifest
     }
     overlaid: dict[str, list[str]] = {
-        entry["public_id"]: [] for entry in manifest.values()
+        skill_id: [] for skill_id in manifest
     }
     routing_entries = [
         entry for entry in manifest.values() if entry.get("routing_contract")
     ]
     if len(routing_entries) != 1:
         raise SystemExit("exactly one skill must declare routing_contract")
-    routing_entry = routing_entries[0]
-    routing_path = (
-        REPO_ROOT / routing_entry["source"] / routing_entry["routing_contract"]
+    routing_id, routing_entry = next(
+        (skill_id, entry)
+        for skill_id, entry in manifest.items()
+        if entry.get("routing_contract")
     )
+    routing_path = REPO_ROOT / "skills" / routing_id / routing_entry["routing_contract"]
     with routing_path.open("rb") as handle:
         routing = tomllib.load(handle)
     for trigger_case in routing.get("trigger_cases", []):
@@ -87,74 +89,38 @@ def build_index() -> dict[str, Any]:
     manifest = contract.get("skills")
     if not isinstance(manifest, dict):
         raise SystemExit("contracts/skills.toml must contain [skills.*] entries")
-    adjacency = {
-        entry["public_id"]: list(entry.get("semantic_requires", []))
-        for entry in manifest.values()
-    }
+    adjacency = {skill_id: list(entry.get("semantic_requires", [])) for skill_id, entry in manifest.items()}
     owned_cases, overlay_cases = trigger_case_index(manifest)
     skills = []
     for skill_name, entry in sorted(manifest.items()):
-        public_id = entry["public_id"]
         record = {
             "id": skill_name,
-            "source": entry["source"],
-            "public_id": public_id,
             "category": entry["category"],
-            "install": entry.get("install", []),
             "lifecycle_owner": entry.get("lifecycle_owner", False),
             "activation_mode": entry["activation_mode"],
             "default_role": entry["default_role"],
             "implicit_invocation": derived_implicit_invocation(contract, entry),
             "effective_provider_state": effective_provider_state(contract, entry),
-            "owned_trigger_cases": sorted(owned_cases[public_id]),
-            "overlay_trigger_cases": sorted(overlay_cases[public_id]),
+            "owned_trigger_cases": sorted(owned_cases[skill_name]),
+            "overlay_trigger_cases": sorted(overlay_cases[skill_name]),
             "may_mutate_repo": entry.get("may_mutate_repo", False),
-            "semantic_requires": adjacency[public_id],
+            "semantic_requires": adjacency[skill_name],
             "semantic_transitive_requires": transitive_requirements(
-                public_id, adjacency
+                skill_name, adjacency
             ),
         }
         if "runtime_contract" in entry:
             record["runtime_contract"] = entry["runtime_contract"]
         if "routing_contract" in entry:
             record["routing_contract"] = entry["routing_contract"]
-        if "runtime_bundle" in entry:
-            record["runtime_bundle"] = entry["runtime_bundle"]
-        if "superseded_by" in entry:
-            record["superseded_by"] = entry["superseded_by"]
         skills.append(record)
-
-    profiles: dict[str, Any] = {}
-    declared_profiles = contract.get("profiles", {})
-    if not isinstance(declared_profiles, dict):
-        raise SystemExit("contracts/skills.toml profiles must be tables")
-    public_ids = sorted(adjacency)
-    for profile_name, profile in sorted(declared_profiles.items()):
-        if not isinstance(profile, dict) or profile.get("selection") != "all-public":
-            raise SystemExit(f"unsupported profile selection: {profile_name}")
-        selected = public_ids
-        selected_set = set(selected)
-        closure_complete = all(
-            set(transitive_requirements(public_id, adjacency)) <= selected_set
-            for public_id in selected
-        )
-        profiles[profile_name] = {
-            "selection": "all-public",
-            "skills": selected,
-            "semantic_closure_complete": closure_complete,
-        }
-
-    semantic_install = contract.get("semantic_install")
-    if not isinstance(semantic_install, dict):
-        raise SystemExit("contracts/skills.toml must contain [semantic_install]")
     command_retirement = contract.get("command_retirement")
     if not isinstance(command_retirement, dict):
         raise SystemExit("contracts/skills.toml must contain [command_retirement]")
     return {
         "command_retirement": command_retirement,
         "generated_from": "contracts/skills.toml",
-        "semantic_install": semantic_install,
-        "profiles": profiles,
+        "canonical_skill_count": len(skills),
         "skills": skills,
     }
 

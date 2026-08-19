@@ -1,28 +1,20 @@
 from __future__ import annotations
 
-import json
 import unittest
 from pathlib import Path
 
 import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-API_CONTRACT_ROOT = (
-    REPO_ROOT / "src" / "skills" / "disciplines" / "api-contract-strategy"
-)
+API_CONTRACT_ROOT = REPO_ROOT / "skills" / "api-contract-strategy"
 
 
 class APIContractStrategyRegistrationTests(unittest.TestCase):
-    def test_manifest_and_generated_surface_are_registered(self) -> None:
+    def test_manifest_and_canonical_surface_are_registered(self) -> None:
         with (REPO_ROOT / "contracts" / "skills.toml").open("rb") as handle:
             manifest = tomllib.load(handle)["skills"]["api-contract-strategy"]
 
-        self.assertEqual(
-            manifest["source"],
-            "src/skills/disciplines/api-contract-strategy",
-        )
         self.assertEqual(manifest["category"], "discipline")
-        self.assertEqual(manifest["install"], ["claude", "codex", "root-flat"])
         self.assertFalse(manifest["lifecycle_owner"])
         self.assertEqual(manifest["activation_mode"], "native")
         self.assertEqual(manifest["default_role"], "primary")
@@ -30,18 +22,9 @@ class APIContractStrategyRegistrationTests(unittest.TestCase):
         self.assertFalse(manifest["may_mutate_repo"])
         self.assertFalse(manifest["may_spawn_agent"])
 
-        generated_root = REPO_ROOT / "skills" / "api-contract-strategy"
-        self.assertTrue((generated_root / "SKILL.md").is_file())
-        self.assertEqual(
-            (API_CONTRACT_ROOT / "SKILL.md").read_bytes(),
-            (generated_root / "SKILL.md").read_bytes(),
-        )
-        source_map = json.loads(
-            (REPO_ROOT / "skills" / ".source-map.json").read_text(encoding="utf-8")
-        )
-        self.assertEqual(
-            source_map["api-contract-strategy"],
-            "src/skills/disciplines/api-contract-strategy",
+        self.assertTrue((API_CONTRACT_ROOT / "SKILL.md").is_file())
+        self.assertTrue(
+            (REPO_ROOT / manifest["source"] / "SKILL.md").is_file()
         )
 
 

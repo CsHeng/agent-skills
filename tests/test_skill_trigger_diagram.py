@@ -34,7 +34,8 @@ class SkillTriggerDiagramTests(unittest.TestCase):
         content = outputs[trigger_path]
         for mode in ("native", "conditional", "controller", "explicit", "baseline"):
             self.assertIn(f"Activation: {mode}", content)
-        self.assertIn("superseded_by", content)
+        self.assertNotIn("superseded_by", content)
+        self.assertNotIn("compatibility", content)
         self.assertIn("case owner", content)
         self.assertIn("controller evaluator", content)
         self.assertIn("rendering baseline", content)

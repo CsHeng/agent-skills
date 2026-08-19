@@ -19,28 +19,21 @@ Update stable truth after a truth-affecting change has evidence behind it. Mutat
 - the request is only a read-only project explanation; use `analyze-project`
 - the task is only implementation review or close without truth updates
 
-## Bundled Runtime
+## Shared Runtime
 
 Resolve the installed helper relative to this `SKILL.md` before changing into the target repository. `SKILL_ROOT` is explicitly assigned to the activated skill directory and is not expected from the host:
 
 ```bash
 SKILL_ROOT="/absolute/path/to/sync-truth"
-RUNNER="$(realpath "$SKILL_ROOT/scripts/harness/truth-sync-runner.sh")"
-[[ -f "$RUNNER" ]] || exit 1
+HARNESS_CLI="$(realpath "$SKILL_ROOT/scripts/harness/cli.py")"
+[[ -f "$HARNESS_CLI" ]] || exit 1
 ```
 
-Use it to record the phase, derive a default artifact path, validate the artifact, and report the approval and gate states:
+Use its `truth-sync` namespace for each complete validation or gate operation:
 
 ```bash
-bash "$RUNNER" entry-phase
-bash "$RUNNER" default-path "<topic>"
-bash "$RUNNER" validate "<truth-sync-artifact>"
-bash "$RUNNER" validate-against "<truth-sync-artifact>" "<approved-plan>" "<execution-result-json>"
-bash "$RUNNER" approval-status "<truth-sync-artifact>"
-bash "$RUNNER" mutation-authorization direct "<true|false>"
-bash "$RUNNER" mutation-authorization controller "<approved-plan>" "<execution-result-json>"
-bash "$RUNNER" docs-governance-decision "<approved-plan>" "<changed-stable-ref>"...
-bash "$RUNNER" gate-result "<truth-sync-artifact>" "<approved-plan>" "<execution-result-json>"
+python3 "$HARNESS_CLI" truth-sync validate "<truth-sync-artifact>"
+python3 "$HARNESS_CLI" truth-sync evaluate "<ledger-file>" "<truth-sync-artifact>"
 ```
 
 ## Artifact Contract
@@ -56,11 +49,9 @@ The truth-sync artifact contains `## Evidence`, `## Stable Truth Updates`, and `
 ## Workflow
 
 1. Validate direct explicit-request authority or the complete approved-plan controller context.
-2. Confirm from the approved plan and immutable execution result that truth sync is required, and reject missing, stale, or mismatched evidence.
-   For external evidence, validate exact set, plan/design/task binding, contiguous parent-linked applied chains, and metadata-only manifests without rereading the current external file. Later legitimate user edits do not invalidate historical execution evidence.
+2. Confirm from the approved plan and immutable execution result that truth sync is required, and reject missing, stale, or mismatched evidence. For external evidence, validate exact set, plan/design/task binding, contiguous parent-linked applied chains, and metadata-only manifests without rereading the current external file. Later legitimate user edits do not invalidate historical execution evidence.
 3. Update stable truth artifacts with the minimum required changes.
-4. Compose `organize-docs` only when a structured approved docs-governance predicate matches and every changed ref remains inside the stable truth touch set.
-   Use `decision-record-lifecycle` only when the approved truth sync creates, promotes, supersedes, compacts, or retires stable decision truth; a simple stable fact update does not match it.
+4. Compose `organize-docs` only when a structured approved docs-governance predicate matches and every changed ref remains inside the stable truth touch set. Use `decision-record-lifecycle` only when the approved truth sync creates, promotes, supersedes, compacts, or retires stable decision truth; a simple stable fact update does not match it.
 5. Stop for explicit human truth-sync approval before close.
 
 ## Operating Rules

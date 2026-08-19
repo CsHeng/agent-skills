@@ -100,7 +100,7 @@ For the current repository, keep all-agent history scope separate from the inven
 python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py \
   --scope all \
   --skill-usage-only \
-  --skill-usage-root /absolute/path/to/repo/src/skills \
+  --skill-usage-root /absolute/path/to/repo/skills \
   --skill-usage-prefix coding \
   --skill-usage-contract /absolute/path/to/repo/contracts/skills.toml \
   --format json \

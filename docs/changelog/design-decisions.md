@@ -1,5 +1,34 @@
 # Design Decisions
 
+## 2026-08-19 - Portable Skill Distribution Repair
+
+### Status
+
+Implemented. This decision supersedes the provider-specific generation mechanics recorded on 2026-07-07 and 2026-07-10; their historical rationale remains below, but their `.dist/claude`, `.dist/codex`, `--target claude`, and `--target codex` instructions are no longer current.
+
+### Constraint
+
+Maintainers need one structured authored skill tree and one authored lifecycle runtime, while plugin and standalone consumers need a root-flat payload whose selected lifecycle skills remain executable without repository siblings or separately installed support skills.
+
+### Change
+
+- Restore `src/skills/` as nested authored truth and keep `skills/` as the sole generated root-flat 39-skill payload.
+- Keep one authored Python runtime at `src/runtime/harness/` and materialize its explicit production manifest inside exactly six generated lifecycle skills.
+- Retain the approved compatibility-ID retirements while restoring the root-flat generator, source map, install contract, transactional replacement, and standalone closure checks.
+- Select codex-native as the flag-absent binding backend while retaining `implement-change-via-herdr` as an explicit adapter overlay.
+- Make `scripts/check.sh` and pre-commit strict non-mutating serial orchestration, and pin ten immutable `docs/plans/` Markdown history exceptions by path and SHA-256.
+
+### Operational Impact
+
+- Lifecycle skills call their skill-local generated Python CLI, allowing selected-skill copies to execute independently while maintainers edit one runtime source.
+- `.dist/` remains ignored inert local output. Optional `npx skills` destination and lifecycle management remain advisory and consumer-owned, but each distributed skill remains resource-closed.
+- The three retired compatibility IDs no longer resolve; their durable successor owners remain canonical.
+
+### Alternatives And Reconsideration
+
+- Repository-shared runtime resolution was rejected because a selected-skill install does not include repository siblings. A separately published runtime dependency was rejected because it adds dependency discovery, network, and version-coordination obligations.
+- `contracts/skills.toml`, `contracts/runtime-bundles.toml`, and `scripts/flatten-skills.py` own this boundary. Reconsider a separately versioned runtime only if measured generated package size or update cost materially harms a supported installation path.
+
 ## 2026-08-18 - Bounded Long-Horizon Maintenance Guidance
 
 ### Failure Mode
@@ -122,13 +151,17 @@ Requiring an explicit `$smart-commit` invocation prevented Codex from selecting 
 
 ## 2026-07-07 - Structured Source Tree And Generated Install Surfaces
 
+### Status
+
+Superseded by the 2026-08-19 Portable Skill Distribution Repair. The nested authored tree and generated root-flat payload remain current; provider-specific `.dist/` generation does not.
+
 ### Failure Mode
 
 The flat skill directory made source ownership, install compatibility, and runtime support look like one undifferentiated surface.
 
 ### Change
 
-Skill source moved under `src/skills/`, while the tracked runtime compatibility surface is generated into `skills/` and external install surfaces can be generated into `.dist/claude/` and `.dist/codex/`.
+Skill source moved under `src/skills/`, while the tracked runtime compatibility surface was generated into `skills/`; this decision also introduced provider-specific `.dist/claude/` and `.dist/codex/` surfaces that are now retired.
 
 ### Operational Impact
 
@@ -137,6 +170,10 @@ Skill source moved under `src/skills/`, while the tracked runtime compatibility 
 - Validate with `bash scripts/check.sh`.
 
 ## 2026-07-10 - Keep External Install Surfaces Reproducible
+
+### Status
+
+Superseded by the 2026-08-19 Portable Skill Distribution Repair. Keeping `.dist/` ignored remains current; generating provider-specific targets on demand does not.
 
 ### Failure Mode
 
@@ -150,7 +187,7 @@ Keep `skills/` as the tracked generated runtime compatibility surface. Ignore `.
 
 - A fresh clone can validate external install surfaces without a pre-existing `.dist/` tree.
 - `bash scripts/check.sh` rejects tracked `.dist/` files.
-- Packaging or inspection may still run `python3 scripts/flatten-skills.py --target claude` or `--target codex` explicitly.
+- The historical provider-specific target commands are no longer available; current generation uses only `python3 scripts/flatten-skills.py --target root-flat`.
 
 ## 2026-07-07 - External Skill Contracts
 

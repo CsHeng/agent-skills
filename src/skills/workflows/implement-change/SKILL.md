@@ -22,29 +22,32 @@ Before implementation, read completely:
 
 Resolve both relative to this `SKILL.md`. The cross-skill graph stays acyclic; repair is internal controller state.
 
-The deterministic execution helper is bundled with this skill. Resolve it before changing into the target repository; the assignment below is explicit and does not rely on an ambient variable:
+The deterministic shared runtime is resolved before changing into the target repository; the assignment below is explicit and does not rely on an ambient variable:
 
 ```bash
 SKILL_ROOT="/absolute/path/to/implement-change"
-RUNNER="$(realpath "$SKILL_ROOT/scripts/harness/execute-runner.sh")"
-[[ -f "$RUNNER" ]] || exit 1
+HARNESS_CLI="$(realpath "$SKILL_ROOT/scripts/harness/cli.py")"
+[[ -f "$HARNESS_CLI" ]] || exit 1
 ```
 
 Before mutation, require an approved execution-grade plan and materialize its immutable task projection:
 
 ```bash
-bash "$RUNNER" entry-phase
-[[ "$(bash "$RUNNER" approval-status "<plan-file>")" == "approved" ]] || exit 1
-bash "$RUNNER" validate "<plan-file>"
-bash "$RUNNER" mode "<plan-file>"
-bash "$RUNNER" allowed-touch-set "<plan-file>"
-bash "$RUNNER" allowed-external-touch-set "<plan-file>"
-bash "$RUNNER" verification-commands "<plan-file>"
-bash "$RUNNER" task-catalog "<plan-file>"
-bash "$RUNNER" task-ledger "<plan-file>"
+python3 "$HARNESS_CLI" plan validate "<plan-file>"
+python3 "$HARNESS_CLI" plan compile "<plan-file>"
+python3 "$HARNESS_CLI" ledger init "<plan-file>" "<ledger-file>"
+python3 "$HARNESS_CLI" ledger transition "<ledger-file>" "<task-id>" "<target-state>"
+python3 "$HARNESS_CLI" ledger ready "<ledger-file>"
+python3 "$HARNESS_CLI" ledger verification "<ledger-file>" "<task-id>" "<evidence.json>"
+python3 "$HARNESS_CLI" ledger review "<ledger-file>" "<task-id>" "<review.json>"
+python3 "$HARNESS_CLI" ledger touch "<ledger-file>" "<task-id>" "<changed-paths.json>"
+python3 "$HARNESS_CLI" ledger external-evidence "<ledger-file>" "<task-id>" "<evidence.json>"
+python3 "$HARNESS_CLI" ledger recover "<failure-kind>"
+python3 "$HARNESS_CLI" ledger result "<ledger-file>"
+python3 "$HARNESS_CLI" execute bind "<ledger-file>" "<task-id>" "<runtime-request.json>"
 ```
 
-Use the remaining runner operations for the one-time worktree preflight, ready-set and runtime binding, controller convergence, evidence-based recovery, final evaluation gate, and machine-checkable execution result. The approved `allowed_touch_set` is exactly the plan's implementation and test refs. Each task's declared `verification_scope` must pass before its ledger state converges.
+The external-evidence request contains only `baseline_ref` and `intents_ref`, pointing to the complete metadata-only broker records. The main controller owns worktree preflight. The shared ledger namespace owns ready-set queries, declared verification and review evidence, touch checks, external evidence, typed recovery, convergence transitions, and the machine-checkable result projection. The approved `allowed_touch_set` is exactly the plan's implementation and test refs. Each task's declared verification command must pass before its ledger state converges.
 
 For an approved task with `external_impl_file_refs`, the main controller alone uses `external-baseline`, `external-prepare`, `external-apply`, and recovery-only `external-cleanup`. Capture the immutable baseline after the task enters `in_progress` and before mutation. `external-prepare` atomically persists a metadata-only `staging` reservation before any raw payload may survive, then stages and promotes that same reservation to `prepared`; replay resumes either checkpoint without widening the ref set. `external-apply` persists after-evidence and completed private-artifact cleanup as one recoverable result. Exact parent state may apply, exact candidate state becomes an idempotent applied checkpoint with parent-directory fsync, and every third state stops with typed baseline drift. Convergence requires the complete applied-and-cleaned chain. A later accepted repair appends the next contiguous intent whose parent is the preceding applied after-state while retaining the original baseline root. Never refresh the baseline, invoke a generic external editor, delegate the write, or synthesize rollback.
 
@@ -67,7 +70,7 @@ After every task is converged, record `task-complete`, `truth-sync-pending`, or 
 
 ## Runtime Binding Backends
 
-Runtime binding is a backend concern layered under this controller. The runner's `controller-binding-envelope` operation builds one backend-neutral core — controller identity and nonce, plan and ledger digests, binding kind, the immutable task projection or hashed review brief, derived runtime role, semantic profiles, isolation, touch set, resource locks, batch provenance, and model policy — and projects it onto a selected backend with `--backend codex-native` or `--backend herdr` (the flag-absent default stays `herdr` and its `schema_version: 1` wire shape is byte-compatible for the existing adapter). The neutral core is the only part reusable contracts may reference; backend extensions carry runtime evidence only. No backend may rewrite approved task IDs, dependencies, DAG topology, delegation policy, isolation, locks, touch sets, or oracles: `plan-change` keeps topology authority, and this controller keeps binding authority.
+Runtime binding is a backend concern layered under this controller. The shared CLI's `execute` namespace builds one backend-neutral core — controller identity and nonce, plan and ledger digests, binding kind, the immutable task projection or hashed review brief, derived runtime role, semantic profiles, isolation, touch set, resource locks, batch provenance, and model policy — and projects it onto codex-native by default or the explicit `--backend herdr` overlay. Codex-native emits `schema_version: 2`; the explicit Herdr path retains its byte-compatible `schema_version: 1` adapter shape. The neutral core is the only part reusable contracts may reference; backend extensions carry runtime evidence only. No backend may rewrite approved task IDs, dependencies, DAG topology, delegation policy, isolation, locks, touch sets, or oracles: `plan-change` keeps topology authority, and this controller keeps binding authority.
 
 Derive runtime roles from the approved task and gate context regardless of backend: a bounded review brief uses a `reviewer`, a pure `fast`/`light`/`shared-read-only` search or factual-confirmation task with no implementation or test write refs may use an `explorer`, and every other delegated task is a `worker`. A reviewer is read-only and returns candidate findings only. An explorer is bounded read-only and reports evidence and open questions instead of synthesizing a design; its authority is independent of physical model or effort, so a stronger parent profile or minimum uplift never expands its scope and there is no physical reasoning ceiling in the portable role contract. A writer uses only its assigned isolated, task-scoped worktree. Reviewers and workers must not delegate recursively. For mixed search-and-judgment work, bind only explicit explorer task IDs to the explorer role and return their bounded facts to the main-owned synthesis task.
 
@@ -85,7 +88,7 @@ Pre-emission validation returns distinct typed capability stops instead of degra
 
 An explicit `implement-change-via-herdr` request is a lower-plane adapter composition, not a second lifecycle controller. Keep the initiating main agent as the sole `orchestrator`; it is never launched again in a Herdr child pane. At runtime, this controller binds each actor to concrete CLI, model, reasoning effort, permission mode, sandbox mode, checkout or worktree, Herdr workspace/tab/pane/agent IDs, and corresponding evidence; these physical bindings are runtime evidence under the same neutral core. Herdr owns only resources created by the current adapter run and cannot choose tasks or grant external authority.
 
-Use `controller-binding-envelope` with `binding_kind=delegated-task` only for one ledger-selected ready task. After every task has converged, the same controller operation may use `binding_kind=bounded-review` with an independently hashed review brief to bind the reviewer; that path cannot reopen task selection or mutate the ledger. Pin Codex and Grok through their native argument profiles, sanitize sensitive child environment names, target live agents by pane ID, and retain opaque terminal and available agent-session identities as runtime evidence. Under `semantic-routing`, apply the absolute low-default/medium-ceiling explorer rule. `inherit-main` and `runtime-default` may change model or reasoning binding only when the resulting explorer remains at or below that ceiling; otherwise return the typed capability result or use the approved main fallback.
+Use `controller-binding-envelope` with `binding_kind=delegated-task` only for one ledger-selected ready task. After every task has converged, the same controller operation may use `binding_kind=bounded-review` with an independently hashed review brief to bind the reviewer; that path cannot reopen task selection or mutate the ledger. Pin Codex and Grok through their native argument profiles, sanitize sensitive child environment names, target live agents by pane ID, and retain opaque terminal and available agent-session identities as runtime evidence. Under `semantic-routing`, inherit the parent session's physical baseline and apply only the role's minimum reasoning requirement. `inherit-main` and `runtime-default` may change model or reasoning binding without introducing a lower or upper effort bound; an unsupported required uplift returns the typed capability result or uses the approved main fallback without downgrading.
 
 For long local verification commands, the controller may issue a separate `binding_kind=command-job` envelope only for an approved task or gate. It pins the exact checkout cwd, literal argv/command, provenance, bounded timeout/output, validated maximum concurrency, and exact task resource locks. The Herdr adapter runs it with `pane run` in an owned non-agent pane, shares lease/member capacity and lock ownership with delegated work, and returns redacted process/output/exit evidence. Ordinary command jobs have no agent lifecycle and never claim task success from exit zero; the main controller retains oracle judgment.
 

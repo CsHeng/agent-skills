@@ -9,20 +9,19 @@ When prose, diagrams, and runtime behavior disagree, resolve drift in this order
 1. `contracts/workflow-modes.toml` defines mode requirements and phase shape.
 2. `contracts/lifecycle.toml` defines kernel membership and repository-wide defaults.
 3. `contracts/skills.toml` defines skill exposure, activation modes, default roles, compatibility successors, permissions, provider projection capabilities, and installed contract pointers.
-4. `src/skills/session/use-coding-skills/references/routing.toml` defines semantic trigger-case ownership, installed discovery behavior, phase-to-owner mapping, review evaluators, support routes, composition, and the host-wrapper boundary.
-5. `src/skills/workflows/implement-change/references/workflow.toml` defines the invocation subgraph and repair metadata that must travel with the installed controller.
-6. `src/skills/workflows/implement-change/references/repair-loop.md` explains the controller's repair semantics.
+4. `skills/use-coding-skills/references/routing.toml` defines semantic trigger-case ownership, installed discovery behavior, phase-to-owner mapping, review evaluators, support routes, composition, and the host-wrapper boundary.
+5. `skills/implement-change/references/workflow.toml` defines the invocation subgraph and repair metadata that must travel with the installed controller.
 7. The PlantUML files in `diagrams/` and the rendered SVG files in `generated/` are generated views for humans and must not be edited by hand.
 
 `docs/plans/` records design and implementation history. It is useful for rationale and dispute resolution but is not current runtime truth.
 
 ## Installed Surface
 
-Claude Code and Codex retain their native plugin marketplaces and consume the same generated public `skills/` inventory. Other agents may consume that payload through optional, consumer-managed `npx skills` guidance. Lifecycle entry is through public skills and native description matching or a thin host mapping to those skills.
+Claude Code and Codex retain their native plugin marketplaces and consume the same canonical authored `skills/` inventory. Other agents may consume that payload through optional, consumer-managed `npx skills` guidance. Lifecycle entry is through public skills and native description matching or a thin host mapping to those skills.
 
 Activation intent is authored once in `contracts/skills.toml`. Generation projects Codex `policy.allow_implicit_invocation` from the contract-level mode table: `native`, `conditional`, and `baseline` allow implicit invocation, while `controller` and `explicit` do not. The shared `SKILL.md` payload remains provider-neutral. Claude's effective visibility is recorded as `default-visible`; the repository does not claim an unsupported per-skill Claude visibility switch.
 
-Each runner-owning workflow carries its own generated `scripts/harness/` runtime bundle sourced from `src/runtime/harness/`. Runtime helpers are not separately discoverable skills, and workflow execution does not depend on a provider plugin root or a sibling support skill.
+The nested authored tree generates one root-flat 39-skill payload. Runtime helpers are not separately discoverable skills: one authored `src/runtime/harness/` package is materialized inside each of six runtime owners, so an installed lifecycle skill resolves its own `scripts/harness/cli.py` without a provider plugin root or sibling support skill.
 
 ## Lifecycle Shape
 
@@ -78,11 +77,11 @@ Reverse calls from evaluators or gates into `implement-change` are forbidden. Th
 
 After every planned task is controller-converged and implementation review and verification pass, `implement-change` records an immutable execution result bound to the approved design and plan, the canonical task ledger, review and verification references, the allowed touch set, and the declared stable-truth refs. A truth-affecting result continues directly to controller-authorized `sync-truth` preparation and stops at the pending truth approval gate; it does not ask for close first. A non-truth-affecting result may advance directly to close approval.
 
-`close-change` derives eligibility only from the approved plan, immutable execution result, and, when required, the exact approved truth-sync artifact. Pending, missing, invalid, or mismatched evidence routes to its owning upstream phase. Successful judgment produces `terminal_state: closed` with `next_entry: null`; there is no successful `close-change` self-route.
+`truth-sync evaluate` accepts a version-3 truth artifact whose approval status and execution-result and ledger digests are validated rather than caller booleans. `close-change` derives eligibility from a version-3 close artifact and its exact digest-linked approved truth artifact. Pending, missing, invalid, or mismatched evidence routes to its owning upstream phase. Successful judgment produces `terminal_state: closed` with `next_entry: null`; there is no successful `close-change` self-route.
 
 ## Optional Exact External Files
 
-Repository writes and exact external-file writes are separate authorization channels. Repository `impl_file_refs`, `test_file_refs`, and `allowed-touch-set` retain their existing relative-path semantics. An approved design and plan may additionally declare `external_impl_file_refs` under `external_touch_policy: exact-existing-files-v1`; the runner derives a separate `allowed-external-touch-set` and requires exact design-to-plan-to-task containment. Field absence normalizes to an empty external set, so legacy plans, ledgers, delegated envelopes, and repository-only execution retain their established behavior.
+Repository writes and exact external-file writes are separate authorization channels. Repository `impl_file_refs`, `test_file_refs`, and the derived touch set retain relative-path semantics. A version-3 design, plan, and task declare `external_impl_file_refs` explicitly; the compiler derives a separate external touch set and requires exact design-to-plan-to-task containment. Repository-only work declares an empty external set, and legacy artifact versions are rejected without a compatibility parser.
 
 The channel is bootstrapped in two units. E1 is repository-only: it installs and verifies the contract, broker, state model, lifecycle validation, and generated bundles without naming or changing an external target. Only a later separately reviewed and approved E2 plan may consume that capability. An external task is always main-controller-owned, serial, non-delegated, bound to the controller checkout, and protected by named resource locks. It never enters a worker, explorer, command-job, parallel batch, or backend envelope.
 
@@ -94,7 +93,7 @@ Recovery is fix-forward within the same exact ref set: replay the persisted stag
 
 ## Runtime Binding Backends
 
-The controller's `controller-binding-envelope` operation builds one backend-neutral core — controller identity and nonce, plan and ledger digests, binding kind, the immutable task projection or hashed review brief, derived runtime role, semantic profiles, isolation, touch set, resource locks, batch provenance, and model policy — and projects it onto a selected backend. `--backend codex-native` emits a `schema_version: 2` envelope of that core plus a codex extension; `--backend herdr` and the flag-absent default emit the unchanged byte-compatible `schema_version: 1` Herdr wire shape. The neutral core is the only surface reusable contracts may reference; backend extensions record runtime evidence only, and no backend may rewrite the approved task topology, delegation policy, isolation, locks, touch sets, or oracles.
+The controller's `execute bind` operation builds one backend-neutral core — controller identity and nonce, plan and ledger digests, binding kind, the immutable task projection or hashed review brief, derived runtime role, semantic profiles, isolation, touch set, resource locks, batch provenance, and model policy — and projects it onto a selected backend. Codex-native is the flag-absent `schema_version: 2` default; `--backend herdr` retains the explicit byte-compatible `schema_version: 1` wire shape. The neutral core is the only surface reusable contracts may reference; backend extensions record runtime evidence only, and no backend may rewrite the approved task topology, delegation policy, isolation, locks, touch sets, or oracles.
 
 ### Codex-Native Backend
 
@@ -119,10 +118,6 @@ Each run creates only a no-focus background tab and its recorded panes in the ca
 Ordinary command jobs use the same controller-issued provenance and lease admission but are not agents. Their owner-only envelope fixes the checkout, literal argv, timeout, output bound, maximum concurrency, task-or-gate provenance, and resource locks while explicitly denying task selection, ledger mutation, review, repair, lifecycle, and task-success authority. Every command member counts against that validated capacity. The adapter sends one shell-safe command through positional `pane run`, records a unique process marker, waits for a unique completion marker with `pane wait-output`, and returns byte-bounded redacted output, process, and exit evidence. Exit zero is evidence only; the main controller still validates the declared oracle and converges the task.
 
 Automated acceptance uses the repository's fake Herdr executable and must not connect to a live Herdr server. Live acceptance is a separately authorized user-run operation whose created resources must be recorded and cleaned without touching unrelated workspaces, tabs, or panes.
-
-### Delegation Decision Horizon
-
-Delegated execution remains experimental. The decision horizon is a three-way comparison — the codex-native backend, the Herdr adapter, and plain main-agent serial execution — judged on the existing evidence standard of three repository-local user-run trials across the candidate paths. Only that trial evidence can justify first-class controller integration, a persisted plan role, a preferred-backend default, or a generic multi-backend interface; deterministic fixture suites (the fake Herdr executable and the codex-agents fixture matrix) gate correctness but do not decide the horizon.
 
 ## Conditional Parallel Execution
 
@@ -165,7 +160,7 @@ Only `implement-change` mutates implementation state inside this loop. `review-i
 
 Native matching can compose one primary workflow with matching policy overlays, such as `review-change` with `review-implementation` and `go-guidelines` for a Go implementation review. When a host needs deterministic entry, its thin mapping points only to public skill IDs or `use-coding-skills`; the installed routing and controller contracts remain authoritative.
 
-Compatibility IDs remain explicit entry points only: `clean-architecture` hands off to `architecture-patterns`, `quality-standards` to `development-standards`, and `security-logging` to `logging-standards`. Public IDs remain stable while their successors own the durable guidance and native semantic cases.
+The three retired compatibility aliases are absent. Their successor owners remain `architecture-patterns`, `development-standards`, and `logging-standards`.
 
 ## Maintenance
 
@@ -175,7 +170,7 @@ Regenerate the diagrams and their tracked SVG renderings after changing routing,
 python3 scripts/generate-workflow-diagrams.py
 ```
 
-SVG rendering requires `plantuml` on `PATH`. The optional pre-commit hook (`bash hooks/install-git-hooks.sh`) regenerates and stages both automatically when diagram inputs are part of a commit.
+SVG rendering requires `plantuml` on `PATH`. The optional pre-commit hook (`bash hooks/install-git-hooks.sh`) delegates to the strict aggregate check and never regenerates or stages files.
 
 Validate that diagrams are current and syntactically valid:
 

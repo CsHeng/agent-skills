@@ -1,5 +1,5 @@
 @startuml
-' Generated from contracts/skills.toml and src/skills/session/use-coding-skills/references/routing.toml; do not edit by hand.
+' Generated from contracts/skills.toml and skills/use-coding-skills/references/routing.toml; do not edit by hand.
 title Skill Activation And Trigger Ownership
 left to right direction
 skinparam shadowing false
@@ -53,12 +53,9 @@ package "Activation: controller" as n_activation_controller {
 }
 
 package "Activation: explicit" as n_activation_explicit {
-  rectangle "clean-architecture\n[helper]\n(compatibility)" as n_skill_clean_architecture <<compatibility>>
   rectangle "codex-session-recovery\n[primary]" as n_skill_codex_session_recovery
   rectangle "git-worktrees\n[primary]" as n_skill_git_worktrees
   rectangle "implement-change-via-herdr\n[overlay]" as n_skill_implement_change_via_herdr
-  rectangle "quality-standards\n[helper]\n(compatibility)" as n_skill_quality_standards <<compatibility>>
-  rectangle "security-logging\n[helper]\n(compatibility)" as n_skill_security_logging <<compatibility>>
   rectangle "skill-miner\n[primary]" as n_skill_skill_miner
   rectangle "smart-squash\n[primary]" as n_skill_smart_squash
 }
@@ -138,9 +135,6 @@ n_case_explicit_skill_history_mining --> n_skill_skill_miner : case owner
 n_case_explicit_codex_session_recovery --> n_skill_codex_session_recovery : case owner
 n_case_explicit_git_worktree_operation --> n_skill_git_worktrees : case owner
 n_case_explicit_unpushed_history_squash --> n_skill_smart_squash : case owner
-n_skill_clean_architecture ..> n_skill_architecture_patterns : superseded_by
-n_skill_quality_standards ..> n_skill_development_standards : superseded_by
-n_skill_security_logging ..> n_skill_logging_standards : superseded_by
 n_skill_review_change --> n_skill_review_design : controller evaluator\nreview-design
 n_skill_review_change --> n_skill_review_implementation : controller evaluator\nposthoc-review, review, review-impl
 n_skill_review_change --> n_skill_review_plan : controller evaluator\nreview-plan
@@ -153,7 +147,6 @@ n_response_composition ..> n_skill_output_styles : rendering baseline
 legend right
   solid case edge = one semantic case owner
   dotted overlay edge = conditional composition
-  compatibility = explicit public handoff retained
   lexical hints are intentionally not rendered as routing logic
 endlegend
 @enduml

@@ -20,24 +20,20 @@ Define the change boundary before planning or implementation.
 - an approved design already exists and the next step is planning
 - the task is already in review, truth sync, or close
 
-## Bundled Runtime
+## Shared Runtime
 
 Resolve the installed helper relative to this `SKILL.md` before changing into the target repository. `SKILL_ROOT` is a local binding to the activated skill directory, not a host-provided environment variable:
 
 ```bash
 SKILL_ROOT="/absolute/path/to/design-change"
-RUNNER="$(realpath "$SKILL_ROOT/scripts/harness/design-runner.sh")"
-[[ -f "$RUNNER" ]] || exit 1
+HARNESS_CLI="$(realpath "$SKILL_ROOT/scripts/harness/cli.py")"
+[[ -f "$HARNESS_CLI" ]] || exit 1
 ```
 
-Use the runner to record the entry phase, classify the change, derive the default artifact path when needed, validate the completed design, and read its approval state:
+Use the shared CLI namespace for each complete artifact operation:
 
 ```bash
-bash "$RUNNER" entry-phase
-bash "$RUNNER" classify "<request-kind>" "<truth-impact>" "<boundary-impact>" "<truth-repair>"
-bash "$RUNNER" default-path "<topic>"
-bash "$RUNNER" validate "<design-file>"
-bash "$RUNNER" approval-status "<design-file>"
+python3 "$HARNESS_CLI" design validate "<design-file>"
 ```
 
 The classification record contains `request_kind`, `change_class`, `design_strength`, `truth_impact`, `boundary_impact`, and `recommended_next_phase`. The design artifact contains goals, non-goals, boundaries, validation, recovery policy, `Implementation Surface`, and `approval_status: pending` before review. Validation and mandatory `review-change` review both pass before the human approval gate.

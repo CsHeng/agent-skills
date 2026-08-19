@@ -1,4 +1,0 @@
-interface:
-  display_name: "Security Logging (Compatibility)"
-  short_description: "Explicit handoff to logging-standards"
-  default_prompt: "Use $security-logging only as an explicit compatibility handoff to $logging-standards."

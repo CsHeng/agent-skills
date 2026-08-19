@@ -1,0 +1,4 @@
+[bundles.harness]
+source = "src/runtime/harness"
+destination = "scripts/harness"
+files = ["__init__.py", "artifacts.py", "binding.py", "cli.py", "external_touch.py", "ledger.py"]

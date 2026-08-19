@@ -8,12 +8,13 @@ For AI-facing repository rules and the docs truth boundary, see `AGENTS.md`.
 
 ## Source And Install Surfaces
 
-- `src/skills/` is the source-of-truth skill tree.
-- `contracts/skills.toml` is the source-of-truth exposure, activation-mode, default-role, compatibility-successor, and provider-projection contract.
-- `src/skills/session/use-coding-skills/references/routing.toml` is the install-required semantic trigger-case, discovery, phase-owner, review-evaluator, support-route, composition, and host-wrapper contract.
-- `src/runtime/harness/` is non-discoverable deterministic lifecycle and artifact-DAG runtime source.
-- `skills/` is tracked generated root-flat public payload for current plugin manifests and optional external discovery. Runner-owning skills carry their own `scripts/harness/` bundle.
-- `.dist/claude/` and `.dist/codex/` are ignored, reproducible target-specific install surfaces generated only when needed.
+- `src/skills/` is the nested authored skill tree.
+- `skills/` is the generated root-flat 39-skill payload consumed by both maintained plugin manifests and standalone skill installers.
+- `contracts/skills.toml` is the source-of-truth source mapping, exposure, activation-mode, default-role, runtime ownership, and provider-projection contract keyed by public skill ID.
+- `contracts/runtime-bundles.toml` declares the exact production Python files copied into runtime-owning generated skills.
+- `skills/use-coding-skills/references/routing.toml` is the semantic trigger-case, discovery, phase-owner, review-evaluator, support-route, composition, and host-wrapper contract.
+- `src/runtime/harness/` is the single authored non-discoverable deterministic lifecycle runtime; six generated lifecycle skills carry it under `scripts/harness/`.
+- `.dist/` is ignored inert local output and is never generated or validated by this repository.
 - `skills.index.json` is generated from `contracts/skills.toml`.
 
 Regenerate and validate with:
@@ -25,7 +26,7 @@ python3 scripts/generate-workflow-diagrams.py
 bash scripts/check.sh
 ```
 
-`scripts/check.sh` generates Claude and Codex install surfaces in a temporary directory and validates them without requiring or modifying `.dist/`. Generate a local external surface explicitly with `python3 scripts/flatten-skills.py --target claude` or `--target codex`.
+`scripts/check.sh` is a strict serial checker: generated root-flat parity, standalone closure, contracts, index, diagrams, Ruff, ty, pytest, and Markdown each run once. It leaves ignored `.dist/` untouched.
 
 The deterministic harness requires GNU/Homebrew Bash 4 or newer. On macOS, ensure Homebrew `bash` and GNU coreutils (`realpath --relative-to`) precede system tools on `PATH`.
 
@@ -50,21 +51,13 @@ Kernel defaults:
 - artifact handoff is gated by explicit `approval_status`, not by prose reminders alone
 - when a gate already determines the next state, the harness reports that state instead of asking whether to continue
 
-Harness runner coverage:
-- `design-runner.sh`: design artifact pathing, validation, classification, and approval status
-- `plan-runner.sh`: plan artifact pathing, upstream design linkage, versioned DAG and named-batch validation, and approval status
-- `execute-runner.sh`: approved-plan validation, immutable plan-ledger checks, bounded runtime binding through one backend-neutral controller envelope core projected onto the codex-native (`schema_version: 2`) or byte-compatible Herdr (`schema_version: 1`) backend, typed serial fallback or capacity/conflict stops, touch set, verification scope, truth-sync requirement, and evidence-based recovery route
-  - task-ledger ready-set and group-convergence helpers, workspace-mode detection, and deterministic execution-result reporting
-  - an optional `exact-existing-files-v1` external channel with a separate exact touch set, main-controller-only serial broker, durable baseline/staging/prepared/applied/cleanup evidence, and metadata-only lifecycle results
-- `recovery-routing.sh`: evidence-class routing that never widens lifecycle phase from failure count alone
+`src/runtime/harness/cli.py` owns design and plan validation, immutable plan compilation, ledger state and evidence operations, binding envelopes, truth-sync evaluation, and close evaluation. Each generated runtime owner invokes the byte-identical CLI bundled inside its own skill directory.
 
 Lower-plane skills stay available as components the kernel can call, not as competing top-level authorities.
 
-Runtime binding offers two backends under the same controller. The codex-native backend binds delegated reviewer, explorer, and worker roles through user-owned, untracked Codex Multi-Agent role agent files with pre-emission capability validation and distinct typed stops; those files pin sandbox and behavior but never model or reasoning. Codex-native physical selection starts from the parent session, then uses no override, an effort-only uplift, or model plus explicit effort under user-owned minimum policy. The backend records the parent and active minimum and rejects any explicit, inherited, or default effort below either boundary. The Herdr backend is `implement-change-via-herdr`, an explicit Tool-plane overlay whose backend-specific allocation policy remains independent. Both compose `implement-change`, which remains the sole lifecycle controller and final judge. Plans keep provider-neutral task profiles and cannot change topology, authority, or oracles through runtime routing.
+Runtime binding defaults to codex-native (`schema_version: 2`), which binds delegated roles through user-owned, untracked Codex Multi-Agent role files with pre-emission capability validation and typed stops. `implement-change-via-herdr` remains an explicit Tool-plane overlay with its byte-compatible `schema_version: 1` adapter contract. Both compose `implement-change`, which remains the sole lifecycle controller and final judge; plans keep provider-neutral task profiles and cannot change topology, authority, or oracles through runtime routing.
 
-Delegated execution is an experimental path with a three-way decision horizon: the codex-native backend, the Herdr adapter, and plain main-agent serial execution are compared on the same three-trial user-run evidence standard before any first-class integration decision. Deterministic automated acceptance uses repository fixtures (the fake Herdr executable and the codex-agents fixture matrix); live acceptance is separately authorized, resource-owned evidence and never part of the ordinary automated suite.
-
-External-file capability and consumption use separate approvals. A repository-only E1 bootstrap installs and verifies the optional broker without touching an external target; only a later independently reviewed and approved E2 plan may declare exact existing external files. Plans without the field keep their legacy behavior. Any request for file creation, deletion, glob or directory authority, generic editing, caller-selected rename, metadata change, delegated/parallel external writes, automatic rollback, or non-metadata evidence requires a new design or plan boundary rather than an implicit upgrade.
+External-file capability and consumption use separate approvals. A repository-only E1 bootstrap installs and verifies the optional broker without touching an external target; only a later independently reviewed and approved E2 plan may declare exact existing external files. Repository-only version-3 plans declare an empty external set; legacy artifact versions are rejected. Any request for file creation, deletion, glob or directory authority, generic editing, caller-selected rename, metadata change, delegated or parallel external writes, automatic rollback, or non-metadata evidence requires a new design or plan boundary rather than an implicit upgrade.
 
 ## Optional Session Routing And Style
 
@@ -80,22 +73,22 @@ Each public skill declares one activation mode and one default role in `contract
 | `native` | Direct semantic owner | implicit allowed |
 | `conditional` | Predicate-matched overlay or focused owner | implicit allowed |
 | `controller` | Reached through lifecycle or review control | implicit disabled |
-| `explicit` | Explicit selection or compatibility handoff | implicit disabled |
+| `explicit` | Explicit selection | implicit disabled |
 | `baseline` | Shared rendering composition | implicit allowed |
 
 Codex invocation policy is generated from this table into flat install surfaces; it is not authored independently per skill. Claude's shared payload remains provider-compatible and reports effective `default-visible` state rather than claiming an unsupported per-skill visibility switch.
 
 ![Skill activation and trigger ownership](docs/architecture/generated/skill-trigger-ownership.svg)
 
-The compatibility IDs `clean-architecture`, `quality-standards`, and `security-logging` remain explicitly invokable, but their durable owners are `architecture-patterns`, `development-standards`, and `logging-standards`. Public skill IDs and install targets remain unchanged.
+The three retired compatibility aliases are absent. Their durable owners are `architecture-patterns`, `development-standards`, and `logging-standards`.
 
 ## Distribution
 
 - Claude Code uses the maintained local marketplace and plugin path exposed by `.claude-plugin/` and `install.sh`.
 - Codex uses the maintained local marketplace and plugin path exposed by `.codex-plugin/`, `.codex-marketplace/`, and `install-codex.sh`.
-- Other coding agents may optionally discover and install the public payload with `npx skills@latest add CsHeng/agent-skills`.
+- Other coding agents may optionally use `npx skills@latest add CsHeng/agent-skills`; every selected runtime-owning skill includes its executable bundle, while destination and installation lifecycle remain advisory and consumer-managed.
 
-The `npx skills` path is guidance, not a repository-owned installer contract. This repository does not restrict selected agents, scopes, destinations, or copy/symlink modes; it does not inspect duplicate exposure or promise that independently installed copies coexist. Selection, installation, updates, removal, cleanup, and any coexistence issues belong to the consumer and the upstream CLI. Public skill names remain unchanged.
+The `npx skills` path is guidance, not a repository-owned installer contract. This repository does not restrict selected agents, scopes, destinations, or copy/symlink modes; it does not inspect duplicate exposure or promise that independently installed copies coexist. Selection, installation, updates, removal, cleanup, and any coexistence issues belong to the consumer and the upstream CLI. The retained 39 public names remain stable; `clean-architecture`, `quality-standards`, and `security-logging` are retired.
 
 ## Skill Planes
 
@@ -111,9 +104,8 @@ Lower-plane skills stay available as components the kernel can call, not as comp
 | Policy | Language, security, quality, and logging rules | `python-guidelines`, `go-guidelines`, `shell-guidelines`, `security-guardrails`, `sops-age-guardrails`, `development-standards` |
 | Tool | Narrow tool adapters and operational helpers | `implement-change-via-herdr`, `web-fetch`, `docker-multiarch-build`, `codex-session-recovery`, `smart-commit` |
 | Manual tools | Explicit user request only, never implicit | `git-worktrees`, `smart-squash` |
-| Compatibility | Explicit retained IDs that hand off to a successor | `clean-architecture`, `quality-standards`, `security-logging` |
 
-The authoritative inventory with roles, permissions, semantic requirements, and install targets is `contracts/skills.toml`; the rendered map above is generated from it by `scripts/generate-workflow-diagrams.py`. Harness runtime is bundled into each runner-owning skill and is not exposed as a separate skill. Each skill's own `SKILL.md` under `src/skills/` is the deep-dive entry for how that skill works.
+The authoritative inventory with roles, permissions, source mappings, runtime ownership, and semantic requirements is `contracts/skills.toml`; the rendered map above is generated from it by `scripts/generate-workflow-diagrams.py`. `src/runtime/harness/` is authored and non-discoverable. Each generated `skills/<id>/SKILL.md` is the public deep-dive entry for that skill.
 
 ## Docs
 

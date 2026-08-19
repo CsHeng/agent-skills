@@ -4,17 +4,34 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-if ! git check-ignore -q .dist/claude/skills; then
-  echo "ERROR: .dist must remain ignored generated output" >&2
+cache_root="${HOME:?HOME must be set}/.cache"
+export UV_CACHE_DIR="$cache_root/uv/market-csheng-harness"
+export UV_PROJECT_ENVIRONMENT="$cache_root/uv-projects/market-csheng-harness"
+export RUFF_CACHE_DIR="$cache_root/ruff/market-csheng-harness"
+export PYTHONPYCACHEPREFIX="$cache_root/python/market-csheng-harness"
+export PYTEST_CACHE_DIR="$cache_root/pytest/market-csheng-harness"
+export PYTHONDONTWRITEBYTECODE=1
+
+check_python="${CHECK_PYTHON:-python3}"
+check_uv="${CHECK_UV:-uv}"
+
+run_gate() {
+  local label="$1"
+  shift
+  printf 'check: %s\n' "$label" >&2
+  "$@"
+}
+
+if ! git check-ignore -q .dist/; then
+  echo "ERROR: .dist must remain an ignored local output boundary" >&2
   exit 1
 fi
 
-if [[ -n "$(git ls-files -- .dist)" ]]; then
+if git ls-files --error-unmatch .dist >/dev/null 2>&1; then
   echo "ERROR: .dist must not contain tracked files" >&2
   exit 1
 fi
 
-# Agents may exec skill/runtime shells directly; tracked .sh must keep git mode 100755.
 non_exec_shells="$(git ls-files -s -- '*.sh' | awk '$1 != "100755" { print $4 }')"
 if [[ -n "$non_exec_shells" ]]; then
   echo "ERROR: tracked .sh files must be mode 100755 (git update-index --chmod=+x):" >&2
@@ -22,51 +39,12 @@ if [[ -n "$non_exec_shells" ]]; then
   exit 1
 fi
 
-install_surface_tmp="$(mktemp -d "${TMPDIR:-/tmp}/market-csheng-install-surfaces.XXXXXX")"
-trap 'rm -rf "$install_surface_tmp"' EXIT
-
-PYTHONDONTWRITEBYTECODE=1 \
-PYTHONPYCACHEPREFIX="$HOME/.cache/python/market-csheng" \
-python3 scripts/generate-skills-index.py --check
-
-PYTHONDONTWRITEBYTECODE=1 \
-PYTHONPYCACHEPREFIX="$HOME/.cache/python/market-csheng" \
-python3 scripts/check-contracts.py
-
-PYTHONDONTWRITEBYTECODE=1 \
-PYTHONPYCACHEPREFIX="$HOME/.cache/python/market-csheng" \
-python3 scripts/generate-workflow-diagrams.py --check
-
-PYTHONDONTWRITEBYTECODE=1 \
-PYTHONPYCACHEPREFIX="$HOME/.cache/python/market-csheng" \
-python3 scripts/flatten-skills.py --target claude --dest "$install_surface_tmp/claude"
-
-PYTHONDONTWRITEBYTECODE=1 \
-PYTHONPYCACHEPREFIX="$HOME/.cache/python/market-csheng" \
-python3 scripts/check-install-surface.py --target claude --dest "$install_surface_tmp/claude"
-
-PYTHONDONTWRITEBYTECODE=1 \
-PYTHONPYCACHEPREFIX="$HOME/.cache/python/market-csheng" \
-python3 scripts/flatten-skills.py --target codex --dest "$install_surface_tmp/codex"
-
-PYTHONDONTWRITEBYTECODE=1 \
-PYTHONPYCACHEPREFIX="$HOME/.cache/python/market-csheng" \
-python3 scripts/check-install-surface.py --target codex --dest "$install_surface_tmp/codex"
-
-PYTHONDONTWRITEBYTECODE=1 \
-PYTHONPYCACHEPREFIX="$HOME/.cache/python/market-csheng" \
-python3 scripts/check-install-surface.py --target root-flat
-
-PYTHONDONTWRITEBYTECODE=1 \
-PYTHONPYCACHEPREFIX="$HOME/.cache/python/market-csheng" \
-python3 scripts/check-fixtures.py
-
-PYTHONDONTWRITEBYTECODE=1 \
-PYTHONPYCACHEPREFIX="$HOME/.cache/python/market-csheng" \
-python3 -m unittest discover -s tests -p 'test_*.py'
-
-for smoke_test in src/runtime/harness/smoke-test/test-*.sh; do
-  bash "$smoke_test"
-done
-
-bash scripts/check-review-boundary.sh
+run_gate contract-package "$check_python" scripts/check-contracts.py
+run_gate generated-root-flat "$check_python" scripts/flatten-skills.py --target root-flat --check
+run_gate install-surface "$check_python" scripts/check-install-surface.py
+run_gate index "$check_python" scripts/generate-skills-index.py --check
+run_gate diagrams "$check_python" scripts/generate-workflow-diagrams.py --check
+run_gate ruff "$check_uv" run ruff check src/runtime/harness scripts/skill_distribution.py scripts/flatten-skills.py scripts/check-install-surface.py
+run_gate ty "$check_uv" run ty check src/runtime/harness scripts/skill_distribution.py scripts/flatten-skills.py scripts/check-install-surface.py
+run_gate pytest "$check_uv" run pytest -o "cache_dir=$PYTEST_CACHE_DIR"
+run_gate markdown "$check_python" src/skills/disciplines/organize-docs/scripts/normalize-markdown-prose.py --root "$repo_root" --immutable-manifest contracts/markdown-prose.toml --mode check

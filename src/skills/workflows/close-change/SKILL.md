@@ -19,22 +19,21 @@ Judge whether the current change can finish.
 - the task is still in design, planning, execution, or review
 - the request only asks for local git status or cleanup advice
 
-## Bundled Runtime
+## Shared Runtime
 
 Resolve the installed helper relative to this `SKILL.md` before changing into the target repository. `SKILL_ROOT` is a local assignment to the activated skill directory, not an ambient host variable:
 
 ```bash
 SKILL_ROOT="/absolute/path/to/close-change"
-RUNNER="$(realpath "$SKILL_ROOT/scripts/harness/close-runner.sh")"
-[[ -f "$RUNNER" ]] || exit 1
+HARNESS_CLI="$(realpath "$SKILL_ROOT/scripts/harness/cli.py")"
+[[ -f "$HARNESS_CLI" ]] || exit 1
 ```
 
 Validate the approved evidence package and emit the deterministic decision:
 
 ```bash
-bash "$RUNNER" entry-phase
-bash "$RUNNER" validate "<merge|release|cleanup>" "<approved-plan>" "<execution-result-json>" "<truth-sync-artifact-if-required>"
-bash "$RUNNER" decision "<merge|release|cleanup>" "<approved-plan>" "<execution-result-json>" "<truth-sync-artifact-if-required>"
+python3 "$HARNESS_CLI" close validate "<close-artifact>"
+python3 "$HARNESS_CLI" close evaluate "<ledger-file>" "<close-artifact>"
 ```
 
 Close mode is `merge`, `release`, or `cleanup`, with `cleanup` as the default when omitted. The mode is judgment metadata only: this skill performs none of those external actions. Closure derives review, verification, truth requirement, stable truth refs, and artifact identities from the approved plan and immutable execution result. Caller-supplied status hints are non-authoritative and mismatches fail closed. If validation fails, follow the returned `plan-change`, `implement-change`, or `sync-truth` route.

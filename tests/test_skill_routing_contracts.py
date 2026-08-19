@@ -30,11 +30,11 @@ class RoutingContractTests(unittest.TestCase):
         self.root = Path(self.temp_dir.name)
         routing_entry = self.skills["use-coding-skills"]
         self.contract_path = (
-            self.root / routing_entry["source"] / routing_entry["routing_contract"]
+            self.root / "skills" / "use-coding-skills" / routing_entry["routing_contract"]
         )
         self.contract_path.parent.mkdir(parents=True)
         source_path = (
-            REPO_ROOT / routing_entry["source"] / routing_entry["routing_contract"]
+            REPO_ROOT / "skills" / "use-coding-skills" / routing_entry["routing_contract"]
         )
         self.contract_path.write_text(
             source_path.read_text(encoding="utf-8"), encoding="utf-8"
@@ -92,9 +92,7 @@ class RoutingContractTests(unittest.TestCase):
     def test_code_simplification_owns_read_only_audit_route(self) -> None:
         self.assertIn("code-simplification", self.skills)
         skill = self.skills["code-simplification"]
-        self.assertEqual(
-            "src/skills/disciplines/code-simplification", skill["source"]
-        )
+        self.assertTrue((REPO_ROOT / "skills/code-simplification/SKILL.md").is_file())
         self.assertEqual("discipline", skill["category"])
         self.assertEqual("native", skill["activation_mode"])
         self.assertEqual("primary", skill["default_role"])
@@ -195,7 +193,7 @@ class RoutingContractTests(unittest.TestCase):
         self.assertTrue(any("unknown owner" in error for error in errors))
         self.assertTrue(any("lifecycle owner cannot be an overlay" in error for error in errors))
 
-    def test_controller_evaluators_and_compatibility_helpers_cannot_own_cases(self) -> None:
+    def test_controller_evaluators_and_retired_skills_cannot_own_cases(self) -> None:
         routing = copy.deepcopy(self.routing_contract)
         routing["trigger_cases"][0]["owner"] = "review-implementation"
         routing["trigger_cases"][1]["owner"] = "clean-architecture"
@@ -203,7 +201,7 @@ class RoutingContractTests(unittest.TestCase):
         errors = self.validate_trigger_cases(routing)
 
         self.assertTrue(any("controller evaluator cannot own" in error for error in errors))
-        self.assertTrue(any("compatibility helper cannot own" in error for error in errors))
+        self.assertTrue(any("unknown owner" in error for error in errors))
 
     def test_uncovered_native_skill_is_rejected(self) -> None:
         routing = copy.deepcopy(self.routing_contract)

@@ -17,13 +17,13 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = (
     ROOT
-    / "src/skills/tools/implement-change-via-herdr/scripts/herdr-runtime-adapter.py"
+    / "skills/implement-change-via-herdr/scripts/herdr-runtime-adapter.py"
 )
 FAKE_HERDR = ROOT / "tests/fixtures/herdr/fake-herdr.py"
 SKILLS_CONTRACT = ROOT / "contracts/skills.toml"
-ROUTING_CONTRACT = ROOT / "src/skills/session/use-coding-skills/references/routing.toml"
-PLAN_SKILL = ROOT / "src/skills/workflows/plan-change/SKILL.md"
-IMPLEMENT_SKILL = ROOT / "src/skills/workflows/implement-change/SKILL.md"
+ROUTING_CONTRACT = ROOT / "skills/use-coding-skills/references/routing.toml"
+PLAN_SKILL = ROOT / "skills/plan-change/SKILL.md"
+IMPLEMENT_SKILL = ROOT / "skills/implement-change/SKILL.md"
 
 
 class HerdrAdapterContractTests(unittest.TestCase):
@@ -1040,9 +1040,7 @@ class HerdrWorkflowContractTests(unittest.TestCase):
         self.assertEqual(
             {
                 "source": "src/skills/tools/implement-change-via-herdr",
-                "public_id": "implement-change-via-herdr",
                 "category": "tool",
-                "install": ["claude", "codex", "root-flat"],
                 "lifecycle_owner": False,
                 "activation_mode": "explicit",
                 "default_role": "overlay",

@@ -52,7 +52,7 @@ The execution tail uses explicit evidence states rather than conversation-memory
 implementation-pending -> task-complete -> truth-sync-pending -> ready-for-close -> closed
 ```
 
-`implement-change` emits immutable execution evidence only after the approved task ledger has controller convergence, oracle, and integration proof and the bounded review and verification gates pass. If the approved design has medium or high truth impact, the approved version-2 plan must declare non-empty stable truth refs inside its immutable touch set; missing or invalid scope routes to `plan-change` with `truth_sync_scope_required`.
+`implement-change` emits immutable execution evidence only after the approved task ledger has controller convergence, oracle, and integration proof and the bounded review and verification gates pass. If the approved design has medium or high truth impact, the approved version-3 plan must declare non-empty stable truth refs inside its immutable touch set; missing or invalid scope routes to `plan-change` with `truth_sync_scope_required`.
 
 Truth-affecting work advances to controller-authorized `sync-truth` preparation. `sync-truth` may update only the declared stable refs, may compose `organize-docs` only for supported structured docs-governance predicates, and then stops at the explicit human truth approval gate. Non-truth-affecting work can enter `ready-for-close` directly.
 

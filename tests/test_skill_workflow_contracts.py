@@ -62,26 +62,20 @@ class WorkflowContractTests(unittest.TestCase):
         self.root = Path(self.temp_dir.name)
         self.skills = {
             "implement-change": {
-                "source": "src/skills/workflows/implement-change",
-                "public_id": "implement-change",
                 "category": "workflow",
                 "lifecycle_owner": True,
                 "runtime_contract": "references/workflow.toml",
             },
             "review-change": {
-                "source": "src/skills/workflows/review-change",
-                "public_id": "review-change",
                 "category": "workflow",
                 "lifecycle_owner": True,
             },
             "review-implementation": {
-                "source": "src/skills/review-components/review-implementation",
-                "public_id": "review-implementation",
                 "category": "review-component",
                 "lifecycle_owner": False,
             },
         }
-        self.contract_path = self.root / "src/skills/workflows/implement-change/references/workflow.toml"
+        self.contract_path = self.root / "skills/implement-change/references/workflow.toml"
         self.contract_path.parent.mkdir(parents=True)
         self.contract_path.write_text(textwrap.dedent(VALID_CONTRACT).lstrip(), encoding="utf-8")
 
@@ -120,8 +114,8 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertTrue(any("exactly one" in error for error in self.validate()))
 
     def test_repair_owners_across_two_contracts_are_rejected(self) -> None:
-        second_source = "src/skills/workflows/alternate-implement-change"
-        second_path = self.root / second_source / "references/workflow.toml"
+        second_source = "alternate-implement-change"
+        second_path = self.root / "skills" / second_source / "references/workflow.toml"
         second_path.parent.mkdir(parents=True)
         second_path.write_text(
             textwrap.dedent(VALID_CONTRACT)
@@ -131,8 +125,6 @@ class WorkflowContractTests(unittest.TestCase):
         )
         skills = copy.deepcopy(self.skills)
         skills["alternate-implement-change"] = {
-            "source": second_source,
-            "public_id": "alternate-implement-change",
             "category": "workflow",
             "lifecycle_owner": True,
             "runtime_contract": "references/workflow.toml",
@@ -157,7 +149,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertTrue(any("contains a cycle" in error for error in self.validate()))
 
     def test_execution_contract_assigns_logical_and_runtime_ownership(self) -> None:
-        contract_path = REPO_ROOT / "src/skills/workflows/implement-change/references/workflow.toml"
+        contract_path = REPO_ROOT / "skills/implement-change/references/workflow.toml"
         with contract_path.open("rb") as handle:
             contract = tomllib.load(handle)
 
@@ -169,7 +161,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertEqual(["deep", "standard", "light"], execution["reasoning_profiles"])
 
     def test_inherit_main_preserves_topology_and_conditional_fallback(self) -> None:
-        contract_path = REPO_ROOT / "src/skills/workflows/implement-change/references/workflow.toml"
+        contract_path = REPO_ROOT / "skills/implement-change/references/workflow.toml"
         with contract_path.open("rb") as handle:
             contract = tomllib.load(handle)
 
@@ -180,7 +172,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertEqual("parallel_capacity_required", execution["required_parallel_capacity_exit"])
 
     def test_native_routing_uses_parent_baseline_without_an_explorer_ceiling(self) -> None:
-        contract_path = REPO_ROOT / "src/skills/workflows/implement-change/references/workflow.toml"
+        contract_path = REPO_ROOT / "skills/implement-change/references/workflow.toml"
         with contract_path.open("rb") as handle:
             contract = tomllib.load(handle)
 
@@ -209,7 +201,7 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertNotIn(removed, explorer)
 
     def test_workers_cannot_recursively_delegate_or_assume_controller_ownership(self) -> None:
-        contract_path = REPO_ROOT / "src/skills/workflows/implement-change/references/workflow.toml"
+        contract_path = REPO_ROOT / "skills/implement-change/references/workflow.toml"
         with contract_path.open("rb") as handle:
             contract = tomllib.load(handle)
 
@@ -232,7 +224,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertEqual("implement-change", contract["repair"]["owner"])
 
     def test_external_touch_contract_is_main_owned_and_backend_excluded(self) -> None:
-        contract_path = REPO_ROOT / "src/skills/workflows/implement-change/references/workflow.toml"
+        contract_path = REPO_ROOT / "skills/implement-change/references/workflow.toml"
         with contract_path.open("rb") as handle:
             contract = tomllib.load(handle)
 
@@ -248,11 +240,11 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_external_touch_workflow_surfaces_preserve_lifecycle_ownership(self) -> None:
         surfaces = {
-            "plan": REPO_ROOT / "src/skills/workflows/plan-change/SKILL.md",
-            "implement": REPO_ROOT / "src/skills/workflows/implement-change/SKILL.md",
-            "review": REPO_ROOT / "src/skills/workflows/review-change/SKILL.md",
-            "review_impl": REPO_ROOT / "src/skills/review-components/review-implementation/SKILL.md",
-            "truth": REPO_ROOT / "src/skills/workflows/sync-truth/SKILL.md",
+            "plan": REPO_ROOT / "skills/plan-change/SKILL.md",
+            "implement": REPO_ROOT / "skills/implement-change/SKILL.md",
+            "review": REPO_ROOT / "skills/review-change/SKILL.md",
+            "review_impl": REPO_ROOT / "skills/review-implementation/SKILL.md",
+            "truth": REPO_ROOT / "skills/sync-truth/SKILL.md",
         }
         content = {name: path.read_text(encoding="utf-8") for name, path in surfaces.items()}
         self.assertIn("external_impl_file_refs", content["plan"])

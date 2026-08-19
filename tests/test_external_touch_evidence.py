@@ -13,7 +13,7 @@ from typing import Any
 from unittest import mock
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-HELPER_PATH = REPO_ROOT / "src/runtime/harness/external-touch-evidence.py"
+HELPER_PATH = REPO_ROOT / "src/runtime/harness/external_touch.py"
 SHA256_ZERO = "0" * 64
 SHA256_ONE = "1" * 64
 

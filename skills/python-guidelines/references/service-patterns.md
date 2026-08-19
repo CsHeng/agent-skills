@@ -12,7 +12,7 @@ Create a Python service with predictable structure and clean layering.
 
 ## Structure
 
-Align with clean-architecture principles:
+Align with clean-boundary principles:
 
 - handlers: transport adapters
 - services: business rules

@@ -1051,10 +1051,6 @@ def result_object(response: JsonObject) -> JsonObject:
     return as_object(result, "Herdr result")
 
 
-def result_string(response: JsonObject, key: str, label: str | None = None) -> str:
-    return as_string(value_at(result_object(response), key, label), label or key)
-
-
 def result_entity(response: JsonObject, key: str) -> JsonObject:
     return as_object(value_at(result_object(response), key, f"Herdr result {key}"), key)
 
@@ -1105,11 +1101,6 @@ def bounded_utf8_preview(value: str, max_bytes: int) -> str:
         except UnicodeDecodeError as exc:
             data = data[: exc.start]
     return ""
-
-
-def command_job_binding(envelope: JsonObject) -> bool:
-    controller = envelope.get("controller")
-    return isinstance(controller, dict) and controller.get("binding_kind") == "command-job"
 
 
 def validate_command_job_shape(
@@ -2458,13 +2449,6 @@ class Adapter:
         if self.binding_kind != "command-job":
             raise AdapterError("adapter_state_invalid", "ordinary command state is unavailable for an agent binding")
         return self.active_child(state)
-
-    def command_run_result(self, response: JsonObject) -> JsonObject:
-        result = result_object(response)
-        candidate = result.get("command_job", result.get("run", result.get("process", result)))
-        if not isinstance(candidate, dict):
-            raise AdapterError("herdr_protocol_invalid", "pane run did not return a command observation")
-        return cast(JsonObject, candidate)
 
     def command_markers(self) -> tuple[str, str]:
         nonce = string_at(self.controller, "run_nonce")

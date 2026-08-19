@@ -41,7 +41,7 @@ def controller_contract() -> tuple[Path, dict[str, Any]]:
     runtime_contract = entry.get("runtime_contract")
     if not runtime_contract:
         raise ValueError(f"missing runtime contract for {CONTROLLER_ID}")
-    path = REPO_ROOT / entry["source"] / runtime_contract
+    path = REPO_ROOT / "skills" / CONTROLLER_ID / runtime_contract
     contract = load_toml(path)
     if contract.get("workflow", {}).get("id") != CONTROLLER_ID:
         raise ValueError(f"workflow id does not match {CONTROLLER_ID}")
@@ -56,7 +56,7 @@ def routing_contract() -> tuple[Path, dict[str, Any]]:
     contract_ref = entry.get("routing_contract")
     if not contract_ref:
         raise ValueError(f"missing routing contract for {ROUTER_ID}")
-    path = REPO_ROOT / entry["source"] / contract_ref
+    path = REPO_ROOT / "skills" / ROUTER_ID / contract_ref
     contract = load_toml(path)
     if contract.get("routing", {}).get("id") != ROUTER_ID:
         raise ValueError(f"routing id does not match {ROUTER_ID}")
@@ -411,8 +411,6 @@ def render_skill_planes(skills: dict[str, Any]) -> str:
     by_category: dict[str, list[str]] = {}
     for skill_id, entry in sorted(skills.items()):
         category = entry.get("category", "unknown")
-        if category == "internal":
-            continue
         by_category.setdefault(category, []).append(skill_id)
 
     lines = [
@@ -460,7 +458,6 @@ def render_skill_planes(skills: dict[str, Any]) -> str:
             "  kernel = top-level lifecycle authority",
             "  review components = read-only evaluators",
             "  manual tools = explicit user request only",
-            "  internal runtime support is intentionally omitted",
             "endlegend",
             "@enduml",
             "",
@@ -507,11 +504,9 @@ def render_skill_trigger_ownership(
         lines.append(f'package "Activation: {mode}" as {alias("activation_" + mode)} {{')
         for skill_id, entry in members:
             role = entry.get("default_role", "unknown")
-            compatibility = "\\n(compatibility)" if entry.get("superseded_by") else ""
-            stereotype = " <<compatibility>>" if entry.get("superseded_by") else ""
             lines.append(
-                f'  rectangle "{skill_id}\\n[{role}]{compatibility}" as '
-                f'{alias("skill_" + skill_id)}{stereotype}'
+                f'  rectangle "{skill_id}\\n[{role}]" as '
+                f'{alias("skill_" + skill_id)}'
             )
         lines.append("}")
         lines.append("")
@@ -534,13 +529,6 @@ def render_skill_trigger_ownership(
         for overlay in trigger_case.get("overlays", []):
             lines.append(
                 f'{alias("case_" + case_id)} ..> {alias("skill_" + overlay)} : overlay'
-            )
-
-    for skill_id, entry in sorted(skills.items()):
-        successor = entry.get("superseded_by")
-        if successor:
-            lines.append(
-                f'{alias("skill_" + skill_id)} ..> {alias("skill_" + successor)} : superseded_by'
             )
 
     review_evaluators = routing.get("review_evaluators", {})
@@ -585,7 +573,6 @@ def render_skill_trigger_ownership(
             "legend right",
             "  solid case edge = one semantic case owner",
             "  dotted overlay edge = conditional composition",
-            "  compatibility = explicit public handoff retained",
             "  lexical hints are intentionally not rendered as routing logic",
             "endlegend",
             "@enduml",

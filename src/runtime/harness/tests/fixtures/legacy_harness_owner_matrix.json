@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "purpose": "HSC-010 legacy Shell characterization ownership before the Python runtime exists.",
+  "intentional_design_changes": [
+    "artifact contract version 3",
+    "codex-native is the flag-absent binding default",
+    "retired compatibility skill and internal-install schema removal",
+    "single canonical skill tree and package-level Python runtime"
+  ],
+  "suites": [
+    {
+      "smoke_suite": "test-artifact-dag.sh",
+      "assertion_owner": "artifact DAG, repository touch set, and exact external touch set",
+      "valid_fixture": "declared design and task paths resolve into their owning repository or external surface",
+      "invalid_fixture": "unsafe, undeclared, or out-of-design paths fail closed"
+    },
+    {
+      "smoke_suite": "test-close-runner.sh",
+      "assertion_owner": "close decision and evidence binding",
+      "valid_fixture": "completed execution with accepted truth evidence reaches a close decision",
+      "invalid_fixture": "missing, pending, or mismatched truth evidence blocks close"
+    },
+    {
+      "smoke_suite": "test-design-runner.sh",
+      "assertion_owner": "design artifact validation and design review routing",
+      "valid_fixture": "approved design declarations validate through the active Shell owner",
+      "invalid_fixture": "malformed or incomplete design declarations are rejected"
+    },
+    {
+      "smoke_suite": "test-execute-runner.sh",
+      "assertion_owner": "execution plan, ready-set, binding envelope, capacity, and external evidence",
+      "valid_fixture": "approved plans and bounded task/review/command bindings emit normalized results",
+      "invalid_fixture": "stale digests, missing nonce, unsafe topology, and unavailable capability stop before mutation"
+    },
+    {
+      "smoke_suite": "test-kernel-contracts.sh",
+      "assertion_owner": "lifecycle enumerations and contract versions",
+      "valid_fixture": "declared phases, policies, states, and versions retain their exact order",
+      "invalid_fixture": "unknown or malformed contract values are rejected"
+    },
+    {
+      "smoke_suite": "test-kernel-phase.sh",
+      "assertion_owner": "evaluation verdict and lifecycle phase projection",
+      "valid_fixture": "passing and truth-synced evaluation becomes close-ready",
+      "invalid_fixture": "needs-fixes or pending truth synchronization cannot become close-ready"
+    },
+    {
+      "smoke_suite": "test-kernel-routing.sh",
+      "assertion_owner": "request classification and next-phase routing",
+      "valid_fixture": "recognized change classes route to their declared phase and entry",
+      "invalid_fixture": "unsupported or contradictory classification inputs are rejected"
+    },
+    {
+      "smoke_suite": "test-plan-runner.sh",
+      "assertion_owner": "plan validation, design containment, execution readiness, and plan truth scope",
+      "valid_fixture": "version-2 approved and bounded plans validate against their design",
+      "invalid_fixture": "pending, legacy prose-only, or out-of-scope plans cannot enter execution"
+    },
+    {
+      "smoke_suite": "test-recovery-routing.sh",
+      "assertion_owner": "failure classification and recovery route",
+      "valid_fixture": "recognized failure kinds keep their designated recovery phase",
+      "invalid_fixture": "zero or malformed failure counts are rejected"
+    },
+    {
+      "smoke_suite": "test-sovereign-skill-surface.sh",
+      "assertion_owner": "top-level sovereign harness skill surface",
+      "valid_fixture": "the seven required kernel entries remain exposed",
+      "invalid_fixture": "missing, reordered, or unauthorized top-level entries fail the surface check"
+    },
+    {
+      "smoke_suite": "test-task-ledger.sh",
+      "assertion_owner": "task-ledger initialization, transition, convergence, and evidence state",
+      "valid_fixture": "ready tasks, dependencies, retries, and verified evidence retain their declared state",
+      "invalid_fixture": "invalid transitions, topology drift, or unauthorized evidence changes are rejected"
+    },
+    {
+      "smoke_suite": "test-truth-sync-runner.sh",
+      "assertion_owner": "truth-sync artifact validation and execution-to-close handoff",
+      "valid_fixture": "truth-affecting passing execution enters truth-sync and accepted evidence advances it",
+      "invalid_fixture": "unapproved, mismatched, or external-evidence-invalid truth artifacts fail closed"
+    }
+  ]
+}

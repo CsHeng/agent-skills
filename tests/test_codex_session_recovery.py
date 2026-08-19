@@ -15,9 +15,7 @@ from unittest import mock
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = (
     REPO_ROOT
-    / "src"
     / "skills"
-    / "tools"
     / "codex-session-recovery"
     / "scripts"
     / "merge-codex-sessions.py"

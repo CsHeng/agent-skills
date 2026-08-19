@@ -14,7 +14,7 @@ VALID_ACTIVATION_MODES = {
     "explicit",
     "baseline",
 }
-VALID_DEFAULT_ROLES = {"primary", "overlay", "evaluator", "helper"}
+VALID_DEFAULT_ROLES = {"primary", "overlay", "evaluator"}
 EXPECTED_CODEX_PROJECTION = {
     "native": True,
     "conditional": True,
@@ -141,20 +141,6 @@ def _frontmatter(text: str) -> dict[str, str]:
     return result
 
 
-def _successor_cycle(adjacency: dict[str, str]) -> list[str] | None:
-    for start in sorted(adjacency):
-        path: list[str] = []
-        positions: dict[str, int] = {}
-        node = start
-        while node in adjacency:
-            if node in positions:
-                return path[positions[node] :] + [node]
-            positions[node] = len(path)
-            path.append(node)
-            node = adjacency[node]
-    return None
-
-
 def validate_activation_contract(
     contract: dict[str, Any],
     repo_root: Path,
@@ -186,19 +172,11 @@ def validate_activation_contract(
     skills = contract.get("skills")
     if not isinstance(skills, dict):
         return [*errors, "skill contract must contain [skills.*] entries"]
-    public_entries = {
-        entry.get("public_id"): entry
-        for entry in skills.values()
-        if isinstance(entry, dict) and isinstance(entry.get("public_id"), str)
-    }
-    successors: dict[str, str] = {}
-
     for skill_name, raw_entry in sorted(skills.items()):
         if not isinstance(raw_entry, dict):
             errors.append(f"{skill_name}: skill entry must be a table")
             continue
         entry = raw_entry
-        public_id = entry.get("public_id")
         mode = entry.get("activation_mode")
         role = entry.get("default_role")
         if "implicit_invocation" in entry:
@@ -216,29 +194,9 @@ def validate_activation_contract(
         if mode == "baseline" and role != "overlay":
             errors.append(f"{skill_name}: baseline activation requires default_role=overlay")
 
-        successor = entry.get("superseded_by")
-        if successor is not None:
-            if not isinstance(successor, str) or not successor:
-                errors.append(f"{skill_name}: superseded_by must be a non-empty public ID")
-            elif successor not in public_entries:
-                errors.append(f"{skill_name}: unknown superseded_by target: {successor}")
-            elif successor == public_id:
-                errors.append(f"{skill_name}: superseded_by cannot reference itself")
-            elif isinstance(public_id, str):
-                successors[public_id] = successor
-            if mode != "explicit" or role != "helper":
-                errors.append(
-                    f"{skill_name}: compatibility successor requires explicit/helper activation"
-                )
-        if role == "helper" and successor is None:
-            errors.append(f"{skill_name}: helper role requires superseded_by")
-
         if not check_sources:
             continue
-        source = entry.get("source")
-        if not isinstance(source, str):
-            continue
-        skill_dir = repo_root / source
+        skill_dir = repo_root / "skills" / skill_name
         skill_path = skill_dir / "SKILL.md"
         try:
             skill_text = skill_path.read_text(encoding="utf-8")
@@ -253,12 +211,12 @@ def validate_activation_contract(
             metadata_text = metadata_path.read_text(encoding="utf-8")
         except OSError:
             metadata_text = ""
-        if has_authored_codex_invocation_policy(metadata_text):
+        expected_metadata = project_openai_metadata(
+            metadata_text, derived_implicit_invocation(contract, entry)
+        )
+        if metadata_text != expected_metadata:
             errors.append(
-                f"{skill_name}: authored Codex invocation policy competes with activation_mode"
+                f"{skill_name}: Codex invocation projection is stale"
             )
 
-    cycle = _successor_cycle(successors)
-    if cycle:
-        errors.append("successor graph contains a cycle: " + " -> ".join(cycle))
     return errors

@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import copy
 import importlib.util
-import subprocess
-import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -103,28 +101,14 @@ class SkillActivationContractTests(unittest.TestCase):
 
         self.assertTrue(any("authored implicit_invocation" in error for error in errors))
 
-    def test_unknown_successor_and_successor_cycle_are_rejected(self) -> None:
-        contract = copy.deepcopy(load_contract())
-        contract["skills"]["clean-architecture"]["superseded_by"] = "missing"
-        contract["skills"]["quality-standards"]["superseded_by"] = "security-logging"
-        contract["skills"]["security-logging"]["superseded_by"] = "quality-standards"
-
-        errors = self.activation.validate_activation_contract(
-            contract, REPO_ROOT, check_sources=False
-        )
-
-        self.assertTrue(any("unknown superseded_by" in error for error in errors))
-        self.assertTrue(any("successor graph contains a cycle" in error for error in errors))
-
-    def test_source_policy_and_unsupported_shared_frontmatter_are_rejected(self) -> None:
+    def test_canonical_metadata_projection_and_frontmatter_are_checked(self) -> None:
         contract = copy.deepcopy(load_contract())
         contract["skills"] = {"fixture": contract["skills"]["analyze-project"]}
-        contract["skills"]["fixture"]["source"] = "src/skills/fixture"
-        contract["skills"]["fixture"]["public_id"] = "fixture"
+        contract["skills"]["fixture"]["activation_mode"] = "controller"
 
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            skill_dir = root / "src" / "skills" / "fixture"
+            skill_dir = root / "skills" / "fixture"
             (skill_dir / "agents").mkdir(parents=True)
             (skill_dir / "SKILL.md").write_text(
                 """---
@@ -148,7 +132,7 @@ policy:
                 contract, root, check_sources=True
             )
 
-        self.assertTrue(any("authored Codex invocation policy" in error for error in errors))
+        self.assertTrue(any("Codex invocation projection is stale" in error for error in errors))
         self.assertTrue(any("unsupported shared frontmatter" in error for error in errors))
 
     def test_openai_projection_is_deterministic_and_preserves_interface(self) -> None:
@@ -164,62 +148,17 @@ policy:
         self.assertTrue(projected.endswith("policy:\n  allow_implicit_invocation: false\n"))
         self.assertEqual(projected, self.activation.project_openai_metadata(projected, False))
 
-    def test_all_generated_targets_match_activation_projection(self) -> None:
+    def test_canonical_tree_matches_activation_projection(self) -> None:
         contract = load_contract()
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            for target in ("claude", "codex", "root-flat"):
-                with self.subTest(target=target):
-                    destination = root / target
-                    subprocess.run(
-                        [
-                            sys.executable,
-                            str(REPO_ROOT / "scripts" / "flatten-skills.py"),
-                            "--target",
-                            target,
-                            "--dest",
-                            str(destination),
-                        ],
-                        cwd=REPO_ROOT,
-                        check=True,
-                        text=True,
-                        capture_output=True,
-                    )
-                    subprocess.run(
-                        [
-                            sys.executable,
-                            str(REPO_ROOT / "scripts" / "check-install-surface.py"),
-                            "--target",
-                            target,
-                            "--dest",
-                            str(destination),
-                        ],
-                        cwd=REPO_ROOT,
-                        check=True,
-                        text=True,
-                        capture_output=True,
-                    )
-                    skills_root = (
-                        destination if target == "root-flat" else destination / "skills"
-                    )
-                    for entry in contract["skills"].values():
-                        if target not in entry.get("install", []):
-                            continue
-                        public_id = entry["public_id"]
-                        expected = self.activation.derived_implicit_invocation(
-                            contract, entry
-                        )
-                        metadata = (
-                            skills_root / public_id / "agents" / "openai.yaml"
-                        ).read_text(encoding="utf-8")
-                        self.assertIn(
-                            f"allow_implicit_invocation: {str(expected).lower()}",
-                            metadata,
-                        )
-                        skill_text = (
-                            skills_root / public_id / "SKILL.md"
-                        ).read_text(encoding="utf-8")
-                        self.assertNotIn("disable-model-invocation: true", skill_text)
+        for skill_id, entry in contract["skills"].items():
+            with self.subTest(skill=skill_id):
+                expected = self.activation.derived_implicit_invocation(contract, entry)
+                metadata = (
+                    REPO_ROOT / "skills" / skill_id / "agents" / "openai.yaml"
+                ).read_text(encoding="utf-8")
+                self.assertIn(
+                    f"allow_implicit_invocation: {str(expected).lower()}", metadata
+                )
 
 
 if __name__ == "__main__":

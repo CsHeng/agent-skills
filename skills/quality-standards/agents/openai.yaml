@@ -1,6 +1,0 @@
-interface:
-  display_name: "Quality Standards (Compatibility)"
-  short_description: "Explicit handoff to repository-owned quality policy"
-  default_prompt: "Use $quality-standards only as an explicit compatibility handoff to $development-standards and owned test or language policy."
-policy:
-  allow_implicit_invocation: false

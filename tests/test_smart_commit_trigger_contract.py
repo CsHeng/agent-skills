@@ -19,22 +19,12 @@ class SmartCommitTriggerContractTest(unittest.TestCase):
         self.assertNotIn("implicit_invocation", contract)
         self.assertTrue(contract["requires_explicit_user_request"])
 
-    def test_openai_policy_is_derived_only_on_generated_surface(self) -> None:
-        source_metadata = (
-            REPO_ROOT
-            / "src"
-            / "skills"
-            / "git"
-            / "smart-commit"
-            / "agents"
-            / "openai.yaml"
-        ).read_text(encoding="utf-8")
-        generated_metadata = (
+    def test_openai_policy_is_derived_in_the_canonical_package(self) -> None:
+        metadata = (
             REPO_ROOT / "skills" / "smart-commit" / "agents" / "openai.yaml"
         ).read_text(encoding="utf-8")
 
-        self.assertNotIn("allow_implicit_invocation", source_metadata)
-        self.assertIn("allow_implicit_invocation: true", generated_metadata)
+        self.assertIn("allow_implicit_invocation: true", metadata)
 
 
 if __name__ == "__main__":

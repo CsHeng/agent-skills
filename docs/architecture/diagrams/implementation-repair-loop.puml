@@ -1,5 +1,5 @@
 @startuml
-' Generated from src/skills/workflows/implement-change/references/workflow.toml; do not edit by hand.
+' Generated from skills/implement-change/references/workflow.toml; do not edit by hand.
 title Controller-Owned Implementation Repair Loop
 hide empty description
 skinparam shadowing false

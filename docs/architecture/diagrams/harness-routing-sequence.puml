@@ -1,5 +1,5 @@
 @startuml
-' Generated from src/skills/session/use-coding-skills/references/routing.toml, contracts/lifecycle.toml, and contracts/workflow-modes.toml; do not edit by hand.
+' Generated from skills/use-coding-skills/references/routing.toml, contracts/lifecycle.toml, and contracts/workflow-modes.toml; do not edit by hand.
 title Harness Request Routing And Lifecycle Sequence
 hide footbox
 autonumber

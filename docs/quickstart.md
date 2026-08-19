@@ -74,6 +74,6 @@ Stage artifacts (designs, plans) live under `docs/plans/`. They are kept for his
 ## 5. Go Deeper
 
 - How routing, modes, gates, and the repair loop actually work: `docs/architecture/workflow-orchestration.md` (with rendered diagrams under `docs/architecture/generated/`).
-- How an individual skill works: its `SKILL.md` under `src/skills/`.
+- How an individual skill works: its `SKILL.md` under `skills/`.
 - What each skill is allowed to do (mutation, agents, invocation): `contracts/skills.toml`.
 - AI-facing repository rules: `AGENTS.md`.

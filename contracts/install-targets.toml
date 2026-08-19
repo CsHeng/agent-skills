@@ -1,28 +1,13 @@
 [distribution]
-provider_plugin_targets = ["claude", "codex"]
-shared_payload_target = "root-flat"
+materialization_target = "root-flat"
+provider_manifests = ["claude", "codex"]
 long_tail_cli = "npx skills@latest"
 long_tail_policy = "advisory"
 long_tail_owner = "consumer"
 enforce_destinations = false
 detect_duplicates = false
 coexistence_guaranteed = false
-public_name_prefix = ""
-
-[targets.claude]
-description = "Ignored, on-demand flat skill surface for the retained Claude Code plugin."
-dest = ".dist/claude"
-include_internal_runtime_support = false
-
-[targets.codex]
-description = "Ignored, on-demand flat skill surface for the retained Codex plugin."
-dest = ".dist/codex"
-include_internal_runtime_support = false
 
 [targets.root-flat]
-description = "Generated shared public payload used by plugin manifests, local authoring exposure, and npx skills discovery."
+description = "Tracked flat skill surface consumed by both plugin manifests and standalone skill installers."
 dest = "skills"
-include_internal_runtime_support = false
-
-[targets.all]
-members = ["claude", "codex", "root-flat"]

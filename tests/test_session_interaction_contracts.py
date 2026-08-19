@@ -10,15 +10,15 @@ import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 STRESS_TEST_PATH = (
-    REPO_ROOT / "src/skills/workflows/design-change/references/stress-test-mode.md"
+    REPO_ROOT / "skills/design-change/references/stress-test-mode.md"
 )
-SESSION_SKILL_PATH = REPO_ROOT / "src/skills/session/use-coding-skills/SKILL.md"
+SESSION_SKILL_PATH = REPO_ROOT / "skills/use-coding-skills/SKILL.md"
 PHASE_BOUNDARY_PATH = (
     REPO_ROOT
-    / "src/skills/session/use-coding-skills/references/phase-boundary-decision-tree.md"
+    / "skills/use-coding-skills/references/phase-boundary-decision-tree.md"
 )
 ROUTING_PATH = (
-    REPO_ROOT / "src/skills/session/use-coding-skills/references/routing.toml"
+    REPO_ROOT / "skills/use-coding-skills/references/routing.toml"
 )
 
 

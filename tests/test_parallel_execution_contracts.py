@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 import re
-import subprocess
+import tomllib
 import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CONTRACTS = REPO_ROOT / "src/runtime/harness/contracts.sh"
+CONTRACTS = REPO_ROOT / "skills/implement-change/references/workflow.toml"
 PORTABLE_PLAN_SURFACES = (
-    REPO_ROOT / "src/skills/workflows/plan-change/SKILL.md",
-    REPO_ROOT / "src/skills/review-components/review-plan/SKILL.md",
-    REPO_ROOT / "src/skills/disciplines/executable-oracle-architecture-selector/SKILL.md",
+    REPO_ROOT / "skills/plan-change/SKILL.md",
+    REPO_ROOT / "skills/review-plan/SKILL.md",
+    REPO_ROOT / "skills/executable-oracle-architecture-selector/SKILL.md",
     CONTRACTS,
-    REPO_ROOT / "src/runtime/harness/plan-runner.sh",
+    REPO_ROOT / "src/runtime/harness/artifacts.py",
 )
 EXTERNAL_TOUCH_POLICY = "exact-existing-files-v1"
 CONCRETE_PROVIDER_MODEL = re.compile(
@@ -21,32 +21,26 @@ CONCRETE_PROVIDER_MODEL = re.compile(
 )
 
 
-def contract_values(array_name: str) -> list[str]:
-    script = 'source "$1"; declare -n selected_values="$2"; printf "%s\\n" "${selected_values[@]}"'
-    result = subprocess.run(
-        ["bash", "-c", script, "parallel-contract-test", str(CONTRACTS), array_name],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    return result.stdout.splitlines()
+def workflow_contract() -> dict[str, object]:
+    with CONTRACTS.open("rb") as handle:
+        return tomllib.load(handle)
 
 
 class ParallelExecutionContractTests(unittest.TestCase):
     def test_portable_plan_contract_uses_semantic_profiles(self) -> None:
-        self.assertEqual(["deep", "balanced", "fast"], contract_values("HARNESS_EXECUTION_PROFILES"))
-        self.assertEqual(["deep", "standard", "light"], contract_values("HARNESS_REASONING_PROFILES"))
+        execution = workflow_contract()["execution"]
+        self.assertEqual(["deep", "balanced", "fast"], execution["execution_profiles"])
+        self.assertEqual(["deep", "standard", "light"], execution["reasoning_profiles"])
         self.assertEqual(
             ["semantic-routing", "inherit-main", "runtime-default"],
-            contract_values("HARNESS_MODEL_POLICIES"),
+            execution["allowed_model_policies"],
         )
 
     def test_parallel_and_delegation_policies_are_independent(self) -> None:
-        self.assertEqual(["forbidden", "allowed", "required"], contract_values("HARNESS_PARALLEL_POLICIES"))
-        self.assertEqual(
-            ["forbidden", "allowed", "preferred"],
-            contract_values("HARNESS_DELEGATION_POLICIES"),
-        )
+        plan = PORTABLE_PLAN_SURFACES[0].read_text(encoding="utf-8")
+        self.assertIn("parallel_policy", plan)
+        self.assertIn("delegation_policy", plan)
+        self.assertIn("may conservatively serialize", plan)
 
     def test_reusable_planning_surfaces_do_not_pin_provider_models(self) -> None:
         violations: list[str] = []
@@ -65,11 +59,13 @@ class ParallelExecutionContractTests(unittest.TestCase):
         self.assertNotIn("medium as the ceiling", plan_text)
 
     def test_external_touch_policy_remains_provider_neutral(self) -> None:
-        plan_runner = (REPO_ROOT / "src/runtime/harness/plan-runner.sh").read_text(encoding="utf-8")
-        artifact_dag = (REPO_ROOT / "src/runtime/harness/artifact-dag.sh").read_text(encoding="utf-8")
-        self.assertIn(EXTERNAL_TOUCH_POLICY, plan_runner)
-        self.assertIn("external_impl_file_refs", artifact_dag)
-        self.assertNotRegex(plan_runner, CONCRETE_PROVIDER_MODEL)
+        contract_text = CONTRACTS.read_text(encoding="utf-8")
+        artifact_compiler = (REPO_ROOT / "src/runtime/harness/artifacts.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(EXTERNAL_TOUCH_POLICY, contract_text)
+        self.assertIn("external_impl_file_refs", artifact_compiler)
+        self.assertNotRegex(contract_text, CONCRETE_PROVIDER_MODEL)
 
 
 if __name__ == "__main__":

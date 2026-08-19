@@ -29,7 +29,7 @@ def final_level_two_section(text: str) -> str:
 
 class MaintenanceGuidanceContractTests(unittest.TestCase):
     def test_organize_docs_decision_lifecycle_reference_resolves(self) -> None:
-        skill_path = REPO_ROOT / "src/skills/disciplines/organize-docs/SKILL.md"
+        skill_path = REPO_ROOT / "skills/organize-docs/SKILL.md"
         links = markdown_links(skill_path.read_text(encoding="utf-8"))
         lifecycle_links = [
             link for link in links if Path(link).name == "decision-record-lifecycle.md"
@@ -52,7 +52,7 @@ class MaintenanceGuidanceContractTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         skill_payload = "\n".join(
             path.read_text(encoding="utf-8", errors="ignore")
-            for root in (REPO_ROOT / "src/skills", REPO_ROOT / "skills")
+            for root in (REPO_ROOT / "skills",)
             for path in root.rglob("*")
             if path.is_file()
         )

@@ -34,7 +34,6 @@ package "Evaluation Plane (review components)" as n_plane_review_component {
 package "Discipline Plane" as n_plane_discipline {
   rectangle "api-contract-strategy" as n_api_contract_strategy
   rectangle "architecture-patterns" as n_architecture_patterns
-  rectangle "clean-architecture" as n_clean_architecture
   rectangle "code-simplification" as n_code_simplification
   rectangle "error-patterns" as n_error_patterns
   rectangle "executable-oracle-architecture-selector" as n_executable_oracle_architecture_selector
@@ -53,9 +52,7 @@ package "Policy Plane" as n_plane_policy {
   rectangle "lua-guidelines" as n_lua_guidelines
   rectangle "powershell-guidelines" as n_powershell_guidelines
   rectangle "python-guidelines" as n_python_guidelines
-  rectangle "quality-standards" as n_quality_standards
   rectangle "security-guardrails" as n_security_guardrails
-  rectangle "security-logging" as n_security_logging
   rectangle "shell-guidelines" as n_shell_guidelines
   rectangle "sops-age-guardrails" as n_sops_age_guardrails
 }
@@ -96,6 +93,5 @@ legend right
   kernel = top-level lifecycle authority
   review components = read-only evaluators
   manual tools = explicit user request only
-  internal runtime support is intentionally omitted
 endlegend
 @enduml

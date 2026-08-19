@@ -13,5 +13,5 @@ emergency = ["outage", "broken local workflow", "urgent revert", "minimal break/
 
 [authority]
 workflow_category = "workflow"
-lower_plane_categories = ["session", "discipline", "policy", "tool", "manual-tool", "review-component", "internal"]
+lower_plane_categories = ["session", "discipline", "policy", "tool", "manual-tool", "review-component"]
 manual_mutation_requires = "explicit user request or approved upstream artifact"

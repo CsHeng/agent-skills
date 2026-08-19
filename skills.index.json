@@ -1,4 +1,5 @@
 {
+  "canonical_skill_count": 39,
   "command_retirement": {
     "absorbed_by_skill": [
       "close-change",
@@ -22,61 +23,6 @@
     ]
   },
   "generated_from": "contracts/skills.toml",
-  "profiles": {
-    "sovereign-harness": {
-      "selection": "all-public",
-      "semantic_closure_complete": true,
-      "skills": [
-        "analyze-project",
-        "api-contract-strategy",
-        "architecture-patterns",
-        "clean-architecture",
-        "close-change",
-        "code-simplification",
-        "codex-session-recovery",
-        "design-change",
-        "development-standards",
-        "docker-multiarch-build",
-        "error-patterns",
-        "executable-oracle-architecture-selector",
-        "git-worktrees",
-        "go-guidelines",
-        "implement-change",
-        "implement-change-via-herdr",
-        "infrastructure-triage",
-        "language-decision-tree",
-        "logging-standards",
-        "lua-guidelines",
-        "organize-docs",
-        "output-styles",
-        "plan-change",
-        "powershell-guidelines",
-        "python-guidelines",
-        "quality-standards",
-        "review-change",
-        "review-design",
-        "review-implementation",
-        "review-plan",
-        "security-guardrails",
-        "security-logging",
-        "shell-guidelines",
-        "skill-miner",
-        "smart-commit",
-        "smart-squash",
-        "sops-age-guardrails",
-        "sync-truth",
-        "testing-strategy",
-        "tool-decision-tree",
-        "use-coding-skills",
-        "web-fetch"
-      ]
-    }
-  },
-  "semantic_install": {
-    "complete_profile": "sovereign-harness",
-    "dependency_resolution": "consumer",
-    "selective_install_requires_transitive_closure": true
-  },
   "skills": [
     {
       "activation_mode": "native",
@@ -94,21 +40,14 @@
       },
       "id": "analyze-project",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": true,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "project-truth-audit"
       ],
-      "public_id": "analyze-project",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/workflows/analyze-project"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -126,21 +65,14 @@
       },
       "id": "api-contract-strategy",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "api-contract-governance"
       ],
-      "public_id": "api-contract-strategy",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/disciplines/api-contract-strategy"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -158,52 +90,14 @@
       },
       "id": "architecture-patterns",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "architecture-and-boundaries"
       ],
-      "public_id": "architecture-patterns",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/disciplines/architecture-patterns"
-    },
-    {
-      "activation_mode": "explicit",
-      "category": "discipline",
-      "default_role": "helper",
-      "effective_provider_state": {
-        "claude": {
-          "model_visibility": "default-visible",
-          "source": "shared-frontmatter-default"
-        },
-        "codex": {
-          "allow_implicit_invocation": false,
-          "source": "activation-mode-projection"
-        }
-      },
-      "id": "clean-architecture",
-      "implicit_invocation": false,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
-      "lifecycle_owner": false,
-      "may_mutate_repo": false,
-      "overlay_trigger_cases": [],
-      "owned_trigger_cases": [],
-      "public_id": "clean-architecture",
-      "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/disciplines/clean-architecture",
-      "superseded_by": "architecture-patterns"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "controller",
@@ -221,20 +115,12 @@
       },
       "id": "close-change",
       "implicit_invocation": false,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": true,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [],
-      "public_id": "close-change",
-      "runtime_bundle": "harness",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/workflows/close-change"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -252,21 +138,14 @@
       },
       "id": "code-simplification",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "code-simplification-audit"
       ],
-      "public_id": "code-simplification",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/disciplines/code-simplification"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "explicit",
@@ -284,21 +163,14 @@
       },
       "id": "codex-session-recovery",
       "implicit_invocation": false,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "explicit-codex-session-recovery"
       ],
-      "public_id": "codex-session-recovery",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/tools/codex-session-recovery"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -316,19 +188,12 @@
       },
       "id": "design-change",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": true,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "change-scope-design"
       ],
-      "public_id": "design-change",
-      "runtime_bundle": "harness",
       "semantic_requires": [
         "review-change"
       ],
@@ -337,8 +202,7 @@
         "review-design",
         "review-implementation",
         "review-plan"
-      ],
-      "source": "src/skills/workflows/design-change"
+      ]
     },
     {
       "activation_mode": "conditional",
@@ -356,21 +220,14 @@
       },
       "id": "development-standards",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "cross-language-implementation-policy"
       ],
-      "public_id": "development-standards",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/policies/development-standards"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -388,21 +245,14 @@
       },
       "id": "docker-multiarch-build",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "docker-multiarch"
       ],
-      "public_id": "docker-multiarch-build",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/tools/docker-multiarch-build"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -420,21 +270,14 @@
       },
       "id": "error-patterns",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "resilience-and-recovery"
       ],
-      "public_id": "error-patterns",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/disciplines/error-patterns"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "conditional",
@@ -452,21 +295,14 @@
       },
       "id": "executable-oracle-architecture-selector",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "executable-oracle-selection"
       ],
-      "public_id": "executable-oracle-architecture-selector",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/disciplines/executable-oracle-architecture-selector"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "explicit",
@@ -484,21 +320,14 @@
       },
       "id": "git-worktrees",
       "implicit_invocation": false,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": true,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "explicit-git-worktree-operation"
       ],
-      "public_id": "git-worktrees",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/git/git-worktrees"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "conditional",
@@ -516,21 +345,14 @@
       },
       "id": "go-guidelines",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "go-language-policy"
       ],
-      "public_id": "go-guidelines",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/policies/go-guidelines"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -548,19 +370,12 @@
       },
       "id": "implement-change",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": true,
       "may_mutate_repo": true,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "approved-plan-execution"
       ],
-      "public_id": "implement-change",
-      "runtime_bundle": "harness",
       "runtime_contract": "references/workflow.toml",
       "semantic_requires": [
         "review-change",
@@ -574,8 +389,7 @@
         "review-implementation",
         "review-plan",
         "sync-truth"
-      ],
-      "source": "src/skills/workflows/implement-change"
+      ]
     },
     {
       "activation_mode": "explicit",
@@ -593,18 +407,12 @@
       },
       "id": "implement-change-via-herdr",
       "implicit_invocation": false,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": true,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "explicit-via-herdr-approved-plan-execution"
       ],
-      "public_id": "implement-change-via-herdr",
       "semantic_requires": [
         "implement-change"
       ],
@@ -616,8 +424,7 @@
         "review-implementation",
         "review-plan",
         "sync-truth"
-      ],
-      "source": "src/skills/tools/implement-change-via-herdr"
+      ]
     },
     {
       "activation_mode": "native",
@@ -635,21 +442,14 @@
       },
       "id": "infrastructure-triage",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "infrastructure-data-path"
       ],
-      "public_id": "infrastructure-triage",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/disciplines/infrastructure-triage"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "conditional",
@@ -667,21 +467,14 @@
       },
       "id": "language-decision-tree",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "persisted-language-selection"
       ],
-      "public_id": "language-decision-tree",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/disciplines/language-decision-tree"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -699,21 +492,14 @@
       },
       "id": "logging-standards",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "application-logging"
       ],
-      "public_id": "logging-standards",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/policies/logging-standards"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "conditional",
@@ -731,21 +517,14 @@
       },
       "id": "lua-guidelines",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "lua-language-policy"
       ],
-      "public_id": "lua-guidelines",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/policies/lua-guidelines"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -763,21 +542,14 @@
       },
       "id": "organize-docs",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": true,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "documentation-organization"
       ],
-      "public_id": "organize-docs",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/disciplines/organize-docs"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "baseline",
@@ -795,19 +567,12 @@
       },
       "id": "output-styles",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [],
-      "public_id": "output-styles",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/session/output-styles"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -825,19 +590,12 @@
       },
       "id": "plan-change",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": true,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "execution-plan"
       ],
-      "public_id": "plan-change",
-      "runtime_bundle": "harness",
       "semantic_requires": [
         "review-change"
       ],
@@ -846,8 +604,7 @@
         "review-design",
         "review-implementation",
         "review-plan"
-      ],
-      "source": "src/skills/workflows/plan-change"
+      ]
     },
     {
       "activation_mode": "conditional",
@@ -865,21 +622,14 @@
       },
       "id": "powershell-guidelines",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "powershell-language-policy"
       ],
-      "public_id": "powershell-guidelines",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/policies/powershell-guidelines"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "conditional",
@@ -897,52 +647,14 @@
       },
       "id": "python-guidelines",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "python-language-policy"
       ],
-      "public_id": "python-guidelines",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/policies/python-guidelines"
-    },
-    {
-      "activation_mode": "explicit",
-      "category": "policy",
-      "default_role": "helper",
-      "effective_provider_state": {
-        "claude": {
-          "model_visibility": "default-visible",
-          "source": "shared-frontmatter-default"
-        },
-        "codex": {
-          "allow_implicit_invocation": false,
-          "source": "activation-mode-projection"
-        }
-      },
-      "id": "quality-standards",
-      "implicit_invocation": false,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
-      "lifecycle_owner": false,
-      "may_mutate_repo": false,
-      "overlay_trigger_cases": [],
-      "owned_trigger_cases": [],
-      "public_id": "quality-standards",
-      "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/policies/quality-standards",
-      "superseded_by": "development-standards"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -960,19 +672,12 @@
       },
       "id": "review-change",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": true,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "lifecycle-review-gate"
       ],
-      "public_id": "review-change",
-      "runtime_bundle": "harness",
       "semantic_requires": [
         "review-design",
         "review-plan",
@@ -982,8 +687,7 @@
         "review-design",
         "review-implementation",
         "review-plan"
-      ],
-      "source": "src/skills/workflows/review-change"
+      ]
     },
     {
       "activation_mode": "controller",
@@ -1001,19 +705,12 @@
       },
       "id": "review-design",
       "implicit_invocation": false,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [],
-      "public_id": "review-design",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/review-components/review-design"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "controller",
@@ -1031,19 +728,12 @@
       },
       "id": "review-implementation",
       "implicit_invocation": false,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [],
-      "public_id": "review-implementation",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/review-components/review-implementation"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "controller",
@@ -1061,19 +751,12 @@
       },
       "id": "review-plan",
       "implicit_invocation": false,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [],
-      "public_id": "review-plan",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/review-components/review-plan"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -1091,52 +774,14 @@
       },
       "id": "security-guardrails",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "application-security-controls"
       ],
-      "public_id": "security-guardrails",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/policies/security-guardrails"
-    },
-    {
-      "activation_mode": "explicit",
-      "category": "policy",
-      "default_role": "helper",
-      "effective_provider_state": {
-        "claude": {
-          "model_visibility": "default-visible",
-          "source": "shared-frontmatter-default"
-        },
-        "codex": {
-          "allow_implicit_invocation": false,
-          "source": "activation-mode-projection"
-        }
-      },
-      "id": "security-logging",
-      "implicit_invocation": false,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
-      "lifecycle_owner": false,
-      "may_mutate_repo": false,
-      "overlay_trigger_cases": [],
-      "owned_trigger_cases": [],
-      "public_id": "security-logging",
-      "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/policies/security-logging",
-      "superseded_by": "logging-standards"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "conditional",
@@ -1154,21 +799,14 @@
       },
       "id": "shell-guidelines",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "shell-language-policy"
       ],
-      "public_id": "shell-guidelines",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/policies/shell-guidelines"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "explicit",
@@ -1186,21 +824,14 @@
       },
       "id": "skill-miner",
       "implicit_invocation": false,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "explicit-skill-history-mining"
       ],
-      "public_id": "skill-miner",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/disciplines/skill-miner"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -1218,21 +849,14 @@
       },
       "id": "smart-commit",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": true,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "focused-smart-commit"
       ],
-      "public_id": "smart-commit",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/git/smart-commit"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "explicit",
@@ -1250,21 +874,14 @@
       },
       "id": "smart-squash",
       "implicit_invocation": false,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": true,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "explicit-unpushed-history-squash"
       ],
-      "public_id": "smart-squash",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/git/smart-squash"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -1282,21 +899,14 @@
       },
       "id": "sops-age-guardrails",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "sops-age-secrets"
       ],
-      "public_id": "sops-age-guardrails",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/policies/sops-age-guardrails"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "controller",
@@ -1314,20 +924,12 @@
       },
       "id": "sync-truth",
       "implicit_invocation": false,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": true,
       "may_mutate_repo": true,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [],
-      "public_id": "sync-truth",
-      "runtime_bundle": "harness",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/workflows/sync-truth"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -1345,21 +947,14 @@
       },
       "id": "testing-strategy",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "verification-strategy"
       ],
-      "public_id": "testing-strategy",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/disciplines/testing-strategy"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "conditional",
@@ -1377,21 +972,14 @@
       },
       "id": "tool-decision-tree",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "ad-hoc-tool-selection"
       ],
-      "public_id": "tool-decision-tree",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/disciplines/tool-decision-tree"
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "native",
@@ -1409,11 +997,6 @@
       },
       "id": "use-coding-skills",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
@@ -1421,7 +1004,6 @@
         "coding-skill-routing",
         "session-boundary-handoff"
       ],
-      "public_id": "use-coding-skills",
       "routing_contract": "references/routing.toml",
       "semantic_requires": [
         "analyze-project",
@@ -1502,8 +1084,7 @@
         "testing-strategy",
         "tool-decision-tree",
         "web-fetch"
-      ],
-      "source": "src/skills/session/use-coding-skills"
+      ]
     },
     {
       "activation_mode": "native",
@@ -1521,21 +1102,14 @@
       },
       "id": "web-fetch",
       "implicit_invocation": true,
-      "install": [
-        "claude",
-        "codex",
-        "root-flat"
-      ],
       "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "web-content-retrieval"
       ],
-      "public_id": "web-fetch",
       "semantic_requires": [],
-      "semantic_transitive_requires": [],
-      "source": "src/skills/tools/web-fetch"
+      "semantic_transitive_requires": []
     }
   ]
 }

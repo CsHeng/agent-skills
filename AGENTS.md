@@ -6,12 +6,7 @@ For human-facing project overview and skill inventory, see `README.md`.
 
 This repository is a local Claude Code and Codex plugin marketplace and plugin source for `coding@csheng`.
 
-The plugin provides:
-- sovereign harness kernel entries under `src/skills/`
-- optional session routing, session-boundary, and output-style skills under `src/skills/`
-- lower-plane language and tooling skills under `src/skills/`
-- plugin manifests under `.claude-plugin/` and `.codex-plugin/`
-- deterministic lifecycle and artifact-DAG source under `src/runtime/harness/`, bundled into each runner-owning generated skill
+The plugin provides nested authored skills under `src/skills/`, one generated root-flat 39-skill payload under `skills/`, a single authored Python lifecycle runtime under `src/runtime/harness/`, and six generated skill-local runtime bundles.
 
 Current plugin identity:
 - plugin name: `coding`
@@ -26,12 +21,13 @@ Current plugin identity:
 - `.codex-marketplace/.agents/plugins/marketplace.json`: Codex local marketplace manifest
 - `.codex-marketplace/plugins/coding`: symlink back to this repository root so Codex can consume the expected `./plugins/coding` marketplace source shape without moving the repository
 - `src/skills/`: source-of-truth skill tree grouped by workflow/session/discipline/policy/tool/git/review category
-- `src/runtime/harness/`: non-discoverable deterministic harness runtime and repository smoke tests
-- `contracts/skills.toml`: source-of-truth skill exposure, activation-mode, default-role, compatibility-successor, and provider-projection contract
-- `src/skills/session/use-coding-skills/references/routing.toml`: installed semantic trigger-case, discovery, phase-to-owner, review-evaluator, support-route, composition, and host-wrapper contract
-- `skills/`: tracked generated root-flat public payload used by current plugin manifests and optional external discovery
-- `.dist/claude/`, `.dist/codex/`: ignored, reproducible target-specific flat skill surfaces generated only when needed
-- `skills/<owner>/scripts/harness/`: generated owner-local runtime bundles for `design-change`, `plan-change`, `implement-change`, `review-change`, `sync-truth`, and `close-change`
+- `src/runtime/harness/`: single non-discoverable deterministic lifecycle runtime and tests
+- `skills/`: tracked generated root-flat 39-skill payload consumed by both plugin manifests and standalone skill installers
+- `skills/<owner>/scripts/harness/`: generated skill-local runtime bundles for the six runtime-owning lifecycle skills
+- `contracts/skills.toml`: source-of-truth source mapping, exposure, activation-mode, default-role, runtime ownership, and provider-projection contract keyed by public skill ID
+- `contracts/runtime-bundles.toml`: exact production runtime file manifest
+- `skills/use-coding-skills/references/routing.toml`: installed semantic trigger-case, discovery, phase-to-owner, review-evaluator, support-route, composition, and host-wrapper contract
+- `.dist/`: ignored inert local output boundary; no generator or checker consumes it
 - `archived/`: inert historical material outside active plugin discovery and default repository search
 - `docs/architecture/workflow-orchestration.md`: canonical maintenance view of lifecycle routing, the installed implementation DAG, and controller-owned repair
 - `docs/architecture/diagrams/`: generated PlantUML views of full harness routing, skill planes, activation and trigger ownership, and the controller-local workflow contract; do not edit by hand
@@ -76,19 +72,19 @@ Lower-plane skills support the kernel:
 
 Planning and ad hoc tooling stay separate: `plan-change` composes `language-decision-tree` only when a task introduces or replaces a persisted implementation boundary, while `tool-decision-tree` owns agent ad hoc command choice and composition. Language guideline skills apply after the implementation language is fixed; `go-guidelines` then selects its CLI-tool or API-service profile as appropriate.
 
-Claude Code and Codex retain their repository-owned plugin marketplaces. Other coding agents may use `npx skills@latest add CsHeng/agent-skills` as optional consumer-managed guidance. Do not restrict selected targets or destinations, inspect duplicate exposure, promise coexistence, or manage external install/update/remove state. Public skill IDs remain unchanged.
+Claude Code and Codex retain their repository-owned plugin marketplaces. Other coding agents may use `npx skills@latest add CsHeng/agent-skills` as optional consumer-managed guidance. Do not restrict selected targets or destinations, inspect duplicate exposure, promise coexistence, or manage external install/update/remove state. The 39 retained public IDs remain stable; `clean-architecture`, `quality-standards`, and `security-logging` are intentionally retired.
 
 ## Working Rules
 
 - Keep the sovereign harness kernel as the only top-level authority.
 - External workflow skills, including retired or third-party agent harnesses, may provide lower-plane technique guidance only; they must not override this repository's phase routing, approval gates, artifact locations, review defaults, or close judgment.
 - Keep reusable behavior agent-agnostic by default. Skills should describe portable workflow contracts, not Codex-only, Claude-only, or UI-only prompt mechanics, unless the file is explicitly scoped to that agent surface.
-- Prefer `src/skills/` plus direct references for reusable behavior. Keep agent-specific manifests, hooks, and install notes thin.
+- Prefer authored `src/skills/` plus direct references for reusable behavior. Keep agent-specific manifests, hooks, and install notes thin.
 - Treat `use-coding-skills` as an optional router for ambiguous multi-stage work and session-boundary guidance; directly matched workflow and policy skills do not require it first.
 - Keep discovery, phase-to-owner mapping, review evaluator selection, support routes, and host-wrapper limits in the installed `use-coding-skills/references/routing.toml` contract. User- or host-level AGENTS files may keep thin public-skill hints but must not become parallel harness truth.
 - Positive trigger boundaries live in each skill's frontmatter `description`; routing trigger cases carry negative boundaries, overlays, and lexical hints, and keep explicit positive overrides only for explicit-invocation cases.
 - Keep skills thin and operational.
-- Treat `src/skills/` and `contracts/skills.toml` as the source of truth for behavior and exposure; generated `skills/` should be refreshed, not edited by hand.
+- Treat `src/skills/`, `src/runtime/harness/`, and the contracts as authored truth. Refresh generated `skills/`; do not edit it by hand.
 - Author activation only through `activation_mode` and `default_role` in `contracts/skills.toml`; derive provider metadata through the contract-level projection table, and do not restore per-skill invocation booleans or source-authored Codex invocation policy.
 - Keep semantic case ownership, case boundaries, optional overlays, and non-authoritative lexical hints in the installed routing contract; do not duplicate them in host wrappers or prose.
 - Prefer explicit validation and deterministic workflows over vague prompt guidance.
@@ -157,15 +153,9 @@ python3 scripts/generate-workflow-diagrams.py
 bash scripts/check.sh
 ```
 
-`generate-workflow-diagrams.py` refreshes both the PlantUML sources and their tracked SVG renderings; `--check` (also run by `check.sh`) fails when either is stale. Install the optional pre-commit hook with `bash hooks/install-git-hooks.sh` to regenerate and stage diagrams automatically when their contract or generator inputs are part of a commit.
+`generate-workflow-diagrams.py` refreshes both the PlantUML sources and their tracked SVG renderings; `--check` (also run by `check.sh`) fails when either is stale. The optional pre-commit hook delegates to the same strict aggregate check and never regenerates or stages files.
 
-The aggregate check generates and validates Claude and Codex install surfaces in a temporary directory. Generate `.dist/` explicitly only when a local external surface is needed.
-
-Before considering review-system changes done, run:
-
-```bash
-bash src/runtime/harness/smoke-test/test-artifact-dag.sh
-```
+The aggregate check validates the generated root-flat surface and standalone skill closure, then runs contract, index, diagram, Ruff, ty, pytest, and Markdown lanes once. `.dist/` remains ignored and untouched.
 
 For Codex plugin metadata changes, also run:
 
@@ -173,16 +163,7 @@ For Codex plugin metadata changes, also run:
 uvx --with pyyaml python "$HOME/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py" .
 ```
 
-For sovereign harness surface changes, also run:
-
-```bash
-bash src/runtime/harness/smoke-test/test-sovereign-skill-surface.sh
-bash src/runtime/harness/smoke-test/test-design-runner.sh
-bash src/runtime/harness/smoke-test/test-plan-runner.sh
-bash src/runtime/harness/smoke-test/test-artifact-dag.sh
-bash src/runtime/harness/smoke-test/test-recovery-routing.sh
-bash src/runtime/harness/smoke-test/test-execute-runner.sh
-```
+For sovereign harness surface changes, run the authored runtime pytest suite and generated standalone-closure checks through `bash scripts/check.sh`.
 
 ## Versioning
 

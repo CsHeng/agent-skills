@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 DOCS_DIR="$ROOT_DIR/docs"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+IMMUTABLE_MANIFEST="$ROOT_DIR/contracts/markdown-prose.toml"
 
 cd "$ROOT_DIR"
 
@@ -31,8 +32,11 @@ fi
 
 rg --files --no-ignore docs | rg -q '^docs/plans/'
 
+NORMALIZER_ARGS=(--root "$ROOT_DIR" --mode check)
+if [[ -f "$IMMUTABLE_MANIFEST" ]]; then
+  NORMALIZER_ARGS+=(--immutable-manifest "$IMMUTABLE_MANIFEST")
+fi
+
 PYTHONDONTWRITEBYTECODE=1 \
 PYTHONPYCACHEPREFIX="$HOME/.cache/python/organize-docs" \
-python3 "$SCRIPT_DIR/normalize-markdown-prose.py" \
-  --root "$ROOT_DIR" \
-  --mode check
+python3 "$SCRIPT_DIR/normalize-markdown-prose.py" "${NORMALIZER_ARGS[@]}"

@@ -19,26 +19,22 @@ Compile an approved change into an execution plan the harness can govern.
 - the user only wants code execution against an already approved plan
 - the task is only review, truth sync, or close
 
-## Bundled Runtime
+## Shared Runtime
 
 Resolve both installed helpers relative to this `SKILL.md` before changing into the target repository. `SKILL_ROOT` is assigned by the agent to the activated skill directory; do not assume the host exported it:
 
 ```bash
 SKILL_ROOT="/absolute/path/to/plan-change"
-DESIGN_RUNNER="$(realpath "$SKILL_ROOT/scripts/harness/design-runner.sh")"
-PLAN_RUNNER="$(realpath "$SKILL_ROOT/scripts/harness/plan-runner.sh")"
-[[ -f "$DESIGN_RUNNER" && -f "$PLAN_RUNNER" ]] || exit 1
+HARNESS_CLI="$(realpath "$SKILL_ROOT/scripts/harness/cli.py")"
+[[ -f "$HARNESS_CLI" ]] || exit 1
 ```
 
 Machine-check the upstream design before planning, then validate the plan and its approval state:
 
 ```bash
-bash "$DESIGN_RUNNER" validate "<design-file>"
-[[ "$(bash "$DESIGN_RUNNER" approval-status "<design-file>")" == "approved" ]] || exit 1
-bash "$PLAN_RUNNER" entry-phase
-bash "$PLAN_RUNNER" default-path "<design-file>"
-bash "$PLAN_RUNNER" validate "<plan-file>"
-bash "$PLAN_RUNNER" approval-status "<plan-file>"
+python3 "$HARNESS_CLI" design validate "<design-file>"
+python3 "$HARNESS_CLI" plan validate "<plan-file>"
+python3 "$HARNESS_CLI" plan compile "<plan-file>"
 ```
 
 The plan starts with `approval_status: pending`; only explicit human approval changes it to `approved` and authorizes `implement-change`.
@@ -195,7 +191,7 @@ Do not finish plan-change with only a generic approval request. The user must be
 - Behavior-changing tasks should declare the failing test, narrow reproducer, or substitute verification evidence expected before implementation.
 - Plan writers must not absorb every possible reviewer concern into the current milestone. Put out-of-scope concerns into `future_phase` or stop with `split_scope` / `needs_design_decision`.
 - Tasks implementing an approved architecture decision should use reversible increments and preserve its upgrade triggers instead of buying all deferred complexity immediately.
-- Each new task should declare enough metadata for task-ledger execution, including `task_id`, `depends_on`, `scope_slice`, task-scoped file refs, `verification_scope`, `executor_mode`, version-2 parallel/delegation/profile/isolation/lock fields, `task_review_depth`, `done_when`, and `failure_policy`.
+- Each new task should declare the version-3 task-ledger metadata, including `task_id`, `depends_on`, `scope_slice`, task-scoped file refs, `verification_commands`, executor and parallel/delegation/profile/isolation/lock fields, convergence and review budgets, `task_review_depth`, `done_when`, `failure_policy`, and explicit rollback fields.
 - External-file tasks additionally declare exact `external_impl_file_refs` and the main-only, serial, locked execution contract above; repository-only plans omit the field and retain legacy behavior.
 - Tasks that create or replace a persisted implementation boundary should also declare the conditional implementation-language decision described above.
 - Task order should put low-risk, repo-local, reversible, and no-confirmation tasks before high-risk, live, destructive, or external-dependency tasks unless the risky task is a hard prerequisite.
