@@ -134,24 +134,6 @@ class CommandRetirementContractTests(unittest.TestCase):
                     (REPO_ROOT / "skills" / public_id / "scripts" / "harness" / "cli.py").is_file()
                 )
 
-    def test_active_command_adapters_use_owner_local_runners(self) -> None:
-        command_root = REPO_ROOT / "commands"
-        if not command_root.is_dir():
-            return
-
-        expected_paths = {
-            "close-change.md": "${CLAUDE_PLUGIN_ROOT}/skills/close-change/scripts/harness/close-runner.sh",
-            "design-change.md": "${CLAUDE_PLUGIN_ROOT}/skills/design-change/scripts/harness/design-runner.sh",
-            "implement-change.md": "${CLAUDE_PLUGIN_ROOT}/skills/implement-change/scripts/harness/execute-runner.sh",
-            "plan-change.md": "${CLAUDE_PLUGIN_ROOT}/skills/plan-change/scripts/harness/plan-runner.sh",
-            "sync-truth.md": "${CLAUDE_PLUGIN_ROOT}/skills/sync-truth/scripts/harness/truth-sync-runner.sh",
-        }
-        for command_name, runner_path in expected_paths.items():
-            with self.subTest(command=command_name):
-                command = (command_root / command_name).read_text(encoding="utf-8")
-                self.assertIn(runner_path, command)
-                self.assertNotIn("skills/_harness-libs", command)
-
     def test_authored_runtime_executes_from_unrelated_directory(self) -> None:
         runtime = REPO_ROOT / "src/runtime/harness/cli.py"
         with tempfile.TemporaryDirectory() as unrelated_cwd:

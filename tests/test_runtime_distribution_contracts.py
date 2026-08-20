@@ -11,6 +11,8 @@ import tomllib
 import unittest
 from pathlib import Path
 
+from scripts.skill_distribution import bundle_payloads, render_surface
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_RUNTIME = REPO_ROOT / "src" / "runtime" / "harness"
 RUNTIME_OWNERS = {
@@ -82,11 +84,10 @@ class RuntimeDistributionContractTests(unittest.TestCase):
             if entry.get("runtime_bundle") == "harness"
         }
         self.assertEqual(RUNTIME_OWNERS, owners)
-        with (REPO_ROOT / "contracts" / "runtime-bundles.toml").open("rb") as handle:
-            bundle = tomllib.load(handle)["bundles"]["harness"]
-        expected = set(bundle["files"])
+        _, destination, payloads = bundle_payloads(REPO_ROOT, "harness")
+        expected = set(payloads)
         for skill_id in self.skills:
-            bundle_dir = REPO_ROOT / "skills" / skill_id / bundle["destination"]
+            bundle_dir = REPO_ROOT / "skills" / skill_id / destination
             if skill_id not in owners:
                 self.assertFalse(bundle_dir.exists(), skill_id)
                 continue
@@ -97,11 +98,30 @@ class RuntimeDistributionContractTests(unittest.TestCase):
             }
             self.assertEqual(expected, actual, skill_id)
             for relative in expected:
-                source = REPO_ROOT / bundle["source"] / relative
                 generated = bundle_dir / relative
                 self.assertEqual(
-                    source.read_bytes(), generated.read_bytes(), f"{skill_id}/{relative}"
+                    payloads[relative], generated.read_bytes(), f"{skill_id}/{relative}"
                 )
+
+    def test_runtime_bundles_project_canonical_lifecycle_resources(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            surface = Path(temporary) / "skills"
+            render_surface(REPO_ROOT, surface)
+            _, destination, payloads = bundle_payloads(REPO_ROOT, "harness")
+            self.assertIn("lifecycle.py", payloads)
+            self.assertIn("resources/lifecycle-contracts.json", payloads)
+            for skill_id in sorted(RUNTIME_OWNERS):
+                bundle = surface / skill_id / destination
+                self.assertEqual(
+                    set(payloads),
+                    {
+                        path.relative_to(bundle).as_posix()
+                        for path in bundle.rglob("*")
+                        if path.is_file()
+                    },
+                )
+                for relative, payload in payloads.items():
+                    self.assertEqual(payload, (bundle / relative).read_bytes())
 
     def test_each_runtime_owner_is_standalone_after_copy(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

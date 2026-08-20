@@ -1,7 +1,0 @@
-{
-  "request": "Change deployment authentication behavior.",
-  "expected_mode": "regulated",
-  "expected_requires_recovery_surface": true,
-  "expected_default_failure_policy": "fix_forward",
-  "expected_requires_fresh_evidence": true
-}

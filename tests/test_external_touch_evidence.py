@@ -126,20 +126,22 @@ class ExternalTouchMutationTests(unittest.TestCase):
 
             first_source = fixture_root / "first.toml"
             first_source.write_text("value = 2\n", encoding="utf-8")
-            first_stage = self.helper.stage_payload(
-                run_dir=run_dir,
-                intent_id="intent-1",
-                source_file=first_source,
-            )
-            self.assertEqual("0600", first_stage["mode"])
-            self.assertNotIn("value = 2", repr(first_stage))
-            first_prepared = self.helper.prepare_intent(
+            first_staging = self.helper.declare_intent(
                 repo_root=REPO_ROOT,
                 baseline=baseline,
                 intents=[],
                 ref=str(target),
                 intent_id="intent-1",
-                staged_payload=first_stage,
+                run_dir=run_dir,
+                source_file=first_source,
+            )
+            first_staged = self.helper.stage_declared_payload(
+                intent=first_staging, source_file=first_source
+            )
+            self.assertEqual("0600", first_staged["mode"])
+            self.assertNotIn("value = 2", repr(first_staged))
+            first_prepared = self.helper.finalize_intent(
+                intent=first_staging, staged_payload=first_staged
             )
             self.assertEqual(1, first_prepared["sequence"])
             self.assertEqual("prepared", first_prepared["state"])
@@ -155,22 +157,24 @@ class ExternalTouchMutationTests(unittest.TestCase):
             self.assertEqual("value = 2\n", target.read_text(encoding="utf-8"))
             self.assertNotEqual(original_inode, target.stat().st_ino)
             self.assertEqual("completed", first_applied["cleanup"]["state"])
-            self.assertFalse(Path(first_stage["path"]).exists())
+            self.assertFalse(Path(first_staged["path"]).exists())
 
             second_source = fixture_root / "second.toml"
             second_source.write_text("value = 3\n", encoding="utf-8")
-            second_stage = self.helper.stage_payload(
-                run_dir=run_dir,
-                intent_id="intent-2",
-                source_file=second_source,
-            )
-            second_prepared = self.helper.prepare_intent(
+            second_staging = self.helper.declare_intent(
                 repo_root=REPO_ROOT,
                 baseline=baseline,
                 intents=[first_applied],
                 ref=str(target),
                 intent_id="intent-2",
-                staged_payload=second_stage,
+                run_dir=run_dir,
+                source_file=second_source,
+            )
+            second_staged = self.helper.stage_declared_payload(
+                intent=second_staging, source_file=second_source
+            )
+            second_prepared = self.helper.finalize_intent(
+                intent=second_staging, staged_payload=second_staged
             )
             self.assertEqual(2, second_prepared["sequence"])
             self.assertEqual(
@@ -203,17 +207,17 @@ class ExternalTouchMutationTests(unittest.TestCase):
             baseline = self._baseline(target)
             source = fixture_root / "candidate.toml"
             source.write_text("value = 2\n", encoding="utf-8")
-            stage = self.helper.stage_payload(
-                run_dir=run_dir, intent_id="intent-1", source_file=source
-            )
-            prepared = self.helper.prepare_intent(
+            staging = self.helper.declare_intent(
                 repo_root=REPO_ROOT,
                 baseline=baseline,
                 intents=[],
                 ref=str(target),
                 intent_id="intent-1",
-                staged_payload=stage,
+                run_dir=run_dir,
+                source_file=source,
             )
+            staged = self.helper.stage_declared_payload(intent=staging, source_file=source)
+            prepared = self.helper.finalize_intent(intent=staging, staged_payload=staged)
 
             self.helper.apply_intent(repo_root=REPO_ROOT, intent=prepared)
             with mock.patch.object(
@@ -230,7 +234,7 @@ class ExternalTouchMutationTests(unittest.TestCase):
                 self.helper.apply_intent(repo_root=REPO_ROOT, intent=prepared)
             self.assertEqual("external_touch_baseline_drift", caught.exception.code)
 
-    def test_prepare_rejects_noop_and_cleanup_refuses_ambiguous_payload(self) -> None:
+    def test_declare_rejects_noop_and_cleanup_refuses_ambiguous_payload(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             fixture_root = Path(temp_dir).resolve()
             run_dir = fixture_root / "run"
@@ -241,26 +245,33 @@ class ExternalTouchMutationTests(unittest.TestCase):
             baseline = self._baseline(target)
             source = fixture_root / "candidate.toml"
             source.write_text("value = 1\n", encoding="utf-8")
-            stage = self.helper.stage_payload(
-                run_dir=run_dir, intent_id="intent-1", source_file=source
-            )
             with self.assertRaises(self.helper.ExternalTouchError) as caught:
-                self.helper.prepare_intent(
+                self.helper.declare_intent(
                     repo_root=REPO_ROOT,
                     baseline=baseline,
                     intents=[],
                     ref=str(target),
                     intent_id="intent-1",
-                    staged_payload=stage,
+                    run_dir=run_dir,
+                    source_file=source,
                 )
             self.assertEqual("external_touch_noop_candidate", caught.exception.code)
 
-            Path(stage["path"]).write_text("tampered\n", encoding="utf-8")
-            prepared_like = {
-                "state": "prepared",
-                "candidate": stage,
-                "broker_candidate_path": str(fixture_root / ".broker.tmp"),
-            }
+            differing = fixture_root / "differing.toml"
+            differing.write_text("value = 2\n", encoding="utf-8")
+            staging = self.helper.declare_intent(
+                repo_root=REPO_ROOT,
+                baseline=baseline,
+                intents=[],
+                ref=str(target),
+                intent_id="intent-2",
+                run_dir=run_dir,
+                source_file=differing,
+            )
+            Path(staging["candidate"]["path"]).write_text("tampered\n", encoding="utf-8")
+            prepared_like = dict(staging)
+            prepared_like["state"] = "prepared"
+            prepared_like["broker_candidate_path"] = str(fixture_root / ".broker.tmp")
             with self.assertRaises(self.helper.ExternalTouchError) as cleanup_error:
                 self.helper.cleanup_intent(intent=prepared_like, allow_prepared=True)
             self.assertEqual(
@@ -376,7 +387,7 @@ class ExternalTouchCliTests(unittest.TestCase):
             check=False,
         )
 
-    def test_cli_runs_baseline_stage_prepare_apply_compare_and_cleanup(self) -> None:
+    def test_cli_runs_baseline_declare_finalize_apply_compare_and_cleanup(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             fixture_root = Path(temp_dir).resolve()
             run_dir = fixture_root / "run"
@@ -406,24 +417,11 @@ class ExternalTouchCliTests(unittest.TestCase):
             baseline = json.loads(baseline_result.stdout)
             baseline_file = fixture_root / "baseline.json"
             baseline_file.write_text(json.dumps(baseline), encoding="utf-8")
-
-            stage_result = self._run(
-                "stage",
-                "--run-dir",
-                str(run_dir),
-                "--intent-id",
-                "intent-1",
-                "--source-file",
-                str(candidate),
-            )
-            self.assertEqual(0, stage_result.returncode, stage_result.stderr)
-            stage_file = fixture_root / "stage.json"
-            stage_file.write_text(stage_result.stdout, encoding="utf-8")
             intents_file = fixture_root / "intents.json"
             intents_file.write_text("[]", encoding="utf-8")
 
-            prepare_result = self._run(
-                "prepare",
+            declare_result = self._run(
+                "declare",
                 "--repo-root",
                 str(REPO_ROOT),
                 "--baseline-file",
@@ -434,12 +432,36 @@ class ExternalTouchCliTests(unittest.TestCase):
                 str(target),
                 "--intent-id",
                 "intent-1",
-                "--staged-file",
-                str(stage_file),
+                "--run-dir",
+                str(run_dir),
+                "--source-file",
+                str(candidate),
             )
-            self.assertEqual(0, prepare_result.returncode, prepare_result.stderr)
+            self.assertEqual(0, declare_result.returncode, declare_result.stderr)
+            staging_file = fixture_root / "staging.json"
+            staging_file.write_text(declare_result.stdout, encoding="utf-8")
+
+            stage_declared_result = self._run(
+                "stage-declared",
+                "--intent-file",
+                str(staging_file),
+                "--source-file",
+                str(candidate),
+            )
+            self.assertEqual(0, stage_declared_result.returncode, stage_declared_result.stderr)
+            staged_file = fixture_root / "staged.json"
+            staged_file.write_text(stage_declared_result.stdout, encoding="utf-8")
+
+            finalize_result = self._run(
+                "finalize",
+                "--intent-file",
+                str(staging_file),
+                "--staged-file",
+                str(staged_file),
+            )
+            self.assertEqual(0, finalize_result.returncode, finalize_result.stderr)
             intent_file = fixture_root / "intent.json"
-            intent_file.write_text(prepare_result.stdout, encoding="utf-8")
+            intent_file.write_text(finalize_result.stdout, encoding="utf-8")
 
             apply_result = self._run(
                 "apply-and-cleanup",
@@ -469,8 +491,9 @@ class ExternalTouchCliTests(unittest.TestCase):
             self.assertEqual(0, cleanup_result.returncode, cleanup_result.stderr)
             for output in (
                 baseline_result.stdout,
-                stage_result.stdout,
-                prepare_result.stdout,
+                declare_result.stdout,
+                stage_declared_result.stdout,
+                finalize_result.stdout,
                 apply_result.stdout,
                 compare_result.stdout,
                 cleanup_result.stdout,

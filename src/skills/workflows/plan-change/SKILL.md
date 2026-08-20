@@ -106,11 +106,11 @@ If a task cannot declare an executable oracle or substitute verification, it is 
 
 ## Versioned Execution Contract
 
-New execution plans use `plan_contract_version: 2`. Plans without a contract version remain on the deliberate legacy compatibility path; do not silently reinterpret them as version 2.
+New execution plans use artifact `contract_version = 4`. Version-3 plans are compatibility evidence only: they may be read and digest-verified, but the refreshed runtime cannot initialize, mutate, admit, repair, or bind execution from them. Do not silently reinterpret or upgrade a version-3 artifact.
 
-Truth-affecting version-2 plans also contain `## Truth Sync Handoff` with non-empty `stable_truth_refs` and `docs_governance_predicates`. Stable truth refs must be safe repository-relative paths inside the immutable implementation touch set and must not point into `docs/plans/`. Declare `none` when no docs-governance component is needed; otherwise use only the supported ownership, truth-root, search-boundary, stage-placement, canonical-terminology, or prose-structure predicates. Missing or invalid truth scope returns the typed `truth_sync_scope_required` planning state instead of allowing execution or widening scope.
+Truth-affecting version-4 plans contain `## Truth Sync Handoff` with non-empty `stable_truth_refs` and the required truth-sync flag matching the approved design. Stable truth refs must be safe repository-relative paths inside the immutable implementation touch set and must not point into `docs/plans/`. Record any docs-governance predicates in the human plan body: declare `none` when no component is needed; otherwise use only the supported ownership, truth-root, search-boundary, stage-placement, canonical-terminology, or prose-structure predicates. Missing or invalid truth scope returns `truth-sync-scope-required` instead of allowing execution or widening scope.
 
-The plan owns logical execution shape. In addition to the existing task metadata, every version-2 task declares:
+The plan owns logical execution shape. Every version-4 task declares:
 
 - `parallel_group`: a stable named group or `none`
 - `parallel_policy`: `forbidden | allowed | required`
@@ -181,7 +181,7 @@ Do not finish plan-change with only a generic approval request. The user must be
 - This is a top-level harness entry.
 - A prose status summary is not a valid plan artifact.
 - New implementation plans should be execution-grade task catalogs, not prose-only checklists.
-- Undeclared or unproven work remains serial. Eligible version-2 tasks follow their declared delegation and parallel policies after approval.
+- Undeclared or unproven work remains serial. Eligible version-4 tasks follow their declared delegation and parallel policies after approval and only after ledger-owned admission.
 - Parallel work must be named, dependency-frozen, conflict-free, isolated when writable, and human-approved.
 - Prefer pre-confirming known gates during planning over deferring them into execution.
 - Plan approval should normally authorize the whole plan to run; unresolved confirmations are exceptions that must be clearly labeled.
@@ -191,7 +191,7 @@ Do not finish plan-change with only a generic approval request. The user must be
 - Behavior-changing tasks should declare the failing test, narrow reproducer, or substitute verification evidence expected before implementation.
 - Plan writers must not absorb every possible reviewer concern into the current milestone. Put out-of-scope concerns into `future_phase` or stop with `split_scope` / `needs_design_decision`.
 - Tasks implementing an approved architecture decision should use reversible increments and preserve its upgrade triggers instead of buying all deferred complexity immediately.
-- Each new task should declare the version-3 task-ledger metadata, including `task_id`, `depends_on`, `scope_slice`, task-scoped file refs, `verification_commands`, executor and parallel/delegation/profile/isolation/lock fields, convergence and review budgets, `task_review_depth`, `done_when`, `failure_policy`, and explicit rollback fields.
+- Each new task declares the complete version-4 task-ledger metadata, including `task_id`, `depends_on`, `scope_slice`, task-scoped file refs, `verification_commands`, executor and parallel/delegation/profile/isolation/lock fields, convergence and review budgets, `task_review_depth`, `done_when`, `failure_policy`, and explicit rollback fields.
 - External-file tasks additionally declare exact `external_impl_file_refs` and the main-only, serial, locked execution contract above; repository-only plans omit the field and retain legacy behavior.
 - Tasks that create or replace a persisted implementation boundary should also declare the conditional implementation-language decision described above.
 - Task order should put low-risk, repo-local, reversible, and no-confirmation tasks before high-risk, live, destructive, or external-dependency tasks unless the risky task is a hard prerequisite.

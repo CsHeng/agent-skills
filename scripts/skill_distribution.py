@@ -21,6 +21,7 @@ from scripts.skill_activation import (  # noqa: E402
     derived_implicit_invocation,
     project_openai_metadata,
 )
+from src.runtime.harness.lifecycle import normalize_lifecycle_sources  # noqa: E402
 
 RUNTIME_OWNERS = {
     "close-change",
@@ -127,6 +128,56 @@ def bundle_files(repo_root: Path, bundle_name: str) -> tuple[Path, str, dict[str
     return source, destination, resolved
 
 
+def _safe_bundle_relative(value: object, field: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise DistributionError(f"invalid runtime bundle {field}")
+    relative = Path(value)
+    if relative.is_absolute() or ".." in relative.parts:
+        raise DistributionError(f"unsafe runtime bundle {field}: {value}")
+    return relative.as_posix()
+
+
+def bundle_payloads(
+    repo_root: Path, bundle_name: str
+) -> tuple[Path, str, dict[str, bytes]]:
+    """Render static files and canonical contract projections for one bundle."""
+    source, destination, files = bundle_files(repo_root, bundle_name)
+    payloads = {relative: path.read_bytes() for relative, path in files.items()}
+    entry = load_bundles(repo_root)[bundle_name]
+    projections = entry.get("projections", [])
+    if not isinstance(projections, list):
+        raise DistributionError(f"invalid runtime bundle projections: {bundle_name}")
+    for projection in projections:
+        if not isinstance(projection, dict):
+            raise DistributionError(f"invalid runtime bundle projection: {bundle_name}")
+        if projection.get("kind") != "lifecycle-contracts-v1":
+            raise DistributionError(f"unknown runtime bundle projection: {bundle_name}")
+        output = _safe_bundle_relative(projection.get("destination"), "projection destination")
+        sources = projection.get("sources")
+        if (
+            not isinstance(sources, list)
+            or len(sources) != 3
+            or not all(isinstance(item, str) for item in sources)
+        ):
+            raise DistributionError(
+                f"lifecycle projection requires exactly three sources: {bundle_name}"
+            )
+        source_paths: list[Path] = []
+        for value in sources:
+            relative = _safe_bundle_relative(value, "projection source")
+            path = repo_root / relative
+            if not path.is_file() or path.is_symlink():
+                raise DistributionError(f"missing or symlinked projection source: {path}")
+            source_paths.append(path)
+        if output in payloads:
+            raise DistributionError(f"runtime projection collides with bundle file: {output}")
+        normalized = normalize_lifecycle_sources(*source_paths)
+        payloads[output] = (
+            json.dumps(normalized, sort_keys=True, separators=(",", ":")) + "\n"
+        ).encode()
+    return source, destination, payloads
+
+
 def _skill_source(repo_root: Path, skill_id: str, entry: dict[str, Any]) -> Path:
     source_value = entry.get("source")
     if not isinstance(source_value, str):
@@ -150,14 +201,14 @@ def _write_projected_metadata(
 
 
 def _copy_bundle(repo_root: Path, bundle_name: str, generated_skill: Path) -> None:
-    _, destination, files = bundle_files(repo_root, bundle_name)
+    _, destination, payloads = bundle_payloads(repo_root, bundle_name)
     bundle_dest = generated_skill / destination
     if bundle_dest.exists():
         raise DistributionError(f"runtime bundle collides with authored content: {bundle_dest}")
-    for relative, source_file in files.items():
+    for relative, payload in payloads.items():
         output = bundle_dest / relative
         output.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source_file, output)
+        output.write_bytes(payload)
 
 
 def render_surface(repo_root: Path, destination: Path) -> None:

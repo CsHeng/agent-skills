@@ -36,6 +36,8 @@ python3 "$HARNESS_CLI" close validate "<close-artifact>"
 python3 "$HARNESS_CLI" close evaluate "<ledger-file>" "<close-artifact>"
 ```
 
+Author new close artifacts with `contract_version = 4`. Version-3 close evaluation exists only to finish work already converged before runtime refresh; it cannot reopen or mutate version-3 execution state.
+
 Close mode is `merge`, `release`, or `cleanup`, with `cleanup` as the default when omitted. The mode is judgment metadata only: this skill performs none of those external actions. Closure derives review, verification, truth requirement, stable truth refs, and artifact identities from the approved plan and immutable execution result. Caller-supplied status hints are non-authoritative and mismatches fail closed. If validation fails, follow the returned `plan-change`, `implement-change`, or `sync-truth` route.
 
 ## Workflow

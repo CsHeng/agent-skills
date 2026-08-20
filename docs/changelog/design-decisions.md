@@ -1,5 +1,31 @@
 # Design Decisions
 
+## 2026-08-20 - Versioned Harness Admission And Contract-Derived Lifecycle Runtime
+
+### Failure Mode
+
+The refreshed Python harness could parse version-3 artifacts but lacked a complete executable authority boundary for strengthened task admission, truth coupling, lifecycle classification, repair attempts, and durable ledger replacement. Extending version 3 in place would make old and new evidence share one version while carrying different authority semantics.
+
+### Change
+
+- Adopt HCR-001: artifact contract version 4 and ledger version 4 are the sole authoring, initialization, task-mutation, admission, repair, and binding path for new work.
+- Retain version 3 only for immutable evidence and digest reads plus truth-sync or close evaluation for work already converged before refresh; reject version-3 initialization, mutation, verification, review, repair, external evidence, admission, and binding.
+- Compile truth impact and truth-sync scope, complete task safety fields, named batches, and runtime model policy before ledger initialization; make the ledger the sole owner of ready-set admission and immutable serial or batch provenance.
+- Derive request classification and next-phase routing from normalized projections of the canonical lifecycle, workflow-mode, and installed routing contracts in every standalone runtime bundle.
+- Distinguish confirmed durable restoration as `ledger-write-failed` from indeterminate post-promotion authority as `ledger-durability-unknown`; the latter forbids blind retry and requires stop-and-diagnose.
+
+### Operational Impact
+
+- New work cannot downgrade to version 3 or substitute caller-selected admission data at binding time.
+- Regulated design and plan approvals follow mandatory review, while modes without explicit review phases retain their direct approval gates.
+- All six generated runtime owners remain standalone and consume the same normalized lifecycle authority as the authored repository runtime.
+- Historical version-3 completion remains possible only at the bounded truth-sync or close tail.
+
+### Alternatives And Reconsideration
+
+- Optional version-3 fields and silent semantic reinterpretation were rejected because they cannot distinguish historical evidence from the strengthened authority model. A general schema framework was rejected because only one bounded compatibility reader is needed.
+- Introduce another artifact or ledger version only when persisted authority shape changes again; ordinary validation additions remain within version 4.
+
 ## 2026-08-19 - Portable Skill Distribution Repair
 
 ### Status

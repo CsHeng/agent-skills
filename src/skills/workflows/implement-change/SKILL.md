@@ -36,6 +36,7 @@ Before mutation, require an approved execution-grade plan and materialize its im
 python3 "$HARNESS_CLI" plan validate "<plan-file>"
 python3 "$HARNESS_CLI" plan compile "<plan-file>"
 python3 "$HARNESS_CLI" ledger init "<plan-file>" "<ledger-file>"
+python3 "$HARNESS_CLI" ledger admit "<ledger-file>" "<admission-request.json>"
 python3 "$HARNESS_CLI" ledger transition "<ledger-file>" "<task-id>" "<target-state>"
 python3 "$HARNESS_CLI" ledger ready "<ledger-file>"
 python3 "$HARNESS_CLI" ledger verification "<ledger-file>" "<task-id>" "<evidence.json>"
@@ -47,7 +48,11 @@ python3 "$HARNESS_CLI" ledger result "<ledger-file>"
 python3 "$HARNESS_CLI" execute bind "<ledger-file>" "<task-id>" "<runtime-request.json>"
 ```
 
-The external-evidence request contains only `baseline_ref` and `intents_ref`, pointing to the complete metadata-only broker records. The main controller owns worktree preflight. The shared ledger namespace owns ready-set queries, declared verification and review evidence, touch checks, external evidence, typed recovery, convergence transitions, and the machine-checkable result projection. The approved `allowed_touch_set` is exactly the plan's implementation and test refs. Each task's declared verification command must pass before its ledger state converges.
+The admission request contains exactly `task_ids` and positive runtime `capacity`. The version-4 ledger validates readiness, dependencies, approved batch membership, conflicts, capacity, and allowed serialization, then persists immutable serial or batch provenance. Runtime binding consumes only that ledger-owned admission and rejects caller substitution.
+
+The external-evidence request contains only `baseline_ref` and `intents_ref`, pointing to the complete metadata-only broker records. The main controller owns worktree preflight. The shared ledger namespace owns admission, ready-set queries, declared verification and review evidence, touch checks, external evidence, typed recovery, convergence transitions, and the machine-checkable result projection. The approved `allowed_touch_set` is exactly the plan's implementation and test refs. Each task's declared verification command must pass before its ledger state converges.
+
+All new execution uses artifact contract version 4 and ledger version 4. Version-3 artifacts and ledgers remain readable only for immutable evidence, digest verification, and truth-sync or close evaluation for work already converged before refresh; reject version-3 initialization, task mutation, verification, review, repair, external evidence, admission, and binding.
 
 For an approved task with `external_impl_file_refs`, the main controller alone uses `external-baseline`, `external-prepare`, `external-apply`, and recovery-only `external-cleanup`. Capture the immutable baseline after the task enters `in_progress` and before mutation. `external-prepare` atomically persists a metadata-only `staging` reservation before any raw payload may survive, then stages and promotes that same reservation to `prepared`; replay resumes either checkpoint without widening the ref set. `external-apply` persists after-evidence and completed private-artifact cleanup as one recoverable result. Exact parent state may apply, exact candidate state becomes an idempotent applied checkpoint with parent-directory fsync, and every third state stops with typed baseline drift. Convergence requires the complete applied-and-cleaned chain. A later accepted repair appends the next contiguous intent whose parent is the preceding applied after-state while retaining the original baseline root. Never refresh the baseline, invoke a generic external editor, delegate the write, or synthesize rollback.
 
@@ -115,6 +120,7 @@ The main controller alone validates changed paths and oracles, converges batches
 - Never synthesize rollback functions, error traps, restore steps, release reversion, or automatic rollback because a change is classified as regulated or because verification failed.
 - Treat HA, VRRP, failover, retained data, and previous releases as recovery surfaces, not implicit instructions to restore the old release.
 - Failure count is diagnostic evidence only. Replan only when evidence proves the task graph or touch set is insufficient; redesign only when evidence proves the approved boundary is invalid.
+- A confirmed durable restoration after ledger promotion failure returns `ledger-write-failed`. `ledger-durability-unknown` means neither promoted nor restored authority can be proven: preserve recovery evidence, stop and diagnose, and do not retry, refresh digests, or infer the authoritative state.
 
 ## Execution Continuity
 

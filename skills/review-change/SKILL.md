@@ -40,6 +40,8 @@ python3 "$HARNESS_CLI" design validate "<design-file>"
 python3 "$HARNESS_CLI" plan validate "<plan-file>"
 ```
 
+New design, plan, truth-sync, and close artifacts use `contract_version = 4`. Version-3 artifacts may be inspected as immutable compatibility evidence, but review cannot authorize refreshed version-3 ledger initialization, mutation, admission, repair, or binding. For regulated design and plan modes, mandatory review completes before the human approval gate.
+
 Select exactly one target: a design artifact, a plan artifact, or an implementation task slice. For implementation review, use the explicitly supplied changed files or the current bounded diff when no files were supplied. Stop when the selected artifact is absent or invalid.
 
 ## Bounded Review Brief

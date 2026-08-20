@@ -36,9 +36,11 @@ python3 "$HARNESS_CLI" truth-sync validate "<truth-sync-artifact>"
 python3 "$HARNESS_CLI" truth-sync evaluate "<ledger-file>" "<truth-sync-artifact>"
 ```
 
+Author new truth-sync artifacts with `contract_version = 4`. Version-3 truth-sync evaluation exists only to finish work already converged before runtime refresh; it does not authorize any version-3 ledger mutation, repair, admission, or binding.
+
 ## Artifact Contract
 
-The truth-sync artifact contains `## Evidence`, `## Stable Truth Updates`, and `## Human Gate`.
+The version-4 truth-sync artifact contains `## Scope`, `## Evidence`, `## Stable Truth Updates`, and `## Human Gate`.
 
 - Evidence records `approved_design_ref`, `approved_plan_ref`, `review_gate_ref`, `verification_ref`, and `truth_sync_required: true`; every value must exactly match the approved plan and immutable execution result.
 - Stable truth updates record `stable_truth_refs`, `stage_artifact_refs`, and `summary`. Stable refs point only at long-lived truth roots and never at `docs/plans/`.

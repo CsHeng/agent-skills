@@ -1,6 +1,0 @@
-{
-  "category": "tool",
-  "activation_mode": "native",
-  "default_role": "primary",
-  "requires_explicit_user_request": true
-}

@@ -11,7 +11,7 @@ For AI-facing repository rules and the docs truth boundary, see `AGENTS.md`.
 - `src/skills/` is the nested authored skill tree.
 - `skills/` is the generated root-flat 39-skill payload consumed by both maintained plugin manifests and standalone skill installers.
 - `contracts/skills.toml` is the source-of-truth source mapping, exposure, activation-mode, default-role, runtime ownership, and provider-projection contract keyed by public skill ID.
-- `contracts/runtime-bundles.toml` declares the exact production Python files copied into runtime-owning generated skills.
+- `contracts/runtime-bundles.toml` declares the exact production Python files and normalized canonical contract projections copied into runtime-owning generated skills.
 - `skills/use-coding-skills/references/routing.toml` is the semantic trigger-case, discovery, phase-owner, review-evaluator, support-route, composition, and host-wrapper contract.
 - `src/runtime/harness/` is the single authored non-discoverable deterministic lifecycle runtime; six generated lifecycle skills carry it under `scripts/harness/`.
 - `.dist/` is ignored inert local output and is never generated or validated by this repository.
@@ -51,13 +51,17 @@ Kernel defaults:
 - artifact handoff is gated by explicit `approval_status`, not by prose reminders alone
 - when a gate already determines the next state, the harness reports that state instead of asking whether to continue
 
-`src/runtime/harness/cli.py` owns design and plan validation, immutable plan compilation, ledger state and evidence operations, binding envelopes, truth-sync evaluation, and close evaluation. Each generated runtime owner invokes the byte-identical CLI bundled inside its own skill directory.
+`src/runtime/harness/cli.py` owns contract-derived request classification and next-phase routing, design and plan validation, immutable plan compilation, ledger state and evidence operations, binding envelopes, truth-sync evaluation, and close evaluation. `contracts/lifecycle.toml`, `contracts/workflow-modes.toml`, and the installed routing contract remain the authored lifecycle owners; generation normalizes their minimum runtime projection into each skill-local bundle instead of maintaining a second Python rule table.
+
+All newly authored artifacts and newly initialized ledgers use version 4. Version-4 compilation binds truth impact, truth-sync scope, complete task metadata, named parallel batches, and runtime policy before ledger initialization; the ledger alone admits ready serial or batch work and supplies immutable admission provenance to binding. Version-3 artifacts and ledgers remain readable only for immutable evidence, digest verification, and truth-sync or close evaluation for work already converged before the runtime refresh. The refreshed runtime rejects version-3 initialization, task mutation, verification, review, repair, external evidence, admission, and binding.
+
+Ledger persistence fails closed. A confirmed durable restoration returns `ledger-write-failed`; an outcome where neither promoted nor restored authority can be proven returns `ledger-durability-unknown`, forbids blind retry, and requires stop-and-diagnose.
 
 Lower-plane skills stay available as components the kernel can call, not as competing top-level authorities.
 
 Runtime binding defaults to codex-native (`schema_version: 2`), which binds delegated roles through user-owned, untracked Codex Multi-Agent role files with pre-emission capability validation and typed stops. `implement-change-via-herdr` remains an explicit Tool-plane overlay with its byte-compatible `schema_version: 1` adapter contract. Both compose `implement-change`, which remains the sole lifecycle controller and final judge; plans keep provider-neutral task profiles and cannot change topology, authority, or oracles through runtime routing.
 
-External-file capability and consumption use separate approvals. A repository-only E1 bootstrap installs and verifies the optional broker without touching an external target; only a later independently reviewed and approved E2 plan may declare exact existing external files. Repository-only version-3 plans declare an empty external set; legacy artifact versions are rejected. Any request for file creation, deletion, glob or directory authority, generic editing, caller-selected rename, metadata change, delegated or parallel external writes, automatic rollback, or non-metadata evidence requires a new design or plan boundary rather than an implicit upgrade.
+External-file capability and consumption use separate approvals. A repository-only E1 bootstrap installs and verifies the optional broker without touching an external target; only a later independently reviewed and approved E2 plan may declare exact existing external files. Repository-only version-4 plans declare an empty external set. Any request for file creation, deletion, glob or directory authority, generic editing, caller-selected rename, metadata change, delegated or parallel external writes, automatic rollback, or non-metadata evidence requires a new design or plan boundary rather than an implicit upgrade.
 
 ## Optional Session Routing And Style
 

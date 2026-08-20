@@ -11,6 +11,7 @@ When prose, diagrams, and runtime behavior disagree, resolve drift in this order
 3. `contracts/skills.toml` defines skill exposure, activation modes, default roles, compatibility successors, permissions, provider projection capabilities, and installed contract pointers.
 4. `skills/use-coding-skills/references/routing.toml` defines semantic trigger-case ownership, installed discovery behavior, phase-to-owner mapping, review evaluators, support routes, composition, and the host-wrapper boundary.
 5. `skills/implement-change/references/workflow.toml` defines the invocation subgraph and repair metadata that must travel with the installed controller.
+6. `contracts/runtime-bundles.toml` defines the exact skill-local Python files and normalized lifecycle resources installed with each runtime owner.
 7. The PlantUML files in `diagrams/` and the rendered SVG files in `generated/` are generated views for humans and must not be edited by hand.
 
 `docs/plans/` records design and implementation history. It is useful for rationale and dispute resolution but is not current runtime truth.
@@ -35,6 +36,8 @@ Workflow mode selection precedes phase implementation. The selected mode determi
 
 Workflow skills own lifecycle transitions. Discipline, policy, tool, and review-component skills contribute methods or evidence without advancing lifecycle state.
 
+The skill-local Python runtime classifies one typed request and advances one typed phase transition from the normalized canonical contracts. Unknown signals, contradictory modes, incomplete phase evidence, and missing human approval produce typed stops. Regulated design and plan approval occurs after their mandatory review phase; modes without an explicit review phase retain the direct design or plan gate.
+
 ## Request Discovery And Route Ownership
 
 The harness routing sequence ([rendered SVG](generated/harness-routing-sequence.svg), [PlantUML source](diagrams/harness-routing-sequence.puml)) is generated from the installed routing contract plus the repository lifecycle and workflow-mode contracts. It shows the expected route from a user request through the optional host wrapper, native skill matching, optional ambiguity routing, lower-plane composition, mode selection, lifecycle gates, review evaluators, truth sync, and close.
@@ -55,7 +58,7 @@ At a completed phase boundary, `use-coding-skills` chooses the first applicable 
 
 Planning conditionally composes implementation policy without adding another controller. When an approved task introduces or replaces a persisted implementation boundary, `plan-change` uses `language-decision-tree` to record the implementation archetype, language, and rationale. Existing-language edits do not need placeholder decisions. Agent ad hoc command choice remains owned by `tool-decision-tree` and does not activate persisted implementation-language selection.
 
-Planning also owns the portable execution topology. A version-2 plan records task dependencies, named parallel groups, delegation policy, semantic execution and reasoning profiles, isolation, write sets, resource locks, batch limits, and a convergence task. New metadata is strict and provider-neutral; legacy plans retain their documented serial compatibility path. A model or reasoning preference is therefore a recommendation attached to an unchanged task DAG, not permission to rewrite its serial or parallel shape.
+Planning also owns the portable execution topology. A version-4 plan records task dependencies, named parallel groups, delegation policy, semantic execution and reasoning profiles, isolation, write sets, resource locks, batch limits, and convergence ownership. New metadata is strict and provider-neutral. A model or reasoning preference is therefore a recommendation attached to an unchanged task DAG, not permission to rewrite its serial or parallel shape.
 
 When the approved design carries an architecture decision, `plan-change` references that decision and stages it as reversible increments with preserved upgrade triggers; it does not rescore the architecture tradeoff. `review-design` evaluates material demand-complexity and owner-cost fit at the design boundary, while `review-plan` evaluates fidelity and executable staging without reopening selection.
 
@@ -77,11 +80,19 @@ Reverse calls from evaluators or gates into `implement-change` are forbidden. Th
 
 After every planned task is controller-converged and implementation review and verification pass, `implement-change` records an immutable execution result bound to the approved design and plan, the canonical task ledger, review and verification references, the allowed touch set, and the declared stable-truth refs. A truth-affecting result continues directly to controller-authorized `sync-truth` preparation and stops at the pending truth approval gate; it does not ask for close first. A non-truth-affecting result may advance directly to close approval.
 
-`truth-sync evaluate` accepts a version-3 truth artifact whose approval status and execution-result and ledger digests are validated rather than caller booleans. `close-change` derives eligibility from a version-3 close artifact and its exact digest-linked approved truth artifact. Pending, missing, invalid, or mismatched evidence routes to its owning upstream phase. Successful judgment produces `terminal_state: closed` with `next_entry: null`; there is no successful `close-change` self-route.
+`truth-sync evaluate` accepts a version-4 truth artifact whose approval status and execution-result and ledger digests are validated rather than caller booleans. `close-change` derives eligibility from a version-4 close artifact and its exact digest-linked approved truth artifact. Pending, missing, invalid, or mismatched evidence routes to its owning upstream phase. Successful judgment produces `terminal_state: closed` with `next_entry: null`; there is no successful `close-change` self-route.
 
 ## Optional Exact External Files
 
-Repository writes and exact external-file writes are separate authorization channels. Repository `impl_file_refs`, `test_file_refs`, and the derived touch set retain relative-path semantics. A version-3 design, plan, and task declare `external_impl_file_refs` explicitly; the compiler derives a separate external touch set and requires exact design-to-plan-to-task containment. Repository-only work declares an empty external set, and legacy artifact versions are rejected without a compatibility parser.
+Repository writes and exact external-file writes are separate authorization channels. Repository `impl_file_refs`, `test_file_refs`, and the derived touch set retain relative-path semantics. A version-4 design, plan, and task declare `external_impl_file_refs` explicitly; the compiler derives a separate external touch set and requires exact design-to-plan-to-task containment. Repository-only work declares an empty external set.
+
+## Versioned Runtime Authority
+
+HCR-001 prevents an in-place reinterpretation of version-3 authority. All new design, plan, truth-sync, and close artifacts use contract version 4, and all new execution state uses ledger version 4. Version-4 compilation binds truth impact and scope, the complete task model, approved named batches, and runtime policy. The ledger then owns ready-set admission and immutable serial or batch provenance; caller and backend requests cannot substitute it.
+
+Version-3 artifacts and ledgers remain readable only for immutable evidence, digest verification, and truth-sync or close evaluation for work already converged before refresh. Version-3 ledger initialization, task mutation, verification, review, repair, external evidence, admission, and binding are rejected. This compatibility boundary permits historical completion without leaving a downgrade path for new work.
+
+Ledger writes use staged file durability, atomic promotion, and a parent-directory barrier. If a post-promotion failure is followed by proven durable restoration, the operation returns `ledger-write-failed`. If the runtime cannot prove either the promoted state or restored predecessor, it returns `ledger-durability-unknown`; the controller preserves evidence and stops instead of retrying, refreshing digests, or inventing rollback authority.
 
 The channel is bootstrapped in two units. E1 is repository-only: it installs and verifies the contract, broker, state model, lifecycle validation, and generated bundles without naming or changing an external target. Only a later separately reviewed and approved E2 plan may consume that capability. An external task is always main-controller-owned, serial, non-delegated, bound to the controller checkout, and protected by named resource locks. It never enters a worker, explorer, command-job, parallel batch, or backend envelope.
 

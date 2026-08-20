@@ -33,10 +33,13 @@ HARNESS_CLI="$(realpath "$SKILL_ROOT/scripts/harness/cli.py")"
 Use the shared CLI namespace for each complete artifact operation:
 
 ```bash
+python3 "$HARNESS_CLI" lifecycle classify "<typed-request.json>"
 python3 "$HARNESS_CLI" design validate "<design-file>"
 ```
 
-The classification record contains `request_kind`, `change_class`, `design_strength`, `truth_impact`, `boundary_impact`, and `recommended_next_phase`. The design artifact contains goals, non-goals, boundaries, validation, recovery policy, `Implementation Surface`, and `approval_status: pending` before review. Validation and mandatory `review-change` review both pass before the human approval gate.
+The typed classification request contains exactly `signals` and `repo_mutation`; the runtime derives one mode, initial phase, and owner from the bundled canonical lifecycle projection or returns a typed contradiction or unknown-signal stop. The classification record contains `request_kind`, `change_class`, `design_strength`, `truth_impact`, `boundary_impact`, and `recommended_next_phase`. The design artifact contains goals, non-goals, boundaries, validation, recovery policy, `Implementation Surface`, and `approval_status: pending` before review. Validation and mandatory `review-change` review both pass before the human approval gate.
+
+Author every new design with `contract_version = 4`, explicit `truth_impact`, and `truth_sync_required`. Version-3 designs are compatibility evidence only and cannot initialize or mutate refreshed execution state.
 
 ## Workflow
 

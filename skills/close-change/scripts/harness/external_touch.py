@@ -584,85 +584,6 @@ def _broker_candidate_path(*, run_id: str, task_id: str, ref: str, intent_id: st
     return Path(ref).parent / f".codex-external-touch-{opaque_id}.tmp"
 
 
-def prepare_intent(
-    *,
-    repo_root: Path,
-    baseline: Mapping[str, object],
-    intents: Sequence[Mapping[str, object]],
-    ref: str,
-    intent_id: str,
-    staged_payload: Mapping[str, object],
-) -> dict[str, object]:
-    """Create the next prepared intent without changing the target file."""
-
-    _require_token(intent_id, "intent_id")
-    baseline_ref = _baseline_ref(baseline, ref)
-    chain = _intent_chain(baseline_ref, intents, ref, require_applied=True)
-    if any(intent.get("intent_id") == intent_id for intent in intents):
-        raise ExternalTouchError("external_touch_duplicate_intent", "intent ID must be unique")
-    parent = dict(cast(Mapping[str, object], chain[-1]["after"])) if chain else dict(baseline_ref)
-    current = capture_file_evidence(repo_root, ref)
-    if not _evidence_equal(current, parent):
-        raise ExternalTouchError(
-            "external_touch_baseline_drift",
-            "target no longer matches the immediate parent",
-            exit_code=3,
-        )
-    staged_path = Path(cast(str, staged_payload.get("path", "")))
-    staged_run_dir = Path(cast(str, staged_payload.get("run_dir", "")))
-    canonical_run_dir = _validate_run_dir(staged_run_dir)
-    expected_staged_path = canonical_run_dir / "payloads" / f"{intent_id}.payload"
-    if staged_path != expected_staged_path:
-        raise ExternalTouchError(
-            "external_touch_stage_path_invalid",
-            "staged payload path is not derived from its run and intent identity",
-        )
-    current_stage = _capture_private_file(staged_path)
-    for field in ("path", "sha256", "size", "mode", "uid", "gid"):
-        if current_stage.get(field) != staged_payload.get(field):
-            raise ExternalTouchError(
-                "external_touch_stage_mismatch",
-                "staged payload evidence changed before prepare",
-                exit_code=3,
-            )
-    if current_stage["mode"] != "0600" or current_stage["uid"] != os.getuid():
-        raise ExternalTouchError(
-            "external_touch_staged_payload_invalid",
-            "staged payload must be current-user owned with mode 0600",
-        )
-    if current_stage["sha256"] == parent["sha256"]:
-        raise ExternalTouchError(
-            "external_touch_noop_candidate",
-            "candidate content must differ from its immediate parent",
-        )
-    run_id = cast(str, baseline.get("run_id", ""))
-    task_id = cast(str, baseline.get("task_id", ""))
-    _require_token(run_id, "run_id")
-    _require_token(task_id, "task_id")
-    candidate_path = _broker_candidate_path(
-        run_id=run_id, task_id=task_id, ref=ref, intent_id=intent_id
-    )
-    return {
-        "schema_version": SCHEMA_VERSION,
-        "run_id": run_id,
-        "task_id": task_id,
-        "intent_id": intent_id,
-        "sequence": len(chain) + 1,
-        "ref": ref,
-        "root_baseline": dict(baseline_ref),
-        "parent": parent,
-        "candidate": dict(staged_payload),
-        "preserved_metadata": {
-            field: parent[field] for field in ("file_type", "mode", "uid", "gid")
-        },
-        "broker_candidate_basename": candidate_path.name,
-        "broker_candidate_path": str(candidate_path),
-        "state": "prepared",
-        "after": None,
-        "cleanup": None,
-    }
-
-
 def _candidate_matches_target(current: Mapping[str, object], intent: Mapping[str, object]) -> bool:
     candidate = cast(Mapping[str, object], intent.get("candidate", {}))
     parent = cast(Mapping[str, object], intent.get("parent", {}))
@@ -1246,11 +1167,6 @@ def _build_parser() -> argparse.ArgumentParser:
     baseline_parser.add_argument("--plan-sha256", required=True)
     baseline_parser.add_argument("--ref", action="append", required=True)
 
-    stage_parser = subparsers.add_parser("stage")
-    stage_parser.add_argument("--run-dir", type=Path, required=True)
-    stage_parser.add_argument("--intent-id", required=True)
-    stage_parser.add_argument("--source-file", type=Path, required=True)
-
     declare_parser = subparsers.add_parser("declare")
     declare_parser.add_argument("--repo-root", type=Path, required=True)
     declare_parser.add_argument("--baseline-file", type=Path, required=True)
@@ -1267,14 +1183,6 @@ def _build_parser() -> argparse.ArgumentParser:
     finalize_parser = subparsers.add_parser("finalize")
     finalize_parser.add_argument("--intent-file", type=Path, required=True)
     finalize_parser.add_argument("--staged-file", type=Path, required=True)
-
-    prepare_parser = subparsers.add_parser("prepare")
-    prepare_parser.add_argument("--repo-root", type=Path, required=True)
-    prepare_parser.add_argument("--baseline-file", type=Path, required=True)
-    prepare_parser.add_argument("--intents-file", type=Path, required=True)
-    prepare_parser.add_argument("--ref", required=True)
-    prepare_parser.add_argument("--intent-id", required=True)
-    prepare_parser.add_argument("--staged-file", type=Path, required=True)
 
     apply_parser = subparsers.add_parser("apply")
     apply_parser.add_argument("--repo-root", type=Path, required=True)
@@ -1325,12 +1233,6 @@ def main(argv: Sequence[str] | None = None) -> int:
                 design_sha256=arguments.design_sha256,
                 plan_sha256=arguments.plan_sha256,
             )
-        elif arguments.operation == "stage":
-            result = stage_payload(
-                run_dir=arguments.run_dir,
-                intent_id=arguments.intent_id,
-                source_file=arguments.source_file,
-            )
         elif arguments.operation == "declare":
             result = declare_intent(
                 repo_root=arguments.repo_root,
@@ -1349,15 +1251,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif arguments.operation == "finalize":
             result = finalize_intent(
                 intent=_read_json_object(arguments.intent_file, "intent-file"),
-                staged_payload=_read_json_object(arguments.staged_file, "staged-file"),
-            )
-        elif arguments.operation == "prepare":
-            result = prepare_intent(
-                repo_root=arguments.repo_root,
-                baseline=_read_json_object(arguments.baseline_file, "baseline-file"),
-                intents=_read_json_list(arguments.intents_file, "intents-file"),
-                ref=arguments.ref,
-                intent_id=arguments.intent_id,
                 staged_payload=_read_json_object(arguments.staged_file, "staged-file"),
             )
         elif arguments.operation == "apply":

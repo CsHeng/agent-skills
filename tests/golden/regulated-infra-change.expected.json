@@ -1,6 +1,0 @@
-{
-  "mode": "regulated",
-  "requires_recovery_surface": true,
-  "default_failure_policy": "fix_forward",
-  "requires_fresh_evidence": true
-}

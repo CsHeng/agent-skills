@@ -173,8 +173,13 @@ def _validate_task(request: BindingRequest) -> str:
             raise _stop(
                 "controller_binding_command_job_invalid", "command provenance kind is invalid"
             )
-    elif task.get("status") != "ready":
-        raise _stop("controller_binding_task_not_ready", "selected task is not ready")
+    elif request.binding_kind == "bounded-review" and task.get("status") != "ready":
+        raise _stop("controller_binding_task_not_ready", "review binding is not ready")
+    elif request.binding_kind == "delegated-task" and task.get("status") not in {
+        "ready",
+        "in-progress",
+    }:
+        raise _stop("controller_binding_task_not_ready", "selected task is not admitted")
     role = derive_runtime_role(request.binding_kind, task)
     if request.binding_kind != "command-job":
         if task.get("executor_mode") != "subagent" or task.get("delegation_policy") == "forbidden":

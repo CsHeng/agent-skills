@@ -1,4 +1,4 @@
-"""Command-line namespace for the non-active contract-version-3 harness runtime."""
+"""Command-line namespace for the version-4 lifecycle harness runtime."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import os
+import stat
 import subprocess
 import sys
 from collections.abc import Mapping
@@ -25,6 +26,7 @@ from .binding import (
 )
 from .external_touch import main as external_touch_main
 from .ledger import (
+    admit_ready,
     assert_task_touch_set,
     close_decision,
     initialize_ledger,
@@ -40,6 +42,7 @@ from .ledger import (
     verify_artifact_digests,
     write_ledger,
 )
+from .lifecycle import classify_request, next_phase
 
 
 def parser() -> argparse.ArgumentParser:
@@ -68,6 +71,9 @@ def parser() -> argparse.ArgumentParser:
     ledger_transition.add_argument("ledger", type=Path)
     ledger_transition.add_argument("task_id")
     ledger_transition.add_argument("target")
+    admit = ledger_commands.add_parser("admit")
+    admit.add_argument("ledger", type=Path)
+    admit.add_argument("request", type=Path)
     ready = ledger_commands.add_parser("ready")
     ready.add_argument("ledger", type=Path)
     result = ledger_commands.add_parser("result")
@@ -86,6 +92,13 @@ def parser() -> argparse.ArgumentParser:
     bind.add_argument("ledger", type=Path)
     bind.add_argument("task_id")
     bind.add_argument("request", type=Path)
+
+    lifecycle = namespaces.add_parser("lifecycle")
+    lifecycle_commands = lifecycle.add_subparsers(dest="operation", required=True)
+    classify = lifecycle_commands.add_parser("classify")
+    classify.add_argument("request", type=Path)
+    advance = lifecycle_commands.add_parser("next")
+    advance.add_argument("request", type=Path)
 
     external_touch = namespaces.add_parser("external-touch", add_help=False)
     external_touch.add_argument("external_arguments", nargs=argparse.REMAINDER)
@@ -143,6 +156,13 @@ def _required_bool(request: dict[str, object], field: str) -> bool:
     return value
 
 
+def _required_positive_int(request: Mapping[str, object], field: str) -> int:
+    value = request.get(field)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise HarnessError("invalid-json-request", f"JSON request requires positive {field}")
+    return value
+
+
 def _optional_string(request: Mapping[str, object], field: str) -> str:
     value = request.get(field, "")
     if not isinstance(value, str):
@@ -190,13 +210,73 @@ def _repository_identity(plan_ref: Path) -> tuple[Path, str]:
     return candidate, "unversioned"
 
 
+def _file_identity(value: os.stat_result) -> tuple[int, int, int, int, int, int]:
+    return (
+        value.st_dev,
+        value.st_ino,
+        value.st_mode,
+        value.st_size,
+        value.st_mtime_ns,
+        value.st_ctime_ns,
+    )
+
+
+def _read_stable_review_brief(path: Path, expected_sha256: str) -> Path:
+    """Hash one regular non-symlink brief through a stable open descriptor."""
+    candidate = path.absolute()
+    descriptor: int | None = None
+    try:
+        path_before = os.lstat(candidate)
+        if stat.S_ISLNK(path_before.st_mode) or not stat.S_ISREG(path_before.st_mode):
+            raise HarnessError(
+                "controller_binding_review_invalid",
+                "review brief must be a regular non-symlink file",
+            )
+        flags = os.O_RDONLY
+        if hasattr(os, "O_CLOEXEC"):
+            flags |= os.O_CLOEXEC
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+        descriptor = os.open(candidate, flags)
+        opened_before = os.fstat(descriptor)
+        if not stat.S_ISREG(opened_before.st_mode) or _file_identity(
+            opened_before
+        ) != _file_identity(path_before):
+            raise HarnessError(
+                "controller_binding_review_invalid", "review brief identity changed while opening"
+            )
+        digest = hashlib.sha256()
+        while payload := os.read(descriptor, 64 * 1024):
+            digest.update(payload)
+        opened_after = os.fstat(descriptor)
+        path_after = os.lstat(candidate)
+        if (
+            _file_identity(opened_after) != _file_identity(opened_before)
+            or _file_identity(path_after) != _file_identity(opened_before)
+        ):
+            raise HarnessError(
+                "controller_binding_review_invalid", "review brief identity changed while reading"
+            )
+        if digest.hexdigest() != expected_sha256:
+            raise HarnessError("controller_binding_review_invalid", "review brief digest drifted")
+        return candidate
+    except HarnessError:
+        raise
+    except OSError as error:
+        raise HarnessError(
+            "controller_binding_review_invalid", "review brief is unreadable"
+        ) from error
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+
+
 def _binding_request(
     request: dict[str, object], ledger_path: Path, task_id: str
 ) -> tuple[BindingRequest, str | None, Path | None, Path | None]:
     """Bind runtime-only input to one immutable ledger task and artifact identity."""
     allowed = {
         "backend",
-        "batch_provenance",
         "binding_kind",
         "command_job",
         "controller_id",
@@ -220,6 +300,11 @@ def _binding_request(
         )
     ledger = read_ledger(ledger_path)
     binding_kind = _required_string(request, "binding_kind")
+    if ledger.data.get("ledger_version") != 4:
+        raise HarnessError(
+            "legacy-ledger-read-only", "version-3 ledger authority cannot emit bindings"
+        )
+    ledger_admission: Mapping[str, object] | None = None
     if binding_kind == "bounded-review":
         verify_artifact_digests(ledger)
         if ledger.data.get("lifecycle_state") != "task-complete":
@@ -227,16 +312,9 @@ def _binding_request(
                 "controller_binding_review_not_ready",
                 "bounded review requires converged task work",
             )
-        review_ref = Path(_required_string(request, "review_brief_ref")).resolve()
+        review_ref = Path(_required_string(request, "review_brief_ref"))
         review_sha256 = _required_string(request, "review_brief_sha256")
-        try:
-            observed_review_sha256 = hashlib.sha256(review_ref.read_bytes()).hexdigest()
-        except OSError as error:
-            raise HarnessError(
-                "controller_binding_review_invalid", "review brief is unreadable"
-            ) from error
-        if observed_review_sha256 != review_sha256:
-            raise HarnessError("controller_binding_review_invalid", "review brief digest drifted")
+        review_ref = _read_stable_review_brief(review_ref, review_sha256)
         task = {
             "task_id": task_id,
             "depends_on": [],
@@ -322,10 +400,14 @@ def _binding_request(
             }
         else:
             task = task_binding_projection(ledger, task_id)
+            ledger_admission = _optional_mapping(task, "admission")
+            task = {key: value for key, value in task.items() if key != "admission"}
     else:
         if "review_brief_ref" in request or "review_brief_sha256" in request:
             raise HarnessError("invalid-json-request", "review brief fields require bounded-review")
         task = task_binding_projection(ledger, task_id)
+        ledger_admission = _optional_mapping(task, "admission")
+        task = {key: value for key, value in task.items() if key != "admission"}
     backend = request.get("backend")
     if backend is not None and not isinstance(backend, str):
         raise HarnessError("invalid-json-request", "backend must be a string")
@@ -367,7 +449,7 @@ def _binding_request(
                 "plan_sha256": plan_sha256,
                 "ledger_ref": str(ledger_path.resolve()),
                 "ledger_sha256": ledger_sha256,
-                "batch": _optional_mapping(request, "batch_provenance"),
+                "batch": ledger_admission,
             },
             parent_reasoning_effort=_required_string(request, "parent_reasoning_effort"),
             minimum_reasoning_effort=_required_string(request, "minimum_reasoning_effort"),
@@ -380,7 +462,7 @@ def _binding_request(
             concurrency_ceiling=(concurrency_value if isinstance(concurrency_value, int) else None),
             spawn_cwd_supported=_optional_bool(request, "spawn_cwd_supported", True),
             required_uplift_supported=_optional_bool(request, "required_uplift_supported", True),
-            batch_provenance=_optional_mapping(request, "batch_provenance"),
+            batch_provenance=ledger_admission,
             command_job=_optional_mapping(request, "command_job"),
             herdr_physical_binding=_optional_mapping(request, "physical_binding"),
         ),
@@ -424,6 +506,18 @@ def main(argv: list[str] | None = None) -> None:
             return
         if args.namespace == "ledger" and args.operation == "transition":
             ledger = transition(read_ledger(args.ledger), args.task_id, args.target)
+            write_ledger(args.ledger, ledger)
+            _emit(_ledger_result(args.ledger, ledger))
+            return
+        if args.namespace == "ledger" and args.operation == "admit":
+            request = _read_request(args.request)
+            if set(request) != {"task_ids", "capacity"}:
+                raise HarnessError("invalid-json-request", "admission request schema is not exact")
+            ledger = admit_ready(
+                read_ledger(args.ledger),
+                _string_array(request, "task_ids"),
+                capacity=_required_positive_int(request, "capacity"),
+            )
             write_ledger(args.ledger, ledger)
             _emit(_ledger_result(args.ledger, ledger))
             return
@@ -502,6 +596,22 @@ def main(argv: list[str] | None = None) -> None:
                 user_role_file=user_role_file,
             )
             _emit({"status": "ok", "envelope": envelope})
+            return
+        if args.namespace == "lifecycle" and args.operation == "classify":
+            _emit(
+                {
+                    "status": "ok",
+                    "classification": classify_request(_read_request(args.request)),
+                }
+            )
+            return
+        if args.namespace == "lifecycle" and args.operation == "next":
+            _emit(
+                {
+                    "status": "ok",
+                    "transition": next_phase(_read_request(args.request)),
+                }
+            )
             return
         if args.namespace == "truth-sync" and args.operation == "evaluate":
             decision = truth_sync_decision(
