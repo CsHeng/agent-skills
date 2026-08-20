@@ -1,12 +1,19 @@
 [distribution]
 materialization_target = "root-flat"
 provider_manifests = ["claude", "codex"]
+recommended_management = "live-symlink"
+recommended_symlink_layout = "per-skill"
+recommended_user_root = "~/.agents/skills"
+recommended_source = "local-git-checkout"
+recommended_update = "git-pull"
+plugin_policy = "compatible-optional"
 long_tail_cli = "npx skills@latest"
-long_tail_policy = "advisory"
+long_tail_policy = "compatible-not-recommended"
 long_tail_owner = "consumer"
 enforce_destinations = false
 detect_duplicates = false
 coexistence_guaranteed = false
+duplicate_invariant = "one-active-discovery-path-per-tool-and-public-id"
 
 [targets.root-flat]
 description = "Tracked flat skill surface consumed by both plugin manifests and standalone skill installers."

@@ -18,6 +18,23 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class InstallTargetContractTests(unittest.TestCase):
+    def test_live_symlinks_are_the_recommended_management_mode(self) -> None:
+        with (REPO_ROOT / "contracts" / "install-targets.toml").open("rb") as handle:
+            distribution = tomllib.load(handle)["distribution"]
+        self.assertEqual("live-symlink", distribution["recommended_management"])
+        self.assertEqual("per-skill", distribution["recommended_symlink_layout"])
+        self.assertEqual("~/.agents/skills", distribution["recommended_user_root"])
+        self.assertEqual("local-git-checkout", distribution["recommended_source"])
+        self.assertEqual("git-pull", distribution["recommended_update"])
+        self.assertEqual("compatible-optional", distribution["plugin_policy"])
+        self.assertEqual(
+            "compatible-not-recommended", distribution["long_tail_policy"]
+        )
+        self.assertEqual(
+            "one-active-discovery-path-per-tool-and-public-id",
+            distribution["duplicate_invariant"],
+        )
+
     def test_root_flat_is_the_only_materialization_target(self) -> None:
         with (REPO_ROOT / "contracts" / "install-targets.toml").open("rb") as handle:
             contract = tomllib.load(handle)

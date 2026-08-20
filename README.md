@@ -1,6 +1,6 @@
 # Development Skills
 
-Claude Code and Codex plugins plus a portable public skill payload organized around a sovereign harness kernel, with supporting truth, evaluation, policy, and tooling planes underneath it.
+A portable Agent Skills collection organized around a sovereign harness kernel, with supporting truth, evaluation, policy, and tooling planes underneath it. The suggested machine topology uses live per-skill links through `~/.agents/skills/`; Claude Code and Codex plugins remain optional compatibility packages.
 
 New here? See `docs/quickstart.md` for install verification and a first end-to-end change walkthrough.
 
@@ -88,11 +88,12 @@ The three retired compatibility aliases are absent. Their durable owners are `ar
 
 ## Distribution
 
-- Claude Code uses the maintained local marketplace and plugin path exposed by `.claude-plugin/` and `install.sh`.
-- Codex uses the maintained local marketplace and plugin path exposed by `.codex-plugin/`, `.codex-marketplace/`, and `install-codex.sh`.
-- Other coding agents may optionally use `npx skills@latest add CsHeng/agent-skills`; every selected runtime-owning skill includes its executable bundle, while destination and installation lifecycle remain advisory and consumer-managed.
+- `src/skills/` is flattened into the generated `skills/` payload.
+- The suggested machine topology exposes selected `skills/<public-id>/` directories under `~/.agents/skills/`, treating that directory as the machine-level distribution center.
+- Each coding agent may consume that center directly or adapt it through its own skill directory and settings, according to that tool's manual.
+- Claude Code and Codex plugin packages and `npx skills` remain compatible alternatives, not the recommended topology.
 
-The `npx skills` path is guidance, not a repository-owned installer contract. This repository does not restrict selected agents, scopes, destinations, or copy/symlink modes; it does not inspect duplicate exposure or promise that independently installed copies coexist. Selection, installation, updates, removal, cleanup, and any coexistence issues belong to the consumer and the upstream CLI. The retained 39 public names remain stable; `clean-architecture`, `quality-standards`, and `security-logging` are retired.
+This topology is guidance, not an installer or lifecycle-management contract. Users choose how to clone, link, copy, update, remove, and expose skills to each tool. The retained 39 public names remain stable; `clean-architecture`, `quality-standards`, and `security-logging` are retired.
 
 ## Skill Planes
 
@@ -143,7 +144,27 @@ Repair behavior:
 - Prefer bounded readonly review context and narrow repair fences for plan-bound execution work.
 - Keep decision discovery, work-package readiness, and bounded review inside the sovereign harness instead of restoring third-party workflow control.
 
-## Install
+## Suggested Machine Topology
+
+```text
+src/skills/
+    |
+    | flatten
+    v
+skills/<public-id>/                 repository-generated payload
+    |
+    | suggested per-skill link
+    v
+~/.agents/skills/<public-id>/       machine distribution center
+    |
+    +--> agent-native discovery
+    |
+    +--> tool-specific skill root or adapter, following that tool's manual
+```
+
+The repository recommends the topology only. It does not prescribe or manage consumer installation commands, provider-specific directories, settings, updates, removals, or coexistence behavior.
+
+### Optional Plugin Compatibility
 
 Claude Code marketplace registration:
 
@@ -169,15 +190,15 @@ Codex local marketplace registration and plugin install:
 ./install-codex.sh
 ```
 
-For other coding agents, the optional advisory path is:
+An optional copy-based compatibility path is:
 
 ```bash
 npx skills@latest add CsHeng/agent-skills
 ```
 
-Review the upstream CLI's proposed targets and locations before accepting them. The repository neither constrains nor verifies that choice and does not manage coexistence with either provider plugin.
+Installation targets and lifecycle choices remain consumer-owned.
 
-For deterministic lifecycle entry, a host-level `AGENTS.md` may keep user preferences, runtime constraints, and thin public-skill hints such as ambiguous multi-stage work -> `coding:use-coding-skills`. The installed `use-coding-skills/references/routing.toml` and `implement-change/references/workflow.toml` remain the route and runtime DAG authorities; do not copy their graphs, budgets, or exits into the host bootstrap.
+For deterministic lifecycle entry, a host-level `AGENTS.md` may keep user preferences, runtime constraints, and thin public-skill hints such as ambiguous multi-stage work -> `use-coding-skills`. The portable identity is the unqualified public ID; a host may render a collection-qualified form such as `coding:use-coding-skills`. The installed `use-coding-skills/references/routing.toml` and `implement-change/references/workflow.toml` remain the route and runtime DAG authorities; do not copy their graphs, budgets, or exits into the host bootstrap.
 
 Manual Codex flow:
 

@@ -95,6 +95,26 @@ Long-running agent work had no native read-only owner for evidence-first simplif
 - Simple stable-fact updates do not trigger repository-wide docs organization; only the declared bounded governance need activates it.
 - Close remains judgment-only and does not imply merge, release, cleanup, commit, push, plugin install, distribution, or deploy.
 
+## 2026-08-20 - Live-Symlink Skill Management
+
+### Failure Mode
+
+Native plugin caches and `npx skills` copies created additional installation, update, removal, and discovery state for a primarily single-user collection. Tools that scanned both generic skill roots and provider compatibility surfaces could expose the same public ID twice even when every copy originated from one repository.
+
+### Change
+
+- Recommend a local Git checkout plus one child symlink per public ID under `~/.agents/skills/`.
+- Update first-party and third-party skill collections through their own Git remotes instead of copying them into each provider directory.
+- Keep Claude Code and Codex plugins as optional compatibility and keep `npx skills` compatible but non-recommended.
+- Require one active discovery path per tool and public ID; add provider-specific child links only after duplicate-name probes pass.
+- On the primary development machine, prove Grok ignores Claude skills before adding Claude coding links, then repeat the probe after exposure.
+
+### Operational Impact
+
+- Skill edits and pulls become visible through live links in new sessions without plugin cache refresh or copy reinstall.
+- `src/skills/` remains authored truth and `skills/` remains the generated portable payload; symlink roots are exposure state, not another source.
+- The 2026-08-07 decision remains authoritative for standalone resource closure and plugin compatibility, but its recommendation of native provider plugins as the maintained primary path is superseded.
+
 ## 2026-08-07 - Native Provider Plugins And Advisory Agent Skills Distribution
 
 ### Failure Mode
@@ -103,7 +123,7 @@ Extending repository-owned install, update, removal, symlink, destination, dupli
 
 ### Change
 
-- Keep the maintained Claude Code and Codex marketplace/plugin paths.
+- Keep Claude Code and Codex marketplace/plugin compatibility paths.
 - Keep all public skill names unchanged and publish the generated root `skills/` tree as the shared portable payload.
 - Present `npx skills@latest add CsHeng/agent-skills` only as optional consumer-managed guidance for other agents.
 - Do not restrict selected agents, scopes, destinations, or copy/symlink modes; do not detect duplicate exposure or guarantee coexistence.
@@ -112,7 +132,7 @@ Extending repository-owned install, update, removal, symlink, destination, dupli
 
 ### Operational Impact
 
-- Repository acceptance covers public identities, semantic requirements, package closure, owner-local runtime, both native plugins, and command retirement. It does not execute or police external installation state.
+- Repository acceptance covers public identities, semantic requirements, package closure, owner-local runtime, both plugin compatibility manifests, and command retirement. It does not execute or police arbitrary external installation state.
 - Consumers and the upstream CLI own optional external selection, installation, updates, removal, cleanup, duplicates, and coexistence.
 - Portable skill resources use skill-relative paths; a universal provider-supplied `$PLUGIN_ROOT` or `$SKILL_ROOT` environment variable is not part of the contract.
 

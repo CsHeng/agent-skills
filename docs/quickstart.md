@@ -1,34 +1,34 @@
 # Quickstart
 
-A five-minute path from install to a first completed change with the `coding@csheng` plugin.
+A five-minute path from a live skill checkout to a first completed change.
 
 ## 1. Install And Verify
 
-```bash
-./install.sh                      # register the local Claude marketplace
-claude plugin install coding@csheng
-claude plugin list                # expect coding@csheng, Status: enabled
-```
+Keep this repository as a local Git checkout and create one child symlink per selected public ID from its generated `skills/` tree into `~/.agents/skills/`. Pull the checkout to update it and start a new agent session so compatible tools refresh discovery.
 
-Restart Claude Code so skills load in a new session. Codex users run `./install-codex.sh` instead and start a new thread. Other agents may optionally use the consumer-managed `npx skills@latest add CsHeng/agent-skills` path described in the README. Update flows are in the README Install section.
+Before exposing the same links through a provider-specific directory, prove that every tool scanning both roots deduplicates or has the provider compatibility path disabled. On the primary development machine, verify Grok has no duplicate names and ignores Claude skills before adding Claude child links, then repeat the probe afterward.
+
+Claude Code and Codex plugin installers and `npx skills@latest add CsHeng/agent-skills` remain compatible alternatives. They are not the recommended local path because they introduce provider caches or copied destinations with separate update and removal state. Exact optional commands are in the README Install section.
 
 ## 2. What You Got
 
 Seven top-level skills form the sovereign kernel:
 
+The table uses portable unqualified IDs. A host may display or invoke the same skill with a collection prefix such as `coding:design-change`; that prefix is host notation, not a second public identity.
+
 | Skill | Role |
 |---|---|
-| `coding:analyze-project` | Read-only project explanation and drift detection |
-| `coding:design-change` | Design a change: scope, boundaries, truth impact |
-| `coding:plan-change` | Versioned task DAG, verification, failure policy |
-| `coding:implement-change` | Execute an approved plan with review and repair |
-| `coding:review-change` | Agent-native review gate over a bounded slice |
-| `coding:sync-truth` | Update stable docs after a verified change |
-| `coding:close-change` | Merge, release, or cleanup judgment |
+| `analyze-project` | Read-only project explanation and drift detection |
+| `design-change` | Design a change: scope, boundaries, truth impact |
+| `plan-change` | Versioned task DAG, verification, failure policy |
+| `implement-change` | Execute an approved plan with review and repair |
+| `review-change` | Agent-native review gate over a bounded slice |
+| `sync-truth` | Update stable docs after a verified change |
+| `close-change` | Merge, release, or cleanup judgment |
 
 Everything else (language guidelines, testing, security, tooling, git helpers) is a lower-plane skill these seven compose automatically. The full map: [skill planes overview](architecture/generated/skill-planes.svg); the authoritative inventory is `contracts/skills.toml`.
 
-The human shorthand **design → plan → execute** maps to `coding:design-change` → `coding:plan-change` → `coding:implement-change`.
+The human shorthand **design → plan → execute** maps to `design-change` → `plan-change` → `implement-change`.
 
 ## 3. Pick Your Entry Point
 
@@ -36,17 +36,17 @@ The harness selects a workflow mode from your request; you only pick the entry:
 
 | Your situation | Start with | Gates you will hit |
 |---|---|---|
-| "Explain this repo / find drift" | `coding:analyze-project` | none (read-only) |
-| Small, bounded, low-risk edit | `coding:plan-change` | plan approval → execute → close |
-| Ordinary feature, fix, or refactor | `coding:design-change` | design approval → plan approval → review → truth sync → close |
-| Infra, secrets, auth, public API, migration | `coding:design-change` | full gate chain with explicit recovery surface |
+| "Explain this repo / find drift" | `analyze-project` | none (read-only) |
+| Small, bounded, low-risk edit | `plan-change` | plan approval → execute → close |
+| Ordinary feature, fix, or refactor | `design-change` | design approval → plan approval → review → truth sync → close |
+| Infra, secrets, auth, public API, migration | `design-change` | full gate chain with explicit recovery surface |
 | Production is on fire | describe the emergency | minimal up-front ceremony, post-hoc review + truth sync |
 
 You stay sovereign: the harness stops for explicit human approval at design, plan, truth-sync, and close. It never runs unattended by default, and execution is serial unless you approve a named parallel batch in the plan.
 
 ## 4. First Change Walkthrough
 
-A standard feature, end to end:
+A standard feature, end to end, using one host's optional `coding:` rendering:
 
 ```text
 $coding:design-change add a --json output mode to the status command

@@ -4,14 +4,14 @@ For human-facing project overview and skill inventory, see `README.md`.
 
 ## Project
 
-This repository is a local Claude Code and Codex plugin marketplace and plugin source for `coding@csheng`.
+This repository is the authored source and generated portable Agent Skills payload for the `coding` collection. Local Git checkouts plus live per-skill symlinks are the recommended management path.
 
-The plugin provides nested authored skills under `src/skills/`, one generated root-flat 39-skill payload under `skills/`, a single authored Python lifecycle runtime under `src/runtime/harness/`, and six generated skill-local runtime bundles.
+The repository provides nested authored skills under `src/skills/`, one generated root-flat 39-skill payload under `skills/`, a single authored Python lifecycle runtime under `src/runtime/harness/`, and six generated skill-local runtime bundles. Claude Code and Codex plugin packages remain optional compatibility surfaces.
 
-Current plugin identity:
+Compatibility plugin identity:
 - plugin name: `coding`
 - marketplace name: `csheng`
-- current version: `1.1.0`
+- current version: `1.2.0`
 
 ## Repository Layout
 
@@ -72,7 +72,7 @@ Lower-plane skills support the kernel:
 
 Planning and ad hoc tooling stay separate: `plan-change` composes `language-decision-tree` only when a task introduces or replaces a persisted implementation boundary, while `tool-decision-tree` owns agent ad hoc command choice and composition. Language guideline skills apply after the implementation language is fixed; `go-guidelines` then selects its CLI-tool or API-service profile as appropriate.
 
-Claude Code and Codex retain their repository-owned plugin marketplaces. Other coding agents may use `npx skills@latest add CsHeng/agent-skills` as optional consumer-managed guidance. Do not restrict selected targets or destinations, inspect duplicate exposure, promise coexistence, or manage external install/update/remove state. The 39 retained public IDs remain stable; `clean-architecture`, `quality-standards`, and `security-logging` are intentionally retired.
+Recommend a local Git checkout plus one child symlink per public ID under `~/.agents/skills/`; update the checkout with Git and regenerate its owned payload. A tool-specific skill root may link to the same generated directories only after duplicate discovery is ruled out for every tool that scans both roots. Claude Code and Codex plugin marketplaces remain optional compatibility, while `npx skills@latest add CsHeng/agent-skills` remains compatible but non-recommended because its copied installation has a separate update and removal lifecycle. Do not promise coexistence or mutate consumer state without explicit authority. The 39 retained public IDs remain stable; `clean-architecture`, `quality-standards`, and `security-logging` are intentionally retired.
 
 ## Working Rules
 
@@ -169,20 +169,25 @@ For sovereign harness surface changes, run the authored runtime pytest suite and
 
 ### Development Workflow (Pre-Release)
 
-During active development before external release:
+The default local workflow is:
 
 1. Make code/doc changes
 2. Run validation
-3. Uninstall and reinstall plugin:
+3. Keep `~/.agents/skills/<public-id>` linked to this checkout's generated `skills/<public-id>` directory
+4. Start a new agent session after pulling or regenerating skills
+
+No plugin reinstall or version bump is needed for this live-symlink path.
+
+When explicitly testing the optional Claude plugin compatibility surface, uninstall and reinstall it:
 
 ```bash
 claude plugin uninstall coding@csheng
 claude plugin install coding@csheng
 ```
 
-4. Restart Claude Code to apply changes
+Then restart Claude Code to apply changes.
 
-No version bump needed - changes are picked up from the local directory.
+No version bump is needed for a local compatibility test because the marketplace points at this directory.
 
 ### Release Workflow (External Distribution)
 
@@ -201,13 +206,17 @@ Version bump procedure:
 
 ## Local Update Guide
 
-This project is installed from a local directory marketplace, not a remote registry.
+The recommended local installation is a Git checkout with live child links:
 
-That means:
-- the source of truth is this repo
-- version bumps are metadata and install/update markers
-- Claude does not fetch a remote package for this plugin
-- after updating the installed plugin, Claude Code must be restarted to apply changes
+```text
+<local checkout>/skills/<public-id> -> ~/.agents/skills/<public-id>
+```
+
+Pull the checkout with Git, run the repository generators when authored sources changed, and start a new agent session. Third-party skill collections follow the same local-clone and live-link pattern. Keep one active discovery path per tool and public ID.
+
+### Optional Plugin Compatibility
+
+The repository still carries local Claude Code and Codex marketplace metadata and installers for compatibility testing. Version bumps are plugin release metadata, and installed plugin caches require their provider-specific refresh flow.
 
 Claude marketplace registration:
 
@@ -258,7 +267,7 @@ codex plugin add coding@csheng
 After update:
 - start a new Codex thread to pick up refreshed plugin skills and metadata
 
-Optional `npx skills` installations are owned by the consumer and upstream CLI. They do not replace the maintained Claude or Codex plugin paths, and this repository does not constrain or inspect their targets, layout, duplicate exposure, coexistence, update, removal, or cleanup behavior.
+Optional `npx skills` installations are compatible but not recommended for the primary local workflow. They copy content into consumer-selected locations and therefore create a separate update, removal, cleanup, and duplicate-exposure lifecycle owned by the consumer and upstream CLI.
 
 ## Notes
 

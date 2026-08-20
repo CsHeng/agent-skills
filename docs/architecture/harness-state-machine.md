@@ -44,7 +44,7 @@ infrastructure-triage -> execute repo mutation -> close change
 
 The cross-skill invocation graph stays acyclic. `implement-change` owns an internal `repair -> verify -> review` state transition; lower-plane reviewers return evidence and never call back into the controller. The installed `use-coding-skills/references/routing.toml` contract maps discovery and lifecycle phases to their owners, while the generated diagrams and their source precedence are documented in `workflow-orchestration.md`.
 
-The active entry surface consists of public skills. Claude Code and Codex expose them through their retained native plugins; optional external `npx skills` installation is consumer-managed and does not change lifecycle ownership, state transitions, or approval gates.
+The active entry surface consists of public skills. The recommended local path exposes the generated payload through live child links under `~/.agents/skills`; provider plugins and `npx skills` copies are optional compatibility paths. Distribution choice does not change lifecycle ownership, state transitions, or approval gates, and each tool should resolve one active path per public ID.
 
 ## Evidence-Bound Lifecycle Tail
 

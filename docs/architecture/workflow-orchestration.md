@@ -18,7 +18,7 @@ When prose, diagrams, and runtime behavior disagree, resolve drift in this order
 
 ## Installed Surface
 
-Claude Code and Codex retain their native plugin marketplaces and consume the same canonical authored `skills/` inventory. Other agents may consume that payload through optional, consumer-managed `npx skills` guidance. Lifecycle entry is through public skills and native description matching or a thin host mapping to those skills.
+The recommended local surface is a Git checkout whose generated `skills/` directories are exposed through live child links under `~/.agents/skills`. Claude Code and Codex retain optional native plugin marketplaces, and `npx skills` remains a compatible but non-recommended copy path. Lifecycle entry is through portable public skill IDs and native description matching or a thin host mapping; distribution must not expose the same ID through multiple active discovery paths in one tool.
 
 Activation intent is authored once in `contracts/skills.toml`. Generation projects Codex `policy.allow_implicit_invocation` from the contract-level mode table: `native`, `conditional`, and `baseline` allow implicit invocation, while `controller` and `explicit` do not. The shared `SKILL.md` payload remains provider-neutral. Claude's effective visibility is recorded as `default-visible`; the repository does not claim an unsupported per-skill Claude visibility switch.
 
