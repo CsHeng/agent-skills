@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "review_status": "passed",
+  "verification_status": "passed",
+  "plan_sha256": "acb9c06e9752adbb4a9f5d175ca2a96d942bc274d2f38923ccfd8eac445ed92f",
+  "design_sha256": "de4c42568dfb150b20e1f2af93546e41fd3ac44774f81f812b5c81d54bef3001",
+  "projection_sha256": "963a2b709643fbc9b7ea20bc3bca524787d9779e2a5c88f0cde3c40050180a61",
+  "execution_state": "ready-for-close",
+  "tasks": [
+    {"task_id": "ETC-010", "state": "converged", "summary": "deleted caller-less check-fixtures.py, check-review-boundary.sh, four request fixtures, four goldens"},
+    {"task_id": "ETC-020", "state": "converged", "summary": "removed vacuous command-adapter retirement test"},
+    {"task_id": "ETC-030", "state": "converged", "summary": "removed prepare_intent and stage/prepare CLI subcommands from external_touch.py"},
+    {"task_id": "ETC-040", "state": "converged", "summary": "rewrote external-touch tests and ledger fixture helper onto declare/stage-declared/finalize chain"},
+    {"task_id": "ETC-050", "state": "converged", "summary": "regenerated six skill-local runtime bundles; full aggregate check.sh passed (215 tests)"}
+  ],
+  "allowed_external_touch_refs": [],
+  "verified_external_changes": [],
+  "controller_notes": "ETC-030 ty oracle overlapped ETC-040's test files; controller landed ETC-040's declared test edits before converging ETC-030, per the plan's declared expected pre-repair evidence. One fix-forward repair inside ETC-040: renamed leftover first_stage assertion variable to first_staged."
+}

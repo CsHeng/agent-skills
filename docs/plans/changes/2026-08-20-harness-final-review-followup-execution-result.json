@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "review_status": "passed",
+  "verification_status": "passed",
+  "plan_sha256": "b1f927e87bab63dc7b13b7c5100732be40cc74dcc7282702348c20cd4d552b4f",
+  "design_sha256": "3bde3ac9022ef290da032c9974e7194fdef276706ba81cdad94f011db26a4eb0",
+  "projection_sha256": "3419bea938d220ac1cd0eca88744970c640079178418a15c00f8835ee33d11d7",
+  "execution_state": "ready-for-close",
+  "tasks": [
+    {
+      "task_id": "FRF-010",
+      "state": "converged",
+      "summary": "repaired artifact version matching, active-admission exclusivity, portable repository references, structural Markdown fences, and typed ledger predecessor handling"
+    },
+    {
+      "task_id": "FRF-020",
+      "state": "converged",
+      "summary": "refreshed and verified all six generated runtime-owner projections"
+    },
+    {
+      "task_id": "FRF-030",
+      "state": "converged",
+      "summary": "passed aggregate acceptance, both plugin validators, diff validation, and final bounded review"
+    }
+  ],
+  "allowed_external_touch_refs": [],
+  "verified_external_changes": [],
+  "controller_notes": "FRF-010 used its single approved repair attempt to resolve two accepted review findings. Focused tests passed with 67 tests; aggregate scripts/check.sh passed with 280 tests. No commit, push, install, publish, deploy, truth-sync approval, or close approval was performed."
+}

@@ -1,0 +1,70 @@
+{
+  "artifact_kind": "implementation-resume-evidence",
+  "captured_on": "2026-08-20",
+  "predecessor": {
+    "design_ref": "docs/plans/changes/2026-08-20-harness-runtime-contract-repair-design.md",
+    "design_sha256": "d43af0d7df1f60dfedcb8cb7a4f9c91586ab15431db42a8cf04dc379bd641c1c",
+    "plan_ref": "docs/plans/changes/2026-08-20-harness-runtime-contract-repair-plan.md",
+    "plan_sha256": "495f665c17df831d9b3a5239baa3127c393d3bef3b4e7725ee1f15cd0ed0a4ca",
+    "ledger_ref": "docs/plans/changes/2026-08-20-harness-runtime-contract-repair-ledger.json",
+    "ledger_sha256": "d7d4bb970e31840f095de24cb4039a8d47678a11cc61405f5e1c2dc4a187019c",
+    "baseline_ref": "docs/plans/changes/2026-08-20-harness-runtime-contract-repair-preexisting-baseline.json",
+    "baseline_sha256": "764e623cf766ce7096fd498d3adef0581a377ab8ffc9c9155ccdb514f8a93b33",
+    "task_states": {
+      "HCR-010": "converged",
+      "HCR-020": "in-progress",
+      "HCR-030": "pending",
+      "HCR-040": "pending",
+      "HCR-050": "pending",
+      "HCR-060": "pending"
+    }
+  },
+  "hcr_010": {
+    "red_oracle": {
+      "capture_kind": "controller-observation",
+      "command": "uv run pytest src/runtime/harness/tests/test_v4_artifacts.py -q",
+      "exit_code": 1,
+      "failed": 21
+    },
+    "source_before": {
+      "src/runtime/harness/__init__.py": "fc96422f0403ce9faaffb3545252aeb5f554412b7ed7bf427f864d93869512cf",
+      "src/runtime/harness/artifacts.py": "04690492ce43f9937e23a26d608984c7e43d00d8f2169c1597e9231cb74b8724"
+    },
+    "source_after": {
+      "src/runtime/harness/__init__.py": "f9a5a13116ed6b86740be1fe5b7d1330102cf3eaf2dabaee5470b5830c795856",
+      "src/runtime/harness/artifacts.py": "52f0cda42027091359d67624a6bd12de78469132c309e33cf26d709e6163b06d",
+      "src/runtime/harness/tests/test_v3_artifacts.py": "ac81a82e4b1b549fa40242ad480642945436d988df15e25738b2a16d8c5e02c7",
+      "src/runtime/harness/tests/test_v4_artifacts.py": "626d963f9d32edffb02970cc7f2465bd31a0aa10464b11da0084f98c23b4700a"
+    },
+    "green_oracles": [
+      {
+        "command": "uv run pytest src/runtime/harness/tests/test_v3_artifacts.py src/runtime/harness/tests/test_v4_artifacts.py -q",
+        "result": "33 passed"
+      },
+      {
+        "command": "uv run ruff check src/runtime/harness/__init__.py src/runtime/harness/artifacts.py src/runtime/harness/tests/test_v3_artifacts.py src/runtime/harness/tests/test_v4_artifacts.py",
+        "result": "passed"
+      },
+      {
+        "command": "uv run ty check src/runtime/harness",
+        "result": "passed"
+      }
+    ]
+  },
+  "hcr_020_stop": {
+    "typed_exit": "needs-plan-change",
+    "reason": "The approved HCR-020 test write set omitted test_ledger.py even though strict version-3 mutation rejection requires migrating its mutation expectations and its declared verification command includes that file.",
+    "red_oracle": {
+      "capture_kind": "controller-observation",
+      "command": "uv run pytest src/runtime/harness/tests/test_v4_ledger.py -q",
+      "exit_code": 1,
+      "failed": 13
+    },
+    "source_at_stop": {
+      "src/runtime/harness/ledger.py": "cd8c74f02ef19d0d5a65887fceccf3bb8cf1b85d180278c1e4b125e0407699d0",
+      "src/runtime/harness/tests/test_ledger.py": "658afb5eb3f530afadd9910f727007a8da7b485c97bb8ba3916496a225b6e624",
+      "src/runtime/harness/tests/test_v4_ledger.py": "afd7e77e272c0f423676d9ca5f8a4659f77faec556653416cd59e637d3a4fdd8"
+    },
+    "ledger_implementation_changed": false
+  }
+}

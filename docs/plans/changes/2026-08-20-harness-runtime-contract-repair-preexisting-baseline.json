@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-08-20",
+  "purpose": "Preserve the separately reviewed external-touch cleanup before HCR-010 mutation.",
+  "tracked_patch_sha256": "a14a00f1860153166484e5c2fee5789a39a32f8c0dc04b800d4bac6c4ada9529",
+  "deleted_paths": [
+    "scripts/check-fixtures.py",
+    "scripts/check-review-boundary.sh",
+    "tests/fixtures/implicit-smart-commit-request.json",
+    "tests/fixtures/micro-doc-change.json",
+    "tests/fixtures/read-only-request.json",
+    "tests/fixtures/regulated-infra-change.json",
+    "tests/golden/implicit-smart-commit-request.expected.json",
+    "tests/golden/micro-doc-change.expected.json",
+    "tests/golden/read-only-request.expected.json",
+    "tests/golden/regulated-infra-change.expected.json"
+  ],
+  "file_sha256": {
+    "skills/close-change/scripts/harness/external_touch.py": "559b39e126230aa03e519640a73da057e4385b9c8922e4e7035588aa79cf276b",
+    "skills/design-change/scripts/harness/external_touch.py": "559b39e126230aa03e519640a73da057e4385b9c8922e4e7035588aa79cf276b",
+    "skills/implement-change/scripts/harness/external_touch.py": "559b39e126230aa03e519640a73da057e4385b9c8922e4e7035588aa79cf276b",
+    "skills/plan-change/scripts/harness/external_touch.py": "559b39e126230aa03e519640a73da057e4385b9c8922e4e7035588aa79cf276b",
+    "skills/review-change/scripts/harness/external_touch.py": "559b39e126230aa03e519640a73da057e4385b9c8922e4e7035588aa79cf276b",
+    "skills/sync-truth/scripts/harness/external_touch.py": "559b39e126230aa03e519640a73da057e4385b9c8922e4e7035588aa79cf276b",
+    "src/runtime/harness/external_touch.py": "559b39e126230aa03e519640a73da057e4385b9c8922e4e7035588aa79cf276b",
+    "src/runtime/harness/tests/test_ledger.py": "658afb5eb3f530afadd9910f727007a8da7b485c97bb8ba3916496a225b6e624",
+    "tests/test_command_retirement_contracts.py": "1085a921c55c731845ac4b5095f7f94e2d079cab7508dc31acee0f22ae5d2e13",
+    "tests/test_external_touch_evidence.py": "1b942680d79150d147547bde0e41bcef31f3ccd3c069fb5d06c80932a45a496f"
+  },
+  "stage_artifact_sha256": {
+    "docs/plans/changes/2026-08-19-external-touch-single-pipeline-and-dead-lane-cleanup-close.md": "299e7adedf25cc4bcdf09e9acca8c8f392e280bc0a78af14ef75d65beefb9bde",
+    "docs/plans/changes/2026-08-19-external-touch-single-pipeline-and-dead-lane-cleanup-design.md": "de4c42568dfb150b20e1f2af93546e41fd3ac44774f81f812b5c81d54bef3001",
+    "docs/plans/changes/2026-08-19-external-touch-single-pipeline-and-dead-lane-cleanup-execution-result.json": "48fab7c130b1c5687e2f596636d475d12f4e9a296512ebf725ad68f09e8d4838",
+    "docs/plans/changes/2026-08-19-external-touch-single-pipeline-and-dead-lane-cleanup-ledger.json": "b8bc1cbfc119e0322275e142b7b0ac45655570a309ef95ac72532d8b1d8e9273",
+    "docs/plans/changes/2026-08-19-external-touch-single-pipeline-and-dead-lane-cleanup-plan.md": "acb9c06e9752adbb4a9f5d175ca2a96d942bc274d2f38923ccfd8eac445ed92f"
+  },
+  "bootstrap_artifact_sha256": {
+    "docs/plans/changes/2026-08-20-harness-runtime-contract-repair-design.md": "d43af0d7df1f60dfedcb8cb7a4f9c91586ab15431db42a8cf04dc379bd641c1c",
+    "docs/plans/changes/2026-08-20-harness-runtime-contract-repair-plan.md": "495f665c17df831d9b3a5239baa3127c393d3bef3b4e7725ee1f15cd0ed0a4ca"
+  }
+}
