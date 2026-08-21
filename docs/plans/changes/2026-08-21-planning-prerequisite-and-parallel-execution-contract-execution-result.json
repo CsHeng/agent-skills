@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "review_status": "passed",
+  "verification_status": "passed",
+  "plan_sha256": "5f03617fc921e54673cbc93929f370da565c48baec6c5d3228732ba63c6ceb07",
+  "design_sha256": "43d004a729b38f79384dbc14e7ad48b6573a53e7d4eca333d1d8ae476aca1729",
+  "projection_sha256": "3444e607ef35e53b7d9cb621faff2a97cd8008fc02504faf27093544a53b8fad",
+  "execution_state": "truth-sync-pending",
+  "tasks": [
+    {
+      "task_id": "PPC-010",
+      "state": "converged",
+      "summary": "made non-automatable external access a planning-admission gate and made approved safe DAG batches actively consume maximal ready parallelism"
+    }
+  ],
+  "allowed_external_touch_refs": [],
+  "verified_external_changes": [],
+  "controller_notes": "Focused workflow tests passed with 21 tests; aggregate scripts/check.sh passed with 283 tests; git diff --check passed. The bounded truth review also repaired an older stable decision whose serial-degradation wording conflicted with the new contract."
+}
