@@ -169,6 +169,9 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("inherit-main", execution["allowed_model_policies"])
         self.assertTrue(execution["inherit_main_preserves_topology"])
         self.assertTrue(execution["allowed_parallel_may_serialize"])
+        self.assertTrue(execution["allowed_parallel_serialization_requires_evidence"])
+        self.assertEqual("maximal-safe-ready-set", execution["approved_parallel_selection"])
+        self.assertTrue(execution["requires_cleared_planning_prerequisites"])
         self.assertEqual("parallel_capacity_required", execution["required_parallel_capacity_exit"])
 
     def test_native_routing_uses_parent_baseline_without_an_explorer_ceiling(self) -> None:

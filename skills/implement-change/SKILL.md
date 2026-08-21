@@ -58,10 +58,10 @@ For an approved task with `external_impl_file_refs`, the main controller alone u
 
 ## Workflow
 
-1. Confirm plan approval, dependency state, execution continuity, and current checkout/worktree decision.
+1. Confirm plan approval, dependency state, execution continuity, cleared planning prerequisites, and current checkout/worktree decision. Reject a plan that carries unresolved manual external setup as implementation work.
 2. Bind each ready approved task to a main agent or worker, an effective concurrency width, and a runtime model policy. `plan-change` owns task IDs, dependencies, parallel groups, policies, semantic profiles, isolation, locks, and approval; this skill owns only runtime binding and physical execution.
 3. Default eligible tasks to their approved delegation advice and `semantic-routing`. Start physical selection from the parent model and reasoning profile. Emit no override when it satisfies the active user or host route, an effort-only uplift when the model remains valid, or model plus explicit effort when the model changes. `inherit-main` preserves the exact approved serial or parallel topology, task IDs, dependencies, isolation, locks, touch sets, and oracles.
-4. Execute serially unless the plan explicitly approves a dependency-frozen, conflict-free parallel batch. Effective concurrency is bounded by runtime capacity, ready tasks, approved limits, isolation, write sets, and locks. Record evidence when `allowed` work serializes; return a typed capacity stop when `required` parallel work cannot run.
+4. Execute serially unless the plan explicitly approves a dependency-frozen, conflict-free parallel batch. For each approved batch, select the maximal safe ready set up to the minimum of runtime capacity, ready tasks, approved limits, isolation width, disjoint write sets, and disjoint locks. Do not choose width one merely because execution is serial-first: `allowed` work may serialize only when an observed limiter reduces effective width and its exact reason is recorded; return a typed capacity stop when `required` parallel work cannot run.
 5. Maintain a task ledger rather than relying on conversation memory. Treat its task topology and safety fields as an immutable projection of the approved plan; a mismatch returns dependency-freeze conflict evidence instead of a binding. Workers use their assigned isolated worktree where required and return evidence only; they cannot delegate recursively, widen scope, integrate peer work, adjudicate review findings, repair, or decide continuation.
 6. Verify each worker's actual changed paths and task oracles, then converge a completed batch through this controller before making any dependency on a batch member ready. Count the controller/main actor at most once in a concurrent binding.
 7. Construct a bounded review brief containing only the approved task slice, exact repository diff, tests, verification evidence, repository touch set, exact external refs, ordered intent identities, root-before/final-after hashes and metadata, redacted task-specific conformance evidence, and justified supporting files. Never include an external preimage, raw configuration, or staged payload.
@@ -127,6 +127,7 @@ The main controller alone validates changed paths and oracles, converges batches
 - `continuous_after_plan_approval`: continue without new questions unless a declared runtime contingency is observed.
 - `pre_confirmation_required`: resolve the named `C*` items before mutation.
 - `not_ready`: stop and route to the declared design or plan entry.
+- If account creation, interactive login or MFA, access grants, credential provisioning, or another non-automatable external prerequisite is still unresolved, reject the plan as `not_ready` and route to `plan-change`; never start the DAG and stop for that known setup later.
 - Runtime contingencies are reactive evidence conditions, not routine checkpoints.
 - Do not reopen plan-approved decisions unless live evidence contradicts the plan.
 
@@ -139,7 +140,7 @@ The main controller alone validates changed paths and oracles, converges batches
 
 ## Operating Rules
 
-- Serial-first and no unattended expansion are defaults. Conditional parallelism never authorizes undeclared work, shared writable checkouts, or new authority.
+- Serial-first applies outside approved parallel groups. Inside an approved group, use the maximal safe ready width; conditional parallelism never authorizes undeclared work, shared writable checkouts, or new authority.
 - The approved plan is the atomic execution unit; do not stop while ready in-scope tasks remain.
 - Prefer red-green or a narrow reproducer for non-trivial behavior changes.
 - Diagnose reproducible root cause before repair.

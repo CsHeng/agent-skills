@@ -42,16 +42,29 @@ The plan starts with `approval_status: pending`; only explicit human approval ch
 ## Workflow
 
 1. Load the approved design or boundary decision.
-2. Break the work into ordered tasks with explicit dependencies and stable task IDs.
-3. Identify any human confirmation, live-risk, destructive-write, external dependency, credential, or cutover uncertainty and try to resolve it before finalizing the plan.
-4. Run work-package readiness before review.
-5. Define touched files, executable oracles, verification commands, review depth, and failure policy for each task.
-6. For each task, declare whether parallel execution and delegation are forbidden, allowed, or preferred/required as applicable; name and dependency-freeze every parallel group.
-7. Validate the plan artifact before review.
-8. Route the artifact through mandatory plan review owned by `review-change` and bounded in-scope autofix when needed.
-9. Hold the artifact at `approval_status: pending` until explicit human plan approval.
-10. In the final planning summary, show whether execution can proceed continuously after approval or which confirmation IDs still need answers.
-11. Stop after explicit human plan approval and hand off to `implement-change`.
+2. Run planning prerequisite clearance before drafting the implementation DAG.
+3. If a non-automatable prerequisite is unresolved, return `manual_checkpoint` without producing an approval-ready plan.
+4. Break the work into ordered tasks with explicit factual dependencies and stable task IDs.
+5. Identify any remaining human confirmation, live-risk, destructive-write, external dependency, credential, or cutover uncertainty and resolve it before finalizing the plan whenever it does not depend on execution output.
+6. Run work-package readiness before review.
+7. Define touched files, executable oracles, verification commands, review depth, and failure policy for each task.
+8. For each task, declare whether parallel execution and delegation are forbidden, allowed, or preferred/required as applicable; proactively name and dependency-freeze every safe parallel development group instead of leaving concurrency implicit.
+9. Validate the plan artifact before review.
+10. Route the artifact through mandatory plan review owned by `review-change` and bounded in-scope autofix when needed.
+11. Hold the artifact at `approval_status: pending` until explicit human plan approval.
+12. In the final planning summary, show whether execution can proceed continuously after approval or which confirmation IDs still need answers.
+13. Stop after explicit human plan approval and hand off to `implement-change`.
+
+## Planning Prerequisite Clearance
+
+Clear non-automatable prerequisites before task decomposition. This entry gate covers external setup that the implementation depends on but the agent cannot safely complete within current authority, including account creation, interactive login or MFA enrollment, access grants, credential provisioning, subscription or license activation, and required physical actions.
+
+- Report each unresolved prerequisite as a stable `C*` item with the exact human action and secret-safe completion evidence required.
+- Return `decision_status: manual_checkpoint` and `execution_mode: not_ready`; do not draft or request approval for the implementation plan yet.
+- Do not model these prerequisites as implementation DAG tasks, planned stop points, or runtime contingencies. They are planning-admission conditions, not unattended execution work.
+- After the user completes them, verify the minimum safe evidence available, never record secret values, and restart planning from the now-cleared boundary.
+
+If an external action can be automated safely inside already granted scope and authority, it may instead become a normal planned task with its own oracle. Lack of automation or authority must never be hidden as a mid-execution human gate.
 
 ## Implementation Language Decisions
 
@@ -102,6 +115,8 @@ Record a `## Work Package Readiness` section with:
 
 If `decision_status` is not `ready_for_review`, stop and return that typed state instead of making the plan bigger.
 
+Do not enter work-package readiness while planning prerequisite clearance is unresolved. `subagent_ready` can become `true` only after those prerequisites are cleared and the delegated slice can run without later human setup.
+
 If a task cannot declare an executable oracle or substitute verification, it is not ready for implementation unless the plan explicitly marks the task as docs-only, exploratory, or manual-evidence-only.
 
 ## Versioned Execution Contract
@@ -122,6 +137,8 @@ The plan owns logical execution shape. Every version-4 task declares:
 
 Use `parallel_execution_approved: true` only when the plan contains a named dependency-frozen parallel group. Every simultaneously eligible task in a group must have no direct or transitive dependency on a peer, disjoint writable file refs, disjoint resource locks, and an explicit batch limit. In `## Parallel Batches`, repeat one complete `batch_id` record per named group; its exact `tasks`, `max_parallelism`, optional policy summary, and `convergence_task` must agree with task metadata. Use `controller` as the convergence task only when convergence is owned directly by the harness rather than a later plan task. Parallel write tasks require `isolated-worktree`; `shared-read-only` is valid only when both implementation and test write refs are `none`, and any delegated writer requires an isolated worktree even when its task is serial.
 
+DAG independence is necessary but not sufficient for parallel development. When two or more ready development tasks are independent, delegable, isolated, conflict-free in writable refs and resource locks, and covered by a bounded named batch, plan them for active parallel execution. Keep them serial only for a concrete dependency, safety, isolation, convergence, or authority reason and record that reason in the plan.
+
 Use semantic routing advice rather than provider model identifiers. `execution_profile` describes task capability and cost; `reasoning_profile` describes task reasoning intensity, not an exact physical effort or ceiling. The plan also declares a default runtime model policy from `semantic-routing | inherit-main | runtime-default`. `semantic-routing` starts from the parent profile and may emit no override, an effort-only uplift, or a model-plus-explicit-effort uplift according to user or host minimum policy. A required uplift that the runtime rejects is a typed no-downgrade stop, not permission to retry through defaults or below the minimum. `inherit-main` and `runtime-default` cannot rewrite task IDs, dependencies, serial/parallel topology, isolation, locks, touch sets, or oracles.
 
 ## Exact External Files
@@ -130,7 +147,7 @@ Keep `impl_file_refs` and `test_file_refs` repository-relative. When an approved
 
 Any task with external refs must use `executor_mode: main`, `delegation_policy: forbidden`, `parallel_policy: forbidden`, `parallel_group: none`, `isolation: controller-checkout`, and at least one named resource lock. It cannot enter a parallel batch, delegated envelope, isolated worker, or command job. The first capability rollout is a repository-only bootstrap plan; only a later independently reviewed and approved plan may consume the newly generated external channel. This prevents a plan from authorizing a capability that does not exist at its own preflight.
 
-`implement-change` owns physical binding to the main agent or subagents, concrete available models, effective concurrency, worktrees, convergence, and recorded fallback. It may conservatively serialize `parallel_policy: allowed` work. It must return a typed capacity stop when `parallel_policy: required` cannot be honored. Workers never own integration, review adjudication, repair, or continuation.
+`implement-change` owns physical binding to the main agent or subagents, concrete available models, effective concurrency, worktrees, convergence, and recorded fallback. For an approved batch, it selects the maximal safe ready set up to the approved and available width. It may serialize `parallel_policy: allowed` work only when an observed limiting factor reduces effective width and the exact reason is recorded. It must return a typed capacity stop when `parallel_policy: required` cannot be honored. Workers never own integration, review adjudication, repair, or continuation.
 
 ## Execution Continuity
 
@@ -138,10 +155,10 @@ The goal of planning is to maximize uninterrupted execution after plan approval.
 
 Record a `## Execution Continuity` section with:
 - `execution_mode`: `continuous_after_plan_approval`, `pre_confirmation_required`, or `not_ready`
-- `confirmation_clearance`: stable `C*` items for known human decisions, named parallel-batch approval, destructive writes, live cutovers, credential needs, or external dependencies
-- `runtime_contingencies`: stable `X*` items only for observed conditions that block authorized or safe continuation, such as missing required authority or credentials, live state that invalidates the approved plan, loss of management connectivity, a routing or control-plane cycle, writer or quorum exclusivity risk, irreversible data-safety risk, or an explicitly declared guarded-rollback trigger; an ordinary verification failure is not itself a stop contingency
-- `planned_stop_points`: should be empty for the normal case; non-empty only when a known issue cannot be safely pre-confirmed during planning
-- `task_ordering_rationale`: explain why low-risk, no-confirmation tasks run before live, destructive, or high-risk tasks unless a risky task is a hard prerequisite
+- `confirmation_clearance`: stable `C*` items for known human decisions, named parallel-batch approval, destructive writes, live cutovers, or output-dependent external decisions; planning prerequisites such as manual account, login, access, or credential setup must already be cleared
+- `runtime_contingencies`: stable `X*` items only for observed conditions that block authorized or safe continuation, such as unexpected loss of previously cleared authority or credentials, live state that invalidates the approved plan, loss of management connectivity, a routing or control-plane cycle, writer or quorum exclusivity risk, irreversible data-safety risk, or an explicitly declared guarded-rollback trigger; an ordinary verification failure is not itself a stop contingency
+- `planned_stop_points`: should be empty for the normal case; non-empty only when a human decision factually depends on execution output and cannot be moved before planning or after all autonomous work
+- `task_ordering_rationale`: explain how factual dependencies were preserved, planning prerequisites were cleared before task decomposition, and any unavoidable output-dependent human action was placed after every independent autonomous task that can precede it
 
 Each `confirmation_clearance` item should include:
 - `id`: example `C1`
@@ -151,6 +168,8 @@ Each `confirmation_clearance` item should include:
 - `default_if_unanswered`: normally `stop`
 
 Known user decisions should be resolved during planning whenever possible. If a known decision remains `needs_confirmation_before_execution`, the plan is not fully continuous and the final planning summary must lead with that fact.
+
+Do not use `pre_confirmation_required` to carry unresolved manual external setup into an otherwise approval-ready plan. Account creation, login or MFA setup, access grants, and credential provisioning that cannot be automated are planning-entry gates and must be completed before the implementation DAG is finalized. A human action that genuinely depends on an execution-produced artifact may remain a planned stop only when the plan places it as late as factual dependencies allow and schedules all independent autonomous work before it.
 
 Use `runtime_contingencies` only for uncertainty that cannot be settled before execution. They are not routine human checkpoints.
 
@@ -183,7 +202,9 @@ Do not finish plan-change with only a generic approval request. The user must be
 - New implementation plans should be execution-grade task catalogs, not prose-only checklists.
 - Undeclared or unproven work remains serial. Eligible version-4 tasks follow their declared delegation and parallel policies after approval and only after ledger-owned admission.
 - Parallel work must be named, dependency-frozen, conflict-free, isolated when writable, and human-approved.
+- Planning must surface eligible parallel development groups proactively; once approved, `implement-change` should use their maximal safe ready width instead of choosing serial execution without a recorded limiter.
 - Prefer pre-confirming known gates during planning over deferring them into execution.
+- Clear non-automatable external setup before drafting the implementation DAG; never turn it into an unattended mid-plan stop.
 - Plan approval should normally authorize the whole plan to run; unresolved confirmations are exceptions that must be clearly labeled.
 - Mandatory review happens before the human approval gate.
 - The upstream design should already be `approval_status: approved` before planning starts.

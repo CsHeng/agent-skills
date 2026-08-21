@@ -16,8 +16,20 @@ execution_profiles = ["deep", "balanced", "fast"]
 reasoning_profiles = ["deep", "standard", "light"]
 inherit_main_preserves_topology = true
 allowed_parallel_may_serialize = true
+allowed_parallel_serialization_requires_evidence = true
+approved_parallel_selection = "maximal-safe-ready-set"
 required_parallel_capacity_exit = "parallel_capacity_required"
 controller_converges_batches = true
+requires_cleared_planning_prerequisites = true
+
+[planning_prerequisites]
+owner = "plan-change"
+clearance_point = "before-task-decomposition"
+unresolved_decision_status = "manual_checkpoint"
+unresolved_execution_mode = "not_ready"
+excluded_from = ["implementation-dag", "planned-stop-points", "runtime-contingencies"]
+completion_evidence = "minimum-secret-safe"
+automatable_action_requires_existing_authority = true
 
 [external_touch]
 policy = "exact-existing-files-v1"

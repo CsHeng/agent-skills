@@ -15,7 +15,7 @@
 5. `diagnose`: form a root-cause hypothesis for the complete accepted batch.
 6. `repair`: fix only accepted findings inside the approved touch set.
 
-Runtime capacity may conservatively serialize approved `allowed` parallel work with recorded evidence. When approved `required` parallel work cannot obtain an equivalent isolated execution boundary, the controller exits with the typed capacity stop; neither fallback changes the approved task topology. `inherit-main` changes worker model and reasoning binding only.
+The controller selects the maximal safe ready set from an approved parallel batch. Approved `allowed` work may serialize only when an observed runtime, actor, isolation, write-set, lock, or approved-width limiter reduces effective width and the controller records that reason. When approved `required` parallel work cannot obtain an equivalent isolated execution boundary, the controller exits with the typed capacity stop; neither fallback changes the approved task topology. `inherit-main` changes worker model and reasoning binding only.
 
 ## Candidate Adjudication
 

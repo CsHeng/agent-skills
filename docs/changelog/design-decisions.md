@@ -1,5 +1,30 @@
 # Design Decisions
 
+## 2026-08-21 - Pre-Planning Manual Prerequisites And Active Safe Batches
+
+### Failure Mode
+
+Known non-automatable external setup could be represented inside an implementation plan and stop unattended work after execution began. Separately, an approved conflict-free batch could be serialized without evidence that capacity or another safety limiter actually required width one.
+
+### Change
+
+- Make account creation, interactive login or MFA enrollment, access grants, credential provisioning, subscription activation, and required physical work planning-admission conditions when they cannot be completed safely inside current authority.
+- Return `manual_checkpoint` and `execution_mode: not_ready` before task decomposition while such a prerequisite remains unresolved; keep it out of the implementation DAG, planned stops, and runtime contingencies.
+- Require planning to surface eligible dependency-frozen development batches instead of leaving safe concurrency implicit.
+- Select the maximal safe ready set inside an approved batch. Allow `parallel_policy: allowed` work to serialize only when an observed limiter reduces effective width and its exact reason is recorded; retain the typed capacity stop for required batches.
+
+### Operational Impact
+
+- A human completes known manual external setup before planning and unattended execution begin, so the normal approved plan does not stop midway for predictable account, login, access, or credential work.
+- DAG independence remains necessary but does not grant parallel authority without named-batch approval, safe isolation, disjoint writes and locks, bounded capacity, and controller convergence.
+- Serial-first remains the default outside approved groups; inside an approved group, serial execution is an evidenced fallback rather than an unrecorded controller preference.
+
+### Alternatives And Reconsideration
+
+- Carrying manual setup as `pre_confirmation_required` was rejected because it still produces an approval-ready plan before the hard external prerequisite is ready.
+- Parallelizing every DAG-independent task was rejected because dependency shape alone does not prove safe writes, locks, authority, capacity, isolation, or convergence.
+- Reconsider runtime enforcement beyond the structured contract only if observed executions show controllers understating available width without valid limiting evidence.
+
 ## 2026-08-20 - Versioned Harness Admission And Contract-Derived Lifecycle Runtime
 
 ### Failure Mode
@@ -160,6 +185,10 @@ The repo owned lifecycle, mode, skill-exposure, and implementation-controller co
 
 ## 2026-08-01 - Portable Conditional Parallel Subagent Routing
 
+### Status
+
+Partially superseded by the 2026-08-21 pre-planning prerequisite and active-safe-batch decision. Named-batch approval and all isolation, conflict, capacity, and convergence safeguards remain current. The earlier discretionary allowed-batch serial fallback does not: an observed limiter and exact evidence are now required.
+
 ### Failure Mode
 
 Planning recorded a mostly serial task list, while implementation had no deterministic contract for exposing a complete ready frontier, binding safe tasks to subagents, preserving topology across model choices, or stopping when isolation and runtime capacity were insufficient. This left useful parallelism implicit and encouraged provider-specific routing advice outside the approved plan.
@@ -176,7 +205,7 @@ Planning recorded a mostly serial task list, while implementation had no determi
 - Execution stays serial-first unless the approved plan and human gate explicitly authorize a safe named batch.
 - A user may inherit the main agent's model and reasoning choice without changing whether approved tasks run serially or in parallel.
 - Semantic profiles remain vendor-neutral; concrete model names and session concurrency defaults stay in runtime or user configuration.
-- Allowed batches degrade conservatively to serial execution, while required batches fail closed when effective capacity is insufficient.
+- Allowed batches fall back to serial execution only when an observed limiter reduces effective width and its exact reason is recorded, while required batches fail closed when effective capacity is insufficient.
 
 ## 2026-07-23 - Allow Intent-Gated Smart Commit Discovery
 

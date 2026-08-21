@@ -40,7 +40,24 @@ class ParallelExecutionContractTests(unittest.TestCase):
         plan = PORTABLE_PLAN_SURFACES[0].read_text(encoding="utf-8")
         self.assertIn("parallel_policy", plan)
         self.assertIn("delegation_policy", plan)
-        self.assertIn("may conservatively serialize", plan)
+
+    def test_manual_external_setup_blocks_planning_entry(self) -> None:
+        prerequisites = workflow_contract()["planning_prerequisites"]
+        self.assertEqual("plan-change", prerequisites["owner"])
+        self.assertEqual("before-task-decomposition", prerequisites["clearance_point"])
+        self.assertEqual("manual_checkpoint", prerequisites["unresolved_decision_status"])
+        self.assertEqual("not_ready", prerequisites["unresolved_execution_mode"])
+        self.assertEqual(
+            ["implementation-dag", "planned-stop-points", "runtime-contingencies"],
+            prerequisites["excluded_from"],
+        )
+        self.assertEqual("minimum-secret-safe", prerequisites["completion_evidence"])
+        self.assertTrue(prerequisites["automatable_action_requires_existing_authority"])
+
+    def test_approved_parallel_batch_uses_maximal_safe_ready_width(self) -> None:
+        execution = workflow_contract()["execution"]
+        self.assertEqual("maximal-safe-ready-set", execution["approved_parallel_selection"])
+        self.assertTrue(execution["allowed_parallel_serialization_requires_evidence"])
 
     def test_reusable_planning_surfaces_do_not_pin_provider_models(self) -> None:
         violations: list[str] = []
