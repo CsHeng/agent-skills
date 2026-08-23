@@ -1,0 +1,24 @@
+{
+  "status": "passed",
+  "review_status": "passed",
+  "verification_status": "passed",
+  "plan_sha256": "3bf4a11bb0140befda3885d592cb0de48287972160617b8d2a59394fe96f4c3b",
+  "design_sha256": "f20590e5d6722cf3b1e390208f945d68093467b10d79d24426f24b30f74aaf42",
+  "projection_sha256": "f26201def100fb4135351fdda291eb21468c5a6c81fdfb6c915a3284e1aeedff",
+  "execution_state": "truth-sync-pending",
+  "tasks": [
+    {
+      "task_id": "RSG-M010",
+      "state": "converged",
+      "summary": "authored the RouterOS scripting policy, focused references, conditional trigger contract, inventory guards, and stable documentation"
+    },
+    {
+      "task_id": "RSG-M020",
+      "state": "converged",
+      "summary": "regenerated the root-flat skill, source map, index, and workflow diagrams and passed the aggregate repository gate"
+    }
+  ],
+  "allowed_external_touch_refs": [],
+  "verified_external_changes": [],
+  "controller_notes": "The source skill quick validator passed; generated source parity and contract checks passed; scripts/check.sh passed with 283 tests; git diff --check passed; bounded direct implementation review found no actionable findings."
+}
