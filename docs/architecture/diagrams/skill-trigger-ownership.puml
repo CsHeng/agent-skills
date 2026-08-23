@@ -40,6 +40,7 @@ package "Activation: conditional" as n_activation_conditional {
   rectangle "lua-guidelines\n[overlay]" as n_skill_lua_guidelines
   rectangle "powershell-guidelines\n[overlay]" as n_skill_powershell_guidelines
   rectangle "python-guidelines\n[overlay]" as n_skill_python_guidelines
+  rectangle "routeros-scripting-guidelines\n[overlay]" as n_skill_routeros_scripting_guidelines
   rectangle "shell-guidelines\n[overlay]" as n_skill_shell_guidelines
   rectangle "tool-decision-tree\n[overlay]" as n_skill_tool_decision_tree
 }
@@ -94,6 +95,7 @@ package "Semantic trigger cases" as n_trigger_cases {
   rectangle "lua-language-policy" as n_case_lua_language_policy <<case>>
   rectangle "powershell-language-policy" as n_case_powershell_language_policy <<case>>
   rectangle "python-language-policy" as n_case_python_language_policy <<case>>
+  rectangle "routeros-scripting-language-policy" as n_case_routeros_scripting_language_policy <<case>>
   rectangle "shell-language-policy" as n_case_shell_language_policy <<case>>
   rectangle "explicit-skill-history-mining" as n_case_explicit_skill_history_mining <<case>>
   rectangle "explicit-codex-session-recovery" as n_case_explicit_codex_session_recovery <<case>>
@@ -130,6 +132,7 @@ n_case_go_language_policy --> n_skill_go_guidelines : case owner
 n_case_lua_language_policy --> n_skill_lua_guidelines : case owner
 n_case_powershell_language_policy --> n_skill_powershell_guidelines : case owner
 n_case_python_language_policy --> n_skill_python_guidelines : case owner
+n_case_routeros_scripting_language_policy --> n_skill_routeros_scripting_guidelines : case owner
 n_case_shell_language_policy --> n_skill_shell_guidelines : case owner
 n_case_explicit_skill_history_mining --> n_skill_skill_miner : case owner
 n_case_explicit_codex_session_recovery --> n_skill_codex_session_recovery : case owner

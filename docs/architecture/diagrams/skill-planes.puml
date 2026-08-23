@@ -52,6 +52,7 @@ package "Policy Plane" as n_plane_policy {
   rectangle "lua-guidelines" as n_lua_guidelines
   rectangle "powershell-guidelines" as n_powershell_guidelines
   rectangle "python-guidelines" as n_python_guidelines
+  rectangle "routeros-scripting-guidelines" as n_routeros_scripting_guidelines
   rectangle "security-guardrails" as n_security_guardrails
   rectangle "shell-guidelines" as n_shell_guidelines
   rectangle "sops-age-guardrails" as n_sops_age_guardrails

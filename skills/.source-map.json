@@ -27,6 +27,7 @@
   "review-design": "src/skills/review-components/review-design",
   "review-implementation": "src/skills/review-components/review-implementation",
   "review-plan": "src/skills/review-components/review-plan",
+  "routeros-scripting-guidelines": "src/skills/policies/routeros-scripting-guidelines",
   "security-guardrails": "src/skills/policies/security-guardrails",
   "shell-guidelines": "src/skills/policies/shell-guidelines",
   "skill-miner": "src/skills/disciplines/skill-miner",

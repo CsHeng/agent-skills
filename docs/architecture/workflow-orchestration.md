@@ -22,7 +22,7 @@ The recommended local surface is a Git checkout whose generated `skills/` direct
 
 Activation intent is authored once in `contracts/skills.toml`. Generation projects Codex `policy.allow_implicit_invocation` from the contract-level mode table: `native`, `conditional`, and `baseline` allow implicit invocation, while `controller` and `explicit` do not. The shared `SKILL.md` payload remains provider-neutral. Claude's effective visibility is recorded as `default-visible`; the repository does not claim an unsupported per-skill Claude visibility switch.
 
-The nested authored tree generates one root-flat 39-skill payload. Runtime helpers are not separately discoverable skills: one authored `src/runtime/harness/` package is materialized inside each of six runtime owners, so an installed lifecycle skill resolves its own `scripts/harness/cli.py` without a provider plugin root or sibling support skill.
+The nested authored tree generates one root-flat 40-skill payload. Runtime helpers are not separately discoverable skills: one authored `src/runtime/harness/` package is materialized inside each of six runtime owners, so an installed lifecycle skill resolves its own `scripts/harness/cli.py` without a provider plugin root or sibling support skill.
 
 ## Lifecycle Shape
 

@@ -1,6 +1,6 @@
 # Invocation Contract
 
-`contracts/skills.toml` is the table-keyed source, exposure, activation, and runtime-ownership contract for the 39 public skills. `skills/use-coding-skills/references/routing.toml` owns installed semantic trigger cases, phase routes, evaluators, support routes, and composition.
+`contracts/skills.toml` is the table-keyed source, exposure, activation, and runtime-ownership contract for the 40 public skills. `skills/use-coding-skills/references/routing.toml` owns installed semantic trigger cases, phase routes, evaluators, support routes, and composition.
 
 Every skill declares one `activation_mode` and one `default_role`. The contract-level activation-mode projection derives Codex invocation metadata; individual skills do not author invocation policy. Runtime and routing references remain inside their canonical skill directories.
 

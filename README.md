@@ -9,7 +9,7 @@ For AI-facing repository rules and the docs truth boundary, see `AGENTS.md`.
 ## Source And Install Surfaces
 
 - `src/skills/` is the nested authored skill tree.
-- `skills/` is the generated root-flat 39-skill payload consumed by both maintained plugin manifests and standalone skill installers.
+- `skills/` is the generated root-flat 40-skill payload consumed by both maintained plugin manifests and standalone skill installers.
 - `contracts/skills.toml` is the source-of-truth source mapping, exposure, activation-mode, default-role, runtime ownership, and provider-projection contract keyed by public skill ID.
 - `contracts/runtime-bundles.toml` declares the exact production Python files and normalized canonical contract projections copied into runtime-owning generated skills.
 - `skills/use-coding-skills/references/routing.toml` is the semantic trigger-case, discovery, phase-owner, review-evaluator, support-route, composition, and host-wrapper contract.
@@ -93,7 +93,7 @@ The three retired compatibility aliases are absent. Their durable owners are `ar
 - Each coding agent may consume that center directly or adapt it through its own skill directory and settings, according to that tool's manual.
 - Claude Code and Codex plugin packages and `npx skills` remain compatible alternatives, not the recommended topology.
 
-This topology is guidance, not an installer or lifecycle-management contract. Users choose how to clone, link, copy, update, remove, and expose skills to each tool. The retained 39 public names remain stable; `clean-architecture`, `quality-standards`, and `security-logging` are retired.
+This topology is guidance, not an installer or lifecycle-management contract. Users choose how to clone, link, copy, update, remove, and expose skills to each tool. The retained 40 public names remain stable; `clean-architecture`, `quality-standards`, and `security-logging` are retired.
 
 ## Skill Planes
 
@@ -106,7 +106,7 @@ Lower-plane skills stay available as components the kernel can call, not as comp
 | Session | Optional routing, session boundaries, response style | `use-coding-skills`, `output-styles` |
 | Evaluation | Read-only review evaluators coordinated by `review-change` | `review-design`, `review-plan`, `review-implementation` |
 | Discipline | Reusable engineering methods and decision trees | `architecture-patterns`, `testing-strategy`, `language-decision-tree`, `tool-decision-tree`, `skill-miner` |
-| Policy | Language, security, quality, and logging rules | `python-guidelines`, `go-guidelines`, `shell-guidelines`, `security-guardrails`, `sops-age-guardrails`, `development-standards` |
+| Policy | Language, security, quality, and logging rules | `python-guidelines`, `go-guidelines`, `shell-guidelines`, `routeros-scripting-guidelines`, `security-guardrails`, `sops-age-guardrails`, `development-standards` |
 | Tool | Narrow tool adapters and operational helpers | `implement-change-via-herdr`, `web-fetch`, `docker-multiarch-build`, `codex-session-recovery`, `smart-commit` |
 | Manual tools | Explicit user request only, never implicit | `git-worktrees`, `smart-squash` |
 

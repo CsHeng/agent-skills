@@ -343,6 +343,15 @@ negative = [
 lexical_hints = ["Python", "uv", "ruff pytest"]
 
 [[trigger_cases]]
+id = "routeros-scripting-language-policy"
+owner = "routeros-scripting-guidelines"
+negative = [
+  "Design RouterOS firewall, routing, VLAN, NAT, DHCP, or other network policy without scripting-language work.",
+  "Run live RouterOS operations or diagnose a device when no script source or event body is involved.",
+]
+lexical_hints = ["RouterOS script", ".rsc", "scheduler Netwatch PPP DHCP event body"]
+
+[[trigger_cases]]
 id = "shell-language-policy"
 owner = "shell-guidelines"
 negative = [

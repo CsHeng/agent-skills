@@ -1,5 +1,5 @@
 {
-  "canonical_skill_count": 39,
+  "canonical_skill_count": 40,
   "command_retirement": {
     "absorbed_by_skill": [
       "close-change",
@@ -759,6 +759,31 @@
       "semantic_transitive_requires": []
     },
     {
+      "activation_mode": "conditional",
+      "category": "policy",
+      "default_role": "overlay",
+      "effective_provider_state": {
+        "claude": {
+          "model_visibility": "default-visible",
+          "source": "shared-frontmatter-default"
+        },
+        "codex": {
+          "allow_implicit_invocation": true,
+          "source": "activation-mode-projection"
+        }
+      },
+      "id": "routeros-scripting-guidelines",
+      "implicit_invocation": true,
+      "lifecycle_owner": false,
+      "may_mutate_repo": false,
+      "overlay_trigger_cases": [],
+      "owned_trigger_cases": [
+        "routeros-scripting-language-policy"
+      ],
+      "semantic_requires": [],
+      "semantic_transitive_requires": []
+    },
+    {
       "activation_mode": "native",
       "category": "policy",
       "default_role": "primary",
@@ -1034,6 +1059,7 @@
         "review-design",
         "review-implementation",
         "review-plan",
+        "routeros-scripting-guidelines",
         "security-guardrails",
         "shell-guidelines",
         "skill-miner",
@@ -1074,6 +1100,7 @@
         "review-design",
         "review-implementation",
         "review-plan",
+        "routeros-scripting-guidelines",
         "security-guardrails",
         "shell-guidelines",
         "skill-miner",

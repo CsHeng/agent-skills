@@ -1,6 +1,6 @@
 # Portable Skill Surface
 
-`src/skills/` is nested authored truth. `skills/` is the sole materialized root-flat 39-skill payload consumed by live Agent Skills discovery, both optional plugin manifests, and compatible consumer-managed `npx skills` installation.
+`src/skills/` is nested authored truth. `skills/` is the sole materialized root-flat 40-skill payload consumed by live Agent Skills discovery, both optional plugin manifests, and compatible consumer-managed `npx skills` installation.
 
 `src/runtime/harness/` is the single authored non-discoverable Python lifecycle runtime. Exactly `design-change`, `plan-change`, `implement-change`, `review-change`, `sync-truth`, and `close-change` declare `runtime_bundle = "harness"`; generation copies the production manifest into each owner at `scripts/harness/`. `analyze-project` remains lifecycle-owned and runtime-free.
 
