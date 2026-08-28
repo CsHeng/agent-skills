@@ -1,0 +1,18 @@
+@startuml
+title Portable Skill composition
+top to bottom direction
+rectangle "Primary workflow Skill" as primary
+rectangle "Session overlay" as session
+rectangle "Discipline / policy overlay" as policy
+rectangle "Tool Skill" as tool
+rectangle "Read-only review evaluator" as evaluator
+rectangle "One semantic result" as result
+session ..> primary
+policy ..> primary
+tool ..> primary
+evaluator ..> primary : candidate findings
+primary --> result
+note right of result
+No environment-specific execution contract.
+end note
+@enduml

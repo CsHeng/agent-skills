@@ -10,7 +10,7 @@ from typing import Any
 VALID_ACTIVATION_MODES = {
     "native",
     "conditional",
-    "controller",
+    "composition",
     "explicit",
     "baseline",
 }
@@ -18,7 +18,7 @@ VALID_DEFAULT_ROLES = {"primary", "overlay", "evaluator"}
 EXPECTED_CODEX_PROJECTION = {
     "native": True,
     "conditional": True,
-    "controller": False,
+    "composition": False,
     "explicit": False,
     "baseline": True,
 }

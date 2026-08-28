@@ -30,16 +30,6 @@ VALID_CATEGORIES = {
     "manual-tool",
     "review-component",
 }
-VALID_WORKFLOW_ROLES = {"controller", "gate", "evaluator", "policy", "oracle", "support"}
-RUNTIME_ROOT = REPO_ROOT / "src" / "runtime" / "harness"
-EXPECTED_RUNTIME_OWNERS = {
-    "close-change",
-    "design-change",
-    "implement-change",
-    "plan-change",
-    "review-change",
-    "sync-truth",
-}
 
 
 def validate_semantic_contracts(
@@ -130,31 +120,6 @@ def validate_semantic_contracts(
                 f"{skill_name}: semantic_requires must match routing targets; "
                 f"expected={sorted(expected_targets)} actual={sorted(declared_targets)}"
             )
-
-    for skill_name, entry in sorted(skills.items()):
-        runtime_contract = entry.get("runtime_contract")
-        if not runtime_contract:
-            continue
-        contract_path = repo_root / "skills" / skill_name / runtime_contract
-        try:
-            with contract_path.open("rb") as handle:
-                runtime = tomllib.load(handle)
-        except (OSError, tomllib.TOMLDecodeError):
-            continue
-        for edge in runtime.get("edges", []):
-            if not isinstance(edge, dict):
-                continue
-            source_id = edge.get("from")
-            target_id = edge.get("to")
-            if (
-                isinstance(source_id, str)
-                and isinstance(target_id, str)
-                and target_id not in adjacency.get(source_id, set())
-            ):
-                errors.append(
-                    f"{skill_name}: runtime edge lacks semantic_requires declaration: "
-                    f"{source_id} -> {target_id}"
-                )
 
     return errors
 
@@ -253,6 +218,62 @@ def authored_skill_sources() -> set[str]:
     }
 
 
+def validate_semantic_only_surface(repo_root: Path = REPO_ROOT) -> list[str]:
+    """Reject executable workflow surfaces and stale maintained product truth."""
+    errors: list[str] = []
+    removed_paths = (
+        Path(".pi"),
+        Path("integrations") / "pi",
+        Path("src") / "runtime" / "harness",
+        Path("scripts") / ("generate-" + "pi-contracts.py"),
+        Path("contracts") / ("runtime-" + "bundles.toml"),
+    )
+    for relative in removed_paths:
+        if (repo_root / relative).exists():
+            errors.append(f"retired executable workflow surface remains: {relative}")
+
+    executable_roots = (
+        repo_root / "src/skills/workflows",
+        repo_root / "src/skills/review-components",
+        repo_root / "src/skills/tools/implement-change-via-herdr",
+    )
+    for root in executable_roots:
+        candidates = (
+            root.glob("*/scripts/*")
+            if root.name != "implement-change-via-herdr"
+            else root.glob("scripts/*")
+        )
+        for path in candidates:
+            if path.is_file():
+                errors.append(
+                    "semantic workflow surface contains executable support: "
+                    + path.relative_to(repo_root).as_posix()
+                )
+
+    forbidden_skill_phrases = (
+        "active host harness",
+        "controller-binding",
+        "parent-linked broker intent",
+        "focused verification review",
+        "additional same-slice repair",
+    )
+    for root in (repo_root / "src/skills", repo_root / "skills"):
+        for path in root.rglob("*"):
+            if not path.is_file() or path.suffix not in {".md", ".toml", ".yaml", ".yml"}:
+                continue
+            text = path.read_text(encoding="utf-8", errors="ignore").lower()
+            for phrase in forbidden_skill_phrases:
+                if phrase in text:
+                    errors.append(
+                        f"provider-coupled workflow phrase remains in {path.relative_to(repo_root)}: {phrase}"
+                    )
+
+    project_text = (repo_root / "pyproject.toml").read_text(encoding="utf-8")
+    if "coding-" + "harness-development" in project_text:
+        errors.append("pyproject retains the retired development package identity")
+    return errors
+
+
 def _runtime_contract_cycle(adjacency: dict[str, set[str]]) -> list[str] | None:
     visiting: set[str] = set()
     visited: set[str] = set()
@@ -281,184 +302,6 @@ def _runtime_contract_cycle(adjacency: dict[str, set[str]]) -> list[str] | None:
         if cycle:
             return cycle
     return None
-
-
-def validate_runtime_contracts(skills: dict[str, Any], repo_root: Path = REPO_ROOT) -> list[str]:
-    errors: list[str] = []
-    public_entries: dict[str, dict[str, Any]] = {}
-    global_node_roles: dict[str, str] = {}
-    global_edges: set[tuple[str, str]] = set()
-    global_forbidden_edges: set[tuple[str, str]] = set()
-    global_repair_owners: list[tuple[str, str]] = []
-    for skill_name, entry in skills.items():
-        if isinstance(entry, dict):
-            public_entries[skill_name] = entry
-
-    for skill_name, entry in sorted(skills.items()):
-        runtime_contract = entry.get("runtime_contract")
-        if runtime_contract is None:
-            continue
-        if not isinstance(runtime_contract, str) or not runtime_contract:
-            errors.append(f"{skill_name}: runtime_contract must be a non-empty relative path")
-            continue
-        if Path(runtime_contract).is_absolute() or ".." in Path(runtime_contract).parts:
-            errors.append(f"{skill_name}: runtime_contract must stay inside the skill source")
-            continue
-
-        contract_path = repo_root / "skills" / skill_name / runtime_contract
-        if not contract_path.is_file():
-            errors.append(f"{skill_name}: runtime contract does not exist: {contract_path.relative_to(repo_root)}")
-            continue
-
-        try:
-            with contract_path.open("rb") as handle:
-                contract = tomllib.load(handle)
-        except (OSError, tomllib.TOMLDecodeError) as exc:
-            errors.append(f"{skill_name}: invalid runtime contract: {exc}")
-            continue
-
-        workflow = contract.get("workflow")
-        nodes = contract.get("nodes")
-        edges = contract.get("edges", [])
-        forbidden_edges = contract.get("forbidden_edges", [])
-        repair = contract.get("repair")
-        public_id = skill_name
-
-        if not isinstance(workflow, dict) or workflow.get("id") != public_id:
-            errors.append(f"{skill_name}: workflow.id must match public_id")
-        if not isinstance(nodes, list) or not nodes:
-            errors.append(f"{skill_name}: runtime contract requires at least one [[nodes]] entry")
-            continue
-
-        node_roles: dict[str, str] = {}
-        repair_owners: list[str] = []
-        for node in nodes:
-            if not isinstance(node, dict):
-                errors.append(f"{skill_name}: each runtime node must be a table")
-                continue
-            node_id = node.get("id")
-            role = node.get("role")
-            if not isinstance(node_id, str) or not node_id:
-                errors.append(f"{skill_name}: runtime node id must be a non-empty string")
-                continue
-            if node_id in node_roles:
-                errors.append(f"{skill_name}: duplicate runtime node: {node_id}")
-                continue
-            if node_id not in public_entries:
-                errors.append(f"{skill_name}: unknown runtime node target: {node_id}")
-            if role not in VALID_WORKFLOW_ROLES:
-                errors.append(f"{skill_name}: invalid runtime node role for {node_id}: {role}")
-            node_roles[node_id] = str(role)
-            existing_role = global_node_roles.get(node_id)
-            if existing_role is not None and existing_role != role:
-                errors.append(
-                    f"{skill_name}: runtime node role conflicts across contracts for {node_id}: "
-                    f"{existing_role} != {role}"
-                )
-            else:
-                global_node_roles[node_id] = str(role)
-            if node.get("owns_repair_loop", False):
-                repair_owners.append(node_id)
-
-        edge_set: set[tuple[str, str]] = set()
-        adjacency: dict[str, set[str]] = {node_id: set() for node_id in node_roles}
-        if not isinstance(edges, list):
-            errors.append(f"{skill_name}: edges must be an array of tables")
-            edges = []
-        for edge in edges:
-            if not isinstance(edge, dict):
-                errors.append(f"{skill_name}: each runtime edge must be a table")
-                continue
-            source_id = edge.get("from")
-            target_id = edge.get("to")
-            if source_id not in node_roles or target_id not in node_roles:
-                errors.append(f"{skill_name}: runtime edge references unknown node: {source_id} -> {target_id}")
-                continue
-            edge_pair = (str(source_id), str(target_id))
-            edge_set.add(edge_pair)
-            global_edges.add(edge_pair)
-            adjacency[str(source_id)].add(str(target_id))
-            if node_roles[str(source_id)] == "evaluator":
-                errors.append(f"{skill_name}: evaluator cannot invoke another skill: {source_id} -> {target_id}")
-
-        if not isinstance(forbidden_edges, list):
-            errors.append(f"{skill_name}: forbidden_edges must be an array of tables")
-            forbidden_edges = []
-        for edge in forbidden_edges:
-            if not isinstance(edge, dict):
-                errors.append(f"{skill_name}: each forbidden edge must be a table")
-                continue
-            edge_pair = (str(edge.get("from", "")), str(edge.get("to", "")))
-            global_forbidden_edges.add(edge_pair)
-            if edge_pair in edge_set:
-                errors.append(f"{skill_name}: forbidden runtime edge is active: {edge_pair[0]} -> {edge_pair[1]}")
-
-        cycle = _runtime_contract_cycle(adjacency)
-        if cycle:
-            errors.append(f"{skill_name}: runtime invocation graph contains a cycle: {' -> '.join(cycle)}")
-
-        if not isinstance(repair, dict):
-            errors.append(f"{skill_name}: runtime contract requires a [repair] table")
-            continue
-        repair_owner = repair.get("owner")
-        initial_review_passes = repair.get("initial_review_passes")
-        focused_verification_passes = repair.get("focused_verification_passes")
-        additional_repair_attempts = repair.get("additional_same_slice_repair_attempts")
-        if repair_owners != [repair_owner]:
-            errors.append(f"{skill_name}: runtime contract must declare exactly one matching repair-loop owner")
-        if isinstance(repair_owner, str) and repair_owner:
-            global_repair_owners.append((skill_name, repair_owner))
-        if repair_owner != public_id or not entry.get("lifecycle_owner", False):
-            errors.append(f"{skill_name}: repair-loop owner must be the lifecycle-owning public skill")
-        if not all(
-            isinstance(value, int)
-            for value in (initial_review_passes, focused_verification_passes, additional_repair_attempts)
-        ):
-            errors.append(f"{skill_name}: bounded review pass limits must be integers")
-        elif not (
-            initial_review_passes == 1
-            and focused_verification_passes == 1
-            and 0 <= additional_repair_attempts <= 1
-        ):
-            errors.append(
-                f"{skill_name}: bounded review requires one initial pass, one focused verification pass, "
-                "and at most one additional same-slice repair attempt"
-            )
-
-    global_adjacency: dict[str, set[str]] = {
-        node_id: set() for node_id in global_node_roles
-    }
-    for source_id, target_id in global_edges:
-        global_adjacency.setdefault(source_id, set()).add(target_id)
-        global_adjacency.setdefault(target_id, set())
-        if global_node_roles.get(source_id) == "evaluator":
-            errors.append(
-                f"global runtime graph: evaluator cannot invoke another skill: "
-                f"{source_id} -> {target_id}"
-            )
-
-    global_cycle = _runtime_contract_cycle(global_adjacency)
-    if global_cycle:
-        errors.append(
-            "global runtime invocation graph contains a cycle: "
-            + " -> ".join(global_cycle)
-        )
-
-    for source_id, target_id in sorted(global_forbidden_edges & global_edges):
-        errors.append(
-            f"global runtime graph: forbidden edge is active: {source_id} -> {target_id}"
-        )
-
-    if len(global_repair_owners) != 1:
-        owner_summary = ", ".join(
-            f"{skill_name}:{owner}" for skill_name, owner in global_repair_owners
-        ) or "none"
-        errors.append(
-            "global runtime contracts must declare exactly one repair-loop owner; "
-            f"found {owner_summary}"
-        )
-
-    return errors
 
 
 def validate_trigger_cases(
@@ -500,7 +343,7 @@ def validate_trigger_cases(
                 owned_cases[owner].add(label)
                 if owner_entry.get("default_role") == "evaluator":
                     errors.append(
-                        f"trigger case {label}: controller evaluator cannot own a trigger case: {owner}"
+                        f"trigger case {label}: composition-only evaluator cannot own a trigger case: {owner}"
                     )
 
         # The owner skill's frontmatter description owns the positive boundary by
@@ -573,7 +416,7 @@ def validate_trigger_cases(
 
     phase_routes = routing_contract.get("phase_routes")
     review_evaluators = routing_contract.get("review_evaluators")
-    controller_targets = {
+    composition_targets = {
         target
         for table in (phase_routes, review_evaluators)
         if isinstance(table, dict)
@@ -583,7 +426,7 @@ def validate_trigger_cases(
     for entry in public_entries.values():
         requirements = entry.get("semantic_requires", [])
         if isinstance(requirements, list):
-            controller_targets.update(
+            composition_targets.update(
                 target for target in requirements if isinstance(target, str)
             )
 
@@ -597,9 +440,9 @@ def validate_trigger_cases(
             errors.append(
                 f"{public_id}: conditional skill must own or overlay a trigger case"
             )
-        elif mode == "controller" and public_id not in controller_targets:
+        elif mode == "composition" and public_id not in composition_targets:
             errors.append(
-                f"{public_id}: controller skill is not reachable from a declared controller edge"
+                f"{public_id}: composition-only skill is not reachable from semantic composition"
             )
         elif mode == "explicit" and not owned_cases[public_id]:
             errors.append(
@@ -682,7 +525,7 @@ def validate_routing_contracts(
         return [f"{skill_name}: invalid routing contract: {exc}"]
 
     routing = contract.get("routing")
-    host_wrapper = contract.get("host_wrapper")
+    environment_instructions = contract.get("environment_instructions")
     composition = contract.get("composition")
     gate_policy = contract.get("gate_policy")
     phase_routes = contract.get("phase_routes")
@@ -700,18 +543,18 @@ def validate_routing_contracts(
             f"{skill_name}: routing must keep native discovery, direct-match bypass, and self-owned ambiguity routing"
         )
 
-    if not isinstance(host_wrapper, dict):
-        errors.append(f"{skill_name}: routing contract requires [host_wrapper]")
+    if not isinstance(environment_instructions, dict):
+        errors.append(f"{skill_name}: routing contract requires [environment_instructions]")
     else:
         for field in ("allowed", "forbidden"):
-            values = host_wrapper.get(field)
+            values = environment_instructions.get(field)
             if (
                 not isinstance(values, list)
                 or not values
                 or not all(isinstance(value, str) for value in values)
             ):
                 errors.append(
-                    f"{skill_name}: host_wrapper.{field} must be a non-empty string array"
+                    f"{skill_name}: environment_instructions.{field} must be a non-empty string array"
                 )
 
     if not isinstance(composition, dict):
@@ -887,7 +730,7 @@ def validate() -> list[str]:
             if not entry.get("requires_explicit_user_request", False):
                 errors.append(f"{skill_name}: direct mutation requires an explicit user request guard")
             if not entry.get("requires_approved_plan", False):
-                errors.append(f"{skill_name}: controller mutation requires an approved-plan guard")
+                errors.append(f"{skill_name}: composed mutation requires an approved-plan guard")
 
     source_dirs = canonical_skill_dirs()
     missing_manifest = sorted(source_dirs - canonical_ids)
@@ -913,26 +756,16 @@ def validate() -> list[str]:
             f"missing={sorted(declared_source_set - authored_sources)}"
         )
 
-    actual_runtime_owners = {
-        skill_id
-        for skill_id, entry in skills.items()
-        if isinstance(entry, dict) and entry.get("runtime_bundle") == "harness"
-    }
-    if actual_runtime_owners != EXPECTED_RUNTIME_OWNERS:
-        errors.append(
-            "runtime bundle owners differ; "
-            f"expected={sorted(EXPECTED_RUNTIME_OWNERS)} actual={sorted(actual_runtime_owners)}"
-        )
-    if not RUNTIME_ROOT.is_dir():
-        errors.append("authored runtime is missing: src/runtime/harness")
-    elif (RUNTIME_ROOT / "SKILL.md").exists():
-        errors.append("authored runtime must not be discoverable")
-    for owner in EXPECTED_RUNTIME_OWNERS:
-        if not (REPO_ROOT / "skills" / owner / "scripts" / "harness" / "cli.py").is_file():
-            errors.append(f"{owner}: generated skill-local harness bundle is missing")
+    generated_runtime_dirs = sorted(
+        path.relative_to(REPO_ROOT).as_posix()
+        for path in (REPO_ROOT / "skills").glob("*/scripts/harness")
+        if path.is_dir()
+    )
+    if generated_runtime_dirs:
+        errors.append("generated skill-local harness bundles remain: " + ", ".join(generated_runtime_dirs))
 
     errors.extend(validate_activation_contract(contract, REPO_ROOT, check_sources=True))
-    errors.extend(validate_runtime_contracts(skills))
+    errors.extend(validate_semantic_only_surface())
     errors.extend(validate_routing_contracts(skills))
     errors.extend(validate_semantic_contracts(contract))
     errors.extend(validate_command_retirement_contract(contract))

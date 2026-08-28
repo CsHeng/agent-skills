@@ -100,7 +100,7 @@
       "semantic_transitive_requires": []
     },
     {
-      "activation_mode": "controller",
+      "activation_mode": "composition",
       "category": "workflow",
       "default_role": "primary",
       "effective_provider_state": {
@@ -376,19 +376,14 @@
       "owned_trigger_cases": [
         "approved-plan-execution"
       ],
-      "runtime_contract": "references/workflow.toml",
       "semantic_requires": [
-        "review-change",
-        "sync-truth",
-        "close-change"
+        "review-change"
       ],
       "semantic_transitive_requires": [
-        "close-change",
         "review-change",
         "review-design",
         "review-implementation",
-        "review-plan",
-        "sync-truth"
+        "review-plan"
       ]
     },
     {
@@ -417,13 +412,11 @@
         "implement-change"
       ],
       "semantic_transitive_requires": [
-        "close-change",
         "implement-change",
         "review-change",
         "review-design",
         "review-implementation",
-        "review-plan",
-        "sync-truth"
+        "review-plan"
       ]
     },
     {
@@ -690,7 +683,7 @@
       ]
     },
     {
-      "activation_mode": "controller",
+      "activation_mode": "composition",
       "category": "review-component",
       "default_role": "evaluator",
       "effective_provider_state": {
@@ -713,7 +706,7 @@
       "semantic_transitive_requires": []
     },
     {
-      "activation_mode": "controller",
+      "activation_mode": "composition",
       "category": "review-component",
       "default_role": "evaluator",
       "effective_provider_state": {
@@ -736,7 +729,7 @@
       "semantic_transitive_requires": []
     },
     {
-      "activation_mode": "controller",
+      "activation_mode": "composition",
       "category": "review-component",
       "default_role": "evaluator",
       "effective_provider_state": {
@@ -934,7 +927,7 @@
       "semantic_transitive_requires": []
     },
     {
-      "activation_mode": "controller",
+      "activation_mode": "composition",
       "category": "workflow",
       "default_role": "primary",
       "effective_provider_state": {

@@ -1,6 +1,6 @@
 ---
 name: use-coding-skills
-description: "Use when the user asks how local coding skills should be selected, when an ambiguous multi-stage coding request needs explicit routing, when host-wrapper boundaries need clarification, or when session-boundary, memory-boundary, or compact handoff guidance is required. Do not load as a mandatory bootstrap for unrelated work or tasks that directly match a workflow or policy skill."
+description: "Use when the user asks how local coding skills should be selected, when an ambiguous multi-stage request needs routing, or when session, memory, or compact-handoff boundaries need guidance. Do not load for tasks that directly match another skill."
 ---
 
 # Use Coding Skills
@@ -11,7 +11,7 @@ Optional routing and session-boundary guidance for local coding work. Keep this 
 
 - Treat repository-owned docs, code, scripts, tests, and skills as durable truth.
 - Treat agent memories, sessions, logs, caches, and generated summaries as recall or staging evidence.
-- Keep scope bound to the named repo, runtime surface, host, or workflow.
+- Keep scope bound to the named repository, product surface, or workflow.
 - Treat explicit read-only wording literally.
 - Match response language to user input language unless file conventions require otherwise.
 - Prefer current local evidence and live runtime checks over stale memory when verification is cheap.
@@ -22,13 +22,13 @@ Optional routing and session-boundary guidance for local coding work. Keep this 
 
 Use these rules only after this skill has matched an explicit routing or ambiguous multi-stage request:
 
-- Read `references/routing.toml` as the machine-readable discovery, semantic trigger-case, phase-to-owner, review-evaluator, support-route, composition, and host-wrapper contract.
+- Read `references/routing.toml` as declarative authoring guidance for discovery, semantic trigger cases, workflow composition, review evaluators, and support routes.
 - Match cases by the owner skill's frontmatter description and each case's negative boundaries; explicit-invocation cases keep positive overrides. Treat lexical hints as examples only; they are not a keyword router or a second owner map.
 - Let an explicitly named skill or confident direct workflow or policy match bypass this router.
-- Route ambiguous multi-stage work through this skill, then select the lifecycle mode before invoking a phase owner.
+- Route ambiguous multi-stage work through this skill, then select the smallest matching workflow skill.
 - Keep exactly one primary response or lifecycle owner. Compose matching session, discipline, policy, tool, or review-component skills only as lower-plane overlays.
-- Route design, planning, execution, review, truth sync, and close through the workflow owners declared by the contract. Review requests enter through `review-change`; artifact-specific `review-*` skills are evaluators, not top-level gates.
-- Keep host-level AGENTS files limited to user preferences, runtime constraints, and thin public-skill entry hints. Do not duplicate the phase graph, repair loop, review budgets, or typed exits outside the repo-owned contract.
+- Review requests enter through `review-change`; artifact-specific `review-*` skills are optional read-only evaluators, not top-level workflow owners.
+- Formal `design-change`, `plan-change`, and `implement-change` each include one bounded review. Informal work does not inherit review, and standalone review does not synthesize earlier phases.
 
 ## Compact Instructions
 
@@ -42,7 +42,7 @@ When compacting or handing off long conversations, preserve in priority order:
 
 ## References
 
-- Read `references/routing.toml` and `references/routing.md` when task routing, skill selection, lifecycle phase ownership, or host-wrapper scope is ambiguous.
+- Read `references/routing.toml` and `references/routing.md` when task routing or skill composition is ambiguous.
 - Read `references/phase-boundary-decision-tree.md` when choosing how to preserve or discard context between completed coding phases.
 - Read `references/memory-boundary.md` when a task touches memories, sessions, logs, generated summaries, or stale recalled facts.
 - Read `references/preference-contract.md` when tuning session defaults, response style, or user preference capture.

@@ -3,7 +3,7 @@ revision = 3
 requires-python = ">=3.11"
 
 [[package]]
-name = "coding-harness-development"
+name = "agent-skills-development"
 version = "0.0.0"
 source = { virtual = "." }
 

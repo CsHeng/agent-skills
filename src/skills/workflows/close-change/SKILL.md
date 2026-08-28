@@ -1,58 +1,33 @@
 ---
 name: close-change
-description: "Use after a verified change to decide merge, release, cleanup, an explicitly guarded recovery action, branch closure, or final close-gate status."
+description: "Use after a verified change to judge closure readiness for handoff, merge, release, cleanup, or an explicitly guarded recovery action."
 ---
 
 # Close Change
 
-Judge whether the current change can finish.
+Decide whether a bounded change is complete for the requested close purpose.
 
 ## Use This Skill When
 
-- the change is ready for merge, release, or workspace cleanup
-- the harness must make the final close decision after review and verification
-- the user wants an explicit closure judgment instead of an implied finish
+- implementation and required verification are complete
+- the user wants an explicit handoff, merge, release, cleanup, or closure judgment
 
-## Do Not Use This Skill When
+Do not use it while design, planning, implementation, review, required truth sync, or requested authorization is unresolved. A local status query or cleanup suggestion alone does not require this Skill.
 
-- the change still lacks required review, verification, or truth-sync evidence
-- the task is still in design, planning, execution, or review
-- the request only asks for local git status or cleanup advice
+## Closure Judgment
 
-## Shared Runtime
+1. Confirm the requested close purpose and the evidence relevant to it.
+2. Check implementation outcome, verification, the formal implementation review when one was required, accepted-repair evidence, truth-sync status, and any explicitly requested external action.
+3. Separate completed work from actions that were not authorized or performed, such as commit, push, publication, deployment, merge, or destructive cleanup.
+4. Return `closed` only when all evidence required for the requested purpose is current and complete; otherwise name the smallest owning gap.
 
-Resolve the installed helper relative to this `SKILL.md` before changing into the target repository. `SKILL_ROOT` is a local assignment to the activated skill directory, not an ambient host variable:
+## Outcomes
 
-```bash
-SKILL_ROOT="/absolute/path/to/close-change"
-HARNESS_CLI="$(realpath "$SKILL_ROOT/scripts/harness/cli.py")"
-[[ -f "$HARNESS_CLI" ]] || exit 1
-```
+- `closed`: the requested change boundary is complete
+- `needs-implementation`: implementation or verification remains incomplete
+- `needs-review`: a required bounded review is absent or unresolved
+- `needs-truth-sync`: stable truth still needs an authorized update
+- `needs-authority`: the requested close action needs user or external authority
+- `blocked`: required evidence is unavailable
 
-Validate the approved evidence package and emit the deterministic decision:
-
-```bash
-python3 "$HARNESS_CLI" close validate "<close-artifact>"
-python3 "$HARNESS_CLI" close evaluate "<ledger-file>" "<close-artifact>"
-```
-
-Author new close artifacts with `contract_version = 4`. Version-3 close evaluation exists only to finish work already converged before runtime refresh; it cannot reopen or mutate version-3 execution state.
-
-Close mode is `merge`, `release`, or `cleanup`, with `cleanup` as the default when omitted. The mode is judgment metadata only: this skill performs none of those external actions. Closure derives review, verification, truth requirement, stable truth refs, and artifact identities from the approved plan and immutable execution result. Caller-supplied status hints are non-authoritative and mismatches fail closed. If validation fails, follow the returned `plan-change`, `implement-change`, or `sync-truth` route.
-
-## Workflow
-
-1. Bind the approved plan, immutable execution result, and required truth-sync artifact by exact identity.
-2. Confirm the target close mode: merge, release, or cleanup.
-3. Block closure when required evidence or approvals are missing.
-4. Produce one terminal close decision with `terminal_state: closed` and `next_entry: null`, or one owning blocked route.
-
-## Operating Rules
-
-- This is the top-level closure gate.
-- Final completion judgment belongs to the harness.
-- Human approval remains final for close.
-- A successful close is terminal and never routes back to `close-change`.
-- No change closes by default just because implementation stopped.
-- Evidence before closure: review status, verification status, requested write/install/deploy/commit status, and truth-sync status must each be proven from current artifacts or command output.
-- Do not infer close readiness from partial checks, previous-session output, or delegated-agent summaries.
+Closure is a semantic judgment, not permission to merge, release, delete, commit, push, publish, or deploy. Do not infer completion from partial checks, stale output, or delegated summaries, and do not reopen earlier phases unless current evidence identifies that specific gap.

@@ -13,7 +13,7 @@ claude_effective_visibility = "default-visible"
 codex_allow_implicit_invocation = true
 claude_effective_visibility = "default-visible"
 
-[activation_modes.controller]
+[activation_modes.composition]
 codex_allow_implicit_invocation = false
 claude_effective_visibility = "default-visible"
 
@@ -36,7 +36,6 @@ may_spawn_agent = false
 
 [skills.design-change]
 source = "src/skills/workflows/design-change"
-runtime_bundle = "harness"
 category = "workflow"
 lifecycle_owner = true
 activation_mode = "native"
@@ -47,7 +46,6 @@ semantic_requires = ["review-change"]
 
 [skills.plan-change]
 source = "src/skills/workflows/plan-change"
-runtime_bundle = "harness"
 category = "workflow"
 lifecycle_owner = true
 activation_mode = "native"
@@ -58,7 +56,6 @@ semantic_requires = ["review-change"]
 
 [skills.implement-change]
 source = "src/skills/workflows/implement-change"
-runtime_bundle = "harness"
 category = "workflow"
 lifecycle_owner = true
 activation_mode = "native"
@@ -66,12 +63,10 @@ default_role = "primary"
 may_mutate_repo = true
 may_spawn_agent = true
 requires_approved_plan = true
-runtime_contract = "references/workflow.toml"
-semantic_requires = ["review-change", "sync-truth", "close-change"]
+semantic_requires = ["review-change"]
 
 [skills.review-change]
 source = "src/skills/workflows/review-change"
-runtime_bundle = "harness"
 category = "workflow"
 lifecycle_owner = true
 activation_mode = "native"
@@ -82,10 +77,9 @@ semantic_requires = ["review-design", "review-plan", "review-implementation"]
 
 [skills.sync-truth]
 source = "src/skills/workflows/sync-truth"
-runtime_bundle = "harness"
 category = "workflow"
 lifecycle_owner = true
-activation_mode = "controller"
+activation_mode = "composition"
 default_role = "primary"
 may_mutate_repo = true
 may_spawn_agent = false
@@ -94,10 +88,9 @@ requires_approved_plan = true
 
 [skills.close-change]
 source = "src/skills/workflows/close-change"
-runtime_bundle = "harness"
 category = "workflow"
 lifecycle_owner = true
-activation_mode = "controller"
+activation_mode = "composition"
 default_role = "primary"
 may_mutate_repo = false
 may_spawn_agent = false
@@ -387,7 +380,7 @@ requires_explicit_user_request = true
 source = "src/skills/review-components/review-implementation"
 category = "review-component"
 lifecycle_owner = false
-activation_mode = "controller"
+activation_mode = "composition"
 default_role = "evaluator"
 may_mutate_repo = false
 may_spawn_agent = true
@@ -396,7 +389,7 @@ may_spawn_agent = true
 source = "src/skills/review-components/review-design"
 category = "review-component"
 lifecycle_owner = false
-activation_mode = "controller"
+activation_mode = "composition"
 default_role = "evaluator"
 may_mutate_repo = false
 may_spawn_agent = true
@@ -405,7 +398,7 @@ may_spawn_agent = true
 source = "src/skills/review-components/review-plan"
 category = "review-component"
 lifecycle_owner = false
-activation_mode = "controller"
+activation_mode = "composition"
 default_role = "evaluator"
 may_mutate_repo = false
 may_spawn_agent = true

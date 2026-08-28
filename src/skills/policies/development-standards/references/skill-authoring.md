@@ -6,7 +6,7 @@ Use this reference when maintaining local skill inventories, descriptions, route
 
 - Model-invoked skills spend prompt context through their name and description every session. Use them only when the agent should route to the skill without the user naming it.
 - User-invoked skills reduce prompt competition but require the user or a router skill to remember them.
-- Keep third-party workflow libraries out of the default discovery surface unless their descriptions are curated and their lifecycle authority is subordinate to the local harness.
+- Keep overlapping third-party workflow libraries out of the default discovery surface unless their descriptions are curated and duplicate public IDs or ambiguous ownership are ruled out.
 - Prefer a small router or wrapper for session defaults instead of exposing many broad workflow descriptions.
 
 ## Description Quality

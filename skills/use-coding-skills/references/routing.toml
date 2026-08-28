@@ -5,21 +5,17 @@ id = "use-coding-skills"
 default_discovery = "native-description-match"
 direct_match_bypasses_router = true
 ambiguous_router = "use-coding-skills"
-mode_selector = "workflow-mode-selection"
-host_wrapper_role = "optional-user-specific-entry-hints"
+mode_selector = "optional-semantic-guidance"
 
-[host_wrapper]
+[environment_instructions]
 allowed = [
   "user preferences",
-  "host and runtime constraints",
+  "environment constraints",
   "thin intent-to-public-skill hints",
 ]
 forbidden = [
-  "workflow phase graph",
-  "phase-to-owner mapping",
-  "repair states",
-  "review budgets",
-  "typed exits",
+  "redefining public skill meaning",
+  "granting mutation authority",
 ]
 
 [composition]
@@ -30,7 +26,7 @@ rendering_baseline = "output-styles"
 
 [gate_policy]
 design_phases = ["design-lite", "design-full"]
-plan_phases = ["plan-lite", "plan", "minimal-plan"]
+plan_phases = ["plan"]
 design_review_phase = "review-design"
 plan_review_phase = "review-plan"
 truth_sync_phase = "sync-truth"
@@ -40,8 +36,6 @@ implicit_review_when_missing = true
 [phase_routes]
 analyze = "analyze-project"
 triage = "analyze-project"
-plan-lite = "plan-change"
-minimal-plan = "plan-change"
 design-lite = "design-change"
 design-full = "design-change"
 review-design = "review-change"
@@ -49,18 +43,14 @@ plan = "plan-change"
 review-plan = "review-change"
 execute = "implement-change"
 verify = "implement-change"
-review = "review-change"
 review-impl = "review-change"
-posthoc-review = "review-change"
 sync-truth = "sync-truth"
 close = "close-change"
 
 [review_evaluators]
 review-design = "review-design"
 review-plan = "review-plan"
-review = "review-implementation"
 review-impl = "review-implementation"
-posthoc-review = "review-implementation"
 
 [support_routes]
 response-shape = "output-styles"
@@ -122,12 +112,12 @@ lexical_hints = ["implement approved plan", "execute plan", "fix forward"]
 id = "explicit-via-herdr-approved-plan-execution"
 owner = "implement-change-via-herdr"
 positive = [
-  "Explicitly invoke $coding:implement-change-via-herdr to execute an approved plan through owned Herdr tabs and panes.",
-  "Explicitly ask to run an approved plan through Herdr while retaining the implement-change controller.",
+  "Explicitly invoke $coding:implement-change-via-herdr for a bounded approved task.",
+  "Explicitly ask to use Herdr for one already approved implementation slice.",
 ]
 negative = [
-  "Implement an approved plan through the ordinary controller runtime without requesting Herdr.",
-  "Use Herdr to choose tasks, adjudicate review findings, repair code, or own lifecycle continuation.",
+  "Implement an approved plan without explicitly requesting Herdr.",
+  "Use Herdr to choose scope, approve new authority, adjudicate review findings, or decide completion.",
 ]
 lexical_hints = ["implement-change-via-herdr", "approved plan through Herdr"]
 

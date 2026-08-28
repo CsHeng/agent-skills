@@ -44,6 +44,7 @@ class CheckOrchestrationTests(unittest.TestCase):
             "FAKE_FAIL_MATCH": fail_match,
             "CHECK_PYTHON": str(fake_bin / "python3"),
             "CHECK_UV": str(fake_bin / "uv"),
+            "STANDALONE_CHECK_ACTIVE": "0",
         }
         (temporary / "home").mkdir()
         return subprocess.run(
@@ -77,28 +78,29 @@ class CheckOrchestrationTests(unittest.TestCase):
                         "python3:scripts/check-install-surface.py",
                         "python3:scripts/generate-skills-index.py --check",
                         "python3:scripts/generate-workflow-diagrams.py --check",
-                        "uv:run ruff check src/runtime/harness scripts/skill_distribution.py "
-                        "scripts/flatten-skills.py scripts/check-install-surface.py",
-                        "uv:run ty check src/runtime/harness scripts/skill_distribution.py "
-                        "scripts/flatten-skills.py scripts/check-install-surface.py",
+                        "uv:run ruff check scripts/skill_distribution.py scripts/flatten-skills.py "
+                        "scripts/check-install-surface.py",
+                        "uv:run ty check scripts/skill_distribution.py scripts/flatten-skills.py "
+                        "scripts/check-install-surface.py",
                         "uv:run pytest -o cache_dir="
-                        f"{temporary / 'home/.cache/pytest/market-csheng-harness'}",
+                        f"{temporary / 'home/.cache/pytest/agent-skills'}",
                         "python3:src/skills/disciplines/organize-docs/scripts/"
                         "normalize-markdown-prose.py "
-                        f"--root {REPO_ROOT} --immutable-manifest "
-                        "contracts/markdown-prose.toml --mode check",
+                        f"--root {REPO_ROOT} --mode check --immutable-manifest "
+                        "contracts/markdown-prose.toml",
                     ],
                     commands,
                 )
                 expected_cache = (
-                    f"cache:{temporary / 'home/.cache/uv/market-csheng-harness'}|"
-                    f"{temporary / 'home/.cache/uv-projects/market-csheng-harness'}|"
-                    f"{temporary / 'home/.cache/ruff/market-csheng-harness'}|"
-                    f"{temporary / 'home/.cache/python/market-csheng-harness'}|"
-                    f"{temporary / 'home/.cache/pytest/market-csheng-harness'}"
+                    f"cache:{temporary / 'home/.cache/uv/agent-skills'}|"
+                    f"{temporary / 'home/.cache/uv-projects/agent-skills'}|"
+                    f"{temporary / 'home/.cache/ruff/agent-skills'}|"
+                    f"{temporary / 'home/.cache/python/agent-skills'}|"
+                    f"{temporary / 'home/.cache/pytest/agent-skills'}"
                 )
                 self.assertEqual(
-                    [expected_cache] * 9, [line for line in log if line.startswith("cache:")]
+                    [expected_cache] * 9,
+                    [line for line in log if line.startswith("cache:")],
                 )
 
     def test_first_failed_gate_preserves_exit_status_without_later_work(self) -> None:

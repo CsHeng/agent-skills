@@ -1,113 +1,56 @@
 ---
 name: design-change
-description: "Use before planning implementation to classify change scope, truth impact, boundary impact, and no-design/design-lite/design-full depth."
+description: "Use before implementation planning to classify change scope, truth impact, boundary impact, and the appropriate design depth."
 ---
 
 # Design Change
 
-Define the change boundary before planning or implementation.
+Define an implementation-independent change boundary before planning.
 
 ## Use This Skill When
 
-- the user wants to shape a new change before work starts
-- the request may affect stable truth, public boundaries, or operating semantics
-- the harness must decide between `no-design`, `design-lite`, or `design-full`
-- the user needs explicit non-goals, change boundaries, or approval points
+- the user wants to shape a concrete change before implementation
+- the request may affect stable truth, public boundaries, architecture, or operating semantics
+- goals, non-goals, acceptance conditions, ownership, or recovery need an explicit decision
 
-## Do Not Use This Skill When
+Do not use it for read-only project explanation, an already approved design, implementation, or a standalone review request.
 
-- the user only wants read-only project explanation; use `analyze-project`
-- an approved design already exists and the next step is planning
-- the task is already in review, truth sync, or close
+## Design
 
-## Shared Runtime
+1. Establish the relevant current truth and the concrete problem.
+2. Classify truth impact and boundary impact; choose `no-design`, `design-lite`, or `design-full` without equating file count with risk.
+3. Run a bounded clarification loop when goals, terminology, owners, constraints, non-goals, or acceptance conditions are unresolved.
+4. Compare viable boundary choices only when the change creates or materially alters a persisted architecture boundary. Compose `architecture-patterns` for that decision.
+5. Record the chosen scope, explicit non-goals, future phases, acceptance evidence, truth impact, recovery policy, and implementation surface.
+6. Produce a stable, reviewable design artifact when the chosen depth requires one.
+7. Invoke `review-change` exactly once with the bounded design target before accepting the design result. The review is read-only; adjudicate its candidate findings here.
+8. Apply at most one focused, in-scope design repair supported by accepted findings, then recheck the affected design evidence without starting another review.
 
-Resolve the installed helper relative to this `SKILL.md` before changing into the target repository. `SKILL_ROOT` is a local binding to the activated skill directory, not a host-provided environment variable:
+This review is part of a formal `design-change` invocation. It does not establish a repository-wide rule that informal discussion, tiny edits, or unrelated work must be reviewed.
 
-```bash
-SKILL_ROOT="/absolute/path/to/design-change"
-HARNESS_CLI="$(realpath "$SKILL_ROOT/scripts/harness/cli.py")"
-[[ -f "$HARNESS_CLI" ]] || exit 1
-```
+## Decision States
 
-Use the shared CLI namespace for each complete artifact operation:
+- `ready_for_approval`: the design and its review evidence are complete
+- `needs_more_design`: a required design decision remains unresolved
+- `split_scope`: the proposed milestone is not one coherent design surface
+- `manual_checkpoint`: progress depends on a user or external decision
 
-```bash
-python3 "$HARNESS_CLI" lifecycle classify "<typed-request.json>"
-python3 "$HARNESS_CLI" design validate "<design-file>"
-```
+Approval belongs to the user. Do not mark a design approved from review success alone, infer approval from a later implementation request, or continue into planning unless the request already authorizes that next step.
 
-The typed classification request contains exactly `signals` and `repo_mutation`; the runtime derives one mode, initial phase, and owner from the bundled canonical lifecycle projection or returns a typed contradiction or unknown-signal stop. The classification record contains `request_kind`, `change_class`, `design_strength`, `truth_impact`, `boundary_impact`, and `recommended_next_phase`. The design artifact contains goals, non-goals, boundaries, validation, recovery policy, `Implementation Surface`, and `approval_status: pending` before review. Validation and mandatory `review-change` review both pass before the human approval gate.
+## Artifact Guidance
 
-Author every new design with `contract_version = 4`, explicit `truth_impact`, and `truth_sync_required`. Version-3 designs are compatibility evidence only and cannot initialize or mutate refreshed execution state.
+A design artifact should make these items easy to find:
 
-## Workflow
+- objective, current truth, and constraints
+- scope, non-goals, and future phases
+- chosen boundary and discarded material alternatives
+- acceptance evidence and truth impact
+- recovery policy and any exact approval-sensitive action
+- review verdict and adjudication summary
+- approval status
 
-1. Classify the request for truth impact and boundary impact.
-2. Run decision discovery when the goal, terminology, acceptance boundary, owner, or non-goals are unclear.
-3. Record the change class and required design strength.
-4. Run conditional architecture economics when the change creates or materially changes a persisted architecture boundary.
-5. Define scope, non-goals, approvals, and recovery surface. Use guarded rollback only when a concrete hazard makes it safer than forward repair.
-6. Produce or update the design artifact in a stable, reviewable shape.
-7. Validate the artifact before review.
-8. Route the artifact through mandatory design review and bounded in-scope autofix when needed.
-9. Hold the artifact at `approval_status: pending` until explicit human design approval.
-10. Stop after explicit human design approval and hand off to `plan-change`.
+Use guarded rollback only when a concrete hazard makes it safer than forward repair and the trigger, target, and verification are explicit. Otherwise prefer fix-forward recovery.
 
-## Decision Discovery
+Keep Markdown paragraphs and list items naturally unwrapped. When a document has several independent scopes, use stable unique labels rather than restarting ambiguous numbered lists.
 
-Use this as a bounded clarification loop, not as a competing top-level workflow.
-
-Run decision discovery when any of these are true:
-- the user cannot state concrete acceptance conditions yet
-- the proposed plan would require guessing architecture intent
-- the change mixes multiple milestones or future phases
-- terminology is unstable enough that reviewers may argue over words instead of behavior
-- a reviewer finds baseline mismatch, scope expansion, or repeated out-of-scope issues
-
-Decision discovery must produce:
-- the chosen milestone objective
-- explicit non-goals and future-phase items
-- unresolved decisions that block planning
-- shared terms that downstream plans and reviews should use
-- a stop state: `ready_for_plan`, `needs_more_design`, `split_scope`, or `manual_checkpoint`
-
-Do not continue to `plan-change` when decision discovery ends in anything other than `ready_for_plan`.
-
-## Architecture Decision Economics
-
-Compose `architecture-patterns` when the approved change creates, replaces, decomposes, centralizes, distributes, or materially scales a persisted architecture boundary.
-
-Keep the detailed theory and decision method in the architecture skill's `references/architecture-decision-economics.md`. Record only the design-level evidence needed to approve the boundary:
-
-- an `architecture_decision_id` for downstream reference
-- current demand evidence and the constrained resource or hard requirement
-- the status quo, smallest sufficient option, and structural investment with material discard reasons
-- marginal lifecycle tradeoff and opportunity cost
-- owner, cost bearer, incentives, and comparative advantage
-- the chosen option, executable oracle, recovery boundary, and observable upgrade trigger
-
-Do not require this section for docs-only work, ordinary existing-boundary edits, generated-surface refreshes, or implementation choices that stay inside an already approved architecture boundary. Do not require numeric scoring; causal evidence and explicit triggers are sufficient.
-
-If the evidence cannot justify one bounded choice, stop with `needs_more_design`, `split_scope`, or `manual_checkpoint` instead of deferring architecture selection into planning.
-
-## Artifact Output
-
-Design artifacts and final design summaries must be easy to review and reference.
-
-- Do not hard-wrap Markdown prose or list-item continuations in design artifacts. Keep each natural paragraph or list item on one physical line unless Markdown syntax, tables, code blocks, frontmatter, or intentional hard breaks require separate lines.
-- When a design artifact or summary contains multiple independent scopes, do not restart plain `1. 2. 3.` lists under each heading. Use stable globally unique labels such as `D1`, `D2`, `B1`, `B2`, `S1`, `S2`, or subsection labels such as `1.1`, `1.2`, `2.1`.
-- Prefer bullets when item order is not semantically important.
-
-## Operating Rules
-
-- This is a top-level harness entry, not a lower-plane guideline.
-- Design strength follows truth impact and boundary impact, not task size.
-- A design file update alone is not completion.
-- Mandatory review happens before the human approval gate.
-- The artifact should carry explicit approval state, not just an approval reminder.
-- Human approval is required before leaving this phase.
-- `design-full` is not the default answer for every change.
-- Architecture economics selects a boundary inside design; planning consumes the approved choice rather than owning a second selection process.
-- Decision discovery may clarify scope, but it must not start planning, execution, or review-batch repair.
-- When the user explicitly asks to grill, stress-test, harden, challenge, or interrogate a design or plan, read `references/stress-test-mode.md`.
+When the user explicitly asks to grill, stress-test, harden, challenge, or interrogate a design or plan, read `references/stress-test-mode.md`.

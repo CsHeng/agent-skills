@@ -25,7 +25,7 @@
 - Strictness: Maximum compliance enforcement
 - Findings: Conservative and rule-driven
 - Determinism: Required output consistency
-- Mutation: Prohibited; the lifecycle controller owns any repair
+- Mutation: Prohibited; the calling implementing agent owns any repair
 
 ### T - Test Cases
 

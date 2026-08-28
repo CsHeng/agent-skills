@@ -84,6 +84,10 @@ class CommandRetirementContractTests(unittest.TestCase):
             "install-codex.sh",
             "hooks/post-edit-check.sh",
         )
+        if os.environ.get("STANDALONE_CHECK_ACTIVE") == "1":
+            retained_paths = tuple(
+                path for path in retained_paths if path != ".codex-marketplace/plugins/coding"
+            )
         for relative_path in retained_paths:
             with self.subTest(path=relative_path):
                 self.assertTrue((REPO_ROOT / relative_path).exists())
@@ -116,7 +120,7 @@ class CommandRetirementContractTests(unittest.TestCase):
                 for retired_entry in retired_entries:
                     self.assertNotIn(retired_entry, content)
 
-    def test_absorbed_workflows_use_skill_local_generated_runtime(self) -> None:
+    def test_absorbed_workflows_are_semantic_only(self) -> None:
         for public_id in (
             "close-change",
             "design-change",
@@ -129,24 +133,14 @@ class CommandRetirementContractTests(unittest.TestCase):
                 skill = (REPO_ROOT / "skills" / public_id / "SKILL.md").read_text(
                     encoding="utf-8"
                 )
-                self.assertIn("$SKILL_ROOT/scripts/harness/cli.py", skill)
-                self.assertTrue(
-                    (REPO_ROOT / "skills" / public_id / "scripts" / "harness" / "cli.py").is_file()
-                )
+                self.assertNotIn("HARNESS_CLI", skill)
+                self.assertNotIn("scripts/harness", skill)
+                self.assertNotIn("host harness", skill.lower())
+                self.assertFalse((REPO_ROOT / "skills" / public_id / "scripts" / "harness").exists())
 
-    def test_authored_runtime_executes_from_unrelated_directory(self) -> None:
-        runtime = REPO_ROOT / "src/runtime/harness/cli.py"
-        with tempfile.TemporaryDirectory() as unrelated_cwd:
-            result = subprocess.run(
-                ["python3", str(runtime), "--help"],
-                cwd=unrelated_cwd,
-                check=True,
-                capture_output=True,
-                text=True,
-                env=os.environ,
-            )
-        for namespace in ("design", "plan", "ledger", "execute", "truth-sync", "close"):
-            self.assertIn(namespace, result.stdout)
+    def test_executable_workflow_runtime_is_retired(self) -> None:
+        self.assertFalse((REPO_ROOT / "src" / "runtime" / "harness").exists())
+        self.assertFalse((REPO_ROOT / "integrations" / "pi").exists())
 
     def test_smart_commit_already_owns_target_repository_binding(self) -> None:
         skill = (REPO_ROOT / "skills/smart-commit/SKILL.md").read_text(

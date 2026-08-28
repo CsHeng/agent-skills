@@ -7,7 +7,7 @@ description: "Use during design or planning when a new persisted project, tool, 
 
 ## Purpose
 
-Choose the implementation language for a new persisted code boundary before implementation begins. This is a planning policy overlay, not a lifecycle controller and not an ad hoc command-selection guide.
+Choose the implementation language for a new persisted code boundary before implementation begins. This is a planning policy overlay, not the primary workflow owner or an ad hoc command-selection guide.
 
 ## Scope
 

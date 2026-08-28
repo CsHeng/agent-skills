@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import os
 import subprocess
 import sys
 import tempfile
@@ -407,6 +408,8 @@ Follow-up:
                 module.load_immutable_manifest(root, manifest)
 
     def test_repository_boundary_checker_honors_immutable_manifest(self) -> None:
+        if os.environ.get("STANDALONE_CHECK_ACTIVE") == "1":
+            self.skipTest("stage history is intentionally absent from standalone copies")
         result = subprocess.run(
             ["bash", str(BOUNDARY_CHECKER)],
             cwd=REPO_ROOT,

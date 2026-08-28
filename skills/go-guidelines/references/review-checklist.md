@@ -58,4 +58,4 @@ Add `go test -race ./...` only when concurrent behavior or shared state is in th
 
 ## Finding Boundary
 
-Report only evidence causally linked to the reviewed diff and its approved oracle. Treat pre-existing architecture, unrelated package debt, optional framework preferences, and unconfigured analyzers as non-blocking unless the current change activates them. Reviewers return candidate findings only; the lifecycle controller owns repair.
+Report only evidence causally linked to the reviewed diff and its approved oracle. Treat pre-existing architecture, unrelated package debt, optional framework preferences, and unconfigured analyzers as non-blocking unless the current change activates them. Reviewers return candidate findings only; the calling implementing agent owns repair.

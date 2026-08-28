@@ -47,9 +47,9 @@ class SemanticSkillContractTests(unittest.TestCase):
 
     def test_cycle_is_rejected(self) -> None:
         contract = copy.deepcopy(load_contract())
-        contract["skills"]["close-change"]["semantic_requires"] = [
-            "implement-change"
-        ]
+        contract["skills"]["review-change"]["semantic_requires"].append(
+            "design-change"
+        )
 
         errors = self.checker.validate_semantic_contracts(contract, REPO_ROOT)
 
@@ -65,16 +65,11 @@ class SemanticSkillContractTests(unittest.TestCase):
 
         self.assertTrue(any("must match routing targets" in error for error in errors))
 
-    def test_runtime_edge_requires_semantic_declaration(self) -> None:
-        contract = copy.deepcopy(load_contract())
-        contract["skills"]["review-change"]["semantic_requires"].remove(
-            "review-implementation"
-        )
-
-        errors = self.checker.validate_semantic_contracts(contract, REPO_ROOT)
-
-        self.assertTrue(
-            any("runtime edge lacks semantic_requires" in error for error in errors)
+    def test_review_composition_is_declarative(self) -> None:
+        contract = load_contract()
+        self.assertEqual(
+            ["review-design", "review-plan", "review-implementation"],
+            contract["skills"]["review-change"]["semantic_requires"],
         )
 
 

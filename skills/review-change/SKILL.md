@@ -1,93 +1,66 @@
 ---
 name: review-change
-description: "Use as the top-level agent-native review gate for design, plan, or implementation artifacts. Builds a bounded review brief, prefers subagent review when useful, adjudicates candidate findings, and returns one lifecycle verdict."
+description: "Review one bounded design, plan, or implementation target; return evidence-backed candidate findings and one verdict without mutating the target or synthesizing missing lifecycle work."
 ---
 
 # Review Change
 
-Run a bounded review and keep final judgment with the main agent.
+Review exactly one supplied target and keep final repair judgment with the calling agent.
 
 ## Use This Skill When
 
-- a design, plan, or implementation needs a lifecycle review gate
-- the main agent must decide whether candidate findings justify repair or a typed stop
-- direct user review needs a bounded artifact-specific evaluator
+- `design-change`, `plan-change`, or `implement-change` requests its single bounded review
+- the user directly asks to review a specific design, plan, diff, or implementation slice
 
-## Actor Selection
+A standalone review needs only a bounded target and review question. Do not require or create an upstream design, plan, implementation state, approval record, or lifecycle sequence merely because review was requested.
 
-The review brief distinguishes the `main` actor from a `delegated` reviewer.
+## Review Path
 
-1. Declare `actor_role: main` before choosing the review path.
-2. Prefer one reviewer subagent for a non-trivial review when delegation is available and the approved task slice is stable.
-3. Review directly when the change is small or mechanical, delegation is unavailable, or spawning would add no useful independence.
-4. Give a reviewer subagent only the bounded review brief, not the full conversation or an invitation to audit the repository.
-5. A delegated reviewer runs with `actor_role: delegated` and must not delegate recursively.
+Review directly when the target is small or delegation is unavailable. For a non-trivial stable target, one independent reviewer may be useful when the active agent environment supports it.
 
-## Artifact Validation
+If a relevant review Skill is currently discoverable, use it as the evaluator:
 
-For design or plan review, resolve the shared CLI relative to this `SKILL.md` before entering the target repository. `SKILL_ROOT` is an explicit local assignment, not a provider contract:
+- design target: `review-design`
+- plan target: `review-plan`
+- implementation target: `review-implementation`
 
-```bash
-SKILL_ROOT="/absolute/path/to/review-change"
-HARNESS_CLI="$(realpath "$SKILL_ROOT/scripts/harness/cli.py")"
-[[ -f "$HARNESS_CLI" ]] || exit 1
-```
+Otherwise perform the same bounded evidence-based review directly. Availability of those evaluator Skills is optional; do not assume a particular repository, provider, command name, or discovery mechanism.
 
-Validate the selected artifact before semantic review:
+An evaluator receives only the bounded brief, remains read-only, returns candidate findings, and must not delegate recursively, invoke another lifecycle phase, repair files, or widen scope.
 
-```bash
-python3 "$HARNESS_CLI" design validate "<design-file>"
-python3 "$HARNESS_CLI" plan validate "<plan-file>"
-```
+## Bounded Brief
 
-New design, plan, truth-sync, and close artifacts use `contract_version = 4`. Version-3 artifacts may be inspected as immutable compatibility evidence, but review cannot authorize refreshed version-3 ledger initialization, mutation, admission, repair, or binding. For regulated design and plan modes, mandatory review completes before the human approval gate.
+Include only what is needed to review the target:
 
-Select exactly one target: a design artifact, a plan artifact, or an implementation task slice. For implementation review, use the explicitly supplied changed files or the current bounded diff when no files were supplied. Stop when the selected artifact is absent or invalid.
+- target class and objective
+- goals, non-goals, and acceptance criteria supplied by the caller
+- exact artifact, diff, or changed files
+- declared verification and current evidence
+- allowed supporting files, each with a reason
 
-## Bounded Review Brief
+Stop with `manual-decision-required` when the target itself is missing or cannot be bounded. Do not reverse-engineer missing lifecycle artifacts.
 
-The main agent constructs:
+## Candidate Findings
 
-- artifact class and current task-slice objective
-- approved goals, non-goals, and acceptance criteria
-- exact artifact diff or changed files
-- declared executable oracles and current verification evidence
-- approved touch set
-- exact approved external refs, when present, plus metadata-only baseline and ordered intent evidence; no raw external content, preimage, or staged payload
-- explicitly allowed supporting files, each with a reason
+Each material candidate should include:
 
-Route the brief to `review-design`, `review-plan`, or `review-implementation`. The evaluator returns candidate evidence only.
+- concrete evidence and location
+- causal connection to the reviewed target
+- violated requirement or correctness risk
+- consequence and confidence
+- smallest in-scope repair, when one exists
 
-## Main-Agent Adjudication
+Exclude pre-existing, unrelated, future-phase, speculative, and low-confidence observations from blocking findings. A critical out-of-scope security or data-loss risk may require a manual decision but never silently expands repair authority.
 
-For every material candidate, verify the evidence, causal connection, approved-contract violation, confidence, consequence, and smallest in-scope fix. Assign exactly one disposition:
-
-- `accepted`
-- `rejected_no_causal_link`
-- `rejected_pre_existing`
-- `rejected_out_of_scope`
-- `rejected_insufficient_evidence`
-- `deferred_followup`
-- `needs_plan_change`
-
-Severity and reviewer-recommended scope never authorize repair by themselves. Only `accepted` candidates can become local repair work. Record a concise reason for each accepted candidate and each materially rejected candidate.
-
-External evidence grants review authority only over the supplied metadata and redacted conformance output. A reviewer remains read-only, cannot reread a live external target, cannot request its raw contents, and cannot mutate or append intents. The main `implement-change` controller adjudicates any candidate and owns the next parent-linked broker intent for an accepted repair.
+The calling agent adjudicates candidates as accepted, rejected, deferred, or requiring a plan/design decision. The reviewer never performs the repair and never decides lifecycle continuation.
 
 ## Verdicts
 
-- `pass`: no accepted candidate remains and required verification is sufficient
-- `needs-fixes`: accepted findings have a smallest fix inside the approved task slice
-- `manual-decision-required`: evidence requires authority, external verification, or an out-of-scope decision
-- `split-scope`: the current milestone cannot remain one bounded review surface
+- `pass`: no material causally bound finding remains
+- `needs-fixes`: one or more supported findings have an in-scope repair
+- `manual-decision-required`: evidence or authority outside the review boundary is required
+- `split-scope`: the supplied target cannot remain one bounded review surface
 - `needs-design-decision`: architecture intent must change
-- `needs-plan-change`: the approved task graph, acceptance contract, or touch set is insufficient
+- `needs-plan-change`: implementation scope or acceptance conditions are insufficient
 
-## Operating Rules
-
-- Review and verification are separate evidence sources combined by the lifecycle controller.
-- Evaluators never mutate files or decide continuation.
-- Pre-existing, unrelated, future-phase, adjacent, and low-confidence findings do not block the current change.
-- A critical out-of-scope security or data-loss observation may force a manual decision but never silently expands repair scope.
-- Prefer PASS when the bounded task acceptance and declared oracles are satisfied.
-- Return the machine-checkable verdict directly; do not ask whether to continue when the state is known.
+Return one verdict with candidate findings and relevant verification gaps. Review and verification remain distinct evidence; neither invents the other.

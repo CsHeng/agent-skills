@@ -1,6 +1,6 @@
 interface:
   display_name: "Review Implementation"
   short_description: "Controller-only implementation candidate evaluator"
-  default_prompt: "Use $review-implementation only with a controller-supplied bounded diff and review brief."
+  default_prompt: "Use $review-implementation only with a supplied bounded diff and review brief."
 policy:
   allow_implicit_invocation: false

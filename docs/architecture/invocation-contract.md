@@ -1,9 +1,7 @@
 # Invocation Contract
 
-`contracts/skills.toml` is the table-keyed source, exposure, activation, and runtime-ownership contract for the 40 public skills. `skills/use-coding-skills/references/routing.toml` owns installed semantic trigger cases, phase routes, evaluators, support routes, and composition.
+Skill frontmatter descriptions are the primary discovery surface. An explicitly named or confidently matched Skill runs directly; `use-coding-skills` is optional guidance for ambiguous multi-stage requests.
 
-Every skill declares one `activation_mode` and one `default_role`. The contract-level activation-mode projection derives Codex invocation metadata; individual skills do not author invocation policy. Runtime and routing references remain inside their canonical skill directories.
+One primary Skill owns the response. Session, discipline, policy, tool, and review-component Skills may contribute bounded overlays. Formal `design-change`, `plan-change`, and `implement-change` each compose one `review-change`; that relationship is semantic guidance rather than executable enforcement.
 
-The authored runtime is non-discoverable at `src/runtime/harness/`. Generation copies its explicit production manifest into six runtime owners, and each installed lifecycle skill invokes only its own `scripts/harness/cli.py`. `implement-change` defaults to codex-native and keeps `implement-change-via-herdr` as an explicit adapter overlay.
-
-Retired compatibility IDs are absent. Native and conditional owners use the routing contract; explicit skills require explicit cases; `output-styles` is the shared baseline overlay.
+Standalone review accepts one bounded target and never creates missing design, plan, or implementation phases. Review evaluators are optional, read-only helpers discovered by their own descriptions.

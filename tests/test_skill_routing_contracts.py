@@ -151,7 +151,7 @@ class RoutingContractTests(unittest.TestCase):
         )
 
     def test_review_phases_require_review_component_evaluators(self) -> None:
-        self.rewrite('review = "review-implementation"', 'review = "review-change"')
+        self.rewrite('review-impl = "review-implementation"', 'review-impl = "review-change"')
 
         errors = self.validate()
 
@@ -193,14 +193,14 @@ class RoutingContractTests(unittest.TestCase):
         self.assertTrue(any("unknown owner" in error for error in errors))
         self.assertTrue(any("lifecycle owner cannot be an overlay" in error for error in errors))
 
-    def test_controller_evaluators_and_retired_skills_cannot_own_cases(self) -> None:
+    def test_composition_evaluators_and_retired_skills_cannot_own_cases(self) -> None:
         routing = copy.deepcopy(self.routing_contract)
         routing["trigger_cases"][0]["owner"] = "review-implementation"
         routing["trigger_cases"][1]["owner"] = "clean-architecture"
 
         errors = self.validate_trigger_cases(routing)
 
-        self.assertTrue(any("controller evaluator cannot own" in error for error in errors))
+        self.assertTrue(any("composition-only evaluator cannot own" in error for error in errors))
         self.assertTrue(any("unknown owner" in error for error in errors))
 
     def test_uncovered_native_skill_is_rejected(self) -> None:

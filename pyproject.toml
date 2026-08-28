@@ -1,7 +1,7 @@
 [project]
-name = "coding-harness-development"
+name = "agent-skills-development"
 version = "0.0.0"
-description = "Development-only validation contract for the coding harness migration."
+description = "Development-only static validation for the coding Skill collection."
 requires-python = ">=3.11"
 dependencies = []
 
@@ -16,9 +16,8 @@ dev = [
 package = false
 
 [tool.pytest.ini_options]
-testpaths = ["src/runtime/harness/tests", "tests"]
-pythonpath = ["src"]
-cache_dir = "/Users/csheng/.cache/pytest/market-csheng-harness"
+testpaths = ["tests"]
+pythonpath = [".", "src"]
 addopts = "-ra"
 
 [tool.ruff]

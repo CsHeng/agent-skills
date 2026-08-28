@@ -1,48 +1,35 @@
 [modes.read_only]
-description = "Analysis, triage, explanation, audit, inventory, or fact gathering. No repo mutation."
+description = "Analysis, triage, explanation, audit, inventory, or fact gathering without repository mutation."
+suggested_skills = ["analyze-project"]
 phases = ["analyze"]
-allows_repo_mutation = false
-requires_human_approval = false
-requires_design_artifact = false
-requires_plan_artifact = false
-requires_review = false
+formal_workflow = false
+review_expectation = "none unless directly requested"
 
 [modes.micro]
 description = "Small bounded change with low truth impact and low boundary impact."
-phases = ["plan-lite", "execute", "verify", "close"]
-allows_repo_mutation = true
-requires_human_approval = true
-requires_design_artifact = false
-requires_plan_artifact = true
-requires_review = "optional"
+suggested_skills = ["implement-change"]
+phases = ["execute", "verify"]
+formal_workflow = false
+review_expectation = "none unless a formal workflow skill is invoked or review is directly requested"
 
 [modes.standard]
 description = "Normal software change."
-phases = ["analyze", "design-lite", "plan", "execute", "review", "sync-truth", "close"]
-allows_repo_mutation = true
-requires_human_approval = true
-requires_design_artifact = true
-requires_plan_artifact = true
-requires_review = true
+suggested_skills = ["design-change", "plan-change", "implement-change"]
+phases = ["design-lite", "review-design", "plan", "review-plan", "execute", "verify", "review-impl"]
+formal_workflow = true
+review_expectation = "each invoked formal design, plan, or implementation skill performs one bounded review"
 
 [modes.regulated]
-description = "Potentially high-risk infra, network, GitOps, IaC, secrets, auth, security, deployment, public API, irreversible data, or high-blast-radius changes. Regulated classification requires explicit recovery and fresh evidence; it does not authorize automatic rollback."
-phases = ["analyze", "design-full", "review-design", "plan", "review-plan", "execute", "review-impl", "sync-truth", "close"]
-allows_repo_mutation = true
-requires_human_approval = true
-requires_design_artifact = true
-requires_plan_artifact = true
-requires_review = true
-requires_recovery_surface = true
-default_failure_policy = "fix_forward"
-requires_fresh_evidence = true
+description = "High-risk infrastructure, security, deployment, public API, irreversible data, or high-blast-radius work requiring explicit recovery and fresh evidence."
+suggested_skills = ["analyze-project", "design-change", "plan-change", "implement-change", "sync-truth", "close-change"]
+phases = ["analyze", "design-full", "review-design", "plan", "review-plan", "execute", "verify", "review-impl", "sync-truth", "close"]
+formal_workflow = true
+review_expectation = "each invoked formal design, plan, or implementation skill performs one bounded review"
+recovery_expectation = "fix forward unless an exact guarded rollback is approved"
 
 [modes.emergency]
-description = "Break/fix path. Minimize up-front ceremony, require post-change truth sync."
-phases = ["triage", "minimal-plan", "execute", "verify", "posthoc-review", "sync-truth", "close"]
-allows_repo_mutation = true
-requires_human_approval = true
-requires_design_artifact = "posthoc"
-requires_plan_artifact = "minimal"
-requires_review = "posthoc"
-requires_fresh_evidence = true
+description = "Break/fix guidance that minimizes up-front ceremony and records stable truth after verified recovery."
+suggested_skills = ["analyze-project", "implement-change", "sync-truth", "close-change"]
+phases = ["triage", "execute", "verify", "sync-truth", "close"]
+formal_workflow = false
+review_expectation = "none unless a formal workflow skill is invoked or review is directly requested"

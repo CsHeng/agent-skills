@@ -49,7 +49,7 @@ class SkillActivationContractTests(unittest.TestCase):
             {
                 "baseline": True,
                 "conditional": True,
-                "controller": False,
+                "composition": False,
                 "explicit": False,
                 "native": True,
             },
@@ -75,7 +75,7 @@ class SkillActivationContractTests(unittest.TestCase):
 
     def test_projection_drift_is_rejected(self) -> None:
         contract = copy.deepcopy(load_contract())
-        contract["activation_modes"]["controller"][
+        contract["activation_modes"]["composition"][
             "codex_allow_implicit_invocation"
         ] = True
 
@@ -85,7 +85,7 @@ class SkillActivationContractTests(unittest.TestCase):
 
         self.assertTrue(
             any(
-                "activation_modes.controller.codex_allow_implicit_invocation"
+                "activation_modes.composition.codex_allow_implicit_invocation"
                 in error
                 for error in errors
             )
@@ -104,7 +104,7 @@ class SkillActivationContractTests(unittest.TestCase):
     def test_canonical_metadata_projection_and_frontmatter_are_checked(self) -> None:
         contract = copy.deepcopy(load_contract())
         contract["skills"] = {"fixture": contract["skills"]["analyze-project"]}
-        contract["skills"]["fixture"]["activation_mode"] = "controller"
+        contract["skills"]["fixture"]["activation_mode"] = "composition"
 
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

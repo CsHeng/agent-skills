@@ -108,7 +108,7 @@ A work package is ready only when it has:
 - subagent boundary: `subagent_ready: true|false`
 - task-level delegation and parallel policy, including the serial fallback or typed capacity stop
 - semantic execution and reasoning profiles without a concrete provider model identifier
-- isolation, write-set, resource-lock, and controller-owned convergence evidence for any parallel slice
+- isolation, write-set, resource-lock, and calling-agent convergence evidence for any parallel slice
 
 If these are missing, do not expand the plan. Stop with one of:
 

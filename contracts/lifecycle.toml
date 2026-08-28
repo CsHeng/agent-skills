@@ -1,17 +1,25 @@
 [lifecycle]
 kernel = ["analyze-project", "design-change", "plan-change", "implement-change", "review-change", "sync-truth", "close-change"]
-router = "workflow mode selection precedes phase implementation"
-default_review = "agent-native-bounded"
-unattended_execution = false
+purpose = "provider-neutral semantic workflow guidance"
+router = "optional ambiguity resolution; direct skill matches bypass it"
 
 [routing]
-read_only = ["explanation", "repo inspection", "debugging hypothesis", "doc audit", "inventory"]
-micro = ["typo", "local docs fix", "narrow script fix", "bounded low-risk edit"]
+read_only = ["explanation", "repository inspection", "debugging hypothesis", "documentation audit", "inventory"]
+micro = ["typo", "local documentation fix", "narrow script fix", "bounded low-risk edit"]
 standard = ["ordinary feature", "ordinary fix", "ordinary refactor"]
-regulated = ["infra", "network", "proxy", "tunnel", "container networking", "gitops", "iac", "secrets", "auth", "security", "deployment", "public api", "data migration"]
+regulated = ["infrastructure", "network", "secrets", "authentication", "security", "deployment", "public API", "data migration"]
 emergency = ["outage", "broken local workflow", "urgent revert", "minimal break/fix"]
 
 [authority]
 workflow_category = "workflow"
 lower_plane_categories = ["session", "discipline", "policy", "tool", "manual-tool", "review-component"]
-manual_mutation_requires = "explicit user request or approved upstream artifact"
+mutation_requires = "explicit user request or approved upstream artifact"
+
+[formal_review]
+owners = ["design-change", "plan-change", "implement-change"]
+review_skill = "review-change"
+reviews_per_invocation = 1
+review_is_read_only = true
+caller_adjudicates = true
+informal_work_review = "not implied"
+standalone_review_requires_upstream_phase = false
