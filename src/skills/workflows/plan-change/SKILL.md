@@ -25,10 +25,8 @@ Do not use it while design or approval is unresolved, to implement an existing p
 6. State fix-forward or an explicitly guarded recovery policy for each risky task.
 7. Identify parallel or delegable work only when dependencies are frozen, writes and shared resources do not conflict, isolation is safe, and convergence ownership is clear. Otherwise keep the plan serial.
 8. Check work-package readiness and artifact coherence.
-9. Invoke `review-change` exactly once with the bounded plan target before accepting the plan result. The review is read-only; adjudicate its candidate findings here.
-10. Apply at most one focused, in-scope plan repair supported by accepted findings, then recheck the affected plan evidence without starting another review.
-
-This review is part of a formal `plan-change` invocation. It does not make review automatic for informal task lists or unrelated work.
+9. Decide whether independent review is required by an explicit user request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment.
+10. When review is required, invoke one bounded `review-change` evaluation before accepting the plan, adjudicate its read-only candidate findings here, and apply at most one focused in-scope repair before rechecking the affected evidence.
 
 ## Conditional Decisions
 
@@ -48,14 +46,14 @@ An execution-grade plan should record:
 - delegation eligibility and isolation expectations when useful
 - recovery policy and any guarded rollback trigger
 - truth-sync targets when stable truth will change
-- review verdict and adjudication summary
+- review decision and, when review ran, its verdict and adjudication summary
 - approval status and any remaining user decisions
 
 Use semantic capability descriptions rather than provider names or exact model settings. A plan may describe task complexity or desired independence, but must not prescribe how a particular product schedules actors, binds models, records attempts, or resumes sessions.
 
 ## Decision States
 
-- `ready_for_approval`: the plan and its review evidence are complete
+- `ready_for_approval`: the plan and any required review evidence are complete
 - `needs_design_decision`: the approved design is no longer sufficient
 - `split_scope`: the milestone cannot remain one bounded execution package
 - `manual_checkpoint`: a prerequisite or authority decision blocks readiness

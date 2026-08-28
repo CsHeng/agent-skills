@@ -40,7 +40,6 @@
       },
       "id": "analyze-project",
       "implicit_invocation": true,
-      "lifecycle_owner": true,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -65,7 +64,6 @@
       },
       "id": "api-contract-strategy",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -90,7 +88,6 @@
       },
       "id": "architecture-patterns",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -115,7 +112,6 @@
       },
       "id": "close-change",
       "implicit_invocation": false,
-      "lifecycle_owner": true,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [],
@@ -138,7 +134,6 @@
       },
       "id": "code-simplification",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -163,7 +158,6 @@
       },
       "id": "codex-session-recovery",
       "implicit_invocation": false,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -188,21 +182,13 @@
       },
       "id": "design-change",
       "implicit_invocation": true,
-      "lifecycle_owner": true,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "change-scope-design"
       ],
-      "semantic_requires": [
-        "review-change"
-      ],
-      "semantic_transitive_requires": [
-        "review-change",
-        "review-design",
-        "review-implementation",
-        "review-plan"
-      ]
+      "semantic_requires": [],
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "conditional",
@@ -220,7 +206,6 @@
       },
       "id": "development-standards",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -245,7 +230,6 @@
       },
       "id": "docker-multiarch-build",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -270,7 +254,6 @@
       },
       "id": "error-patterns",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -295,7 +278,6 @@
       },
       "id": "executable-oracle-architecture-selector",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -320,7 +302,6 @@
       },
       "id": "git-worktrees",
       "implicit_invocation": false,
-      "lifecycle_owner": false,
       "may_mutate_repo": true,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -345,7 +326,6 @@
       },
       "id": "go-guidelines",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -370,21 +350,13 @@
       },
       "id": "implement-change",
       "implicit_invocation": true,
-      "lifecycle_owner": true,
       "may_mutate_repo": true,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
-        "approved-plan-execution"
+        "bounded-change-execution"
       ],
-      "semantic_requires": [
-        "review-change"
-      ],
-      "semantic_transitive_requires": [
-        "review-change",
-        "review-design",
-        "review-implementation",
-        "review-plan"
-      ]
+      "semantic_requires": [],
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "explicit",
@@ -402,7 +374,6 @@
       },
       "id": "implement-change-via-herdr",
       "implicit_invocation": false,
-      "lifecycle_owner": false,
       "may_mutate_repo": true,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -412,11 +383,7 @@
         "implement-change"
       ],
       "semantic_transitive_requires": [
-        "implement-change",
-        "review-change",
-        "review-design",
-        "review-implementation",
-        "review-plan"
+        "implement-change"
       ]
     },
     {
@@ -435,7 +402,6 @@
       },
       "id": "infrastructure-triage",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -460,7 +426,6 @@
       },
       "id": "language-decision-tree",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -485,7 +450,6 @@
       },
       "id": "logging-standards",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -510,7 +474,6 @@
       },
       "id": "lua-guidelines",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -535,7 +498,6 @@
       },
       "id": "organize-docs",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": true,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -560,7 +522,6 @@
       },
       "id": "output-styles",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [],
@@ -583,21 +544,13 @@
       },
       "id": "plan-change",
       "implicit_invocation": true,
-      "lifecycle_owner": true,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
         "execution-plan"
       ],
-      "semantic_requires": [
-        "review-change"
-      ],
-      "semantic_transitive_requires": [
-        "review-change",
-        "review-design",
-        "review-implementation",
-        "review-plan"
-      ]
+      "semantic_requires": [],
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "conditional",
@@ -615,7 +568,6 @@
       },
       "id": "powershell-guidelines",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -640,7 +592,6 @@
       },
       "id": "python-guidelines",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -665,22 +616,13 @@
       },
       "id": "review-change",
       "implicit_invocation": true,
-      "lifecycle_owner": true,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
-        "lifecycle-review-gate"
+        "bounded-change-review"
       ],
-      "semantic_requires": [
-        "review-design",
-        "review-plan",
-        "review-implementation"
-      ],
-      "semantic_transitive_requires": [
-        "review-design",
-        "review-implementation",
-        "review-plan"
-      ]
+      "semantic_requires": [],
+      "semantic_transitive_requires": []
     },
     {
       "activation_mode": "composition",
@@ -698,7 +640,6 @@
       },
       "id": "review-design",
       "implicit_invocation": false,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [],
@@ -721,7 +662,6 @@
       },
       "id": "review-implementation",
       "implicit_invocation": false,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [],
@@ -744,7 +684,6 @@
       },
       "id": "review-plan",
       "implicit_invocation": false,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [],
@@ -767,7 +706,6 @@
       },
       "id": "routeros-scripting-guidelines",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -792,7 +730,6 @@
       },
       "id": "security-guardrails",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -817,7 +754,6 @@
       },
       "id": "shell-guidelines",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -842,7 +778,6 @@
       },
       "id": "skill-miner",
       "implicit_invocation": false,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -867,7 +802,6 @@
       },
       "id": "smart-commit",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": true,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -892,7 +826,6 @@
       },
       "id": "smart-squash",
       "implicit_invocation": false,
-      "lifecycle_owner": false,
       "may_mutate_repo": true,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -917,7 +850,6 @@
       },
       "id": "sops-age-guardrails",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -942,7 +874,6 @@
       },
       "id": "sync-truth",
       "implicit_invocation": false,
-      "lifecycle_owner": true,
       "may_mutate_repo": true,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [],
@@ -965,7 +896,6 @@
       },
       "id": "testing-strategy",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -990,7 +920,6 @@
       },
       "id": "tool-decision-tree",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -1015,7 +944,6 @@
       },
       "id": "use-coding-skills",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [
@@ -1049,9 +977,6 @@
         "powershell-guidelines",
         "python-guidelines",
         "review-change",
-        "review-design",
-        "review-implementation",
-        "review-plan",
         "routeros-scripting-guidelines",
         "security-guardrails",
         "shell-guidelines",
@@ -1090,9 +1015,6 @@
         "powershell-guidelines",
         "python-guidelines",
         "review-change",
-        "review-design",
-        "review-implementation",
-        "review-plan",
         "routeros-scripting-guidelines",
         "security-guardrails",
         "shell-guidelines",
@@ -1122,7 +1044,6 @@
       },
       "id": "web-fetch",
       "implicit_invocation": true,
-      "lifecycle_owner": false,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
       "owned_trigger_cases": [

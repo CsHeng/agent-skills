@@ -13,47 +13,27 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIR = REPO_ROOT / "docs/architecture/diagrams"
 SVG_DIR = REPO_ROOT / "docs/architecture/generated"
 DIAGRAMS = {
-    "semantic-workflow": """@startuml
-title Semantic workflow composition
-left to right direction
-rectangle "analyze-project" as analyze
-rectangle "design-change" as design
-rectangle "plan-change" as plan
-rectangle "implement-change" as impl
-rectangle "review-change\n(read-only bounded review)" as review
-rectangle "sync-truth" as truth
-rectangle "close-change" as close
-analyze --> design : relevant truth
-design --> plan : approved design
-plan --> impl : approved plan
-design ..> review : exactly one review
-plan ..> review : exactly one review
-impl ..> review : exactly one review
-impl --> truth : verified truth impact
-truth --> close : stable truth current
-impl --> close : no truth impact
-note bottom of review
-Standalone review starts from one supplied target.
-Informal work has no implied review.
-end note
-@enduml
-""",
     "skill-composition": """@startuml
 title Portable Skill composition
 top to bottom direction
-rectangle "Primary workflow Skill" as primary
+rectangle "Compatible agent host\n(loop, tools, session)" as host
+rectangle "Active coding agent\n(selection and judgment)" as agent
+rectangle "Primary Skill" as primary
 rectangle "Session overlay" as session
 rectangle "Discipline / policy overlay" as policy
 rectangle "Tool Skill" as tool
-rectangle "Read-only review evaluator" as evaluator
+rectangle "Optional read-only review evaluator" as evaluator
 rectangle "One semantic result" as result
+host --> agent : request and capabilities
+agent --> primary : select
 session ..> primary
 policy ..> primary
 tool ..> primary
-evaluator ..> primary : candidate findings
+evaluator ..> agent : candidate findings
 primary --> result
+result --> agent : evidence
 note right of result
-No environment-specific execution contract.
+No fixed phase, runtime mode, or implicit review.
 end note
 @enduml
 """,

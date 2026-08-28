@@ -1,18 +1,25 @@
 @startuml
 title Portable Skill composition
 top to bottom direction
-rectangle "Primary workflow Skill" as primary
+rectangle "Compatible agent host
+(loop, tools, session)" as host
+rectangle "Active coding agent
+(selection and judgment)" as agent
+rectangle "Primary Skill" as primary
 rectangle "Session overlay" as session
 rectangle "Discipline / policy overlay" as policy
 rectangle "Tool Skill" as tool
-rectangle "Read-only review evaluator" as evaluator
+rectangle "Optional read-only review evaluator" as evaluator
 rectangle "One semantic result" as result
+host --> agent : request and capabilities
+agent --> primary : select
 session ..> primary
 policy ..> primary
 tool ..> primary
-evaluator ..> primary : candidate findings
+evaluator ..> agent : candidate findings
 primary --> result
+result --> agent : evidence
 note right of result
-No environment-specific execution contract.
+No fixed phase, runtime mode, or implicit review.
 end note
 @enduml

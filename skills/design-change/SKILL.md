@@ -23,14 +23,12 @@ Do not use it for read-only project explanation, an already approved design, imp
 4. Compare viable boundary choices only when the change creates or materially alters a persisted architecture boundary. Compose `architecture-patterns` for that decision.
 5. Record the chosen scope, explicit non-goals, future phases, acceptance evidence, truth impact, recovery policy, and implementation surface.
 6. Produce a stable, reviewable design artifact when the chosen depth requires one.
-7. Invoke `review-change` exactly once with the bounded design target before accepting the design result. The review is read-only; adjudicate its candidate findings here.
-8. Apply at most one focused, in-scope design repair supported by accepted findings, then recheck the affected design evidence without starting another review.
-
-This review is part of a formal `design-change` invocation. It does not establish a repository-wide rule that informal discussion, tiny edits, or unrelated work must be reviewed.
+7. Decide whether independent review is required by an explicit user request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment.
+8. When review is required, invoke one bounded `review-change` evaluation before accepting the design, adjudicate its read-only candidate findings here, and apply at most one focused in-scope repair before rechecking the affected evidence.
 
 ## Decision States
 
-- `ready_for_approval`: the design and its review evidence are complete
+- `ready_for_approval`: the design and any required review evidence are complete
 - `needs_more_design`: a required design decision remains unresolved
 - `split_scope`: the proposed milestone is not one coherent design surface
 - `manual_checkpoint`: progress depends on a user or external decision
@@ -46,7 +44,7 @@ A design artifact should make these items easy to find:
 - chosen boundary and discarded material alternatives
 - acceptance evidence and truth impact
 - recovery policy and any exact approval-sensitive action
-- review verdict and adjudication summary
+- review decision and, when review ran, its verdict and adjudication summary
 - approval status
 
 Use guarded rollback only when a concrete hazard makes it safer than forward repair and the trigger, target, and verification are explicit. Otherwise prefer fix-forward recovery.

@@ -58,7 +58,7 @@ class RuntimeDistributionContractTests(unittest.TestCase):
         by_id = {entry["id"]: entry for entry in index["skills"]}
         self.assertEqual(40, index["canonical_skill_count"])
         self.assertEqual(set(self.skills), set(by_id))
-        self.assertEqual(["review-change"], by_id["implement-change"]["semantic_requires"])
+        self.assertEqual([], by_id["implement-change"]["semantic_requires"])
 
     def test_source_map_digest_is_deterministic(self) -> None:
         source_map = REPO_ROOT / "skills/.source-map.json"
@@ -72,7 +72,7 @@ class RuntimeDistributionContractTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr.decode())
         self.assertEqual(first, hashlib.sha256(source_map.read_bytes()).hexdigest())
 
-    def test_static_checker_rejects_executable_and_provider_coupled_fixtures(self) -> None:
+    def test_static_checker_rejects_executable_and_package_coupled_fixtures(self) -> None:
         spec = importlib.util.spec_from_file_location(
             "check_contracts_semantic_only", REPO_ROOT / "scripts/check-contracts.py"
         )
@@ -88,12 +88,8 @@ class RuntimeDistributionContractTests(unittest.TestCase):
             script = root / "src/skills/workflows/example/scripts/runtime.py"
             script.parent.mkdir(parents=True)
             script.write_text("pass\n", encoding="utf-8")
-            skill = root / "src/skills/example/SKILL.md"
-            skill.parent.mkdir(parents=True)
-            skill.write_text("active host harness\n", encoding="utf-8")
             errors = checker.validate_semantic_only_surface(root)
         self.assertTrue(any("executable support" in error for error in errors))
-        self.assertTrue(any("provider-coupled" in error for error in errors))
         self.assertTrue(any("package identity" in error for error in errors))
 
 

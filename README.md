@@ -7,18 +7,17 @@ This repository is the authored source and generated portable payload for a coll
 - `src/skills/`: nested authored source
 - `skills/`: generated root-flat distribution
 - `contracts/skills.toml`: public ID, source, discovery, role, permission, and semantic-composition inventory
-- `contracts/lifecycle.toml` and `contracts/workflow-modes.toml`: non-executable semantic guidance
 - `skills/use-coding-skills/references/routing.toml`: installed trigger and composition guidance
 - `docs/architecture/`: stable maintenance truth
 - `docs/plans/`: stage artifacts, excluded from default docs search
 
 The repository contains no workflow engine, artifact validator, task graph compiler, mutable task ledger, replay system, provider adapter, or user-settings integration. Compatible agent environments may use the Skills independently and may implement their own mechanics without consuming these private authoring contracts.
 
-## Workflow Skills
+## Skill Composition
 
-The primary semantic workflow Skills are `analyze-project`, `design-change`, `plan-change`, `implement-change`, `review-change`, `sync-truth`, and `close-change`.
+The collection includes semantic capabilities for repository analysis, change design, planning, implementation, review, truth maintenance, and completion judgment. These are independently selected Skills, not fixed phases of a repository-owned workflow.
 
-Formal design, planning, and implementation each include one bounded review through `review-change`. Informal work is not automatically reviewed. A direct review request needs only its supplied bounded target, and review evaluators never mutate the target.
+The active coding agent selects one primary response owner and any useful overlays. Review is conditional on explicit intent, an applicable repository or approved-scope rule, or evidence-backed risk. A direct review request needs only its supplied bounded target, and review evaluators never mutate the target.
 
 ## Generate And Check
 

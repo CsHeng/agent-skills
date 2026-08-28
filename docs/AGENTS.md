@@ -4,7 +4,7 @@
 
 - `docs/architecture/` and other stable `docs/` domains contain long-lived project truth.
 - `docs/plans/` contains stage artifacts and history, not default current truth.
-- `docs/architecture/workflow-orchestration.md` is the canonical semantic workflow view.
+- `docs/architecture/skill-composition.md` is the canonical semantic composition view.
 - `docs/architecture/diagrams/*.puml` and `docs/architecture/generated/*.svg` are generated from repository-owned semantic composition data; do not edit them by hand.
 - `archived/` is inert history outside default documentation and Skill discovery.
 

@@ -21,12 +21,16 @@ class SkillTriggerDiagramTests(unittest.TestCase):
         spec.loader.exec_module(cls.generator)
 
     def test_diagrams_show_semantic_composition_only(self) -> None:
-        self.assertEqual({"semantic-workflow", "skill-composition"}, set(self.generator.DIAGRAMS))
+        self.assertEqual({"skill-composition"}, set(self.generator.DIAGRAMS))
         content = "\n".join(self.generator.DIAGRAMS.values())
-        self.assertIn("exactly one review", content)
-        self.assertIn("Informal work has no implied review", content)
-        self.assertIn("Standalone review", content)
-        for mechanical in ("ledger", "attempt", "replay", "scheduler", "provider adapter"):
+        for mechanical in (
+            "exactly one review",
+            "ledger",
+            "attempt",
+            "replay",
+            "scheduler",
+            "provider adapter",
+        ):
             self.assertNotIn(mechanical, content.lower())
 
 

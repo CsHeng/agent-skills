@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import tomllib
 import unittest
 from pathlib import Path
 from types import ModuleType
 
-import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -39,7 +39,7 @@ class SemanticSkillContractTests(unittest.TestCase):
 
     def test_unknown_dependency_is_rejected(self) -> None:
         contract = copy.deepcopy(load_contract())
-        contract["skills"]["design-change"]["semantic_requires"].append("missing")
+        contract["skills"]["design-change"]["semantic_requires"] = ["missing"]
 
         errors = self.checker.validate_semantic_contracts(contract, REPO_ROOT)
 
@@ -47,9 +47,8 @@ class SemanticSkillContractTests(unittest.TestCase):
 
     def test_cycle_is_rejected(self) -> None:
         contract = copy.deepcopy(load_contract())
-        contract["skills"]["review-change"]["semantic_requires"].append(
-            "design-change"
-        )
+        contract["skills"]["design-change"]["semantic_requires"] = ["plan-change"]
+        contract["skills"]["plan-change"]["semantic_requires"] = ["design-change"]
 
         errors = self.checker.validate_semantic_contracts(contract, REPO_ROOT)
 
@@ -65,12 +64,9 @@ class SemanticSkillContractTests(unittest.TestCase):
 
         self.assertTrue(any("must match routing targets" in error for error in errors))
 
-    def test_review_composition_is_declarative(self) -> None:
+    def test_review_evaluators_are_not_mandatory_dependencies(self) -> None:
         contract = load_contract()
-        self.assertEqual(
-            ["review-design", "review-plan", "review-implementation"],
-            contract["skills"]["review-change"]["semantic_requires"],
-        )
+        self.assertNotIn("semantic_requires", contract["skills"]["review-change"])
 
 
 if __name__ == "__main__":

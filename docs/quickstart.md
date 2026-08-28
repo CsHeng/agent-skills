@@ -16,10 +16,6 @@ Optional Claude and Codex plugin manifests are compatibility packaging surfaces.
 
 Use an explicitly named or confidently matched Skill directly. Use `use-coding-skills` only for ambiguous multi-stage requests or questions about Skill selection.
 
-The usual formal flow is:
+Select `design-change` when an unresolved persisted boundary needs a decision, `plan-change` when an accepted scope needs execution ordering and oracles, and `implement-change` when an explicit bounded mutation request or approved plan is ready. These capabilities may be used independently when their own preconditions are satisfied.
 
-1. `design-change` defines the boundary and performs one bounded design review.
-2. After user approval, `plan-change` creates an execution-grade plan and performs one bounded plan review.
-3. After user approval, `implement-change` changes and verifies the repository, then performs one bounded implementation review.
-
-Informal work does not inherit automatic review. A direct `review-change` request starts from one supplied bounded target and does not manufacture earlier phases.
+Invoke `review-change` for an explicit bounded review request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment. Review does not manufacture earlier work, and a review evaluator never owns repair.

@@ -89,7 +89,7 @@ def validate_semantic_contracts(
         except (OSError, tomllib.TOMLDecodeError):
             continue
         expected_targets: set[str] = set()
-        for table_name in ("phase_routes", "review_evaluators", "support_routes"):
+        for table_name in ("support_routes",):
             table = routing.get(table_name)
             if isinstance(table, dict):
                 expected_targets.update(
@@ -250,24 +250,6 @@ def validate_semantic_only_surface(repo_root: Path = REPO_ROOT) -> list[str]:
                     + path.relative_to(repo_root).as_posix()
                 )
 
-    forbidden_skill_phrases = (
-        "active host harness",
-        "controller-binding",
-        "parent-linked broker intent",
-        "focused verification review",
-        "additional same-slice repair",
-    )
-    for root in (repo_root / "src/skills", repo_root / "skills"):
-        for path in root.rglob("*"):
-            if not path.is_file() or path.suffix not in {".md", ".toml", ".yaml", ".yml"}:
-                continue
-            text = path.read_text(encoding="utf-8", errors="ignore").lower()
-            for phrase in forbidden_skill_phrases:
-                if phrase in text:
-                    errors.append(
-                        f"provider-coupled workflow phrase remains in {path.relative_to(repo_root)}: {phrase}"
-                    )
-
     project_text = (repo_root / "pyproject.toml").read_text(encoding="utf-8")
     if "coding-" + "harness-development" in project_text:
         errors.append("pyproject retains the retired development package identity")
@@ -384,10 +366,6 @@ def validate_trigger_cases(
                 errors.append(f"trigger case {label}: unknown overlay: {overlay}")
                 continue
             overlay_cases[overlay].add(label)
-            if overlay_entry.get("lifecycle_owner", False):
-                errors.append(
-                    f"trigger case {label}: lifecycle owner cannot be an overlay: {overlay}"
-                )
             if overlay == owner:
                 errors.append(f"trigger case {label}: owner cannot also be an overlay")
 
@@ -414,11 +392,9 @@ def validate_trigger_cases(
             f"baseline={baseline_skills} rendering_baseline={baseline_target!r}"
         )
 
-    phase_routes = routing_contract.get("phase_routes")
-    review_evaluators = routing_contract.get("review_evaluators")
     composition_targets = {
         target
-        for table in (phase_routes, review_evaluators)
+        for table in (routing_contract.get("support_routes"),)
         if isinstance(table, dict)
         for target in table.values()
         if isinstance(target, str)
@@ -440,7 +416,11 @@ def validate_trigger_cases(
             errors.append(
                 f"{public_id}: conditional skill must own or overlay a trigger case"
             )
-        elif mode == "composition" and public_id not in composition_targets:
+        elif (
+            mode == "composition"
+            and entry.get("default_role") != "evaluator"
+            and public_id not in composition_targets
+        ):
             errors.append(
                 f"{public_id}: composition-only skill is not reachable from semantic composition"
             )
@@ -454,7 +434,6 @@ def validate_trigger_cases(
 def validate_routing_contracts(
     skills: dict[str, Any],
     repo_root: Path = REPO_ROOT,
-    workflow_modes: dict[str, Any] | None = None,
 ) -> list[str]:
     errors: list[str] = []
     public_entries = {name: entry for name, entry in skills.items() if isinstance(entry, dict)}
@@ -471,36 +450,12 @@ def validate_routing_contracts(
         )
         return errors
 
-    if workflow_modes is None:
-        modes_path = repo_root / "contracts" / "workflow-modes.toml"
-        try:
-            with modes_path.open("rb") as handle:
-                workflow_modes = tomllib.load(handle)
-        except (OSError, tomllib.TOMLDecodeError) as exc:
-            return [f"invalid workflow mode contract: {exc}"]
-
-    modes = workflow_modes.get("modes") if isinstance(workflow_modes, dict) else None
-    if not isinstance(modes, dict) or not modes:
-        return ["workflow mode contract must contain [modes.*] entries"]
-
-    expected_phases: set[str] = set()
-    for mode_name, mode in modes.items():
-        phases = mode.get("phases") if isinstance(mode, dict) else None
-        if not isinstance(phases, list) or not all(
-            isinstance(phase, str) for phase in phases
-        ):
-            errors.append(f"workflow mode {mode_name}: phases must be a string array")
-            continue
-        expected_phases.update(phases)
-
     skill_name, entry = routing_entries[0]
     routing_contract = entry.get("routing_contract")
     public_id = skill_name
 
-    if entry.get("category") != "session" or entry.get("lifecycle_owner", False):
-        errors.append(
-            f"{skill_name}: routing contract owner must be a non-lifecycle session skill"
-        )
+    if entry.get("category") != "session":
+        errors.append(f"{skill_name}: routing contract owner must be a session skill")
     if not isinstance(routing_contract, str) or not routing_contract:
         errors.append(
             f"{skill_name}: routing_contract must be a non-empty relative path"
@@ -527,9 +482,6 @@ def validate_routing_contracts(
     routing = contract.get("routing")
     environment_instructions = contract.get("environment_instructions")
     composition = contract.get("composition")
-    gate_policy = contract.get("gate_policy")
-    phase_routes = contract.get("phase_routes")
-    review_evaluators = contract.get("review_evaluators")
     support_routes = contract.get("support_routes")
 
     if not isinstance(routing, dict) or routing.get("id") != public_id:
@@ -569,84 +521,16 @@ def validate_routing_contracts(
             errors.append(
                 f"{skill_name}: unknown rendering baseline: {rendering_baseline}"
             )
-        if composition.get("lifecycle_owner_category") != "workflow":
+        if "lifecycle_owner_category" in composition:
             errors.append(
-                f"{skill_name}: lifecycle owner category must remain workflow"
+                f"{skill_name}: composition must not declare lifecycle ownership"
             )
 
-    if not isinstance(gate_policy, dict):
-        errors.append(f"{skill_name}: routing contract requires [gate_policy]")
-        gate_policy = {}
-    design_phases = gate_policy.get("design_phases")
-    plan_phases = gate_policy.get("plan_phases")
-    for field, values in (("design_phases", design_phases), ("plan_phases", plan_phases)):
-        if not isinstance(values, list) or not values or not all(isinstance(value, str) for value in values):
-            errors.append(f"{skill_name}: gate_policy.{field} must be a non-empty string array")
-        elif unknown_gate_phases := sorted(set(values) - expected_phases):
+    for retired_table in ("gate_policy", "phase_routes", "review_evaluators"):
+        if retired_table in contract:
             errors.append(
-                f"{skill_name}: gate_policy.{field} contains unknown phases: {', '.join(unknown_gate_phases)}"
+                f"{skill_name}: routing contract retains retired control table: {retired_table}"
             )
-    if gate_policy.get("implicit_review_when_missing") is not True:
-        errors.append(f"{skill_name}: gate policy must preserve implicit design and plan review")
-    for field in ("design_review_phase", "plan_review_phase", "truth_sync_phase", "close_phase"):
-        phase = gate_policy.get(field)
-        if phase not in expected_phases:
-            errors.append(f"{skill_name}: gate_policy.{field} must name a workflow phase")
-
-    if not isinstance(phase_routes, dict):
-        errors.append(f"{skill_name}: routing contract requires [phase_routes]")
-        phase_routes = {}
-    missing_phases = sorted(expected_phases - set(phase_routes))
-    extra_phases = sorted(set(phase_routes) - expected_phases)
-    if missing_phases:
-        errors.append(
-            f"{skill_name}: phase routes missing workflow phases: {', '.join(missing_phases)}"
-        )
-    if extra_phases:
-        errors.append(
-            f"{skill_name}: phase routes contain unknown workflow phases: {', '.join(extra_phases)}"
-        )
-
-    for phase, target in phase_routes.items():
-        target_entry = public_entries.get(target)
-        if target_entry is None:
-            errors.append(
-                f"{skill_name}: phase {phase} routes to unknown skill: {target}"
-            )
-        elif not target_entry.get("lifecycle_owner", False):
-            errors.append(
-                f"{skill_name}: phase {phase} must route to a lifecycle owner: {target}"
-            )
-
-    if not isinstance(review_evaluators, dict):
-        errors.append(f"{skill_name}: routing contract requires [review_evaluators]")
-        review_evaluators = {}
-    review_phases = {
-        phase for phase, target in phase_routes.items() if target == "review-change"
-    }
-    if missing_review_phases := sorted(review_phases - set(review_evaluators)):
-        errors.append(
-            f"{skill_name}: review evaluators missing review phases: {', '.join(missing_review_phases)}"
-        )
-    if extra_review_phases := sorted(set(review_evaluators) - review_phases):
-        errors.append(
-            f"{skill_name}: review evaluators contain non-review phases: {', '.join(extra_review_phases)}"
-        )
-    for phase, target in review_evaluators.items():
-        target_entry = public_entries.get(target)
-        if target_entry is None:
-            errors.append(
-                f"{skill_name}: review phase {phase} uses unknown evaluator: {target}"
-            )
-        elif target_entry.get("category") != "review-component":
-            errors.append(
-                f"{skill_name}: review phase {phase} must use a review-component: {target}"
-            )
-
-    for field in ("design_review_phase", "plan_review_phase"):
-        review_phase = gate_policy.get(field)
-        if review_phase not in review_evaluators:
-            errors.append(f"{skill_name}: gate_policy.{field} must select a review evaluator phase")
 
     if not isinstance(support_routes, dict) or not support_routes:
         errors.append(
@@ -659,9 +543,9 @@ def validate_routing_contracts(
                 errors.append(
                     f"{skill_name}: support route {intent} targets unknown skill: {target}"
                 )
-            elif target_entry.get("lifecycle_owner", False):
+            elif target_entry.get("default_role") == "evaluator":
                 errors.append(
-                    f"{skill_name}: support route {intent} cannot target a lifecycle owner: {target}"
+                    f"{skill_name}: support route {intent} cannot target an evaluator: {target}"
                 )
 
     errors.extend(validate_trigger_cases(skills, contract))
@@ -680,7 +564,12 @@ def validate() -> list[str]:
         return [str(exc)]
 
     canonical_ids = set(skills)
-    forbidden_contract_fields = {"public_id", "install", "superseded_by"}
+    forbidden_contract_fields = {
+        "public_id",
+        "install",
+        "superseded_by",
+        "lifecycle_owner",
+    }
     for field in ("semantic_install", "profiles"):
         if field in contract:
             errors.append(f"contract retains removed top-level schema: {field}")
@@ -715,9 +604,6 @@ def validate() -> list[str]:
         if category not in VALID_CATEGORIES:
             errors.append(f"{skill_name}: invalid category: {category}")
 
-        if entry.get("lifecycle_owner", False) and category != "workflow":
-            errors.append(f"{skill_name}: only workflow skills may set lifecycle_owner=true")
-
         if category == "manual-tool" and entry.get("activation_mode") != "explicit":
             errors.append(f"{skill_name}: manual-tool must use explicit activation")
 
@@ -729,8 +615,6 @@ def validate() -> list[str]:
         if skill_name in {"sync-truth", "organize-docs"}:
             if not entry.get("requires_explicit_user_request", False):
                 errors.append(f"{skill_name}: direct mutation requires an explicit user request guard")
-            if not entry.get("requires_approved_plan", False):
-                errors.append(f"{skill_name}: composed mutation requires an approved-plan guard")
 
     source_dirs = canonical_skill_dirs()
     missing_manifest = sorted(source_dirs - canonical_ids)

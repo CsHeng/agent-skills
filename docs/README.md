@@ -5,7 +5,7 @@ This directory contains stable project truth plus stage artifacts retained for h
 ## Stable Truth
 
 - `quickstart.md` introduces installation and Skill selection.
-- `architecture/workflow-orchestration.md` explains provider-neutral semantic workflow composition.
+- `architecture/skill-composition.md` explains provider-neutral Skill and agent-loop ownership.
 - `architecture/install-surface.md`, `invocation-contract.md`, and `maintenance-contract.md` define distribution and maintenance boundaries.
 - `architecture/diagrams/` and `architecture/generated/` contain generated semantic views.
 - `changelog/design-decisions.md` records current durable decisions and explicit supersessions.

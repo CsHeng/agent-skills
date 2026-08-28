@@ -22,13 +22,13 @@ Optional routing and session-boundary guidance for local coding work. Keep this 
 
 Use these rules only after this skill has matched an explicit routing or ambiguous multi-stage request:
 
-- Read `references/routing.toml` as declarative authoring guidance for discovery, semantic trigger cases, workflow composition, review evaluators, and support routes.
+- Read `references/routing.toml` as declarative authoring guidance for discovery, semantic trigger cases, response composition, and support routes.
 - Match cases by the owner skill's frontmatter description and each case's negative boundaries; explicit-invocation cases keep positive overrides. Treat lexical hints as examples only; they are not a keyword router or a second owner map.
 - Let an explicitly named skill or confident direct workflow or policy match bypass this router.
 - Route ambiguous multi-stage work through this skill, then select the smallest matching workflow skill.
-- Keep exactly one primary response or lifecycle owner. Compose matching session, discipline, policy, tool, or review-component skills only as lower-plane overlays.
+- Keep exactly one primary response owner. Compose matching session, discipline, policy, tool, or review-component skills only as semantic overlays.
 - Review requests enter through `review-change`; artifact-specific `review-*` skills are optional read-only evaluators, not top-level workflow owners.
-- Formal `design-change`, `plan-change`, and `implement-change` each include one bounded review. Informal work does not inherit review, and standalone review does not synthesize earlier phases.
+- Review is conditional: use it for an explicit request, an applicable repository or approved-scope rule, or an evidence-backed risk judgment. Standalone review does not synthesize earlier phases.
 
 ## Compact Instructions
 

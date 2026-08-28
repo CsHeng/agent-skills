@@ -7,17 +7,18 @@ This repository authors and distributes the `coding` collection of 40 portable A
 ## Truth And Generated Surfaces
 
 - `src/skills/` is authored Skill truth.
-- `contracts/skills.toml`, `contracts/lifecycle.toml`, `contracts/workflow-modes.toml`, and the installed routing reference are declarative authoring and composition guidance.
+- `contracts/skills.toml` owns public IDs, authored sources, discovery projection, roles, permissions, and optional semantic dependencies.
+- The installed routing reference owns native trigger cases, direct-match bypass, support routes, and one-primary-response composition; it defines no runtime mode or lifecycle.
 - `skills/` and `skills.index.json` are tracked generated output; do not edit them by hand.
 - `docs/architecture/` contains stable architecture truth.
 - `docs/plans/` is stage history and is excluded from default documentation search by `docs/.ignore`.
 - Provider plugin manifests are optional distribution surfaces, not workflow authority.
 
-## Workflow Semantics
+## Skill Composition
 
 - Directly matched Skills do not require the optional `use-coding-skills` router.
-- Formal `design-change`, `plan-change`, and `implement-change` each invoke `review-change` exactly once before accepting their semantic result.
-- Informal work does not acquire automatic review. A standalone `review-change` starts from the supplied bounded target and does not synthesize upstream lifecycle work.
+- The active coding agent owns request interpretation, Skill selection, sequencing, evidence judgment, optional review, finding adjudication, and the final response.
+- Review is conditional on an explicit request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment. A standalone `review-change` starts from the supplied bounded target and does not synthesize upstream work.
 - Review evaluators are read-only. The calling design, planning, or implementing agent adjudicates findings and owns any accepted repair.
 - Skills preserve user and repository authorization boundaries. They never imply commit, push, publication, deployment, destructive history changes, or external mutation.
 
@@ -25,7 +26,7 @@ This repository authors and distributes the `coding` collection of 40 portable A
 
 - Keep Skills provider-neutral and self-contained under the standard Agent Skills directory shape.
 - Keep frontmatter descriptions precise enough for native discovery.
-- Store optional composition in `semantic_requires`; do not add executable workflow contracts, artifact validators, task graph compilers, mutable ledgers, replay logic, or provider adapters.
+- Store only real semantic dependencies in `semantic_requires`; do not add executable workflow contracts, artifact validators, task graph compilers, mutable ledgers, replay logic, provider adapters, or prompt-space lifecycle gates.
 - Preserve all 40 public IDs and authored-to-generated parity.
 - Use `apply_patch` for source edits and preserve unrelated working-tree changes.
 

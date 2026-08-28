@@ -15,7 +15,7 @@ class APIContractStrategyRegistrationTests(unittest.TestCase):
             manifest = tomllib.load(handle)["skills"]["api-contract-strategy"]
 
         self.assertEqual(manifest["category"], "discipline")
-        self.assertFalse(manifest["lifecycle_owner"])
+        self.assertNotIn("lifecycle_owner", manifest)
         self.assertEqual(manifest["activation_mode"], "native")
         self.assertEqual(manifest["default_role"], "primary")
         self.assertNotIn("implicit_invocation", manifest)

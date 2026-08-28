@@ -1,6 +1,6 @@
 # Focused Implementation Repair
 
-Read this reference only after the single bounded implementation review returns causally supported findings.
+Read this reference only when a bounded implementation review returns causally supported findings.
 
 1. The implementing agent adjudicates every material candidate against the approved scope and current evidence.
 2. Combine all accepted in-scope findings into one focused repair.

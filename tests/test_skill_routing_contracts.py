@@ -23,18 +23,22 @@ class RoutingContractTests(unittest.TestCase):
         with (REPO_ROOT / "contracts/skills.toml").open("rb") as handle:
             self.skill_contract = tomllib.load(handle)
             self.skills = self.skill_contract["skills"]
-        with (REPO_ROOT / "contracts/workflow-modes.toml").open("rb") as handle:
-            self.workflow_modes = tomllib.load(handle)
 
         self.temp_dir = tempfile.TemporaryDirectory()
         self.root = Path(self.temp_dir.name)
         routing_entry = self.skills["use-coding-skills"]
         self.contract_path = (
-            self.root / "skills" / "use-coding-skills" / routing_entry["routing_contract"]
+            self.root
+            / "skills"
+            / "use-coding-skills"
+            / routing_entry["routing_contract"]
         )
         self.contract_path.parent.mkdir(parents=True)
         source_path = (
-            REPO_ROOT / "skills" / "use-coding-skills" / routing_entry["routing_contract"]
+            REPO_ROOT
+            / "skills"
+            / "use-coding-skills"
+            / routing_entry["routing_contract"]
         )
         self.contract_path.write_text(
             source_path.read_text(encoding="utf-8"), encoding="utf-8"
@@ -49,7 +53,6 @@ class RoutingContractTests(unittest.TestCase):
         return CHECK_CONTRACTS.validate_routing_contracts(
             skills or self.skills,
             self.root,
-            self.workflow_modes,
         )
 
     def rewrite(self, old: str, new: str) -> None:
@@ -89,73 +92,31 @@ class RoutingContractTests(unittest.TestCase):
 
         self.assertTrue(any("native discovery" in error for error in errors))
 
-    def test_code_simplification_owns_read_only_audit_route(self) -> None:
-        self.assertIn("code-simplification", self.skills)
-        skill = self.skills["code-simplification"]
-        self.assertTrue((REPO_ROOT / "skills/code-simplification/SKILL.md").is_file())
-        self.assertEqual("discipline", skill["category"])
-        self.assertEqual("native", skill["activation_mode"])
-        self.assertEqual("primary", skill["default_role"])
-        self.assertFalse(skill["may_mutate_repo"])
-        self.assertFalse(skill["may_spawn_agent"])
-
-        router = self.skills["use-coding-skills"]
-        self.assertIn("code-simplification", router["semantic_requires"])
-        cases = [
-            case
-            for case in self.routing_contract["trigger_cases"]
-            if case["id"] == "code-simplification-audit"
-        ]
-        self.assertEqual(1, len(cases))
-        self.assertEqual("code-simplification", cases[0]["owner"])
-        negative_contract = " ".join(cases[0]["negative"]).lower()
-        for boundary in ("ordinary", "performance", "apply", "current diff"):
-            self.assertIn(boundary, negative_contract)
-
-    def test_every_workflow_mode_phase_requires_a_route(self) -> None:
-        self.rewrite('verify = "implement-change"\n', "")
-
-        errors = self.validate()
-
-        self.assertTrue(
-            any(
-                "phase routes missing workflow phases: verify" in error
-                for error in errors
-            )
-        )
-
-    def test_phase_routes_must_target_lifecycle_owners(self) -> None:
+    def test_retired_control_tables_and_lifecycle_ownership_are_rejected(self) -> None:
         self.rewrite(
-            'execute = "implement-change"', 'execute = "review-implementation"'
+            "[support_routes]",
+            "[gate_policy]\nimplicit_review_when_missing = true\n\n[support_routes]",
         )
-
-        errors = self.validate()
-
-        self.assertTrue(
-            any("must route to a lifecycle owner" in error for error in errors)
-        )
-
-    def test_gate_policy_must_preserve_implicit_design_and_plan_review(self) -> None:
         self.rewrite(
-            "implicit_review_when_missing = true",
-            "implicit_review_when_missing = false",
+            "primary_owner_count = 1",
+            'primary_owner_count = 1\nlifecycle_owner_category = "workflow"',
         )
 
         errors = self.validate()
 
-        self.assertTrue(
-            any(
-                "must preserve implicit design and plan review" in error
-                for error in errors
-            )
-        )
+        self.assertTrue(any("retired control table: gate_policy" in error for error in errors))
+        self.assertTrue(any("must not declare lifecycle ownership" in error for error in errors))
 
-    def test_review_phases_require_review_component_evaluators(self) -> None:
-        self.rewrite('review-impl = "review-implementation"', 'review-impl = "review-change"')
+    def test_support_routes_require_known_non_evaluator_targets(self) -> None:
+        self.rewrite(
+            'response-shape = "output-styles"',
+            'response-shape = "review-design"\nmissing = "not-a-skill"',
+        )
 
         errors = self.validate()
 
-        self.assertTrue(any("must use a review-component" in error for error in errors))
+        self.assertTrue(any("cannot target an evaluator" in error for error in errors))
+        self.assertTrue(any("targets unknown skill" in error for error in errors))
 
     def test_current_trigger_case_registry_is_complete(self) -> None:
         self.assertEqual([], self.validate_trigger_cases())
@@ -171,7 +132,7 @@ class RoutingContractTests(unittest.TestCase):
         self.assertTrue(any("duplicate trigger case id" in error for error in errors))
         self.assertTrue(any("exactly one owner" in error for error in errors))
 
-    def test_trigger_cases_require_semantic_positive_and_negative_examples(self) -> None:
+    def test_trigger_cases_require_semantic_boundaries(self) -> None:
         routing = copy.deepcopy(self.routing_contract)
         routing["trigger_cases"][0]["positive"] = []
         routing["trigger_cases"][0].pop("negative")
@@ -183,15 +144,17 @@ class RoutingContractTests(unittest.TestCase):
         self.assertTrue(any("non-empty negative" in error for error in errors))
         self.assertTrue(any("cannot be keyword-only" in error for error in errors))
 
-    def test_unknown_targets_and_lifecycle_owner_overlays_are_rejected(self) -> None:
+    def test_unknown_targets_and_owner_overlay_conflicts_are_rejected(self) -> None:
         routing = copy.deepcopy(self.routing_contract)
         routing["trigger_cases"][0]["owner"] = "missing"
-        routing["trigger_cases"][1]["overlays"] = ["design-change"]
+        routing["trigger_cases"][1]["overlays"] = [
+            routing["trigger_cases"][1]["owner"]
+        ]
 
         errors = self.validate_trigger_cases(routing)
 
         self.assertTrue(any("unknown owner" in error for error in errors))
-        self.assertTrue(any("lifecycle owner cannot be an overlay" in error for error in errors))
+        self.assertTrue(any("owner cannot also be an overlay" in error for error in errors))
 
     def test_composition_evaluators_and_retired_skills_cannot_own_cases(self) -> None:
         routing = copy.deepcopy(self.routing_contract)
@@ -200,7 +163,9 @@ class RoutingContractTests(unittest.TestCase):
 
         errors = self.validate_trigger_cases(routing)
 
-        self.assertTrue(any("composition-only evaluator cannot own" in error for error in errors))
+        self.assertTrue(
+            any("composition-only evaluator cannot own" in error for error in errors)
+        )
         self.assertTrue(any("unknown owner" in error for error in errors))
 
     def test_uncovered_native_skill_is_rejected(self) -> None:
@@ -213,7 +178,9 @@ class RoutingContractTests(unittest.TestCase):
 
         errors = self.validate_trigger_cases(routing)
 
-        self.assertTrue(any("analyze-project: native skill must own" in error for error in errors))
+        self.assertTrue(
+            any("analyze-project: native skill must own" in error for error in errors)
+        )
 
     def test_baseline_must_match_rendering_composition(self) -> None:
         routing = copy.deepcopy(self.routing_contract)
@@ -221,7 +188,9 @@ class RoutingContractTests(unittest.TestCase):
 
         errors = self.validate_trigger_cases(routing)
 
-        self.assertTrue(any("baseline must match composition.rendering_baseline" in error for error in errors))
+        self.assertTrue(
+            any("baseline must match composition.rendering_baseline" in error for error in errors)
+        )
 
 
 if __name__ == "__main__":

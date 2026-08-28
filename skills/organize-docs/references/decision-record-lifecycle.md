@@ -38,4 +38,4 @@ Migrate an older entry only when a real decision update touches it. Do not rewri
 
 ## Truth-Sync Predicate
 
-Use `decision-record-lifecycle` only when an approved truth sync must create, promote, supersede, compact, or retire stable decision truth. It activates bounded `organize-docs` work only for declared stable refs. It does not apply to a simple stable fact update and never makes `docs/plans/` a stable-truth ref.
+Use `decision-record-lifecycle` only when an authorized truth sync must create, promote, supersede, compact, or retire stable decision truth. It activates bounded `organize-docs` work only for declared stable refs. It does not apply to a simple stable fact update and never makes `docs/plans/` a stable-truth ref.

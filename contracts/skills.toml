@@ -28,7 +28,6 @@ claude_effective_visibility = "default-visible"
 [skills.analyze-project]
 source = "src/skills/workflows/analyze-project"
 category = "workflow"
-lifecycle_owner = true
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
@@ -37,59 +36,48 @@ may_spawn_agent = false
 [skills.design-change]
 source = "src/skills/workflows/design-change"
 category = "workflow"
-lifecycle_owner = true
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
 may_spawn_agent = false
-semantic_requires = ["review-change"]
 
 [skills.plan-change]
 source = "src/skills/workflows/plan-change"
 category = "workflow"
-lifecycle_owner = true
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
 may_spawn_agent = false
-semantic_requires = ["review-change"]
 
 [skills.implement-change]
 source = "src/skills/workflows/implement-change"
 category = "workflow"
-lifecycle_owner = true
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = true
 may_spawn_agent = true
-requires_approved_plan = true
-semantic_requires = ["review-change"]
+requires_explicit_user_request = true
 
 [skills.review-change]
 source = "src/skills/workflows/review-change"
 category = "workflow"
-lifecycle_owner = true
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
 may_spawn_agent = true
-semantic_requires = ["review-design", "review-plan", "review-implementation"]
 
 [skills.sync-truth]
 source = "src/skills/workflows/sync-truth"
 category = "workflow"
-lifecycle_owner = true
 activation_mode = "composition"
 default_role = "primary"
 may_mutate_repo = true
 may_spawn_agent = false
 requires_explicit_user_request = true
-requires_approved_plan = true
 
 [skills.close-change]
 source = "src/skills/workflows/close-change"
 category = "workflow"
-lifecycle_owner = true
 activation_mode = "composition"
 default_role = "primary"
 may_mutate_repo = false
@@ -98,18 +86,16 @@ may_spawn_agent = false
 [skills.use-coding-skills]
 source = "src/skills/session/use-coding-skills"
 category = "session"
-lifecycle_owner = false
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
 may_spawn_agent = false
 routing_contract = "references/routing.toml"
-semantic_requires = ["analyze-project", "api-contract-strategy", "architecture-patterns", "close-change", "code-simplification", "codex-session-recovery", "design-change", "development-standards", "docker-multiarch-build", "error-patterns", "executable-oracle-architecture-selector", "git-worktrees", "go-guidelines", "implement-change", "implement-change-via-herdr", "infrastructure-triage", "language-decision-tree", "logging-standards", "lua-guidelines", "organize-docs", "output-styles", "plan-change", "powershell-guidelines", "python-guidelines", "review-change", "review-design", "review-implementation", "review-plan", "routeros-scripting-guidelines", "security-guardrails", "shell-guidelines", "skill-miner", "smart-commit", "smart-squash", "sops-age-guardrails", "sync-truth", "testing-strategy", "tool-decision-tree", "web-fetch"]
+semantic_requires = ["analyze-project", "api-contract-strategy", "architecture-patterns", "close-change", "code-simplification", "codex-session-recovery", "design-change", "development-standards", "docker-multiarch-build", "error-patterns", "executable-oracle-architecture-selector", "git-worktrees", "go-guidelines", "implement-change", "implement-change-via-herdr", "infrastructure-triage", "language-decision-tree", "logging-standards", "lua-guidelines", "organize-docs", "output-styles", "plan-change", "powershell-guidelines", "python-guidelines", "review-change", "routeros-scripting-guidelines", "security-guardrails", "shell-guidelines", "skill-miner", "smart-commit", "smart-squash", "sops-age-guardrails", "sync-truth", "testing-strategy", "tool-decision-tree", "web-fetch"]
 
 [skills.output-styles]
 source = "src/skills/session/output-styles"
 category = "session"
-lifecycle_owner = false
 activation_mode = "baseline"
 default_role = "overlay"
 may_mutate_repo = false
@@ -118,18 +104,15 @@ may_spawn_agent = false
 [skills.organize-docs]
 source = "src/skills/disciplines/organize-docs"
 category = "discipline"
-lifecycle_owner = false
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = true
 may_spawn_agent = false
 requires_explicit_user_request = true
-requires_approved_plan = true
 
 [skills.api-contract-strategy]
 source = "src/skills/disciplines/api-contract-strategy"
 category = "discipline"
-lifecycle_owner = false
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
@@ -138,7 +121,6 @@ may_spawn_agent = false
 [skills.architecture-patterns]
 source = "src/skills/disciplines/architecture-patterns"
 category = "discipline"
-lifecycle_owner = false
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
@@ -147,7 +129,6 @@ may_spawn_agent = false
 [skills.code-simplification]
 source = "src/skills/disciplines/code-simplification"
 category = "discipline"
-lifecycle_owner = false
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
@@ -156,7 +137,6 @@ may_spawn_agent = false
 [skills.error-patterns]
 source = "src/skills/disciplines/error-patterns"
 category = "discipline"
-lifecycle_owner = false
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
@@ -165,7 +145,6 @@ may_spawn_agent = false
 [skills.executable-oracle-architecture-selector]
 source = "src/skills/disciplines/executable-oracle-architecture-selector"
 category = "discipline"
-lifecycle_owner = false
 activation_mode = "conditional"
 default_role = "overlay"
 may_mutate_repo = false
@@ -174,7 +153,6 @@ may_spawn_agent = false
 [skills.infrastructure-triage]
 source = "src/skills/disciplines/infrastructure-triage"
 category = "discipline"
-lifecycle_owner = false
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
@@ -183,7 +161,6 @@ may_spawn_agent = false
 [skills.language-decision-tree]
 source = "src/skills/disciplines/language-decision-tree"
 category = "discipline"
-lifecycle_owner = false
 activation_mode = "conditional"
 default_role = "overlay"
 may_mutate_repo = false
@@ -192,7 +169,6 @@ may_spawn_agent = false
 [skills.skill-miner]
 source = "src/skills/disciplines/skill-miner"
 category = "discipline"
-lifecycle_owner = false
 activation_mode = "explicit"
 default_role = "primary"
 may_mutate_repo = false
@@ -201,7 +177,6 @@ may_spawn_agent = false
 [skills.testing-strategy]
 source = "src/skills/disciplines/testing-strategy"
 category = "discipline"
-lifecycle_owner = false
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
@@ -210,7 +185,6 @@ may_spawn_agent = false
 [skills.tool-decision-tree]
 source = "src/skills/disciplines/tool-decision-tree"
 category = "discipline"
-lifecycle_owner = false
 activation_mode = "conditional"
 default_role = "overlay"
 may_mutate_repo = false
@@ -219,7 +193,6 @@ may_spawn_agent = false
 [skills.codex-session-recovery]
 source = "src/skills/tools/codex-session-recovery"
 category = "tool"
-lifecycle_owner = false
 activation_mode = "explicit"
 default_role = "primary"
 may_mutate_repo = false
@@ -229,7 +202,6 @@ requires_explicit_user_request = true
 [skills.docker-multiarch-build]
 source = "src/skills/tools/docker-multiarch-build"
 category = "tool"
-lifecycle_owner = false
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
@@ -238,7 +210,6 @@ may_spawn_agent = false
 [skills.web-fetch]
 source = "src/skills/tools/web-fetch"
 category = "tool"
-lifecycle_owner = false
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
@@ -247,7 +218,6 @@ may_spawn_agent = false
 [skills.implement-change-via-herdr]
 source = "src/skills/tools/implement-change-via-herdr"
 category = "tool"
-lifecycle_owner = false
 activation_mode = "explicit"
 default_role = "overlay"
 may_mutate_repo = true
@@ -259,7 +229,6 @@ semantic_requires = ["implement-change"]
 [skills.development-standards]
 source = "src/skills/policies/development-standards"
 category = "policy"
-lifecycle_owner = false
 activation_mode = "conditional"
 default_role = "overlay"
 may_mutate_repo = false
@@ -268,7 +237,6 @@ may_spawn_agent = false
 [skills.go-guidelines]
 source = "src/skills/policies/go-guidelines"
 category = "policy"
-lifecycle_owner = false
 activation_mode = "conditional"
 default_role = "overlay"
 may_mutate_repo = false
@@ -277,7 +245,6 @@ may_spawn_agent = false
 [skills.logging-standards]
 source = "src/skills/policies/logging-standards"
 category = "policy"
-lifecycle_owner = false
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
@@ -286,7 +253,6 @@ may_spawn_agent = false
 [skills.lua-guidelines]
 source = "src/skills/policies/lua-guidelines"
 category = "policy"
-lifecycle_owner = false
 activation_mode = "conditional"
 default_role = "overlay"
 may_mutate_repo = false
@@ -295,7 +261,6 @@ may_spawn_agent = false
 [skills.powershell-guidelines]
 source = "src/skills/policies/powershell-guidelines"
 category = "policy"
-lifecycle_owner = false
 activation_mode = "conditional"
 default_role = "overlay"
 may_mutate_repo = false
@@ -304,7 +269,6 @@ may_spawn_agent = false
 [skills.python-guidelines]
 source = "src/skills/policies/python-guidelines"
 category = "policy"
-lifecycle_owner = false
 activation_mode = "conditional"
 default_role = "overlay"
 may_mutate_repo = false
@@ -313,7 +277,6 @@ may_spawn_agent = false
 [skills.routeros-scripting-guidelines]
 source = "src/skills/policies/routeros-scripting-guidelines"
 category = "policy"
-lifecycle_owner = false
 activation_mode = "conditional"
 default_role = "overlay"
 may_mutate_repo = false
@@ -322,7 +285,6 @@ may_spawn_agent = false
 [skills.security-guardrails]
 source = "src/skills/policies/security-guardrails"
 category = "policy"
-lifecycle_owner = false
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
@@ -331,7 +293,6 @@ may_spawn_agent = false
 [skills.shell-guidelines]
 source = "src/skills/policies/shell-guidelines"
 category = "policy"
-lifecycle_owner = false
 activation_mode = "conditional"
 default_role = "overlay"
 may_mutate_repo = false
@@ -340,7 +301,6 @@ may_spawn_agent = false
 [skills.sops-age-guardrails]
 source = "src/skills/policies/sops-age-guardrails"
 category = "policy"
-lifecycle_owner = false
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
@@ -349,7 +309,6 @@ may_spawn_agent = false
 [skills.git-worktrees]
 source = "src/skills/git/git-worktrees"
 category = "manual-tool"
-lifecycle_owner = false
 activation_mode = "explicit"
 default_role = "primary"
 may_mutate_repo = true
@@ -359,7 +318,6 @@ requires_explicit_user_request = true
 [skills.smart-commit]
 source = "src/skills/git/smart-commit"
 category = "tool"
-lifecycle_owner = false
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = true
@@ -369,7 +327,6 @@ requires_explicit_user_request = true
 [skills.smart-squash]
 source = "src/skills/git/smart-squash"
 category = "manual-tool"
-lifecycle_owner = false
 activation_mode = "explicit"
 default_role = "primary"
 may_mutate_repo = true
@@ -379,7 +336,6 @@ requires_explicit_user_request = true
 [skills.review-implementation]
 source = "src/skills/review-components/review-implementation"
 category = "review-component"
-lifecycle_owner = false
 activation_mode = "composition"
 default_role = "evaluator"
 may_mutate_repo = false
@@ -388,7 +344,6 @@ may_spawn_agent = true
 [skills.review-design]
 source = "src/skills/review-components/review-design"
 category = "review-component"
-lifecycle_owner = false
 activation_mode = "composition"
 default_role = "evaluator"
 may_mutate_repo = false
@@ -397,7 +352,6 @@ may_spawn_agent = true
 [skills.review-plan]
 source = "src/skills/review-components/review-plan"
 category = "review-component"
-lifecycle_owner = false
 activation_mode = "composition"
 default_role = "evaluator"
 may_mutate_repo = false

@@ -99,7 +99,7 @@ class CommandRetirementContractTests(unittest.TestCase):
             "docs/quickstart.md",
             "docs/architecture/install-surface.md",
             "docs/architecture/maintenance-contract.md",
-            "docs/architecture/workflow-orchestration.md",
+            "docs/architecture/skill-composition.md",
         )
         retired_entries = tuple(
             f"`/{public_id}`"

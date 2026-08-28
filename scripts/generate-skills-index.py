@@ -96,7 +96,6 @@ def build_index() -> dict[str, Any]:
         record = {
             "id": skill_name,
             "category": entry["category"],
-            "lifecycle_owner": entry.get("lifecycle_owner", False),
             "activation_mode": entry["activation_mode"],
             "default_role": entry["default_role"],
             "implicit_invocation": derived_implicit_invocation(contract, entry),

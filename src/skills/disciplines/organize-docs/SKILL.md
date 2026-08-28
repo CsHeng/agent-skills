@@ -5,7 +5,7 @@ description: "Use for docs organization: README/AGENTS/CLAUDE split, stable trut
 
 # Organize Docs
 
-Write or update long-lived project truth after an explicit user request, an explicit drift follow-up from `analyze-project`, or a bounded `sync-truth` handoff backed by an approved plan and current execution evidence.
+Write or update long-lived project truth after an explicit user request, an explicit drift follow-up from `analyze-project`, or an authorized bounded `sync-truth` handoff backed by current execution evidence.
 
 ## Use This Skill When
 
@@ -25,7 +25,7 @@ Write or update long-lived project truth after an explicit user request, an expl
 ## Core Rules
 
 - Direct invocation still requires explicit user intent or explicit drift follow-up; implicit native matching alone never authorizes mutation.
-- Controller invocation is valid only under `sync-truth`, for declared docs-governance predicates and stable truth refs inside the same immutable approved touch set.
+- Composed invocation is valid only under an authorized `sync-truth` request, for declared docs-governance predicates and stable truth refs inside the same bounded touch set.
 - A Markdown suffix alone is not a docs-governance predicate, and Skill composition never authorizes repository-wide cleanup or prose normalization.
 
 - `README.md` stays human-facing.
@@ -61,7 +61,7 @@ Write or update long-lived project truth after an explicit user request, an expl
 7. For durable decision work, apply the owner-local lifecycle reference before promoting or retiring truth and preserve stage history by default.
 8. When explicitly consolidating plan artifacts, inventory all source plan roots, choose domain-based target directories under the canonical stage root, move files with date-first names, and update references after the move.
 9. Normalize Markdown prose wrapping with the bundled processing workflow: unwrap fixed-width paragraphs and list-item continuations across stable, stage, and archived docs that are in the requested scope, then decompose genuinely over-broad content at semantic boundaries.
-10. Update stable docs only after explicit user approval, explicit drift follow-up from `analyze-project`, or an approved-plan `sync-truth` handoff with current evidence.
+10. Update stable docs only after an explicit user request, explicit drift follow-up from `analyze-project`, or an authorized bounded `sync-truth` handoff with current evidence.
 
 ## Markdown Prose Processing
 

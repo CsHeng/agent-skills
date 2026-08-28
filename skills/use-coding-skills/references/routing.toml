@@ -20,37 +20,8 @@ forbidden = [
 
 [composition]
 primary_owner_count = 1
-lifecycle_owner_category = "workflow"
 overlay_categories = ["session", "discipline", "policy", "tool", "review-component"]
 rendering_baseline = "output-styles"
-
-[gate_policy]
-design_phases = ["design-lite", "design-full"]
-plan_phases = ["plan"]
-design_review_phase = "review-design"
-plan_review_phase = "review-plan"
-truth_sync_phase = "sync-truth"
-close_phase = "close"
-implicit_review_when_missing = true
-
-[phase_routes]
-analyze = "analyze-project"
-triage = "analyze-project"
-design-lite = "design-change"
-design-full = "design-change"
-review-design = "review-change"
-plan = "plan-change"
-review-plan = "review-change"
-execute = "implement-change"
-verify = "implement-change"
-review-impl = "review-change"
-sync-truth = "sync-truth"
-close = "close-change"
-
-[review_evaluators]
-review-design = "review-design"
-review-plan = "review-plan"
-review-impl = "review-implementation"
 
 [support_routes]
 response-shape = "output-styles"
@@ -60,6 +31,8 @@ persisted-language-selection = "language-decision-tree"
 infrastructure = "infrastructure-triage"
 documentation = "organize-docs"
 memory-and-session-mining = "skill-miner"
+truth-maintenance = "sync-truth"
+completion-judgment = "close-change"
 
 [[trigger_cases]]
 id = "project-truth-audit"
@@ -75,7 +48,7 @@ id = "change-scope-design"
 owner = "design-change"
 negative = [
   "Turn an already approved design into an execution-grade task plan.",
-  "Implement an already approved plan.",
+  "Implement a bounded change request or an already approved plan.",
 ]
 lexical_hints = ["design change", "design-lite", "design-full"]
 
@@ -84,7 +57,7 @@ id = "execution-plan"
 owner = "plan-change"
 negative = [
   "Decide unresolved architecture boundaries that still require design.",
-  "Execute tasks from an already approved plan.",
+  "Execute an explicit bounded change or tasks from an already approved plan.",
 ]
 lexical_hints = ["implementation plan", "task DAG", "plan change"]
 
@@ -100,13 +73,13 @@ negative = [
 lexical_hints = ["simplify codebase", "code entropy", "remove accidental complexity"]
 
 [[trigger_cases]]
-id = "approved-plan-execution"
+id = "bounded-change-execution"
 owner = "implement-change"
 negative = [
-  "Plan a change whose execution order is not yet approved.",
+  "Plan a change whose scope or execution order is not yet resolved.",
   "Perform a read-only project explanation with no requested mutation.",
 ]
-lexical_hints = ["implement approved plan", "execute plan", "fix forward"]
+lexical_hints = ["implement change", "execute plan", "fix forward"]
 
 [[trigger_cases]]
 id = "explicit-via-herdr-approved-plan-execution"
@@ -122,13 +95,13 @@ negative = [
 lexical_hints = ["implement-change-via-herdr", "approved plan through Herdr"]
 
 [[trigger_cases]]
-id = "lifecycle-review-gate"
+id = "bounded-change-review"
 owner = "review-change"
 negative = [
   "Implement accepted findings or mutate the reviewed code.",
-  "Give informal feedback that is not a lifecycle review request.",
+  "Give informal feedback without a bounded review target or decision question.",
 ]
-lexical_hints = ["review change", "review gate", "adjudicate findings"]
+lexical_hints = ["review change", "review target", "adjudicate findings"]
 
 [[trigger_cases]]
 id = "coding-skill-routing"
@@ -153,7 +126,7 @@ id = "documentation-organization"
 owner = "organize-docs"
 negative = [
   "Explain existing project truth without reorganizing documentation.",
-  "Synchronize truth after a verified behavior change through the lifecycle gate.",
+  "Synchronize stable truth from verified change evidence without reorganizing documentation boundaries.",
 ]
 lexical_hints = ["organize docs", "README AGENTS split", "docs boundary"]
 
