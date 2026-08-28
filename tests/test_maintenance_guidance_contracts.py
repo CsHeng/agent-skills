@@ -28,6 +28,40 @@ def final_level_two_section(text: str) -> str:
 
 
 class MaintenanceGuidanceContractTests(unittest.TestCase):
+    def test_organize_docs_uses_conditional_claude_compatibility(self) -> None:
+        skill_path = REPO_ROOT / "skills/organize-docs/SKILL.md"
+        skill = skill_path.read_text(encoding="utf-8")
+
+        self.assertIn(
+            "When root `CLAUDE.md` is absent, do not create it",
+            skill,
+        )
+        self.assertNotIn("`CLAUDE.md` remains a symlink", skill)
+
+        migration_links = [
+            link
+            for link in markdown_links(skill)
+            if Path(link).name == "legacy-claude-migration.md"
+        ]
+        self.assertEqual(1, len(migration_links))
+
+        migration = (skill_path.parent / migration_links[0]).read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("relative symlink `CLAUDE.md -> AGENTS.md`", migration)
+        self.assertIn("Never remove or replace a regular file", migration)
+
+    def test_skill_miner_treats_claude_as_legacy_input(self) -> None:
+        skill = (REPO_ROOT / "skills/skill-miner/SKILL.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("existing legacy `CLAUDE.md`", skill)
+        self.assertNotIn(
+            "tracked `AGENTS.md`, `CLAUDE.md`, and `README.md`",
+            skill,
+        )
+
     def test_organize_docs_decision_lifecycle_reference_resolves(self) -> None:
         skill_path = REPO_ROOT / "skills/organize-docs/SKILL.md"
         links = markdown_links(skill_path.read_text(encoding="utf-8"))

@@ -17,7 +17,7 @@ from urllib.parse import unquote
 
 
 EXIT_RE = re.compile(r"Process exited with code (\d+)")
-DOC_NAMES = {"AGENTS.md", "CLAUDE.md", "README.md"}
+DOC_NAMES = {"AGENTS.md", "README.md", "CLAUDE.md"}  # CLAUDE.md is legacy input only.
 
 DOC_OFFLOAD_RE = re.compile(
     r"workflow|validation|troubleshoot|runbook|deploy|commit|skill|agent|"

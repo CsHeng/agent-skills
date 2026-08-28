@@ -1,6 +1,6 @@
 ---
 name: organize-docs
-description: "Use for docs organization: README/AGENTS/CLAUDE split, stable truth roots, docs layout, docs/.ignore, stage artifacts, canonical terminology, search boundaries, and Markdown prose wrapping."
+description: "Use for docs organization: README/AGENTS ownership, conditional legacy CLAUDE.md migration, stable truth roots, docs layout, docs/.ignore, stage artifacts, canonical terminology, search boundaries, and Markdown prose wrapping."
 ---
 
 # Organize Docs
@@ -9,7 +9,7 @@ Write or update long-lived project truth after an explicit user request, an expl
 
 ## Use This Skill When
 
-- the user wants to reorganize or update `README.md`, `AGENTS.md`, `CLAUDE.md`, or stable docs
+- the user wants to reorganize or update `README.md`, `AGENTS.md`, existing legacy `CLAUDE.md`, or stable docs
 - the repository needs explicit stable truth roots and stage artifact roots
 - default docs search needs a local search-boundary policy such as `docs/.ignore`
 - scattered plan, draft, or execution-note roots should be consolidated into one stage-artifact tree
@@ -29,8 +29,11 @@ Write or update long-lived project truth after an explicit user request, an expl
 - A Markdown suffix alone is not a docs-governance predicate, and Skill composition never authorizes repository-wide cleanup or prose normalization.
 
 - `README.md` stays human-facing.
-- `AGENTS.md` stays AI-facing.
-- `CLAUDE.md` remains a symlink to `AGENTS.md`.
+- `AGENTS.md` is the maintained AI-facing truth root.
+- `CLAUDE.md` is a conditional compatibility path, never a separately maintained truth root.
+- Record whether the repository root's `CLAUDE.md` is absent, a regular file, or a symlink before changing documentation topology.
+- When root `CLAUDE.md` is absent, do not create it or add a compatibility symlink.
+- When root `CLAUDE.md` exists, read [Legacy CLAUDE.md Migration](references/legacy-claude-migration.md), preserve its still-valid unique guidance in `AGENTS.md`, and retain `CLAUDE.md` only as a relative symlink to `AGENTS.md`.
 - Stable truth roots and stage artifact roots must be explicit.
 - Default docs search should avoid stage artifacts when the repository needs that search-boundary.
 - Stage artifacts can support history, but they do not become default truth automatically.
@@ -52,16 +55,17 @@ Write or update long-lived project truth after an explicit user request, an expl
 
 ## Workflow
 
-1. Assess the current doc layout: `README.md`, `AGENTS.md`, `CLAUDE.md`, `docs/`, and local docs policy files.
+1. Assess the current doc layout: `README.md`, `AGENTS.md`, the initial root `CLAUDE.md` state, `docs/`, and local docs policy files.
 2. Classify stable truth roots versus stage artifact roots using repository-local policy first.
 3. Preserve or establish docs-local search-boundary files such as `docs/.ignore` when default search should exclude history.
 4. Keep human-facing guidance in `README.md` and AI-operational rules in `AGENTS.md`.
-5. Align canonical terminology across stable docs, path names, test names, and code references when the task is terminology cleanup.
-6. Move or summarize content into stable docs domains without treating plans, drafts, or other stage artifacts as default truth.
-7. For durable decision work, apply the owner-local lifecycle reference before promoting or retiring truth and preserve stage history by default.
-8. When explicitly consolidating plan artifacts, inventory all source plan roots, choose domain-based target directories under the canonical stage root, move files with date-first names, and update references after the move.
-9. Normalize Markdown prose wrapping with the bundled processing workflow: unwrap fixed-width paragraphs and list-item continuations across stable, stage, and archived docs that are in the requested scope, then decompose genuinely over-broad content at semantic boundaries.
-10. Update stable docs only after an explicit user request, explicit drift follow-up from `analyze-project`, or an authorized bounded `sync-truth` handoff with current evidence.
+5. Apply the linked root `CLAUDE.md` compatibility migration only when the recorded initial state shows that path already existed; never create it for a repository that lacked it.
+6. Align canonical terminology across stable docs, path names, test names, and code references when the task is terminology cleanup.
+7. Move or summarize content into stable docs domains without treating plans, drafts, or other stage artifacts as default truth.
+8. For durable decision work, apply the owner-local lifecycle reference before promoting or retiring truth and preserve stage history by default.
+9. When explicitly consolidating plan artifacts, inventory all source plan roots, choose domain-based target directories under the canonical stage root, move files with date-first names, and update references after the move.
+10. Normalize Markdown prose wrapping with the bundled processing workflow: unwrap fixed-width paragraphs and list-item continuations across stable, stage, and archived docs that are in the requested scope, then decompose genuinely over-broad content at semantic boundaries.
+11. Update stable docs only after explicit user approval, explicit drift follow-up from `analyze-project`, or an approved-plan `sync-truth` handoff with current evidence.
 
 ## Markdown Prose Processing
 
