@@ -68,6 +68,56 @@ class SemanticSkillContractTests(unittest.TestCase):
         contract = load_contract()
         self.assertNotIn("semantic_requires", contract["skills"]["review-change"])
 
+    def test_delegation_profile_vocabulary_is_provider_neutral(self) -> None:
+        path = (
+            REPO_ROOT
+            / "src/skills/workflows/plan-change/references/delegation-profiles.toml"
+        )
+        with path.open("rb") as handle:
+            vocabulary = tomllib.load(handle)
+
+        self.assertEqual(1, vocabulary["semantic_vocabulary_version"])
+        self.assertFalse(vocabulary["runtime_contract"])
+        self.assertEqual(
+            ["fast", "balanced", "deep"], vocabulary["execution_profiles"]
+        )
+        self.assertEqual(
+            ["light", "standard", "deep"], vocabulary["reasoning_profiles"]
+        )
+        self.assertEqual(
+            {
+                "repository_owner",
+                "write_set",
+                "resource_locks",
+                "isolation",
+                "convergence_owner",
+                "verification",
+                "done_when",
+                "failure_policy",
+            },
+            set(vocabulary["delegation_ready_facts"]),
+        )
+        self.assertEqual(
+            {
+                "provider",
+                "model",
+                "thinking_level",
+                "tool_arguments",
+                "working_directory_flag",
+                "scheduler_limit",
+                "retry_count",
+                "actor_binding",
+                "attempt_state",
+                "session_state",
+            },
+            set(vocabulary["forbidden_binding_keys"]),
+        )
+
+    def test_planning_semantics_do_not_grant_spawn_authority(self) -> None:
+        contract = load_contract()
+        self.assertFalse(contract["skills"]["plan-change"]["may_spawn_agent"])
+        self.assertTrue(contract["skills"]["implement-change"]["may_spawn_agent"])
+
 
 if __name__ == "__main__":
     unittest.main()

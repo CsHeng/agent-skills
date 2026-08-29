@@ -23,4 +23,6 @@ Review is conditional on an explicit request, an applicable repository or approv
 
 `contracts/skills.toml` and the installed routing reference support authoring, discovery projection, semantic dependencies, trigger cases, and response composition. They do not define a runtime mode, fixed phase graph, implicit review, task scheduler, attempt ledger, replay protocol, actor or model binding, or completion settlement.
 
-Plans may still describe dependencies, safe isolation, verification, authority, and recovery because those facts make a bounded change executable. They remain guidance consumed by the active coding agent rather than state for a repository-owned controller.
+Plans may still describe dependencies, safe isolation, verification, authority, and recovery because those facts make a bounded change executable. When delegated implementation is explicitly requested, they may also carry optional provider-neutral execution and reasoning profiles, one repository owner, repository-relative write sets, resource locks, isolation, and convergence ownership. These semantics remain guidance consumed and translated by the active coding agent rather than model bindings, host tool arguments, or state for a repository-owned controller.
+
+Writable delegated slices belong to one repository root. Multi-repository plans split repository-owned writes or retain cross-repository integration in the active parent; they do not prescribe a host working directory, snapshot, worktree, staging path, scheduler, or concrete route.

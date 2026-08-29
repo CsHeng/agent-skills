@@ -23,7 +23,7 @@ Do not use it while design or approval is unresolved, to implement an existing p
 4. State required authority for external mutation, destructive actions, live cutovers, commits, publication, or deployment. Planning does not grant that authority.
 5. Choose executable or substitute evidence for each task. Compose `executable-oracle-architecture-selector` when correctness needs an explicit oracle strategy, and `testing-strategy` when that strategy needs concrete test lanes.
 6. State fix-forward or an explicitly guarded recovery policy for each risky task.
-7. Identify parallel or delegable work only when dependencies are frozen, writes and shared resources do not conflict, isolation is safe, and convergence ownership is clear. Otherwise keep the plan serial.
+7. Identify parallel or delegable work only when dependencies are frozen, writes and shared resources do not conflict, isolation is safe, repository ownership is unambiguous, and convergence ownership is clear. Otherwise keep the plan serial.
 8. Check work-package readiness and artifact coherence.
 9. Decide whether independent review is required by an explicit user request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment.
 10. When review is required, invoke one bounded `review-change` evaluation before accepting the plan, adjudicate its read-only candidate findings here, and apply at most one focused in-scope repair before rechecking the affected evidence.
@@ -34,6 +34,10 @@ Use `language-decision-tree` only when a task creates or replaces a persisted pr
 
 When the approved design contains an architecture decision, reference it and plan reversible implementation increments, ownership, oracles, and observable upgrade triggers. Do not rescore the design during planning. Return `needs_design_decision` if current evidence invalidates an approved design premise.
 
+When the user explicitly requests delegated or subagent-assisted implementation, read `references/delegation-profiles.toml`. For every task claimed ready for delegation, record one canonical execution profile, one canonical reasoning profile, one repository owner, an exact repository-relative write set, resource locks, isolation, convergence ownership, verification, completion evidence, and failure policy. Mark the task not ready or keep delegation conditional when those facts are unresolved.
+
+A writable delegated task belongs to one repository root. Split a multi-repository milestone into repository-owned writable slices, retain cross-repository integration in the active parent, or design an explicit external boundary with its own authority and cleanup. Do not imply that one worker can mutate sibling repositories, and do not prescribe a host-specific working-directory flag, snapshot, worktree, staging path, or scheduler.
+
 ## Plan Guidance
 
 An execution-grade plan should record:
@@ -43,13 +47,14 @@ An execution-grade plan should record:
 - completion conditions and verification commands or evidence
 - explicit authority boundaries and prerequisite status
 - serial order or safely independent named groups
-- delegation eligibility and isolation expectations when useful
+- delegation eligibility, repository ownership, exact write set, resource locks, isolation, and convergence ownership when useful
+- canonical execution and reasoning profiles for tasks claimed delegation-ready after an explicit delegated-implementation request
 - recovery policy and any guarded rollback trigger
 - truth-sync targets when stable truth will change
 - review decision and, when review ran, its verdict and adjudication summary
 - approval status and any remaining user decisions
 
-Use semantic capability descriptions rather than provider names or exact model settings. A plan may describe task complexity or desired independence, but must not prescribe how a particular product schedules actors, binds models, records attempts, or resumes sessions.
+Use semantic capability descriptions rather than provider names or exact model settings. The optional execution and reasoning profiles express intent, not a route binding; a compatible active host may use a default or retain the task when no mapping exists. Plans that do not claim delegation readiness may omit them. A plan must not prescribe how a particular product schedules actors, binds models, records attempts, or resumes sessions.
 
 ## Decision States
 

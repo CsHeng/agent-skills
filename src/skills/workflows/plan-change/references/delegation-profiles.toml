@@ -1,0 +1,26 @@
+semantic_vocabulary_version = 1
+runtime_contract = false
+execution_profiles = ["fast", "balanced", "deep"]
+reasoning_profiles = ["light", "standard", "deep"]
+delegation_ready_facts = [
+  "repository_owner",
+  "write_set",
+  "resource_locks",
+  "isolation",
+  "convergence_owner",
+  "verification",
+  "done_when",
+  "failure_policy",
+]
+forbidden_binding_keys = [
+  "provider",
+  "model",
+  "thinking_level",
+  "tool_arguments",
+  "working_directory_flag",
+  "scheduler_limit",
+  "retry_count",
+  "actor_binding",
+  "attempt_state",
+  "session_state",
+]
