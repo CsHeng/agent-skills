@@ -17,6 +17,7 @@ Do not use it while scope, design, plan, prerequisites, or required authority re
 ## Preconditions
 
 - Confirm the authorized objective, any approved task order, repository ownership, allowed surfaces, declared verification, recovery policy, and known user changes.
+- Inspect `git status --short` before implementation. When the current worktree is dirty, consider using `git-worktrees` to isolate the bounded change before mutation, especially when unrelated changes could cause conflicts or force a mid-task authority decision. Preserve uncommitted task context explicitly because a new worktree does not inherit it.
 - Treat commit, push, publication, deployment, destructive history changes, and external mutation as separate authority. Never infer them from approval to implement repository changes.
 - Return `needs-authority`, `replan`, or `redesign` before performing work outside the approved boundary.
 
