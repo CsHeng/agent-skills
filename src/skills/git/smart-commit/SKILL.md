@@ -9,7 +9,7 @@ Analyze git repository changes, exclude files that should not be committed, grou
 
 ## Scope
 
-This skill handles the full workflow from change analysis to commit execution. It does NOT push to any remote.
+This skill handles the full workflow from change analysis to commit execution.
 
 This skill may be selected implicitly only when the user explicitly asks to group current working-tree changes by business domain or purpose and create the resulting focused local commits. A generic request to commit, inspect diffs, summarize status, or clean up history does not match this skill. Once the intent matches, default to committing eligible changes without a confirmation gate. Stop for human confirmation only when Git is already tracking or staging a file that appears unsafe or inappropriate to commit.
 
@@ -244,7 +244,7 @@ After all commits complete, run `git -C "$TARGET_REPO" log --oneline -<N>` to sh
 
 ## Constraints
 
-- Never push — this skill only performs local add and commit operations
+- Determine whether push is in scope from the user's information instead of imposing a skill-level prohibition or default
 - Never force — no `--force`, `--no-verify`, or other safety bypasses
 - Automatic execution after matching the domain-grouping commit request — present the plan, then commit eligible groups without a separate confirmation prompt
 - Human confirmation required only for tracked or staged content that appears unsafe or inappropriate to commit
