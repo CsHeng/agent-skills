@@ -28,11 +28,12 @@ Do not use it while scope, design, plan, prerequisites, or required authority re
 3. Make the smallest durable change within the approved scope and preserve unrelated user changes.
 4. Complete all approved in-scope tasks whose dependencies can be satisfied; a task boundary is progress, not an automatic stopping point. When choosing a compatible delegation mechanism, preserve the approved repository owner, write set, resource locks, isolation, convergence owner, and optional execution and reasoning profiles. Submit ordinary independent slices as a flat batch. Encode a hard predecessor only when the approved implementation order requires it and no parent-owned synthesis, authority, verification, review adjudication, repair, or continuation decision occurs between the tasks.
 5. Check the actual changed surfaces against the plan.
-6. Run the declared verification and any focused checks needed for the changed behavior.
-7. Decide whether independent review is required by an explicit user request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment.
-8. When review is required, invoke one bounded `review-change` evaluation over the converged implementation diff and supply the objective, scope, changed files, declared oracles, and current verification evidence.
-9. Adjudicate every material review candidate. Accept only findings causally tied to the current change and fixable inside the authorized scope.
-10. If accepted findings exist, apply at most one focused same-slice repair and rerun the affected and declared verification without starting another review or an unbounded repair loop.
+6. Remove abstractions, helpers, flags, and fallbacks this slice introduced that the approved behavior does not need. This is a same-slice cut, not a `code-simplification` audit and not a new task. If a cut needs a product tradeoff, stop and return `redesign` or `needs-authority`.
+7. Run the declared verification and any focused checks needed for the changed behavior.
+8. Decide whether independent review is required by an explicit user request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment.
+9. When review is required, invoke one bounded `review-change` evaluation over the converged implementation diff and supply the objective, scope, changed files, declared oracles, and current verification evidence.
+10. Adjudicate every material review candidate. Accept only findings causally tied to the current change and fixable inside the authorized scope.
+11. If accepted findings exist, apply at most one focused same-slice repair, repeat the same-slice cut, and rerun the affected and declared verification without starting another review or an unbounded repair loop.
 
 Optional execution and reasoning profiles are semantic hints, not authority or provider bindings. Their absence or an unavailable host mapping does not block implementation: use a compatible default or retain the task in the active agent. When the user explicitly selects a concrete execution or reasoning route, preserve that choice through ephemeral task parameters when the compatible host supports them; the explicit user choice overrides semantic defaults for that invocation. Never mutate durable route configuration as a one-invocation workaround unless the user separately authorizes a persistent default change. Delegation does not transfer scope control, invocation judgment, verification, review adjudication, repair, continuation, or the final response.
 

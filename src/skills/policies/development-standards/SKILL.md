@@ -23,6 +23,8 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 - Do not refactor adjacent code, reformat unrelated files, remove pre-existing dead code, or add features that were not requested.
 - Match established repository structure, naming, style, and ownership unless the approved change explicitly replaces them.
 - Avoid single-use abstractions, speculative configuration, hypothetical extension points, and defensive branches for impossible states.
+- Fail closed on required errors. Do not add silent fallback, guessed defaults, or degraded success unless the approved design or a current caller contract names that behavior. A missing case is an explicit failure, not a recovery.
+- Do not swallow errors or keep a legacy path "just in case". Prefer a clean break over dual-running old and new behavior. Route classified fallback or degraded mode through `error-patterns` when that boundary is active.
 - Remove imports, variables, helpers, configuration, and documentation made obsolete by the current change.
 
 ## Durability And Temporary Mechanisms
@@ -51,10 +53,10 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 - Use names and module boundaries that reveal behavior and ownership.
 - Keep functions and modules cohesive; split by responsibility, authority, state, or failure boundary rather than arbitrary line limits.
 - Create interfaces for proven variation or caller-visible contracts, not hypothetical substitution.
-- Comment why a non-obvious constraint exists; do not narrate obvious code.
+- Comment why a non-obvious constraint exists; do not narrate obvious code, intermediate attempts, or session history. Apply the same rule to skill prose and `AGENTS.md`.
 - Write persisted prose for the current repository state. A reader at current HEAD must be able to resolve its internal references and verify its claims without an authoring session, review thread, temporary branch, or uncommitted draft.
 - Preserve complete propositions when editing comments, docstrings, prompts, diagnostics, help text, examples, configuration comments, and other durable prose: retain the actor, action, conditions, order, modality, negative guarantees, exceptions, ownership transfers, side effects, failure modes, and consequences that affect behavior.
-- Remove review choreography, dead phase labels, reviewer arguments, and temporary change narration once they no longer explain the current state. Preserve exact durable issues, decisions, standards, and measured evidence at their repository-owned truth location.
+- Remove review choreography, dead phase labels, reviewer arguments, and temporary change narration once they no longer explain the current state. Preserve exact durable issues, decisions, still-valid rejected alternatives, standards, and measured evidence at their repository-owned truth location.
 - Treat model-visible and user-visible strings as behavior when wording affects routing, interpretation, diagnosis, safety, or compatibility. Protect such changes with the narrowest owned snapshot, contract, or runtime oracle; do not normalize prose repository-wide without an approved scope.
 - Update authored sources before generated projections and regenerate through the repository-owned workflow.
 - Validate external input at the owned boundary and handle failures that can occur under the declared runtime contract.
