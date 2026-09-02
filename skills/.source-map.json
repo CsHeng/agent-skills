@@ -13,7 +13,6 @@
   "git-worktrees": "src/skills/git/git-worktrees",
   "go-guidelines": "src/skills/policies/go-guidelines",
   "implement-change": "src/skills/workflows/implement-change",
-  "implement-change-via-herdr": "src/skills/tools/implement-change-via-herdr",
   "infrastructure-triage": "src/skills/disciplines/infrastructure-triage",
   "language-decision-tree": "src/skills/disciplines/language-decision-tree",
   "logging-standards": "src/skills/policies/logging-standards",

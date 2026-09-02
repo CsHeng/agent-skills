@@ -235,15 +235,9 @@ def validate_semantic_only_surface(repo_root: Path = REPO_ROOT) -> list[str]:
     executable_roots = (
         repo_root / "src/skills/workflows",
         repo_root / "src/skills/review-components",
-        repo_root / "src/skills/tools/implement-change-via-herdr",
     )
     for root in executable_roots:
-        candidates = (
-            root.glob("*/scripts/*")
-            if root.name != "implement-change-via-herdr"
-            else root.glob("scripts/*")
-        )
-        for path in candidates:
+        for path in root.glob("*/scripts/*"):
             if path.is_file():
                 errors.append(
                     "semantic workflow surface contains executable support: "

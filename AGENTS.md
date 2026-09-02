@@ -2,7 +2,7 @@
 
 ## Project
 
-This repository authors and distributes the `coding` collection of 40 portable Agent Skills. The Skills are semantic guidance usable by any compatible agent environment; this repository does not provide or require a workflow engine.
+This repository authors and distributes the `coding` collection of 39 portable Agent Skills. The Skills are semantic guidance usable by any compatible agent environment; this repository does not provide or require a workflow engine.
 
 ## Truth And Generated Surfaces
 
@@ -27,7 +27,7 @@ This repository authors and distributes the `coding` collection of 40 portable A
 - Keep Skills provider-neutral and self-contained under the standard Agent Skills directory shape.
 - Keep frontmatter descriptions precise enough for native discovery.
 - Store only real semantic dependencies in `semantic_requires`; do not add executable workflow contracts, artifact validators, task graph compilers, mutable ledgers, replay logic, provider adapters, or prompt-space lifecycle gates.
-- Preserve all 40 public IDs and authored-to-generated parity.
+- Preserve all 39 public IDs and authored-to-generated parity.
 - Use `apply_patch` for source edits and preserve unrelated working-tree changes.
 
 ## Validation

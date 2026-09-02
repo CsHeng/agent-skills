@@ -63,8 +63,8 @@ def load_contract(repo_root: Path) -> dict[str, Any]:
     """Load and minimally validate the skill contract."""
     contract = load_toml(repo_root / "contracts" / "skills.toml")
     skills = contract.get("skills")
-    if not isinstance(skills, dict) or len(skills) != 40:
-        raise DistributionError("contracts/skills.toml must define exactly 40 skills")
+    if not isinstance(skills, dict) or len(skills) != 39:
+        raise DistributionError("contracts/skills.toml must define exactly 39 skills")
     return contract
 
 

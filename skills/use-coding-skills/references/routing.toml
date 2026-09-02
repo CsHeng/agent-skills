@@ -82,19 +82,6 @@ negative = [
 lexical_hints = ["implement change", "execute plan", "fix forward"]
 
 [[trigger_cases]]
-id = "explicit-via-herdr-approved-plan-execution"
-owner = "implement-change-via-herdr"
-positive = [
-  "Explicitly invoke $coding:implement-change-via-herdr for a bounded approved task.",
-  "Explicitly ask to use Herdr for one already approved implementation slice.",
-]
-negative = [
-  "Implement an approved plan without explicitly requesting Herdr.",
-  "Use Herdr to choose scope, approve new authority, adjudicate review findings, or decide completion.",
-]
-lexical_hints = ["implement-change-via-herdr", "approved plan through Herdr"]
-
-[[trigger_cases]]
 id = "bounded-change-review"
 owner = "review-change"
 negative = [

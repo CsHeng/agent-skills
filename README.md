@@ -1,6 +1,6 @@
 # Agent Skills: coding
 
-This repository is the authored source and generated portable payload for a collection of 40 semantic coding Skills. The collection guides agents through analysis, design, planning, implementation, review, documentation, policy, testing, tools, and Git work without depending on a particular agent product.
+This repository is the authored source and generated portable payload for a collection of 39 semantic coding Skills. The collection guides agents through analysis, design, planning, implementation, review, documentation, policy, testing, tools, and Git work without depending on a particular agent product.
 
 ## Layout
 

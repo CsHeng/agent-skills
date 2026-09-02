@@ -41,12 +41,6 @@ class WorkflowContractTests(unittest.TestCase):
                 self.assertTrue(skills[skill_id]["requires_explicit_user_request"])
                 self.assertNotIn("requires_approved_plan", skills[skill_id])
 
-    def test_explicit_herdr_delegation_retains_frozen_plan_scope(self) -> None:
-        herdr = self.contract["skills"]["implement-change-via-herdr"]
-        self.assertTrue(herdr["requires_explicit_user_request"])
-        self.assertTrue(herdr["requires_approved_plan"])
-        self.assertEqual(["implement-change"], herdr["semantic_requires"])
-
     def test_review_evaluators_are_optional_composition_capabilities(self) -> None:
         skills = self.contract["skills"]
         for skill_id in ("review-design", "review-plan", "review-implementation"):

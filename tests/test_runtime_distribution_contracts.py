@@ -29,9 +29,9 @@ class RuntimeDistributionContractTests(unittest.TestCase):
         with (REPO_ROOT / "contracts/skills.toml").open("rb") as handle:
             cls.skills = tomllib.load(handle)["skills"]
 
-    def test_authored_and_generated_trees_have_exact_40_skill_mapping(self) -> None:
+    def test_authored_and_generated_trees_have_exact_39_skill_mapping(self) -> None:
         generated = {path.name for path in (REPO_ROOT / "skills").glob("*/")}
-        self.assertEqual(40, len(self.skills))
+        self.assertEqual(39, len(self.skills))
         self.assertEqual(set(self.skills), generated)
         source_map = json.loads(
             (REPO_ROOT / "skills/.source-map.json").read_text(encoding="utf-8")
@@ -56,7 +56,7 @@ class RuntimeDistributionContractTests(unittest.TestCase):
     def test_index_keeps_semantic_identity(self) -> None:
         index = json.loads((REPO_ROOT / "skills.index.json").read_text(encoding="utf-8"))
         by_id = {entry["id"]: entry for entry in index["skills"]}
-        self.assertEqual(40, index["canonical_skill_count"])
+        self.assertEqual(39, index["canonical_skill_count"])
         self.assertEqual(set(self.skills), set(by_id))
         self.assertEqual([], by_id["implement-change"]["semantic_requires"])
 

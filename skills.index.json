@@ -1,5 +1,5 @@
 {
-  "canonical_skill_count": 40,
+  "canonical_skill_count": 39,
   "command_retirement": {
     "absorbed_by_skill": [
       "close-change",
@@ -357,34 +357,6 @@
       ],
       "semantic_requires": [],
       "semantic_transitive_requires": []
-    },
-    {
-      "activation_mode": "explicit",
-      "category": "tool",
-      "default_role": "overlay",
-      "effective_provider_state": {
-        "claude": {
-          "model_visibility": "default-visible",
-          "source": "shared-frontmatter-default"
-        },
-        "codex": {
-          "allow_implicit_invocation": false,
-          "source": "activation-mode-projection"
-        }
-      },
-      "id": "implement-change-via-herdr",
-      "implicit_invocation": false,
-      "may_mutate_repo": true,
-      "overlay_trigger_cases": [],
-      "owned_trigger_cases": [
-        "explicit-via-herdr-approved-plan-execution"
-      ],
-      "semantic_requires": [
-        "implement-change"
-      ],
-      "semantic_transitive_requires": [
-        "implement-change"
-      ]
     },
     {
       "activation_mode": "native",
@@ -966,7 +938,6 @@
         "git-worktrees",
         "go-guidelines",
         "implement-change",
-        "implement-change-via-herdr",
         "infrastructure-triage",
         "language-decision-tree",
         "logging-standards",
@@ -1004,7 +975,6 @@
         "git-worktrees",
         "go-guidelines",
         "implement-change",
-        "implement-change-via-herdr",
         "infrastructure-triage",
         "language-decision-tree",
         "logging-standards",

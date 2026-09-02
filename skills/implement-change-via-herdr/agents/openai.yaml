@@ -1,6 +1,0 @@
-interface:
-  display_name: "Implement Change via Herdr"
-  short_description: "Guide one bounded approved Herdr handoff"
-  default_prompt: "Use $implement-change-via-herdr for one explicitly requested bounded implementation handoff."
-policy:
-  allow_implicit_invocation: false
