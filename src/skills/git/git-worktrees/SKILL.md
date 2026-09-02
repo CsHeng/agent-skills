@@ -13,7 +13,7 @@ Create and manage agent-friendly git worktrees without scattering directories or
 - If the repo has no explicit preference, default to `./.agents/worktrees/<branch-slug>/`.
 - Never silently fall back to a parent directory or a home-directory location.
 - Before creating a repo-local worktree, verify the directory is ignored by both Git and search tooling.
-- If ignore coverage is missing, ambiguous, or inconsistent, stop and ask the user to confirm how to proceed.
+- If ignore coverage is missing, ambiguous, or inconsistent, stop and ask the user to confirm how to proceed, except during an explicitly requested isolated coding-agent handoff that uses the bounded local-exclude setup below.
 
 ## Preflight
 
@@ -61,6 +61,8 @@ Apply these rules:
 
 Do not assume the new worktree inherits uncommitted planning files.
 
+For an explicitly requested isolated coding-agent handoff, an exact bounded prompt or bridge plan payload is an approved context-transfer mechanism. Do not require an untracked or modified design/plan artifact to be committed when its exact bytes and hash are transferred and the recipient is forbidden to edit it. Still stop when uncommitted source or configuration state is required in the recipient filesystem and cannot be transferred without changing semantics.
+
 ## Path Policy
 
 When the repository does not define its own location, use this default path:
@@ -95,6 +97,17 @@ Rules:
 - If the repository uses `.ignore`, `.rgignore`, or `.fdignore`, the chosen file should also ignore `.agents/worktrees`.
 - If there is no search-ignore file at all, ask the user whether to add one or accept search noise.
 - Do not create nested worktrees elsewhere inside the repository unless the repository explicitly opted in.
+
+### Isolated handoff local-exclude setup
+
+An explicit isolated coding-agent handoff authorizes local, untracked ignore setup for its temporary linked worktree. When `.agents/worktrees/` is not already ignored:
+
+1. Resolve the repository's actual local exclude file with `git rev-parse --git-path info/exclude`.
+2. Refuse a symlink, directory, or path outside the repository's Git common directory.
+3. Append exactly `.agents/worktrees/` once; do not edit tracked `.gitignore`, `.ignore`, `.rgignore`, or `.fdignore` merely to launch the handoff.
+4. Verify `git check-ignore` and a hidden `rg --files` or equivalent search inventory both exclude a disposable path beneath `.agents/worktrees/`.
+
+This is setup metadata, not project truth, and it must not enter the implementation diff. If the local exclude cannot be changed or verified safely, stop; do not invent a parent-directory or home-directory worktree location.
 
 ## Create or List Worktrees
 
@@ -212,16 +225,16 @@ Rules:
 - Never delete a worktree with `rm -rf`.
 - Use `prune` after accidental manual deletion or stale metadata warnings.
 - Use `git worktree repair` after moving repository-local worktrees or when links become inconsistent.
-- If the worktree still contains active work, confirm before removal.
+- If the worktree still contains active work, confirm before removal. An explicit isolated-handoff cleanup policy counts as confirmation only for resources created by that handoff after verified convergence proves no unique work remains.
 
 ## Failure Conditions
 
 Stop and ask the user to confirm when any of these are true:
 
 - the repository already declares a different worktree location
-- `.agents/worktrees` is not ignored by Git
-- search-ignore coverage is missing or ambiguous
-- relevant design, spec, or plan files exist but are not committed
+- `.agents/worktrees` is not ignored by Git and the bounded isolated-handoff local-exclude setup does not apply or cannot be verified
+- search-ignore coverage is missing or ambiguous and the bounded isolated-handoff local-exclude setup does not apply or cannot be verified
+- relevant design, spec, or plan files exist but are not committed and no exact handoff prompt or bridge transfer owns their bytes
 - the requested branch, base, or source worktree cannot be resolved uniquely
 - the target path already exists but is not a valid worktree
 
