@@ -100,6 +100,8 @@ Match documentation checks to the property that can actually fail:
 - Generated documentation: regenerate it and compare the owned source and generated surface.
 - Prompt or instruction Markdown: test observable consumer behavior with an evaluation or integration scenario when that evidence is worth its cost; machine consumption alone does not make prose a unit-test interface.
 
+When efficacy measurement is requested or a bounded risk judgment justifies it, use [Agent Skill Evaluation](references/agent-skill-evaluation.md) with the necessary execution authority and budget. Ordinary Skill editing does not require a live experiment, and maintenance checks do not establish behavioral or economic gains.
+
 PROHIBITED: Add unit or contract tests that assert exact natural-language sentences, keyword collections, prose headings, or their absence in Markdown solely to freeze intended meaning.
 
 PROHIBITED: Duplicate a Markdown policy sentence or rule list in test code.

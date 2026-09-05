@@ -23,8 +23,12 @@ Do not use it while scope, design, plan, prerequisites, or required authority re
 
 ## Implement And Verify
 
-1. Inspect the smallest current surface needed for the next ready task.
-2. Prefer a narrow reproducer or red-green oracle for non-trivial behavior.
+1. Inspect the smallest current surface needed for the next ready task. For bug fixes touching shared behavior:
+   - Trace the reported symptom through the relevant entry point, shared function, and affected callers to the contract that owns the violated invariant.
+   - Use symbol, reference, configuration, and test evidence as appropriate; account for public, generated, dynamic, or external callers when relevant. Text-search silence does not prove that all consumers are known. Keep inspection proportional to the proposed change rather than scanning the whole repository by default.
+   - Choose a shared fix only when the affected callers share the invariant. Keep caller-specific product rules at their owning boundary and preserve intentionally different validation or error behavior; fewer guards or lines do not justify hoisting policy into a common helper.
+   - If an unresolved caller contract prevents a safe bounded fix, state the evidence gap and use the existing `blocked`, `replan`, `redesign`, or `needs-authority` outcome that fits. Do not broaden the repair or turn it into a simplification audit.
+2. Prefer a narrow reproducer or red-green oracle for non-trivial behavior. For shared-behavior fixes, select focused regression evidence for affected sibling paths and protected caller behavior as needed, without requiring one test per caller or prescribing a framework.
 3. Make the smallest durable change within the approved scope and preserve unrelated user changes.
 4. Complete all approved in-scope tasks whose dependencies can be satisfied; a task boundary is progress, not an automatic stopping point. When choosing a compatible delegation mechanism, preserve the approved repository owner, write set, resource locks, isolation, convergence owner, and optional execution and reasoning profiles. Submit ordinary independent slices as a flat batch. Encode a hard predecessor only when the approved implementation order requires it and no parent-owned synthesis, authority, verification, review adjudication, repair, or continuation decision occurs between the tasks.
 5. Check the actual changed surfaces against the plan.

@@ -43,6 +43,8 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 
 ## Dependency Selection
 
+- Understand the approved requirement and relevant current code before choosing a solution. Search for a suitable repository-owned helper, type, or pattern; then standard-library and native-platform capabilities; then installed dependencies; only then consider a new implementation or dependency under the lifecycle-cost rules below.
+- Treat this as a candidate-search order, not an unconditional solution ranking. Stop at a candidate that satisfies the owned behavior, compatibility, trust, error, deployment, and maintenance constraints. Do not reuse a similar-looking helper with different semantics or replace an approved dependency merely because a standard-library alternative exists; repository conventions and contracts take precedence over ladder position.
 - Prefer an established, actively maintained library for non-trivial or security-sensitive capabilities when its total lifecycle cost is lower than a custom implementation.
 - Compare correctness risk, maintenance activity, security response, transitive surface, update burden, license, runtime fit, and ecosystem ownership.
 - Do not add a dependency for small transparent local logic whose implementation and verification are cheaper than the dependency lifecycle.
