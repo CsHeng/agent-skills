@@ -28,8 +28,9 @@ Do not use it while a necessary design decision or scope approval is unresolved,
 8. Check that the objective, authorized writes, protected behavior, factual dependencies, delivery endpoints, and acceptance evidence are sufficient and coherent. They may come from existing requests or contracts; local implementation does not require delegation profiles, parallel policy, exact dispatch paths, or a fixed review budget. Assess delegation readiness separately only for slices actually delegated or claimed delegation-ready.
 9. Decide whether independent review is required by an explicit user request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment.
 10. When review is required, request a bounded `review-change` evaluation, adjudicate its read-only candidate findings, and repair accepted defects within the confirmed design and planning scope. Continue evidence-backed in-scope repair and affected verification without a default count limit. Use targeted rereview when prior evidence becomes stale or an independent question remains; do not reopen adjudicated findings without new evidence. Do not rewrite confirmed goals, dependencies, authority, or acceptance to make the plan pass. Stop for a concrete decision or prerequisite gap, lack of a viable path, or an explicit invocation budget, reporting the reason and incomplete work. Finish when the requested plan satisfies its requirements; further review is not a ritual.
+11. Close every implementation-oriented plan with an explicit implementation-approval summary for the user. State the exact scope and actions approval would cover, authority already covered, unresolved `manual_checkpoint` items, actions intentionally excluded, and the limited conditions that would require another pause. Do not hide a future approval request in task prose or ask again for ordinary in-scope execution choices after the stated scope is approved.
 
-Read `references/delivery-and-delegation.md` when the plan must record delivery endpoints, two-stage planning versus dispatch, cohesive worker slices, required versus missing authority, or same-task continuation without handles. Ordinary local plans that do not claim those arrangements may omit it.
+Read `references/delivery-and-delegation.md` when the plan must record delivery endpoints, two-stage planning versus dispatch, cohesive worker slices, required versus missing authority, same-task continuation without handles, or its implementation-approval summary. Ordinary local plans that do not claim those arrangements may omit it.
 
 ## Conditional Decisions
 
@@ -60,15 +61,15 @@ An execution-grade plan should record:
 - recovery policy and any guarded rollback trigger
 - truth-sync targets when stable truth will change
 - review decision and, when review ran, its verdict and adjudication summary
-- approval status and any remaining user decisions
+- an implementation-approval summary: exact requested decision and scope, covered authority, unresolved manual checkpoints, excluded actions, and reapproval triggers
 
 Use semantic capability descriptions rather than provider names or exact model settings. The optional execution and reasoning profiles express intent, not a route binding; a compatible active host may use a default or retain the task when no mapping exists. A later explicit user-selected execution or reasoning route is invocation authority rather than plan metadata and may be preserved through ephemeral compatible-host parameters without amending the plan. It never authorizes mutation of durable route configuration. Plans that do not claim delegation readiness may omit profiles. A plan must not prescribe how a particular product schedules actors, binds models, records attempts, or resumes sessions.
 
 ## Decision States
 
-- `ready_for_approval`: the plan and any required review evidence are complete
+- `ready_for_approval`: the plan and any required review evidence are complete, and its implementation-approval summary names the exact decision the user can make
 - `needs_design_decision`: the approved design is no longer sufficient
 - `split_scope`: the milestone cannot remain one bounded execution package
-- `manual_checkpoint`: a prerequisite or authority decision blocks readiness
+- `manual_checkpoint`: a specific prerequisite or authority decision blocks the affected work; name it in the approval summary instead of hiding it in a later task
 
-Approval belongs to the user. Review success does not authorize implementation, and an implementation request does not retroactively approve an unresolved plan.
+Approval belongs to the user. A plan's summary makes the next approval actionable but does not grant it; review success does not authorize implementation, and an implementation request does not retroactively approve an unresolved plan.

@@ -22,6 +22,19 @@ Record required authority and missing authority separately. Already covered requ
 
 When the task includes implementation and delivery, the plan states the delivery endpoint and the evidence that endpoint needs. `close-change` still owns later completion judgment. This skill does not rewrite live project permissions.
 
+## Implementation-Approval Summary
+
+End every plan intended for later implementation with a short, user-facing summary that makes the next decision explicit rather than leaving approval implied among tasks. Use the smallest shape that can state:
+
+- **Decision requested:** whether the user is being asked to authorize implementation now, or the plan is intentionally plan-only.
+- **Approval scope:** the exact objective, approved write or operational surfaces, delivery endpoints, and external effects the approval would cover. List commit, push, publication, deployment, destructive cleanup, configuration, installation, and live-data actions separately; omission means they are not approved.
+- **Already covered:** trusted approval or project policy that already covers a listed action, with its source and matching target/side effects. Do not ask again for that same approval.
+- **Manual checkpoints:** each currently unresolved authority, account, credential, access, license, physical prerequisite, or user decision; name the affected task, owner, and why it blocks. Do not disguise it as an implementation subtask.
+- **Continuous-execution boundary:** after the user approves the stated scope and any named checkpoint, continue through ordinary in-scope investigation, dispatch refinement, worker execution, verification, review adjudication, and accepted repair without requesting serial approvals. Pause only for a new goal, material side effect, protected-state risk, acceptance change, authority gap, or other decision explicitly retained by the user.
+- **Excluded actions:** state actions intentionally outside the request so a later host/tool step cannot infer them from implementation approval.
+
+Do not force a user to approve implementation merely because they requested a plan. For a plan-only request, say that no implementation authority is requested and name the exact later decision needed. Do not use this summary as a generic lifecycle gate, a task ledger, or an excuse to ask the user about local choices the executor can make. New evidence that changes the stated scope or boundary requires a new, narrow approval; a different model, reviewer, worker, or normal repair iteration does not.
+
 ## Cohesive Slices
 
 A worker slice may include investigation, implementation, direct tests, command feedback, and in-scope local repair. Do not split by one file per worker or by sending code and tests to different workers by default. The parent should not exhaust implementation detail and then hand off leftover typing.
