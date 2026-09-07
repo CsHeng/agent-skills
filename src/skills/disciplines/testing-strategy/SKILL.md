@@ -1,6 +1,6 @@
 ---
 name: testing-strategy
-description: "Translate an approved executable-oracle strategy into concrete verification with owned boundaries, evidence classes, fixtures, environments, CI/release lanes, and failure diagnosis. Use when implementing, classifying, or auditing unit, component, integration, contract, workflow, UI/E2E, runtime, documentation, or generated checks; reviewing suite size or duplication; improving test isolation; or choosing CI commands after oracle selection."
+description: "Design or revise verification coverage, suite placement, fixtures, isolation, and execution lanes for an established oracle. Use for test-strategy decisions or suite audits; not merely to run existing checks or add routine tests under a settled strategy."
 ---
 
 # Testing Strategy
@@ -9,7 +9,7 @@ description: "Translate an approved executable-oracle strategy into concrete ver
 
 Turn a selected executable oracle into the smallest concrete verification set that protects the intended boundary.
 
-For architecture or planning decisions, use `executable-oracle-architecture-selector` first. For multi-client API contract ownership and layer decomposition, use `api-contract-strategy`.
+Use `executable-oracle-architecture-selector` when the oracle method or protected behavior still needs a decision, not merely because the task involves architecture, planning, or TDD. Consume an established strategy directly. Running known checks or adding a routine regression test under that strategy does not require reopening strategy selection. For multi-client API contract ownership and layer decomposition decisions, use `api-contract-strategy`.
 
 Do not measure maturity by test count or impose universal coverage percentages.
 

@@ -1,13 +1,13 @@
 ---
 name: executable-oracle-architecture-selector
-description: "Select executable oracle strategy for architecture, planning, review, and agent-assisted implementation. Use when deciding between TDD, BDD/ATDD, contract tests, property/model-based tests, characterization/golden tests, mutation testing, runtime probes, canaries, chaos, or when a work package needs test/readiness gating before execution."
+description: "Choose or revise executable evidence when how to verify a change is unresolved. Select oracle methods and protected boundaries; not to run known checks or implement tests under an established strategy."
 ---
 
 # Executable Oracle Architecture Selector
 
 ## Purpose
 
-Choose the executable feedback strategy for a change before implementation.
+Choose or revise the executable feedback strategy when the evidence needed to verify a change is unresolved. An established contract, test strategy, or narrow reproducer may already answer that question; using TDD or running known checks alone does not require this selector.
 
 Treat tests, contracts, properties, models, golden files, monitors, canaries, and synthetic probes as executable oracles: durable constraints that define what behavior must hold.
 
@@ -93,31 +93,15 @@ Infrastructure or platform systems:
 - prefer contract/conformance tests, model/state-machine tests, fault injection, narrow local TDD, and runtime synthetic probes
 - define the oracle before running live probes; a probe observes behavior, an oracle says whether it is acceptable
 
-## Work-Package Readiness
+## Evidence Sufficiency And Delegation
 
-Use this gate before assigning a slice to a subagent, TDD loop, or execution runner.
+Ordinary implementation needs the authorized objective and scope, allowed changes, protected behavior, and concrete acceptance evidence or a suitable substitute. These facts may already come from the bounded request, repository contracts, existing tests, or a reproducer; do not require a new plan or a work-package schema to restate them.
 
-A work package is ready only when it has:
+When necessary evidence is missing or contradictory, name the actual unresolved oracle, contract, design, or authority decision and return it to the calling agent. Do not block local implementation or a TDD loop on delegation profiles, parallel policy, or a maximum review budget.
 
-- one milestone objective
-- explicit non-goals and future-phase items
-- a declared oracle strategy from this skill
-- concrete acceptance oracles or substitute verification evidence
-- maximum review budget
-- failure policy or stop condition
-- subagent boundary: `subagent_ready: true|false`
-- task-level delegation and parallel policy, including the serial fallback or typed capacity stop
-- semantic execution and reasoning profiles without a concrete provider model identifier
-- isolation, write-set, resource-lock, and calling-agent convergence evidence for any parallel slice
+Actual delegation additionally needs an accountable repository owner, bounded writes, safe isolation and shared-resource handling, completion evidence, and calling-agent convergence ownership. Let `plan-change` and `implement-change` consume those facts when delegating; profiles apply under their delegation-ready conditions, not as a local implementation gate. If safe delegation is unavailable, retain the work locally when the user's requirements and authority permit it; do not silently replace a required delegation method.
 
-If these are missing, do not expand the plan. Stop with one of:
-
-- `needs_design_decision`
-- `split_scope`
-- `needs_oracle_strategy`
-- `manual_checkpoint`
-
-For an agent scheduler or conditional parallel batch, prefer a small executable task-graph fixture over prose snapshots. Exercise ready-set order, dependency completion, conflict exclusion, effective capacity, actor binding, serial fallback, required-capacity stop, and convergence. Run the same approved graph under semantic routing and `inherit-main`; the oracle should compare topology and safety metadata, not provider model names.
+When the product being changed is itself an agent scheduler, model/state-transition and contract fixtures can protect dependency order, conflict exclusion, capacity, fallback behavior, and convergence. Test the actual owned scheduler interface and approved contract, not prose snapshots or provider names. An ordinary task using parallel assistance does not thereby require building a scheduler fixture.
 
 ## Agent Oracle Policy
 

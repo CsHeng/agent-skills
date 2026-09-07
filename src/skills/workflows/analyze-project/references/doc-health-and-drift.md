@@ -1,5 +1,7 @@
 # Document Health And Drift
 
+Read when document health or a concrete drift signal affects the answer's confidence, or when the user requests that assessment. Apply classifications to the investigated scope; do not require a whole-project health audit for a local fact whose evidence is sufficient.
+
 ## Document Health
 
 - `healthy`: stable docs are largely consistent, cover key project questions, and provide usable operating guidance
@@ -8,13 +10,15 @@
 
 ## Basis Used For The Run
 
-Pick one basis and report it directly:
+When a health assessment is relevant, pick the basis supported by the actual investigation and report it when requested or material to confidence:
 
 - `documentation-led`
 - `mixed verification`
 - `code reconstruction`
 
-## Required Drift Types
+## Drift Types
+
+For an actual drift finding, select the applicable type below. Do not manufacture findings or expand the investigation merely to populate every category.
 
 - `doc_code_mismatch`
 - `doc_doc_conflict`

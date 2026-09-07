@@ -1,30 +1,31 @@
 ---
 name: design-change
-description: "Use before implementation planning to classify change scope, truth impact, boundary impact, and the appropriate design depth."
+description: "Resolve material design decisions or produce a requested change design. Use when goals, boundaries, ownership, compatibility, or acceptance need a decision; not to execute an already bounded change or approved plan."
 ---
 
 # Design Change
 
-Define an implementation-independent change boundary before planning.
+Resolve the material change boundary that is still undecided, or document established decisions when the user requests a design artifact.
 
 ## Use This Skill When
 
-- the user wants to shape a concrete change before implementation
-- the request may affect stable truth, public boundaries, architecture, or operating semantics
-- goals, non-goals, acceptance conditions, ownership, or recovery need an explicit decision
+- the user explicitly requests a design artifact
+- a material decision about goals, non-goals, acceptance, ownership, compatibility, or recovery remains unresolved
 
-Do not use it for read-only project explanation, an already approved design, implementation, or a standalone review request.
+Do not use it merely because a task mentions architecture or may touch stable truth. An authorized bounded change or approved plan can enter implementation directly; code investigation and local technical choices do not automatically require a new design. If execution exposes a real boundary conflict, identify that decision rather than restarting every phase. An explicit request to document settled design decisions still belongs here, but does not authorize subsequent implementation.
+
+Do not use it for read-only project explanation or a standalone review request.
 
 ## Design
 
 1. Establish the relevant current truth and the concrete problem.
-2. Classify truth impact and boundary impact; choose `no-design`, `design-lite`, or `design-full` without equating file count with risk.
+2. For a design question that actually remains, classify truth and boundary impact and choose `no-design`, `design-lite`, or `design-full` without equating file count with risk. `no-design` is an available conclusion, not a credential every implementation must obtain from this Skill.
 3. Run a bounded clarification loop when goals, terminology, owners, constraints, non-goals, or acceptance conditions are unresolved.
 4. Compare viable boundary choices only when the change creates or materially alters a persisted architecture boundary. Compose `architecture-patterns` for that decision.
 5. Record the chosen scope, explicit non-goals, future phases, acceptance evidence, truth impact, recovery policy, and implementation surface.
 6. Produce a stable, reviewable design artifact when the chosen depth requires one.
 7. Decide whether independent review is required by an explicit user request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment.
-8. When review is required, invoke one bounded `review-change` evaluation before accepting the design, adjudicate its read-only candidate findings here, and apply at most one focused in-scope repair before rechecking the affected evidence.
+8. When review is required, request a bounded `review-change` evaluation and adjudicate its read-only candidate findings. Repair accepted defects within the confirmed design inputs and recheck affected evidence. Continue while there is an evidence-backed in-scope path; use targeted rereview when changes invalidate prior review evidence or an independent question remains. Do not impose a default repair count, reopen settled findings without new evidence, or change the confirmed goals to manufacture acceptance. Stop for a concrete unresolved decision, unavailable prerequisite, lack of a viable path, or an explicit invocation budget; report the reason and incomplete work. Once the requested artifact meets its requirements and no material issue remains, finish without redundant review.
 
 ## Decision States
 

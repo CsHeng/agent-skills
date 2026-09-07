@@ -1,6 +1,6 @@
 # Full Project Truth Audit
 
-Use this reference only when the user explicitly requests comprehensive project orientation or a full truth audit.
+Use this reference only when the user explicitly requests comprehensive project orientation or a full truth audit. The local-question and evidence-expansion branches do not inherit its sections or minimums. Incomplete documentation may require deeper investigation of a specific gap without activating this full-audit report.
 
 ## Semantic Sections
 

@@ -11,7 +11,7 @@ Identify code that can become smaller or clearer without changing owned behavior
 
 - Keep the audit read-only. Do not mutate the repository, generate files, run destructive commands, or spawn another agent.
 - Treat behavior, public contracts, compatibility, persisted data, security, auditability, and operational recovery as protected boundaries rather than removable complexity.
-- Route requests to apply a candidate or accept a product tradeoff through `design-change`. Route review of an exact current diff through `review-change`.
+- Route an explicitly authorized, sufficiently bounded candidate application to `implement-change`; use `design-change` when a material product, compatibility, ownership, or acceptance decision remains unresolved, or the user requests a design artifact. An audit recommendation or `recommend-design` disposition is evidence, not mutation authority or a mandatory design phase for already settled work. Route review of an exact current diff through `review-change`.
 - Do not turn ordinary task-local cleanup, performance work, or style preferences into a repository simplification audit.
 
 ## Workflow

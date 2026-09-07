@@ -48,7 +48,8 @@ id = "change-scope-design"
 owner = "design-change"
 negative = [
   "Turn an already approved design into an execution-grade task plan.",
-  "Implement a bounded change request or an already approved plan.",
+  "Implement an authorized bounded change or approved plan whose material decisions are already settled, even when it touches architecture or stable truth.",
+  "Investigate code or make local technical choices without a material design decision or requested design artifact.",
 ]
 lexical_hints = ["design change", "design-lite", "design-full"]
 
@@ -58,6 +59,7 @@ owner = "plan-change"
 negative = [
   "Decide unresolved architecture boundaries that still require design.",
   "Execute an explicit bounded change or tasks from an already approved plan.",
+  "Perform local implementation with sufficient scope, dependencies, and verification and no requested separate plan artifact.",
 ]
 lexical_hints = ["implementation plan", "task DAG", "plan change"]
 
@@ -67,7 +69,7 @@ owner = "code-simplification"
 negative = [
   "Perform ordinary cleanup while implementing an approved task.",
   "Tune performance without a repository simplification audit.",
-  "Apply or refactor a candidate instead of routing mutation intent through design-change.",
+  "Apply an explicitly authorized bounded candidate through implement-change, or resolve a material outstanding tradeoff through design-change.",
   "Review only the current diff instead of auditing current repository structure.",
 ]
 lexical_hints = ["simplify codebase", "code entropy", "remove accidental complexity"]
@@ -157,7 +159,8 @@ lexical_hints = ["infrastructure", "network path", "GitOps"]
 id = "verification-strategy"
 owner = "testing-strategy"
 negative = [
-  "Choose among TDD, contract, property, characterization, runtime, or chaos oracles before planning.",
+  "Choose among oracle methods when what evidence would prove correctness is still unresolved.",
+  "Run known checks or add routine regression tests under an established oracle and verification strategy.",
   "Apply one language's lint and test tooling conventions only.",
 ]
 lexical_hints = ["testing strategy", "test layers", "verification scope"]
@@ -226,8 +229,9 @@ owner = "executable-oracle-architecture-selector"
 negative = [
   "Implement concrete tests after the oracle boundary is already approved.",
   "Run a known verification command for an existing task.",
+  "Use TDD or execute locally without any unresolved oracle-method decision or actual delegation.",
 ]
-lexical_hints = ["oracle strategy", "TDD or contract tests", "readiness gate"]
+lexical_hints = ["oracle strategy", "TDD or contract tests", "choose acceptance evidence"]
 
 [[trigger_cases]]
 id = "persisted-language-selection"

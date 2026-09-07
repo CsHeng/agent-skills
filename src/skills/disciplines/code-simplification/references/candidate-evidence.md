@@ -68,4 +68,4 @@ smallest decisive oracle:
 disposition:
 ```
 
-If implementation is requested, hand the accepted candidate to `design-change`. This audit does not authorize mutation or choose the implementation plan.
+If the user explicitly authorizes applying a candidate and its scope, protected behavior, and acceptance are sufficient, hand it to `implement-change`. Use `design-change` for a material unresolved tradeoff or a requested design artifact, not as a prerequisite for already settled implementation. The audit and its dispositions do not authorize mutation or choose the implementation plan.

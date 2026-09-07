@@ -9,7 +9,7 @@ Review exactly one supplied target and keep final repair judgment with the calli
 
 ## Use This Skill When
 
-- `design-change`, `plan-change`, or `implement-change` requests its single bounded review
+- `design-change`, `plan-change`, or `implement-change` requests a bounded review of a current artifact or a targeted rereview of a repair
 - the user directly asks to review a specific design, plan, diff, or implementation slice
 
 A standalone review needs only a bounded target and review question. Do not require or create an upstream design, plan, implementation state, approval record, or lifecycle sequence merely because review was requested.
@@ -27,6 +27,8 @@ If a relevant review Skill is currently discoverable, use it as the evaluator:
 Otherwise perform the same bounded evidence-based review directly. Availability of those evaluator Skills is optional; do not assume a particular repository, provider, command name, or discovery mechanism.
 
 An evaluator receives only the bounded brief, remains read-only, returns candidate findings, and must not delegate recursively, invoke another lifecycle phase, repair files, or widen scope.
+
+One invocation returns one evaluation of its supplied target; this is not a limit on review calls for the whole change. The calling agent decides whether current evidence or an applicable rule needs another review. For rereview, focus on repairs, affected boundaries, and unresolved findings. Respect prior adjudications while their evidence remains valid; a new reviewer alone does not reopen a settled finding, and an old pass does not cover a new regression.
 
 ## Bounded Brief
 

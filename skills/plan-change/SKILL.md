@@ -1,6 +1,6 @@
 ---
 name: plan-change
-description: "Use after approved design or scope to create an execution-grade plan with task order, dependencies, verification, authority boundaries, and recovery policy."
+description: "Create a requested implementation plan or resolve execution ordering, dependencies, coordination, and verification for an authorized change. Not for executing an existing plan or a bounded change that needs no separate planning artifact."
 ---
 
 # Plan Change
@@ -9,11 +9,12 @@ Turn an approved design or explicit bounded scope into an implementation plan an
 
 ## Use This Skill When
 
-- an approved design or boundary decision needs ordered implementation work
-- touched surfaces, dependencies, verification, authority, or recovery must be decided before mutation
-- the work may benefit from explicitly independent task groups or delegated slices
+- the user requests an implementation plan based on settled design or bounded scope
+- execution ordering, dependencies, coordination, verification, authority, or recovery arrangements genuinely need a planning decision
 
-Do not use it while design or approval is unresolved, to implement an existing plan, or for a standalone review request.
+A bounded authorized change can enter implementation directly when those facts are already sufficient. Potential parallelism or ordinary local technical choices do not by themselves require a separate plan. When the user requests a plan artifact, document established decisions without reopening them or proceeding into implementation.
+
+Do not use it while a necessary design decision or scope approval is unresolved, to execute an existing plan, or for a standalone review request.
 
 ## Plan
 
@@ -24,9 +25,9 @@ Do not use it while design or approval is unresolved, to implement an existing p
 5. Choose executable or substitute evidence for each task. Compose `executable-oracle-architecture-selector` when correctness needs an explicit oracle strategy, and `testing-strategy` when that strategy needs concrete test lanes.
 6. State fix-forward or an explicitly guarded recovery policy for each risky task.
 7. Identify parallel or delegable work only when dependencies are frozen, writes and shared resources do not conflict, isolation is safe, repository ownership is unambiguous, and convergence ownership is clear. Record factual predecessors without projecting them into a host task graph; ordinary delegated slices remain independent and flat. Every serial dependency between delegation-ready tasks must name the concrete predecessor artifact, shared resource, or parent-owned decision that requires the order; narrative order alone is not a dependency. Otherwise keep the plan serial.
-8. Check work-package readiness and artifact coherence.
+8. Check that the objective, authorized writes, protected behavior, factual dependencies, and acceptance evidence are sufficient and coherent. They may come from existing requests or contracts; local implementation does not require delegation profiles, parallel policy, or a fixed review budget. Assess delegation readiness separately only for slices actually delegated or claimed delegation-ready.
 9. Decide whether independent review is required by an explicit user request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment.
-10. When review is required, invoke one bounded `review-change` evaluation before accepting the plan, adjudicate its read-only candidate findings here, and apply at most one focused in-scope repair before rechecking the affected evidence.
+10. When review is required, request a bounded `review-change` evaluation, adjudicate its read-only candidate findings, and repair accepted defects within the confirmed design and planning scope. Continue evidence-backed in-scope repair and affected verification without a default count limit. Use targeted rereview when prior evidence becomes stale or an independent question remains; do not reopen adjudicated findings without new evidence. Do not rewrite confirmed goals, dependencies, authority, or acceptance to make the plan pass. Stop for a concrete decision or prerequisite gap, lack of a viable path, or an explicit invocation budget, reporting the reason and incomplete work. Finish when the requested plan satisfies its requirements; further review is not a ritual.
 
 ## Conditional Decisions
 

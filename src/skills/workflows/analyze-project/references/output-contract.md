@@ -1,6 +1,6 @@
 # Analyze Project Output Contract
 
-Use `output-styles` as the shared rendering baseline. This contract adds project-analysis semantics without imposing a second conversational style system.
+Read this reference when the requested truth map, audit, or material drift needs reporting guidance. A direct local fact answer does not require it. Use `output-styles` as the shared rendering baseline; this contract adds project-analysis semantics without a second conversational style system.
 
 ## Output Ownership
 
@@ -18,13 +18,13 @@ Use this mode unless the user explicitly requests a comprehensive project audit.
 4. Include drift signals only when drift exists and affects the answer or warrants a follow-up.
 5. Stop after the last useful action, risk, or unresolved point.
 
-Project scope, truth roots, terminology, search boundaries, architecture, operations, status, and drift are required analysis axes. They are not mandatory headings. Omit axes that do not materially support the response.
+Choose only the analysis concerns the question or evidence gap needs: project scope, truth roots, terminology, search boundaries, architecture, operations, status, and drift are available concerns, not a mandatory full reading or analysis checklist. Do not investigate unrelated axes merely to omit them from the final answer.
 
 ## Full Audit Mode
 
 Use full-audit mode only when the user explicitly requests comprehensive project orientation, a complete truth map, or an audit covering most analysis axes. A degraded or untrusted document-health result does not by itself authorize a long report.
 
-Read `references/full-audit-output.md` for the full-audit semantic sections. Continue to use the selected `output-styles` mode inside those sections.
+Read [Full Project Truth Audit](full-audit-output.md) for the full-audit semantic sections. Continue to use the selected `output-styles` mode inside those sections.
 
 ## Evidence
 

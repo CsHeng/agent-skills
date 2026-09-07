@@ -1,63 +1,35 @@
 ---
 name: analyze-project
-description: "Use for repository-level read-only truth mapping: explain project purpose, current state, documented architecture or search boundaries, terminology, operations, gaps, unfinished work, or doc drift. Own the response for broad project orientation or explicit truth audits; for runtime incidents or domain diagnosis, supply project-truth evidence to the matching primary skill instead. Do not use for implementation or code review."
+description: "Answer read-only project-state questions from current repository truth, from a local fact to requested broad orientation or a truth audit. Expand investigation when evidence is insufficient; not for implementation or code review. Supply bounded project evidence to a more specific domain diagnosis."
 ---
 
 # Analyze Project
 
-Read stable project truth before answering recurring project-state questions.
+Answer the actual project question from sufficient current evidence, without turning every local query into a full audit.
 
-## Use This Skill When
+## Select The Scope
 
-- the user asks what the project does
-- the user asks what is implemented, in progress, or still missing
-- the user asks where architecture or concept boundaries live
-- the user asks how terminology, ignored files, hidden files, or search boundaries are organized
-- the user asks how to operate, use, or validate the project
-- the user needs a current-state explanation before deciding whether docs should be updated by `organize-docs`
+- For a local fact, identify the relevant `project`, follow applicable scoped instructions, and read the stable owner that can answer the question. Verify the specific claim from code, configuration, or commands when needed. Do not automatically inventory all terminology or read every root document.
+- If ownership is unclear, stable sources conflict, or evidence is insufficient, expand only along that gap: inspect the relevant repository maps, README/AGENTS, ignore rules, or implementation. State uncertainty rather than guessing. Poor documentation may justify code reconstruction, but does not itself authorize a full-project report.
+- For explicitly requested broad orientation or a full truth audit, map the relevant stable truth and search boundaries before drawing conclusions. Use [Full Project Truth Audit](references/full-audit-output.md) for the comprehensive branch, not for routine local questions.
 
-## Do Not Use This Skill When
+A request to implement, reorganize docs, or review a change belongs to its matching Skill. For runtime/infrastructure/security or another domain diagnosis, contribute bounded project-truth evidence to that primary owner rather than emitting a second report.
 
-- the user wants to reorganize or update docs directly
-- the user is asking for a design, plan, or code review workflow
-- the user only wants local git or worktree status
-- the main task is a runtime incident or domain diagnosis; use the matching domain skill as response owner and this skill only as a truth-evidence overlay
+## Investigate And Answer
 
-## Workflow
+1. Bound the question and the project. Honor the most specific applicable project instructions; use `docs/AGENTS.md`, `AGENTS.md`, `docs/README.md`, and `README.md` as needed to locate the truth owner, not as a fixed reading list for every query.
+2. Separate stable truth from stage history before searching. Observe applicable ignore/search policy; a default search miss does not prove hidden, generated, or ignored material absent.
+3. Read enough stable evidence to support the answer and perform targeted read-only verification. Escalate investigation when contradictions or missing facts actually prevent a reliable conclusion.
+4. When document health or drift affects confidence or is requested, read [Document Health And Drift](references/doc-health-and-drift.md). Classify health and verification basis for that affected scope; do not require a whole-repository classification for an unrelated local fact.
+5. Give the conclusion, relevant evidence, and any material limitation once. Use `output-styles`; read [Output Contract](references/output-contract.md) when reporting a broader truth map, drift, or a requested audit. A direct local answer needs no extra report template.
+6. Stop after answering. Document reorganization or other mutation requires its own authorized request; this Skill remains read-only.
 
-1. Determine the `project` scope before reading deeply.
-2. Load repository policy for the selected `project` scope by reading the most specific project-scoped `docs/AGENTS.md`, `AGENTS.md`, `docs/README.md`, and `README.md` first, then fall back outward as needed, along with local ignore files.
-3. Separate stable truth roots from stage artifact roots before searching.
-4. Inventory project-local terminology and default search boundaries before drawing conclusions.
-5. Judge document health as `healthy`, `degraded`, or `untrusted`.
-6. Pick one basis for the run: `documentation-led`, `mixed verification`, or `code reconstruction`.
-7. Read stable truth first, then do targeted read-only verification from code, commands, tests, or repository structure.
-8. Select the rendering depth from `references/output-contract.md`: use selective terse output by default and full-audit output only for an explicit comprehensive truth-mapping request.
-9. Emit drift signals and `recommended_action` values from `references/doc-health-and-drift.md` only when stable truth is weak, conflicting, incomplete, or stale.
-10. Stop after reporting. Use only the current `recommended_action` values `run-organize-docs`, `ask-human`, or `search-stage-artifacts-explicitly` instead of mutating docs directly.
+## Protected Boundaries
 
-## Operating Rules
-
-- Use `project`, not `workspace`, as the analysis unit.
-- Keep stable truth separate from stage artifacts during default search.
-- Treat terminology as repository-local unless a scoped stable doc defines a wider convention.
-- Report default search boundaries from local ignore files before deciding that ignored or hidden material is absent.
-- Use stage artifacts only when the user explicitly asks for history or when stable truth is insufficient.
-- Render file references relative to the selected project root; do not emit absolute filesystem paths in the report unless the user explicitly asks for them.
-- Prefer context-appropriate relative file paths and command examples over absolute paths in reports and guidance.
-- For Git projects, when a repo root needs to be made explicit, prefer `cd "$(git rev-parse --show-toplevel)"` before relative commands.
-- Follow `output-styles` for conversational density, evidence labels, numbering, and response mode.
-- Treat project scope, truth roots, terminology, search boundaries, document health, and verification basis as analysis axes, not mandatory response sections.
-- When another primary skill owns the response, contribute only the project-truth facts, confidence, and drift signals it needs; do not emit an independent project report.
-- Emit the conclusion once. Render only relevant findings and omit empty or low-value sections.
-- Use `fact`, `inferred`, `judgment`, and `uncertain` as the conversational evidence labels. Record `documented`, `code`, `runtime`, or `external` as evidence provenance only when it matters.
-- Report document health and verification basis when they affect confidence, or when full-audit output was explicitly requested.
-- Keep one or two short file references with the supporting evidence; use nested reference lists only for larger or ambiguous evidence sets.
-- Preserve every drift signal's type, severity, summary, source evidence, verification evidence, and recommended action, but render those fields compactly.
-- Keep the result read-only; do not rewrite stable docs from this skill.
-
-## References
-
-- `references/output-contract.md`
-- `references/doc-health-and-drift.md`
-- Read `references/full-audit-output.md` only for an explicit comprehensive project truth audit.
+- Use `project`, not `workspace`, as the analysis unit. Keep terminology repository-local unless an applicable stable owner defines a wider convention.
+- Keep stable truth and stage artifacts distinct. Search stage history only when explicitly requested or needed to resolve a gap that stable truth cannot answer; make that use visible rather than silently promoting history to current truth.
+- Preserve the subject and limits of each claim. File existence, documented intent, current implementation, observed runtime behavior, and inferred cause are different evidence.
+- Use `fact`, `inferred`, `judgment`, and `uncertain` when confidence matters. Give evidence provenance (`documented`, `code`, `runtime`, or `external`) only when useful.
+- Prefer project-relative references with exact starting lines. Use external paths when the evidence necessarily lives outside the project; do not imply those external files apply to every project.
+- Keep references and output proportional to the question. Internal investigation as well as final rendering must scale with scope; do not do an unrequested full audit and merely shorten its answer.
+- If another primary Skill owns the response, contribute only relevant project facts, confidence, and drift evidence. Do not concatenate report templates or take mutation authority from that composition.
