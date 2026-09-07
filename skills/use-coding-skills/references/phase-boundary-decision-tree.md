@@ -4,7 +4,7 @@ Choose how to carry context from one completed coding phase into the next withou
 
 ## Entry Condition
 
-Apply this tree only at a completed phase boundary, after one coherent analysis, design, planning, implementation, verification, or review phase has reached its owning stop state. Mid-phase, continue the current work unless a separately authorized and independently scoped delegation can proceed without losing the active reasoning thread.
+Apply this tree only at a completed phase boundary, after one coherent analysis, design, planning, implementation, verification, or review phase has reached its owning stop state. Mid-phase, continue the current work unless a separately authorized and independently scoped delegation can proceed without losing the active reasoning thread. Same-task follow-up, in-scope repair, or reuse of a still-valid executor is not a completed phase boundary and does not enter this tree.
 
 Evaluate the branches in order and take the first applicable branch.
 
@@ -39,3 +39,5 @@ When PB3 or PB5 applies, use the `Compact Instructions` section in the owning `u
 - Express each branch semantically; the host decides how to continue, reset, hand off, delegate, or compact.
 - Use observed context pressure and next-phase needs instead of a fixed context-window threshold.
 - Keep lifecycle transitions with their workflow owners. This tree selects a context operation only.
+- Keep the PB1–PB5 order; compaction, a missing handle, or task-state recovery does not insert a router or ledger gate ahead of these branches.
+- Compaction itself is not a completed phase and does not force discard, portable handoff, or a new executor.

@@ -1,6 +1,6 @@
 ---
 name: plan-change
-description: "Create a requested implementation plan or resolve execution ordering, dependencies, coordination, and verification for an authorized change. Not for executing an existing plan or a bounded change that needs no separate planning artifact."
+description: "Create a requested implementation plan or resolve execution ordering, dependencies, coordination, verification, authority, or delivery endpoints for an authorized change. Not for executing an existing plan or a bounded change that needs no separate planning artifact."
 ---
 
 # Plan Change
@@ -10,7 +10,7 @@ Turn an approved design or explicit bounded scope into an implementation plan an
 ## Use This Skill When
 
 - the user requests an implementation plan based on settled design or bounded scope
-- execution ordering, dependencies, coordination, verification, authority, or recovery arrangements genuinely need a planning decision
+- execution ordering, dependencies, coordination, verification, authority, delivery endpoints, or recovery arrangements genuinely need a planning decision
 
 A bounded authorized change can enter implementation directly when those facts are already sufficient. Potential parallelism or ordinary local technical choices do not by themselves require a separate plan. When the user requests a plan artifact, document established decisions without reopening them or proceeding into implementation.
 
@@ -20,14 +20,16 @@ Do not use it while a necessary design decision or scope approval is unresolved,
 
 1. Load the approved design or bounded scope and preserve its decisions.
 2. Clear non-automatable prerequisites before presenting an execution-ready plan. Report unresolved account, login, access, credential, license, or physical prerequisites as `manual_checkpoint`; never hide them inside implementation tasks.
-3. Split the work into stable task IDs with explicit factual dependencies, bounded objectives, touched files or surfaces, completion conditions, and concrete verification.
-4. State required authority for external mutation, destructive actions, live cutovers, commits, publication, or deployment. Planning does not grant that authority.
+3. Split the work into stable task IDs with explicit factual dependencies, bounded objectives, ownership, completion conditions, and concrete verification. Record write surfaces, resources, and files when they are already known; leave remaining local investigation to the executor instead of inventing exact paths. Ordinary implementation is not blocked by missing delegation metadata.
+4. Separate whether an action belongs to this task, whether required authority is already covered or still missing, and whether current capability can perform it. State delivery endpoints when the task includes delivery. Consume already approved authority for the same goals and side effects after checking remaining premises; list only uncovered authority as `manual_checkpoint`. Planning does not grant authority. Missing capability blocks that step without blocking independently completable authorized work or reporting local completion as end-to-end delivery.
 5. Choose executable or substitute evidence for each task. Compose `executable-oracle-architecture-selector` when correctness needs an explicit oracle strategy, and `testing-strategy` when that strategy needs concrete test lanes.
 6. State fix-forward or an explicitly guarded recovery policy for each risky task.
-7. Identify parallel or delegable work only when dependencies are frozen, writes and shared resources do not conflict, isolation is safe, repository ownership is unambiguous, and convergence ownership is clear. Record factual predecessors without projecting them into a host task graph; ordinary delegated slices remain independent and flat. Every serial dependency between delegation-ready tasks must name the concrete predecessor artifact, shared resource, or parent-owned decision that requires the order; narrative order alone is not a dependency. Otherwise keep the plan serial.
-8. Check that the objective, authorized writes, protected behavior, factual dependencies, and acceptance evidence are sufficient and coherent. They may come from existing requests or contracts; local implementation does not require delegation profiles, parallel policy, or a fixed review budget. Assess delegation readiness separately only for slices actually delegated or claimed delegation-ready.
+7. Actively identify cohesive delegable work, including local investigation, implementation, tests, and repair. Independent slices can run in a flat batch when inputs and interfaces are stable, writes and shared resources do not conflict, isolation is safe, and repository and convergence ownership are clear. Do not pad calls or require explorer-first investigation. Record concrete predecessor artifacts, shared resources, or parent decisions for serial order; narrative order alone is not a dependency. Keep unresolved slices conditional rather than claiming delegation readiness.
+8. Check that the objective, authorized writes, protected behavior, factual dependencies, delivery endpoints, and acceptance evidence are sufficient and coherent. They may come from existing requests or contracts; local implementation does not require delegation profiles, parallel policy, exact dispatch paths, or a fixed review budget. Assess delegation readiness separately only for slices actually delegated or claimed delegation-ready.
 9. Decide whether independent review is required by an explicit user request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment.
 10. When review is required, request a bounded `review-change` evaluation, adjudicate its read-only candidate findings, and repair accepted defects within the confirmed design and planning scope. Continue evidence-backed in-scope repair and affected verification without a default count limit. Use targeted rereview when prior evidence becomes stale or an independent question remains; do not reopen adjudicated findings without new evidence. Do not rewrite confirmed goals, dependencies, authority, or acceptance to make the plan pass. Stop for a concrete decision or prerequisite gap, lack of a viable path, or an explicit invocation budget, reporting the reason and incomplete work. Finish when the requested plan satisfies its requirements; further review is not a ritual.
+
+Read `references/delivery-and-delegation.md` when the plan must record delivery endpoints, two-stage planning versus dispatch, cohesive worker slices, required versus missing authority, or same-task continuation without handles. Ordinary local plans that do not claim those arrangements may omit it.
 
 ## Conditional Decisions
 
@@ -35,21 +37,24 @@ Use `language-decision-tree` only when a task creates or replaces a persisted pr
 
 When the approved design contains an architecture decision, reference it and plan reversible implementation increments, ownership, oracles, and observable upgrade triggers. Do not rescore the design during planning. Return `needs_design_decision` if current evidence invalidates an approved design premise.
 
+Planning fixes acceptable behavior and ownership; dispatch refines host-required files and inputs inside the approved scope. Do not expand already approved exact files, interfaces, or order, invent readiness, or pre-solve the worker's implementation merely to fill filenames. In-scope local refinement does not reopen the whole plan.
+
 When the user explicitly requests delegated or subagent-assisted implementation, read `references/delegation-profiles.toml`. For every task claimed ready for delegation, record one canonical execution profile, one canonical reasoning profile, one repository owner, an exact repository-relative write set, resource locks, isolation, convergence ownership, verification, completion evidence, and failure policy. Mark the task not ready or keep delegation conditional when those facts are unresolved.
 
 A writable delegated task belongs to one repository root. Split a multi-repository milestone into repository-owned writable slices, retain cross-repository integration in the active parent, or design an explicit external boundary with its own authority and cleanup. Do not imply that one worker can mutate sibling repositories, and do not prescribe a host-specific working-directory flag, snapshot, worktree, staging path, or scheduler.
 
-`implement-change` owns any later projection of an approved factual predecessor into a compatible host mechanism. A hard predecessor is eligible only when approved implementation order requires it and no parent-owned synthesis, authority, verification, review adjudication, repair, or continuation decision occurs between the tasks.
+`implement-change` owns any later projection of an approved factual predecessor into a compatible host mechanism. A hard predecessor is eligible only when approved implementation order requires it and no parent-owned synthesis, authority, cross-task coordination, finding adjudication, final acceptance, or continuation decision occurs between the tasks. Verification or repair labor may have factual dependencies but does not by itself require an intervening parent decision. Do not compile a plan into a static worker-to-reviewer-to-repair chain that bypasses parent semantic adjudication.
 
 ## Plan Guidance
 
 An execution-grade plan should record:
 
 - milestone objective, non-goals, and future phases
-- task IDs, dependencies, scope slices, and touched surfaces
-- completion conditions and verification commands or evidence
-- explicit authority boundaries and prerequisite status
+- task IDs, dependencies, scope slices, ownership, and known write surfaces
+- completion conditions, delivery endpoints, and verification commands or evidence
+- required authority, missing authority, and capability gaps as separate facts
 - serial order or safely independent named groups
+- expected same-task parent-child interaction without prefilling handles that do not exist yet
 - delegation eligibility, repository ownership, exact write set, resource locks, isolation, and convergence ownership when useful
 - canonical execution and reasoning profiles for tasks claimed delegation-ready after an explicit delegated-implementation request
 - recovery policy and any guarded rollback trigger

@@ -37,12 +37,20 @@ When compacting or handing off long conversations, preserve in priority order:
 1. Architecture decisions and durable contracts.
 2. Modified files and key changes.
 3. Current verification status.
-4. Open TODOs, recovery notes, and next gates.
+4. Open TODOs, recovery notes, unadjudicated reports, still-valid executors, and next gates.
 5. Tool outputs only as pass/fail or the smallest required evidence.
+
+## Task Continuity
+
+Distinguish capability, guidance, and task-delegation state. Capability and guidance persistence belong to the runtime; recover next-step decisions from trusted repository truth, current host results, and still-valid approvals rather than from a compact summary.
+
+After compaction or resume, first reconcile actual changes, the current goal and approval baseline, unadjudicated reports, and any still-valid executor before choosing continue or create. Do not redispatch completed or still-running work from a stale running or failed label, do not treat an unverified candidate as accepted, and do not recreate an executor only because a handle is absent from a summary.
+
+Same-task follow-up is not a phase-boundary gate. Keep the existing direct-match bypass; this skill remains optional routing and does not impose a mandatory router, mission ledger, or full skills reload. Continuation depends on a real host resume path; do not claim host continuation is already supported, and do not read arbitrary historical JSONL or raw sessions to bypass host workspace and capability checks.
 
 ## References
 
 - Read `references/routing.toml` and `references/routing.md` when task routing or skill composition is ambiguous.
 - Read `references/phase-boundary-decision-tree.md` when choosing how to preserve or discard context between completed coding phases.
-- Read `references/memory-boundary.md` when a task touches memories, sessions, logs, generated summaries, or stale recalled facts.
+- Read `references/memory-boundary.md` when a task touches memories, sessions, logs, generated summaries, stale recalled facts, or recovery after compaction.
 - Read `references/preference-contract.md` when tuning session defaults, response style, or user preference capture.

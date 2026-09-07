@@ -29,6 +29,7 @@ Answer these before choosing a method:
 - Is the risk local, cross-service, stateful, security-sensitive, or production-only?
 - Can the behavior be expressed as examples, contracts, properties, models, snapshots, or runtime SLOs?
 - Is the agent allowed to change the oracle, or only the implementation?
+- Does this change persist, migrate, or recover state, and does existing evidence still hold for the final candidate?
 
 Common boundaries:
 
@@ -102,6 +103,14 @@ When necessary evidence is missing or contradictory, name the actual unresolved 
 Actual delegation additionally needs an accountable repository owner, bounded writes, safe isolation and shared-resource handling, completion evidence, and calling-agent convergence ownership. Let `plan-change` and `implement-change` consume those facts when delegating; profiles apply under their delegation-ready conditions, not as a local implementation gate. If safe delegation is unavailable, retain the work locally when the user's requirements and authority permit it; do not silently replace a required delegation method.
 
 When the product being changed is itself an agent scheduler, model/state-transition and contract fixtures can protect dependency order, conflict exclusion, capacity, fallback behavior, and convergence. Test the actual owned scheduler interface and approved contract, not prose snapshots or provider names. An ordinary task using parallel assistance does not thereby require building a scheduler fixture.
+
+## Change-Sensitive State Evidence
+
+Scale persistence and recovery evidence to this change, the value of the affected state, the blast radius, and whether prior evidence still applies to the final candidate. A project stage label such as unreleased or non-commercial does not lower protection for unique or irreplaceable data. Follow applicable project requirements; do not skip them to save time.
+
+Ordinary logic that does not touch persistence or recovery paths does not default to a full backup/restore drill. Necessary behavior checks still run. When the change is a migration, select an oracle for upgrading representative pre-migration state, not only empty-store initialization; this does not require or authorize touching live data. When the change is backup/restore itself, restore behavior is the product behavior under test and needs corresponding evidence.
+
+Reuse still-valid prior evidence. Re-verify combinations, state transitions, or checks that later edits invalidated. Do not add a risk-scoring system, a fixed recovery-drill checklist, or a mandatory pre-work environment rehearsal.
 
 ## Agent Oracle Policy
 

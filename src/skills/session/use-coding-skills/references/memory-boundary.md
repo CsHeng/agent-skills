@@ -20,6 +20,15 @@ Agent memory is a recall layer, not the primary source of truth.
 - The fact can drift and is cheap to verify.
 - The answer depends on current install state, live runtime, tool versions, service behavior, or external project support.
 - A memory note conflicts with repository truth or current command output.
+- A compact or session summary claims executor, permission, running, or failed state.
+
+## Recovery Evidence
+
+Capability, guidance, and task-delegation state are different facts. Runtime restores tools and installed guidance; recover task decisions from repository truth, current host results, still-valid approvals, actual changes, unadjudicated reports, and continuable executors.
+
+Do not treat a compact or memory summary of running, failed, or missing handles as current executor state. Do not overwrite source from a summary, do not accept an unverified candidate, and do not redispatch or recreate work only because a handle is absent.
+
+Do not read arbitrary historical JSONL, transcripts, or raw sessions to bypass host workspace, permission, or capability checks. If the host cannot resume a session, report that gap and choose a bounded rebuild or local continue; do not claim continuation is already supported, and do not disguise a new session as the original executor.
 
 ## Promotion Rule
 

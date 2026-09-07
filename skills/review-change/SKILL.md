@@ -26,9 +26,15 @@ If a relevant review Skill is currently discoverable, use it as the evaluator:
 
 Otherwise perform the same bounded evidence-based review directly. Availability of those evaluator Skills is optional; do not assume a particular repository, provider, command name, or discovery mechanism.
 
-An evaluator receives only the bounded brief, remains read-only, returns candidate findings, and must not delegate recursively, invoke another lifecycle phase, repair files, or widen scope.
+An evaluator receives only the bounded brief, remains read-only, returns candidate findings, and must not delegate recursively, invoke another lifecycle phase, repair files, or widen scope. Read-only review does not grant command execution: any private verification must be supported and permitted by the host, preserve the reviewed source and protected state, and stay within the brief. Worker self-checking is not independent review.
 
 One invocation returns one evaluation of its supplied target; this is not a limit on review calls for the whole change. The calling agent decides whether current evidence or an applicable rule needs another review. For rereview, focus on repairs, affected boundaries, and unresolved findings. Respect prior adjudications while their evidence remains valid; a new reviewer alone does not reopen a settled finding, and an old pass does not cover a new regression.
+
+## Reviewer Continuity
+
+For a justified follow-up on the same change, prefer the original reviewer when the host can safely continue its context, role, permissions, and current target. Supply the previous result reference, exact new candidate and delta, relevant evidence, parent dispositions, and remaining review question. Confirm the actual repair and affected regressions; neither a worker's claim nor the caller's wish to finish proves success.
+
+The reviewer remains separate from the worker even across rounds. Do not rename a worker session to manufacture independence. A fresh view is useful for a changed material boundary, deficient prior coverage or judgment, or an explicit independent-review request, not as a fixed extra round. Respect route authority, and do not silently switch a selected model or reuse a session across repositories or roles. When valid continuation is unavailable, describe reconstruction or a new review honestly rather than claiming preserved native context.
 
 ## Bounded Brief
 
@@ -36,9 +42,11 @@ Include only what is needed to review the target:
 
 - target class and objective
 - goals, non-goals, and acceptance criteria supplied by the caller
-- exact artifact, diff, or changed files
-- declared verification and current evidence
-- allowed supporting files, each with a reason
+- exact artifact, diff, or changed files and current candidate identity
+- declared verification and evidence applicable to that candidate, including gaps or invalidated results
+- allowed supporting files, each with a reason and a genuinely accessible source or bounded excerpt
+
+Preserve the parent goal, protected behavior, and important rationale without copying the entire conversation. A path outside the evaluator's readable snapshot is not supplied context. On follow-up, pass changed facts and still-valid adjudications rather than rewriting the acceptance baseline.
 
 Stop with `manual-decision-required` when the target itself is missing or cannot be bounded. Do not reverse-engineer missing lifecycle artifacts.
 

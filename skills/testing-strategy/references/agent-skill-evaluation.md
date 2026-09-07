@@ -42,6 +42,8 @@ Report relevant variation across runs. If different measures use different eligi
 
 Compare required behavior first. Treat code size, dependency count, and maintenance surface as contextual proxies for a named goal, not as the goal itself. Report tokens, cost, and latency only when the observed accounting and execution conditions are comparable, including relevant setup or instruction overhead. A more compact answer is not necessarily a smaller implementation or a cheaper agent run.
 
+When cost, elapsed time, or repeated labor is in scope, compare the accepted result of the complete task across every round that produced it. Record host facts that distinguish create, continue, and reconstruct; a later continue is not a second new worker, and a reconstructed session is not a successful continue. Count incremental usage once. Do not add recovered historical usage on top of the same rounds, and do not treat same-session identity as prefix-cache or as a proven saving. Reuse rate is not an objective. This reference does not define a metrics system, provider pricing, or a mandatory experiment gate.
+
 ## Reporting and Claim Limits
 
 Keep the report proportional to the decision. Include the question, comparator and content revisions, task/fixture and model/host conditions, isolation and activation evidence, acceptance results, attempt accounting, comparable measures, and remaining uncertainty. Preserve enough evidence for a reviewer to trace each material conclusion, subject to approved data handling; no new ledger or result schema is required.

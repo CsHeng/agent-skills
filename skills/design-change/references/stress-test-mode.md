@@ -11,10 +11,10 @@ Use this reference only when the user explicitly asks to grill, stress-test, har
 
 - `frontier`: Keep every unresolved decision-changing question whose prerequisites are already settled in the current frontier. A question that depends on another unresolved answer waits for a later round.
 - `round`: Ask the whole current frontier in one numbered round instead of serializing independent decisions across separate turns.
-- `question_id`: Give questions stable `Q*` identifiers that remain unchanged when later rounds add newly unblocked questions.
+- `question_id`: Give questions stable `Q*` identifiers that remain unchanged when later rounds add newly unblocked questions. These identifiers exist only for the current explicit stress-test; do not promote them into a permanent issue ledger.
 - `recommendation`: Include the recommended answer for every question.
 - `tradeoff`: State the material cost, risk, or discarded alternative attached to the recommendation.
-- `fact_owner`: Inspect code, docs, runtime, and required external evidence with the main agent instead of asking the user for facts that can be discovered. This contract does not add automatic delegation authority.
+- `fact_owner`: Discoverable facts in code, docs, runtime, and required external evidence belong to agent investigation, not to the user questionnaire. The parent remains responsible for asking only decision-changing questions; approved help may complete that factual labor. This does not require the parent to perform every inspection personally, and this contract does not add delegation authority.
 - `sequential_override`: Respect an explicit user preference to work one question at a time without changing the decision tree or completion condition.
 
 Recompute the frontier after each user reply: record settled decisions, unlock questions whose prerequisites are now satisfied, and ask the next complete round.

@@ -110,6 +110,12 @@ REQUIRED: If a documentation rule must be machine-enforced, place the enforceabl
 
 When auditing an existing suite, find tests and checkers that read Markdown and classify every assertion. Delete prose snapshots rather than weakening them to smaller keyword checks. Retain syntax, link, schema, embedded machine-identifier, executable-example, generated-surface, and consumer-behavior checks.
 
+## State, Recovery, And Evidence Reuse
+
+Do not schedule a full backup/restore exercise for ordinary logic that leaves persistence and recovery paths untouched. Migration checks must exercise the upgrade of realistic existing state, not only empty-database initialization. Changes to backup or restore must verify restore behavior. Unique or irreplaceable data keeps its protection regardless of project-stage labels; still obey applicable repository requirements.
+
+Reuse reliable evidence that still matches the final candidate. Later edits that change the covered behavior, fixture, or environment invalidate the old result and need a fresh check. Local greens do not prove uncovered combinations or state transitions; those still need verification. Do not invent a scoring rubric or a standing drill catalog to force this scaling.
+
 ## Oracle Integrity
 
 - Do not delete, weaken, or bulk-update an oracle to make implementation pass without explicit review.

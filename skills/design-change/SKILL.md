@@ -12,7 +12,7 @@ Resolve the material change boundary that is still undecided, or document establ
 - the user explicitly requests a design artifact
 - a material decision about goals, non-goals, acceptance, ownership, compatibility, or recovery remains unresolved
 
-Do not use it merely because a task mentions architecture or may touch stable truth. An authorized bounded change or approved plan can enter implementation directly; code investigation and local technical choices do not automatically require a new design. If execution exposes a real boundary conflict, identify that decision rather than restarting every phase. An explicit request to document settled design decisions still belongs here, but does not authorize subsequent implementation.
+Do not use it merely because a task mentions architecture or may touch stable truth. An authorized bounded change or approved plan can enter implementation directly; do not route it through this Skill to obtain a `no-design` credential. Code investigation and local technical choices do not automatically require a new design. If execution exposes one real boundary conflict, resolve that decision and return to the original task rather than restarting every phase. An explicit request to document settled design decisions still belongs here, but does not authorize subsequent implementation.
 
 Do not use it for read-only project explanation or a standalone review request.
 
@@ -20,7 +20,7 @@ Do not use it for read-only project explanation or a standalone review request.
 
 1. Establish the relevant current truth and the concrete problem.
 2. For a design question that actually remains, classify truth and boundary impact and choose `no-design`, `design-lite`, or `design-full` without equating file count with risk. `no-design` is an available conclusion, not a credential every implementation must obtain from this Skill.
-3. Run a bounded clarification loop when goals, terminology, owners, constraints, non-goals, or acceptance conditions are unresolved.
+3. When a remaining goal, means, terminology, owner, hard-constraint, non-goal, acceptance, or authority mismatch actually blocks progress, read `references/goal-alignment.md` and clarify only what that decision needs. Stop once the next authorized step can proceed.
 4. Compare viable boundary choices only when the change creates or materially alters a persisted architecture boundary. Compose `architecture-patterns` for that decision.
 5. Record the chosen scope, explicit non-goals, future phases, acceptance evidence, truth impact, recovery policy, and implementation surface.
 6. Produce a stable, reviewable design artifact when the chosen depth requires one.
@@ -52,4 +52,4 @@ Use guarded rollback only when a concrete hazard makes it safer than forward rep
 
 Keep Markdown paragraphs and list items naturally unwrapped. When a document has several independent scopes, use stable unique labels rather than restarting ambiguous numbered lists.
 
-When the user explicitly asks to grill, stress-test, harden, challenge, or interrogate a design or plan, read `references/stress-test-mode.md`.
+When the user explicitly asks to grill, stress-test, harden, challenge, or interrogate a design or plan, read `references/stress-test-mode.md`. Ordinary bounded clarification does not enable that mode.
