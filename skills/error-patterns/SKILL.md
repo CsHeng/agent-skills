@@ -31,7 +31,7 @@ Do not use it to own:
 3. Decide which actor can safely recover and which state must be preserved or cleaned up.
 4. Select the smallest behavior that prevents invalid state and avoids failure amplification.
 5. Define observable success, exhaustion, degraded state, and recovery evidence.
-6. Verify the failure and recovery paths with the smallest realistic executable oracle.
+6. Verify the failure and recovery paths with the smallest realistic executable oracle. A missing perfect agent-runnable reproducer does not freeze unrelated authorized work.
 
 When a reproducible code or performance failure needs a tighter evidence loop, read `references/debugging-tight-loop.md`. That reference helps establish the oracle; it does not make this skill the incident or lifecycle owner.
 
@@ -75,5 +75,7 @@ Health checks should answer an actor's decision. Liveness proves the process can
 
 - Exercise representative transient, permanent, timeout, cancellation, partial, and cleanup paths that the boundary declares.
 - Prove retry budgets, idempotency, resource release, degraded markers, and health-state transitions where they apply.
+- Do not define effort by a fixed hypothesis or test count.
+- Reuse still-valid recovery evidence; re-verify affected paths when recovery implementation or retained-state conditions changed.
 - Route concrete logging fields to `logging-standards` and test placement to `testing-strategy`.
 - Return recovery evidence and unresolved risk to the owning workflow. Do not independently choose rollback, widen the plan, or declare the change complete.

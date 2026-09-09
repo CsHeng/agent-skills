@@ -37,6 +37,7 @@ Write or update long-lived project truth after an explicit user request, an expl
 - Stable truth roots and stage artifact roots must be explicit.
 - Default docs search should avoid stage artifacts when the repository needs that search-boundary.
 - Stage artifacts can support history, but they do not become default truth automatically.
+- Keep currently effective design or plan prose limited to live goals, authorized discretion, ownership, delivery endpoints, and real pause conditions. Leave superseded gates and historical exemptions in stage history and cite them shortly when needed. Do not copy old exemption lists into every live task, treat document length as a quality gate, or migrate unrelated historical plans unless that cleanup is the requested work.
 - When durable decision truth is created, promoted, superseded, compacted, or retired, read [Decision Record Lifecycle](references/decision-record-lifecycle.md) and classify current status together with future value. Do not apply this lifecycle to every docs edit.
 - Write stable prose from the current repository state. A reader at `HEAD` must be able to resolve internal references and verify claims without the authoring session, review thread, branch stack, or an uncommitted draft.
 - Move change narration, review choreography, temporary phase labels, and historical argument to stage or historical owners unless they are still an exact durable reference. Preserve complete factual propositions, non-obvious rationale, conditions, exceptions, failure modes, and consequences.

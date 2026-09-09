@@ -29,5 +29,6 @@ Do not use it for read-only project explanation, a change with no truth impact, 
 - `analyze-project` remains the read-only truth query entry.
 - Truth sync does not rediscover the project from zero or reinterpret unverified implementation claims.
 - Stage artifacts do not become stable truth merely because they are detailed.
+- Currently effective goals, discretion, and boundaries may be updated from verified evidence; superseded gates and exemption history stay in stage records rather than becoming a runtime contract.
 - External paths, secrets, settings contents, or transient machine state do not enter stable project truth unless the user explicitly chose them as a durable public contract.
 - Documentation scope never widens implementation authority.

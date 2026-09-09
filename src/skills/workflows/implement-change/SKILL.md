@@ -21,6 +21,12 @@ Do not use it when a necessary scope, design, execution-order, prerequisite, or 
 - Treat task membership, authority, and capability as separate facts. Commit, push, publication, deployment, destructive history changes, and external mutation need matching authority, not merely implementation approval. Consume existing trusted permission for the same requested target and side effects without re-asking; standing permission does not add work to a design-only or otherwise narrower request. A push includes its entire outgoing history and triggered CI/CD, not just this task's tip commit.
 - Return `needs-authority`, `replan`, or `redesign` before performing work outside the approved boundary.
 
+## Goals, Discretion, And Continuation
+
+Main goals, necessary conditions, specified technical choices, and inviolable boundaries remain binding. Already-authorized best-effort secondary work may be adapted or omitted based on evidence while the main goal continues; do not self-grant that discretion or relabel a required result. Investigate facts and generate execution products rather than asking for them. After a blocking question is answered, resume the original authorized work in this task; do not terminate on confirmation.
+
+Local technical difficulty is diagnosis or in-discretion tradeoff, not automatic `replan` or `redesign`. Pause affected actions whose goals, hard constraints, commitments, risk, or permissions would leave the approved boundary, and obtain narrow authorization before that impact, including before production or protected-state actions. Independent authorized work continues. Credentials, tools, and review success are not operational permission. Specified libraries bind; glue, helpers, and local algorithms stay with the implementer.
+
 ## Checkout And Concurrent Work
 
 - Continue in the current checkout when the only uncommitted files are this task's design, plan, implementation, or evidence. Unrelated non-overlapping changes are also acceptable; preserve them and keep them outside this task's edits and any authorized commit. Committing task documents is optional and requires commit authority, not a prerequisite for implementation or a concurrency safeguard.
@@ -46,7 +52,7 @@ Do not use it when a necessary scope, design, execution-order, prerequisite, or 
 9. When review is required, request a bounded `review-change` evaluation over the current implementation diff with the objective, scope, changed files, declared oracles, and current verification evidence. Each invocation has one target; it does not consume a whole-change review allowance.
 10. Adjudicate every material review candidate. Accept only findings causally tied to the current change and fixable inside the authorized scope.
 11. For an in-scope verification failure or accepted finding, diagnose and repair against the same acceptance baseline, repeat the same-slice cut, and rerun affected and declared verification. Continue while there is an evidence-backed in-scope next step, without a default fixed repair count. Use targeted rereview when the repair invalidates prior review evidence, an independent question remains, or an applicable rule requires it. Do not automatically re-audit the whole repository after each edit.
-12. Complete when the authorized objective, requested delivery endpoint, required verification, and material accepted findings are satisfied. Evidence must identify the actual delivered candidate or version. A missing downstream permission or capability blocks that step, not independent authorized work; partial completion is not end-to-end success. Without new changes, failures, or unresolved risk, do not repeat checks or review merely to seek further confirmation.
+12. Complete when the authorized objective, requested delivery endpoint, required verification, and material accepted findings are satisfied. Evidence must identify the actual delivered candidate or version and any authorized secondary tradeoff with its reason and impact. A missing downstream permission or capability blocks that step, not independent authorized work; partial completion is not end-to-end success. Disclosed authorized secondary omissions do not block `pass` when the main goal and approved acceptance hold; they also do not let the report claim every feature completed. Without new changes, failures, or unresolved risk, do not repeat checks or review merely to seek further confirmation.
 
 Optional execution and reasoning profiles are semantic hints, not authority or provider bindings. Their absence or an unavailable host mapping does not block implementation: use a compatible default or retain the task in the active agent. When the user explicitly selects a concrete execution or reasoning route, preserve that choice through ephemeral task parameters when the compatible host supports them; the explicit user choice overrides semantic defaults for that invocation. Never mutate durable route configuration as a one-invocation workaround unless the user separately authorizes a persistent default change. Delegation does not transfer scope control, invocation and continuation decisions, cross-task synthesis, review adjudication, final acceptance, or the final response. It can transfer bounded investigation, implementation, verification execution, diagnosis, and authorized repair labor when the host and applicable policy permit them.
 
@@ -72,6 +78,8 @@ The reviewer is read-only. The implementing parent adjudicates candidate finding
 
 The approved objective, non-goals, dependencies, authority, protected contracts, and acceptance conditions remain the baseline throughout repair. Updating progress or adding execution evidence does not authorize rewriting these requirements to match the current implementation.
 
+An authorized best-effort secondary adaptation, recorded with evidence, is an allowed result and does not rewrite the main-goal baseline. Treating a required result as optional, or deleting its oracle to manufacture a pass, remains forbidden. Ordinary failure or unknown feasibility is not itself proof that a required result is unsupported.
+
 A mistaken test implementation may be corrected within authorized surfaces when an independent approved contract clearly establishes the right behavior; retain that evidence and apply the required review for oracle edits. Changing what counts as correct is a scope or design decision, not an implementation repair. Never weaken assertions, remove a failing requirement, or reduce the objective to manufacture a pass.
 
 ## Recovery
@@ -84,7 +92,7 @@ Never synthesize rollback, silently change task topology, or treat repeated fail
 
 ## Outcomes
 
-- `pass`: implementation and required verification pass; no accepted finding from any required review remains
+- `pass`: implementation and required verification pass; no accepted finding from any required review remains. Disclosed authorized secondary tradeoffs may remain when the main goal and approved acceptance are met; do not also claim every secondary feature completed. A requested production endpoint that was not performed is not end-to-end success.
 - `replan`: the approved scope, order, or verification is insufficient
 - `redesign`: evidence invalidates an approved design boundary
 - `needs-authority`: completion needs new user or external authority
@@ -92,4 +100,4 @@ Never synthesize rollback, silently change task topology, or treat repeated fail
 - `non-convergent`: diagnosis yields no new evidence and no reasonable in-scope path remains; report what was tried, excluded, and still missing rather than a failure count
 - `blocked`: required evidence or a prerequisite is unavailable, or work stopped on user cancellation or an explicit invocation time, call, or resource budget; name the actual reason and remaining work, not a claim that the objective is impossible
 
-Return the outcome with changed files, verification evidence, the review decision and any resulting verdict or adjudication, repair evidence when applicable, and remaining uncertainty. Do not claim a write, install, deploy, commit, or push that was not actually performed.
+Return the outcome with changed files, verification evidence, the review decision and any resulting verdict or adjudication, repair evidence when applicable, authorized secondary tradeoffs with reason and impact, unverified remainder, and remaining uncertainty. Do not claim a write, install, deploy, commit, or push that was not actually performed, and do not claim every feature complete when only the main goal and approved acceptance were met.

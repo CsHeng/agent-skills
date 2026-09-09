@@ -12,10 +12,12 @@ Prefer parallel ready slices with stable shared contracts, nonconflicting writes
 
 Carry enough information for an executor without the original conversation to understand:
 
-- the slice's result and relationship to the parent objective;
-- protected behavior, acceptance, non-goals, important rationale, and local choices left to the executor;
+- the slice's result and relationship to the parent objective, including which outcomes are main goals or necessary conditions and which are authorized best-effort secondary work;
+- protected behavior, acceptance, non-goals, important rationale, authorized tradeoff boundaries, relevant environment facts, and local choices left to the executor;
 - accessible evidence and inputs, repository ownership, allowed reads and exact writes required by the host;
 - actual tools, execution environment, shared-resource and isolation boundaries, required checks, and when to return a decision or blocker.
+
+The brief carries authority and discretion; a child does not self-grant production permission, extra scope, or after-the-fact best-effort status. Glue around specified technology and in-brief secondary adaptation stay with the executor. Do not ask the child, or the user through the child, for execution products the slice can generate.
 
 Keep simple briefs short. If documents are uncommitted, ignored, in another checkout, or absent from a snapshot, supply bounded excerpts or a genuinely readable source; naming a path does not transmit its contents. Do not assume either complete or absent inheritance of parent instructions. Use observable host context, not wholesale conversation or Skill copying.
 
@@ -25,17 +27,17 @@ Refine files inside approved module scope before dispatch without pre-solving ev
 
 Within the brief, a worker can read, reproduce, edit, run permitted checks, interpret failures, and repair until its completion criteria hold. A red test or compiler error does not require returning every iteration or starting a full design/plan lifecycle. Apply [Focused Implementation Repair](repair-loop.md) to in-scope defects; independent review is not replaced by worker self-checking.
 
-Return the actual changes and candidate identity, executed checks with real outcomes, unrun or invalidated checks, necessary evidence locations, and remaining questions or blockers. A host snapshot or diff identity is sufficient; do not commit merely to name a candidate. Keep process success, report completeness, source export, local test success, and parent acceptance distinct.
+Return the actual changes and candidate identity, executed checks with real outcomes, unrun or invalidated checks, necessary evidence locations, remaining questions or blockers, and any authorized secondary tradeoff with its reason and impact. A host snapshot or diff identity is sufficient; do not commit merely to name a candidate. Keep process success, report completeness, source export, local test success, and parent acceptance distinct.
 
 Evidence must cover the final exported candidate. A passing check that depended on temporary source edits omitted from export does not validate the exported result. Later changes can invalidate only part of the evidence; reuse the applicable part and verify affected combinations and missing acceptance. The parent decides sufficiency, not the host status or the worker's confidence.
 
 ## Same-Task Continuation
 
-A returned report or exited process does not by itself end a logical assignment. Prefer the original worker for an accepted in-scope defect or answered clarification when its context, workspace, permissions, and route remain valid and the host supports continuation. A question needing parent coordination is not necessarily human approval or permanent failure. Worker self-repair inside a call and parent-child exchanges across calls are different capabilities.
+A returned report or exited process does not by itself end a logical assignment. Prefer the original worker for an accepted in-scope defect or answered clarification when its context, workspace, permissions, and route remain valid and the host supports continuation. After a blocking question is answered, resume the original authorized assignment rather than closing on confirmation. A question needing parent coordination is not necessarily human approval or permanent failure. Worker self-repair inside a call and parent-child exchanges across calls are different capabilities.
 
 Before continuing, use current host evidence to reconcile the previous candidate/export, actual baseline and drift, pending reports, permissions, and available executor. Coordinate other integrated changes before allowing writes. Never let remembered file contents overwrite the current baseline. After compaction, recover existing results and executors before creating replacements; a missing handle in a summary does not prove the executor is absent.
 
-An incremental brief normally supplies the existing task/result reference, current candidate or baseline, adjudicated findings or answered question, concrete error evidence, allowed repair, and expected return. Keep original non-goals, acceptance, and decisions intact. Do not rewrite the initial prompt to change scope silently or reopen settled findings without new evidence.
+An incremental brief normally supplies the existing task/result reference, current candidate or baseline, adjudicated findings or answered question, concrete error evidence, allowed repair, and expected return. Keep original non-goals, acceptance, main goals, and authorized discretion intact. Do not rewrite the initial prompt to change scope silently, let the child self-authorize, or reopen settled findings without new evidence.
 
 Use a new executor when the task is unrelated, state cannot safely continue, capability or route is unavailable, or persistent misunderstanding leaves no useful progress. Identify continuation, migration, branching, and reconstruction honestly; a bounded summary rebuild is not complete native-session continuity. Do not silently change a user-selected route or reuse an executor across repositories or roles. Reviewer continuity is evaluated through `review-change`, never by relabeling the worker as an independent reviewer.
 

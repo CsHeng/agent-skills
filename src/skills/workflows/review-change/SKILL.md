@@ -41,12 +41,12 @@ The reviewer remains separate from the worker even across rounds. Do not rename 
 Include only what is needed to review the target:
 
 - target class and objective
-- goals, non-goals, and acceptance criteria supplied by the caller
+- goals, non-goals, acceptance criteria, and any authorized best-effort discretion supplied by the caller
 - exact artifact, diff, or changed files and current candidate identity
 - declared verification and evidence applicable to that candidate, including gaps or invalidated results
 - allowed supporting files, each with a reason and a genuinely accessible source or bounded excerpt
 
-Preserve the parent goal, protected behavior, and important rationale without copying the entire conversation. A path outside the evaluator's readable snapshot is not supplied context. On follow-up, pass changed facts and still-valid adjudications rather than rewriting the acceptance baseline.
+Preserve the parent goal, protected behavior, authorized discretion, and important rationale without copying the entire conversation. A path outside the evaluator's readable snapshot is not supplied context. On follow-up, pass changed facts and still-valid adjudications rather than rewriting the acceptance baseline. Do not invent extra gates the supplied goals and acceptance do not require.
 
 Stop with `manual-decision-required` when the target itself is missing or cannot be bounded. Do not reverse-engineer missing lifecycle artifacts.
 
@@ -62,11 +62,13 @@ Each material candidate should include:
 
 Exclude pre-existing, unrelated, future-phase, speculative, and low-confidence observations from blocking findings. A critical out-of-scope security or data-loss risk may require a manual decision but never silently expands repair authority.
 
+Check both omitted main goals or required results and overstrong invented gates. A secondary target wrongly raised into a gate, or an exhaustive secondary-feature catalog demanded where best-effort discretion already exists, is a defect. Using best-effort language to drop a required result, or deleting its oracle to manufacture a pass, is also a defect. An authorized secondary adaptation recorded with evidence is not automatically a finding. Security or oracle labels affect actual risk judgment; they do not create a fixed review count, per-file review loop, or evaluator repair right.
+
 The calling agent adjudicates candidates as accepted, rejected, deferred, or requiring a plan/design decision. The reviewer never performs the repair and never decides lifecycle continuation.
 
 ## Verdicts
 
-- `pass`: no material causally bound finding remains
+- `pass`: no material causally bound finding remains, including when authorized secondary tradeoffs are disclosed and the main goals still hold
 - `needs-fixes`: one or more supported findings have an in-scope repair
 - `manual-decision-required`: evidence or authority outside the review boundary is required
 - `split-scope`: the supplied target cannot remain one bounded review surface

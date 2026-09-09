@@ -4,11 +4,13 @@ Use this method when efficacy measurement is requested or a bounded risk judgmen
 
 This reference supplies evaluation guidance, not a benchmark runner, host adapter, persistent result store, mandatory CI gate, or permission grant.
 
+For offline review of goal, risk, and discretion behavior, use [Goal And Risk Cases](goal-and-risk-cases.md). Those cases are optional comparison material. They are not a runtime validator, CI gate, or compulsory live-model experiment.
+
 ## Question and Comparator
 
 State the claimed behavior change, task boundary, and acceptance criteria before comparing outputs. For an incremental Skill change, compare the current relevant Skill bundle at a pinned revision with the candidate bundle, keeping unrelated instructions constant. Identify each variant's exact content, including uncommitted changes when a revision alone is insufficient.
 
-A no-Skill or terse-prose control is optional when it answers a distinct question. It does not replace the existing-bundle baseline for deciding whether an incremental change helps. Select tasks that exercise the claimed improvement and its protected counterexamples; do not generalize beyond the evaluated tasks and conditions.
+A no-Skill or terse-prose control is optional when it answers a distinct question. It does not replace the existing-bundle baseline for deciding whether an incremental change helps. Select tasks that exercise the claimed improvement and its protected counterexamples, including [Goal And Risk Cases](goal-and-risk-cases.md) when they match the claim; do not generalize beyond the evaluated tasks and conditions.
 
 ## Authority and Controlled Execution
 

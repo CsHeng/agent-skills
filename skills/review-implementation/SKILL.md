@@ -11,4 +11,6 @@ Check that evidence applies to the actual candidate and protected behavior, not 
 
 A blocking candidate must be caused or newly activated by the current diff, violate a named requirement or oracle, have a concrete material consequence, carry sufficient evidence, and admit a smallest fix inside the approved scope. Moving or formatting unchanged code does not activate a pre-existing defect. Omit unrelated, future-phase, stylistic, speculative, and low-confidence observations.
 
+Check both omitted main goals or required oracles and overstrong invented gates. An authorized best-effort secondary adaptation with evidence is not a defect; relabeling a required result as secondary, deleting its oracle, or replacing a specified library without substitution authority is. Do not demand an exhaustive secondary-feature catalog, a per-file review loop, or user-supplied execution products the change should have generated.
+
 Return `pass`, `candidate-findings`, or `manual-decision-required`. Each candidate includes location, evidence, impact, causal class, violated requirement, confidence, smallest in-scope fix, and recommended disposition. The calling implementing agent independently adjudicates every candidate and owns any accepted repair.

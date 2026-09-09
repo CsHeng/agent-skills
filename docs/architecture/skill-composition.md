@@ -22,6 +22,14 @@ Review is conditional on an explicit request, an applicable repository or approv
 
 Repair follows the authorized objective, dependencies, scope, authority, and acceptance evidence. Continue with an evidence-backed in-scope path; stop for the actual decision, input, authority, diagnostic, cancellation, or explicit budget limit. Do not weaken acceptance or rewrite approved goals to fit the implementation. Finish when required evidence and accepted findings are satisfied rather than repeating checks without a new reason.
 
+## Goals, Discretion, And Risk
+
+Main outcomes, their necessary conditions, explicit technical choices, and hard boundaries remain binding. When the request, approved scope, or applicable project convention authorizes best-effort secondary work, the implementer may adapt or omit it with evidence and disclosure. Design records that discretion without enumerating every possible feature failure; it does not freeze library glue or permit relabeling failed required outcomes. Review checks both missing required results and invented guarantees that obstruct authorized work.
+
+Projects own their actual environment, disposable versus retained state, and operational permissions. Shared Skills calibrate controls to exposure, exploitability, expected damage, state value, blast radius, and recovery/control cost; remote deployment is not automatically production, and a development label does not waive real protected boundaries. Authorized disposable state may recover by rebuild or fix-forward. Reuse still-valid recovery evidence and reverify affected paths when state, migration, recovery implementation, or operating conditions change, not merely for a new revision.
+
+Authorized secondary tradeoffs within existing goals, commitments, risk, and authority do not require renewed approval. Changes outside those boundaries pause affected actions before their impact while independent authorized work continues. Completion reports distinguish fulfilled goals and delivery endpoints from disclosed secondary omissions and unverified behavior; they do not manufacture total feature completion or whole-task failure.
+
 ## Bounded Delegation And Continuity
 
 Plans fix acceptable results, ownership, constraints, and factual dependencies without exhausting local implementation choices. Dispatch refines actual host-required files and inputs inside that approved boundary; exact approved writes do not silently expand. Cohesive worker slices can include investigation, implementation, tests, and local repair. Prefer useful independent parallel work without call quotas, explorer-first gates, or mandatory delegation of trivial work. Parent decision boundaries cannot be compiled into static reviewer-to-repair chains; a verification command alone is not such a decision.

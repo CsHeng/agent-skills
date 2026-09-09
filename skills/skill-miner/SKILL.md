@@ -1,6 +1,6 @@
 ---
 name: skill-miner
-description: "Mine Codex/Claude/Grok sessions, memory files, and project context docs for repeated failures, workflow patterns, concrete skill improvement candidates, and memory cleanup after durable repo truth extraction."
+description: "Mine Codex/Claude/Grok/Pi sessions, memory files, and project context docs for repeated failures, workflow patterns, concrete skill improvement candidates, and memory cleanup after durable repo truth extraction."
 ---
 
 # Skill Miner
@@ -19,15 +19,16 @@ Read these sources when available:
 - Claude sessions: `~/.claude/projects/**/*.jsonl`
 - Claude memory: `~/.claude/projects/**/memory/*.md` and other `~/.claude/**/memory/*.md`
 - Grok sessions: `~/.grok/sessions/<urlencoded-workspace>/prompt_history.jsonl` and per-session `events.jsonl`
+- Pi sessions: `~/.pi/agent/sessions/**/*.jsonl`
 - Project context docs: tracked `AGENTS.md` and `README.md` files under the target repo, plus an existing legacy `CLAUDE.md` as compatibility-migration evidence; symlinks that resolve to an already scanned document are deduplicated
 
-Additional homes use the same directory shapes under their own Codex, Claude, or Grok home roots.
+Additional homes use the same directory shapes under their own Codex, Claude, Grok, or Pi home roots. Pi scanning is read-only and limited to `sessions/**/*.jsonl`; do not read auth, settings, databases, other runtime stores, or subagent private state.
 
 Do not decide what future agents should write into memory. Mine existing memory only to identify missing repo truth, missing skills, stale memory, and cleanup candidates.
 
 ## Workflow
 
-1. Confirm the requested scope: current repo, named repo, or all local Codex/Claude/Grok history.
+1. Confirm the requested scope: current repo, named repo, or all local Codex/Claude/Grok/Pi history.
 2. Stay read-only unless the user explicitly approves skill edits.
 3. Run the bundled parser for structured signals instead of raw-scanning large JSONL files.
 4. Separate evidence into:
@@ -71,7 +72,9 @@ python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py 
   --claude-home ~/.claude \
   --claude-home /path/to/another/.claude \
   --grok-home ~/.grok \
-  --grok-home /path/to/another/.grok
+  --grok-home /path/to/another/.grok \
+  --pi-home ~/.pi/agent \
+  --pi-home /path/to/another/.pi/agent
 ```
 
 For machine-readable aggregation:
@@ -107,11 +110,13 @@ python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py 
   --limit 0
 ```
 
-The script is read-only and accepts only named parameters. `--codex-home`, `--claude-home`, and `--grok-home` are repeatable; comma-separated values are also accepted. Default sources include `grok`. Grok workspace directories under `sessions/` are URL-encoded absolute paths; scope `current` matches those decoded paths to `--repo-root`.
+The script is read-only and accepts only named parameters. `--codex-home`, `--claude-home`, `--grok-home`, and `--pi-home` are repeatable; comma-separated values are also accepted. Default sources include `grok` and `pi`. `--pi-home` defaults to `~/.pi/agent`. Grok workspace directories under `sessions/` are URL-encoded absolute paths; scope `current` matches those decoded paths to `--repo-root`. Default repository scope remains `current`; cross-repo Pi history still requires `--scope all`.
+
+Pi v3 JSONL files are interpreted on the last determinable recorded `id`/`parentId` branch and that selection is reported rather than treated as the UI current branch. Exclusive branches are not concatenated. Mine raw tree messages, not compaction summaries or `retainedTail` copies. Version 1/2 and other unsupported or malformed files are disclosed as incomplete evidence, not counted as complete sessions. Do not follow `parentSession` outside the selected files; unrecognized forks are limitations, not unique-task claims. Strip injected `<skill ...>...</skill>` blocks and keep the remaining user tail as intent; skill injection is not an explicit user invocation. Count assistant `stop`, `toolUse`, `error`, `aborted`, and `length` separately from model-change events and from the assistant's actual model. Ordinary `stop` is not completion, premature stop, or missing approval; a later continue/approval prompt is only a candidate relationship.
 
 Skill usage evidence is separated into explicit `$skill` user requests, assistant references, skill-file loads, and optional tool outputs. A model activation is only a heuristic summary: a skill load without an explicit user request in the same session is inferred activation, while raw records remain an upper bound rather than an exact invocation count. Installed flat paths resolve through exact current-inventory public ID directories; loads that cannot resolve to a current public ID are excluded instead of entering a repository-wide fallback bucket. Injected prompts, instruction blocks, available-skill inventories, and Claude tool-result wrappers do not count as user intent. `--skill-usage-contract` reports declared contract state, Codex source policy/defaults, and Claude frontmatter/default visibility as separate fields.
 
-Raw examples are disabled by default. Set a positive `--limit` only when bounded session excerpts are required. Use `--skill-usage-include-output` only when tool output itself is evidence; it is off by default because directory listings and inventory dumps can inflate usage counts.
+Raw examples are disabled by default. Set a positive `--limit` only when bounded session excerpts are required. Pi samples are categorical summaries and omit thinking, images, and raw tool payloads; text sanitization is not a guarantee that arbitrary secrets are safe. Use `--skill-usage-include-output` only when tool output itself is evidence; it is off by default because directory listings and inventory dumps can inflate usage counts. For Pi, skill-usage matching uses structured tool names and path-like arguments rather than flattened payloads, and include-output still does not lift the sensitive-content boundary.
 
 ## Output Rules
 
@@ -124,6 +129,8 @@ Raw examples are disabled by default. Set a positive `--limit` only when bounded
 - For memory-derived findings, name both the durable target file and the source memory cleanup action.
 - Do not claim a write, install, deploy, or commit happened unless the corresponding step completed.
 - When the user requested analysis only, end with recommendations and do not edit files.
+- Do not treat ordinary Pi `stop` as task success or as an approval-gate failure.
+- Surface malformed, unsupported, or partial Pi evidence instead of reporting a silently complete count.
 
 ## Promotion Rules
 

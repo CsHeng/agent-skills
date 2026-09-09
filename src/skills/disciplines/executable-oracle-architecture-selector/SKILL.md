@@ -30,6 +30,7 @@ Answer these before choosing a method:
 - Can the behavior be expressed as examples, contracts, properties, models, snapshots, or runtime SLOs?
 - Is the agent allowed to change the oracle, or only the implementation?
 - Does this change persist, migrate, or recover state, and does existing evidence still hold for the final candidate?
+- Which user-visible outcome must hold, and would a parser, existence check, or golden file fail to prove it?
 
 Common boundaries:
 
@@ -58,7 +59,7 @@ Common boundaries:
 | Test-suite strength | Mutation testing | Meta-oracle | Suite is slow, flaky, or low risk |
 | Distributed resilience | Fault injection / chaos / synthetic probes | Runtime oracle | Recovery and blast-radius controls are weak |
 | Production-only regression | Canary / monitoring / SLO alerts | Runtime oracle | Used as a substitute for pre-merge correctness |
-| Security boundary | TDD + properties + fuzz/static analysis + review | Mixed oracle | Agent can silently weaken assertions |
+| Security boundary | TDD + properties + fuzz/static analysis | Mixed oracle | Required assertions can be silently weakened |
 
 ## API Contract Decomposition
 
@@ -68,6 +69,8 @@ This selector retains authority over oracle-method selection. `api-contract-stra
 
 ## Phase Defaults
 
+Choose from these methods when they protect the current boundary at proportionate cost. A phase or infrastructure label does not require every method below.
+
 Exploration or prototype:
 
 - use smoke tests, typecheck/lint, minimal happy-path acceptance tests, small golden samples, and minimal public interface contracts
@@ -75,13 +78,13 @@ Exploration or prototype:
 
 Stabilizing core semantics:
 
-- require a failing test, executable oracle, or narrow reproducer before implementation for non-trivial behavior changes
+- require a failing test, executable oracle, or narrow reproducer before implementation for non-trivial behavior changes when a correct seam exists
 - focus on state transitions, permission decisions, error semantics, idempotency, compatibility, and persisted formats
 
 Mature or agent-assisted maintenance:
 
 - use TDD/component tests for local changes, BDD/ATDD for critical business workflows, contract/schema checks for boundaries, mutation testing on critical diffs, and canaries/SLO validation for production-only behavior
-- do not delete, weaken, or bulk-update oracles without explicit review
+- do not delete or weaken required oracles to make implementation pass; bulk snapshot updates need readable justification
 
 Legacy or unknown behavior:
 
@@ -98,7 +101,9 @@ Infrastructure or platform systems:
 
 Ordinary implementation needs the authorized objective and scope, allowed changes, protected behavior, and concrete acceptance evidence or a suitable substitute. These facts may already come from the bounded request, repository contracts, existing tests, or a reproducer; do not require a new plan or a work-package schema to restate them.
 
-When necessary evidence is missing or contradictory, name the actual unresolved oracle, contract, design, or authority decision and return it to the calling agent. Do not block local implementation or a TDD loop on delegation profiles, parallel policy, or a maximum review budget.
+A missing perfect agent-runnable reproducer does not freeze unrelated authorized work. Use the best available before-state evidence and keep unblocked work moving; ask for access or instrumentation when that is the actual blocker.
+
+When necessary evidence is missing or contradictory, name the actual unresolved oracle, contract, design, or authority decision and return it to the calling agent. Do not block local implementation or a TDD loop on delegation profiles, parallel policy, a maximum review budget, or a fixed hypothesis or test count.
 
 Actual delegation additionally needs an accountable repository owner, bounded writes, safe isolation and shared-resource handling, completion evidence, and calling-agent convergence ownership. Let `plan-change` and `implement-change` consume those facts when delegating; profiles apply under their delegation-ready conditions, not as a local implementation gate. If safe delegation is unavailable, retain the work locally when the user's requirements and authority permit it; do not silently replace a required delegation method.
 
@@ -108,26 +113,26 @@ When the product being changed is itself an agent scheduler, model/state-transit
 
 Scale persistence and recovery evidence to this change, the value of the affected state, the blast radius, and whether prior evidence still applies to the final candidate. A project stage label such as unreleased or non-commercial does not lower protection for unique or irreplaceable data. Follow applicable project requirements; do not skip them to save time.
 
-Ordinary logic that does not touch persistence or recovery paths does not default to a full backup/restore drill. Necessary behavior checks still run. When the change is a migration, select an oracle for upgrading representative pre-migration state, not only empty-store initialization; this does not require or authorize touching live data. When the change is backup/restore itself, restore behavior is the product behavior under test and needs corresponding evidence.
+Ordinary logic that does not touch persistence or recovery paths does not default to a full backup/restore drill. A new revision, repair, candidate digest, or template-only change does not by itself invalidate still-valid recovery evidence or require a restore drill. Necessary behavior checks still run.
 
-Reuse still-valid prior evidence. Re-verify combinations, state transitions, or checks that later edits invalidated. Do not add a risk-scoring system, a fixed recovery-drill checklist, or a mandatory pre-work environment rehearsal.
+When the change migrates retained state, select an oracle for upgrading representative pre-migration state, not only empty-store initialization; this does not require or authorize touching live data. When the change is backup/restore itself, restore behavior is the product behavior under test and needs corresponding evidence. Authorized disposable development state may prove recovery by rebuild or replace; do not force in-place upgrade for state that is approved to discard. Retained existing data still needs corresponding migration evidence.
 
-## Agent Oracle Policy
+Reuse still-valid prior evidence. Re-verify combinations, state transitions, or checks that later edits invalidated, including changed data formats, recovery implementations, or runtime recovery conditions. Refreshing a production backup is not by itself a reason to redo every recovery proof. Do not add a risk-scoring system, a fixed recovery-drill checklist, or a mandatory pre-work environment rehearsal. Do not measure oracle quality by test count, full matrix, or formality.
 
-Classify oracle edits by risk:
+## Oracle Edit Judgment
 
-| Diff type | Risk |
+Use the labels below to judge actual risk. They do not schedule a review round or a full matrix.
+
+| Diff type | Concern to assess |
 |---|---|
-| implementation diff | normal |
-| test addition | usually beneficial, review semantics |
-| test deletion | high |
-| assertion weakening | high |
-| snapshot/golden update | high |
-| contract/model change | very high |
-| business scenario change | very high |
-| security oracle change | critical |
+| implementation diff | Changed behavior and affected callers |
+| test addition | Independent expected results and realistic fixtures |
+| test deletion or assertion weakening | Loss of required coverage versus authorized retirement or adaptation |
+| snapshot/golden update | Independent evidence for the new expected behavior |
+| contract/model or business scenario change | Changed user commitments, compatibility, and state transitions |
+| security oracle change | Actual exposure, exploitability, expected damage, and control cost |
 
-Reject or require explicit review for:
+Treat these as likely required-oracle weakening unless an independent contract authorizes the adaptation:
 
 - exact assertion changed to existence-only assertion
 - specific error changed to any error
@@ -139,6 +144,8 @@ Reject or require explicit review for:
 - sleeps or retries added to hide flakiness
 - integration behavior mocked away to make CI pass
 
+Authorized secondary-capability tradeoffs are recorded adapted results with evidence. They do not justify deleting or relaxing a main-goal or hard-boundary oracle to make implementation pass. Parser, existence, or golden checks do not replace user-goal scenarios.
+
 ## Output Contract
 
 Follow `output-styles` and preserve these semantic results:
@@ -147,7 +154,7 @@ Follow `output-styles` and preserve these semantic results:
 - protected boundary, behavior status, risk, and oracle owner
 - selected methods, purpose, oracle level, and material discard reasons
 - implementation order and concrete validation evidence
-- oracle edits that require explicit review
+- oracle edits whose actual risk needs calling-agent judgment
 - likely failure modes when they affect the decision
 
 When this skill owns the response, lead with the decision and render only the fields needed to justify or execute it. When design, planning, review, or implementation owns the response, contribute these results as a semantic overlay instead of emitting an independent oracle report.

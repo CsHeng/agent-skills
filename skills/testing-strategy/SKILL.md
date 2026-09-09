@@ -11,7 +11,7 @@ Turn a selected executable oracle into the smallest concrete verification set th
 
 Use `executable-oracle-architecture-selector` when the oracle method or protected behavior still needs a decision, not merely because the task involves architecture, planning, or TDD. Consume an established strategy directly. Running known checks or adding a routine regression test under that strategy does not require reopening strategy selection. For multi-client API contract ownership and layer decomposition decisions, use `api-contract-strategy`.
 
-Do not measure maturity by test count or impose universal coverage percentages.
+Do not measure maturity by test count or impose universal coverage percentages. Do not define effort by a fixed number of tests or hypotheses.
 
 ## Strategy Mapping
 
@@ -82,8 +82,9 @@ Critical paths may justify stronger gates than glue or generated code. Generated
 
 ## Red-Green Verification
 
-- For behavior changes and bug fixes, write or identify a failing test or narrow reproducer before implementation.
+- For behavior changes and bug fixes, write or identify a failing test or narrow reproducer before implementation when a correct seam exists.
 - Confirm the oracle fails for the expected reason, not a typo or environment error.
+- A missing perfect agent-runnable reproducer does not freeze other authorized work; use the tightest available equivalent evidence and keep unblocked work moving.
 - Implement the smallest change that makes the reproducer pass.
 - Rerun the narrow oracle and declared verification scope before claiming success.
 - For config-only changes, prefer parser, schema, or real-consumer validation.
@@ -102,6 +103,8 @@ Match documentation checks to the property that can actually fail:
 
 When efficacy measurement is requested or a bounded risk judgment justifies it, use [Agent Skill Evaluation](references/agent-skill-evaluation.md) with the necessary execution authority and budget. Ordinary Skill editing does not require a live experiment, and maintenance checks do not establish behavioral or economic gains.
 
+For offline review of goal, risk, and discretion behavior, read [Goal And Risk Cases](references/goal-and-risk-cases.md). Those cases are optional comparison material, not unit tests, CI gates, or required live experiments.
+
 PROHIBITED: Add unit or contract tests that assert exact natural-language sentences, keyword collections, prose headings, or their absence in Markdown solely to freeze intended meaning.
 
 PROHIBITED: Duplicate a Markdown policy sentence or rule list in test code.
@@ -112,15 +115,17 @@ When auditing an existing suite, find tests and checkers that read Markdown and 
 
 ## State, Recovery, And Evidence Reuse
 
-Do not schedule a full backup/restore exercise for ordinary logic that leaves persistence and recovery paths untouched. Migration checks must exercise the upgrade of realistic existing state, not only empty-database initialization. Changes to backup or restore must verify restore behavior. Unique or irreplaceable data keeps its protection regardless of project-stage labels; still obey applicable repository requirements.
+Do not schedule a full backup/restore exercise for ordinary logic that leaves persistence and recovery paths untouched. A new revision, repair, candidate digest, or template-only change does not by itself invalidate still-valid recovery evidence. Unique or irreplaceable data keeps its protection regardless of project-stage labels; still obey applicable repository requirements.
 
-Reuse reliable evidence that still matches the final candidate. Later edits that change the covered behavior, fixture, or environment invalidate the old result and need a fresh check. Local greens do not prove uncovered combinations or state transitions; those still need verification. Do not invent a scoring rubric or a standing drill catalog to force this scaling.
+Migration of retained state must exercise the upgrade of realistic existing state, not only empty-database initialization. Changes to backup or restore must verify restore behavior. Authorized disposable development state may prove recovery by rebuild or replace; do not force in-place upgrade for state that is approved to discard.
+
+Reuse reliable evidence that still matches the final candidate. Later edits that change the covered behavior, fixture, environment, recovery implementation, or retained-state conditions invalidate the old result and need a fresh check of the affected path. Refreshing a production backup is not by itself a reason to redo every recovery proof. Local greens do not prove uncovered combinations or state transitions; those still need verification. Do not invent a scoring rubric or a standing drill catalog to force this scaling.
 
 ## Oracle Integrity
 
-- Do not delete, weaken, or bulk-update an oracle to make implementation pass without explicit review.
+- Do not delete, weaken, or bulk-update a required oracle to make implementation pass. Authorized secondary tradeoffs are disclosed adapted results, not deleted assertions.
 - Record the oracle type for non-trivial changes: example, scenario, contract, property, model, current-behavior snapshot, meta-oracle, or runtime oracle.
-- Treat test deletion, assertion weakening, snapshot updates, contract changes, and security-oracle changes as elevated-risk diffs.
+- Treat test deletion, assertion weakening, snapshot updates, contract changes, and security-oracle changes as elevated-risk diffs. Those labels inform risk judgment; they do not schedule a review round or a full matrix.
 - Do not add sleeps, retries, broad status ranges, or existence-only assertions to hide deterministic failures.
 - Preserve exact negative and boundary behavior where it carries domain meaning.
 
@@ -144,6 +149,7 @@ Reuse reliable evidence that still matches the final candidate. Later edits that
 - Prefer characterization tests for unknown legacy behavior before refactoring.
 - Keep workflows focused on business sequences rather than endpoint catalogs.
 - Keep UI/E2E narrow and user-visible.
+- User-experience goals need corresponding scenarios, such as independent selection across business groups or a first-run initialization source. Parser, existence, or golden checks do not replace those behaviors.
 
 ## CI And Release Placement
 
@@ -172,3 +178,5 @@ When another lifecycle skill owns the response, contribute these results as a se
 - [Go Testing Examples](references/examples-go.md)
 - [Capability-Based CI](references/ci-config.md)
 - [TDD Vertical Slices](references/tdd-vertical-slices.md)
+- [Agent Skill Evaluation](references/agent-skill-evaluation.md)
+- [Goal And Risk Cases](references/goal-and-risk-cases.md)

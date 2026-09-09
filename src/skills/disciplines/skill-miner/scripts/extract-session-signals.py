@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract skill-improvement signals from Codex, Claude, and Grok history."""
+"""Extract skill-improvement signals from Codex, Claude, Grok, and Pi history."""
 
 from __future__ import annotations
 
@@ -60,6 +60,34 @@ EVENT_NAMES = {
     "task_complete",
 }
 
+PI_SKILL_BLOCK_RE = re.compile(r"<skill\b[^>]*>.*?</skill>", re.I | re.S)
+PI_SECRET_HINT_RE = re.compile(
+    r"(?i)\b(?:api[_-]?key|token|secret|password|authorization|bearer)\b"
+)
+PI_CONTINUE_RE = re.compile(
+    r"^(?:继续|请继续|please continue|continue\.?|go ahead)$",
+    re.I,
+)
+PI_STOP_REASONS = {"stop", "length", "toolUse", "error", "aborted"}
+PI_PATH_KEYS = (
+    "path",
+    "file",
+    "file_path",
+    "target",
+    "skill",
+    "skill_path",
+    "command",
+    "cmd",
+)
+PI_NON_INTENT_TYPES = {
+    "branch_summary",
+    "custom",
+    "custom_message",
+    "label",
+    "session_info",
+    "thinking_level_change",
+}
+
 
 @dataclass(frozen=True)
 class Example:
@@ -112,6 +140,24 @@ class SkillUsageRecord:
     text: str
 
 
+@dataclass
+class PiParsedSession:
+    path: Path
+    header: dict[str, Any] | None
+    version: object
+    cwd: str
+    session_id: str
+    timestamp: str
+    parent_session: str
+    selected: list[dict[str, Any]]
+    leaf_count: int
+    malformed_lines: int
+    skipped_no_id: int
+    duplicate_ids: int
+    incomplete_ancestor: bool
+    unsupported_reason: str
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Mine local agent history for skill-improvement signals.")
     parser.add_argument("--scope", choices=("current", "all"), default="current")
@@ -135,11 +181,17 @@ def parse_args() -> argparse.Namespace:
         help="Grok home to scan (default ~/.grok). Repeat for multiple homes; comma-separated values are also accepted.",
     )
     parser.add_argument(
+        "--pi-home",
+        action="append",
+        default=None,
+        help="Pi home to scan (default ~/.pi/agent). Repeat for multiple homes; comma-separated values are also accepted.",
+    )
+    parser.add_argument(
         "--sources",
-        default="codex,codex-memory,claude,claude-memory,grok,context-docs",
+        default="codex,codex-memory,claude,claude-memory,grok,pi,context-docs",
         help=(
             "Comma-separated sources: codex,codex-memory,claude,claude-memory,"
-            "grok,context-docs."
+            "grok,pi,context-docs."
         ),
     )
     parser.add_argument("--format", choices=("markdown", "json"), default="markdown")
@@ -510,6 +562,7 @@ def add_skill_usage_record(
     skill_prefix: str = "",
     inventory: dict[str, SkillInventoryEntry] | None = None,
     limit_text: int = 300,
+    emitted_text: str | None = None,
 ) -> None:
     if skip_injected_text(text):
         return
@@ -519,6 +572,7 @@ def add_skill_usage_record(
         names = match_skill_usage_names(text, skill_markers, root_markers)
     if not names:
         return
+    stored = text if emitted_text is None else emitted_text
     skill_usage_records.append(
         SkillUsageRecord(
             source,
@@ -528,7 +582,7 @@ def add_skill_usage_record(
             file,
             line,
             names,
-            " ".join(text.split())[:limit_text],
+            " ".join(stored.split())[:limit_text],
         )
     )
 
@@ -1005,6 +1059,622 @@ def scan_grok_home(
             counts["sessions_grok"] += 1
 
 
+def iter_pi_session_paths(pi_home: Path) -> tuple[list[Path], list[Path]]:
+    sessions_root = pi_home / "sessions"
+    if not sessions_root.is_dir():
+        return [], []
+    try:
+        sessions_real = sessions_root.resolve()
+    except OSError:
+        return [], []
+    kept: list[Path] = []
+    escaped: list[Path] = []
+    seen: set[Path] = set()
+    for path in sorted(sessions_root.rglob("*.jsonl")):
+        if not path.is_file() and not path.is_symlink():
+            continue
+        try:
+            real = path.resolve()
+        except OSError:
+            escaped.append(path)
+            continue
+        try:
+            real.relative_to(sessions_real)
+        except ValueError:
+            escaped.append(path)
+            continue
+        if not real.is_file() or real in seen:
+            continue
+        seen.add(real)
+        kept.append(path)
+    return kept, escaped
+
+
+def record_pi_escaped_sources(
+    escaped: list[Path],
+    event_counts: Counter[str] | None,
+    limitations: list[str] | None,
+) -> None:
+    for path in escaped:
+        if event_counts is not None:
+            event_counts["pi_escaped_source"] += 1
+        if limitations is not None:
+            limitations.append(
+                f"{path}: skipped path that escaped the Pi sessions/ read boundary"
+            )
+
+
+def pi_empty_parse(path: Path, reason: str) -> PiParsedSession:
+    return PiParsedSession(
+        path=path,
+        header=None,
+        version=None,
+        cwd="(unknown)",
+        session_id="",
+        timestamp="",
+        parent_session="",
+        selected=[],
+        leaf_count=0,
+        malformed_lines=0,
+        skipped_no_id=0,
+        duplicate_ids=0,
+        incomplete_ancestor=False,
+        unsupported_reason=reason,
+    )
+
+
+def pi_parent_session_id(value: Any) -> str:
+    if isinstance(value, str) and value:
+        return value
+    if isinstance(value, dict):
+        ident = value.get("id") or value.get("sessionId") or ""
+        return str(ident) if ident else ""
+    if value:
+        return str(value)
+    return ""
+
+
+def select_pi_branch(
+    entries: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, int | bool]]:
+    by_id: dict[str, dict[str, Any]] = {}
+    order: list[str] = []
+    duplicate_ids = 0
+    skipped_no_id = 0
+    for entry in entries:
+        eid = entry.get("id")
+        if not isinstance(eid, str) or not eid:
+            skipped_no_id += 1
+            continue
+        if eid in by_id:
+            duplicate_ids += 1
+            continue
+        by_id[eid] = entry
+        order.append(eid)
+
+    has_children: set[str] = set()
+    for eid in order:
+        pid = by_id[eid].get("parentId")
+        if isinstance(pid, str) and pid:
+            has_children.add(pid)
+    leaves = [eid for eid in order if eid not in has_children]
+
+    incomplete = False
+    if not order:
+        return [], {
+            "leaf_count": 0,
+            "duplicate_ids": duplicate_ids,
+            "skipped_no_id": skipped_no_id,
+            "incomplete": False,
+        }
+
+    start = leaves[-1] if leaves else order[-1]
+    chain: list[str] = []
+    seen: set[str] = set()
+    current: str | None = start
+    while isinstance(current, str) and current:
+        if current in seen:
+            incomplete = True
+            break
+        if current not in by_id:
+            incomplete = True
+            break
+        chain.append(current)
+        seen.add(current)
+        pid = by_id[current].get("parentId")
+        if pid is None or pid == "":
+            break
+        if not isinstance(pid, str):
+            incomplete = True
+            break
+        current = pid
+    chain.reverse()
+    return [by_id[eid] for eid in chain], {
+        "leaf_count": len(leaves),
+        "duplicate_ids": duplicate_ids,
+        "skipped_no_id": skipped_no_id,
+        "incomplete": incomplete,
+    }
+
+
+def parse_pi_session_file(path: Path) -> PiParsedSession:
+    try:
+        raw_text = path.read_text(errors="replace")
+    except OSError:
+        return pi_empty_parse(path, "unreadable")
+
+    header: dict[str, Any] | None = None
+    entries: list[dict[str, Any]] = []
+    malformed = 0
+    for line_number, line in enumerate(raw_text.splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            malformed += 1
+            continue
+        if not isinstance(obj, dict):
+            malformed += 1
+            continue
+        if obj.get("type") == "session":
+            if header is None:
+                header = obj
+            continue
+        entries.append({**obj, "_source_line": line_number})
+
+    selected, meta = select_pi_branch(entries)
+    if header is None:
+        parsed = pi_empty_parse(path, "missing_header")
+        parsed.malformed_lines = malformed
+        parsed.skipped_no_id = int(meta["skipped_no_id"])
+        parsed.duplicate_ids = int(meta["duplicate_ids"])
+        parsed.selected = selected
+        parsed.leaf_count = int(meta["leaf_count"])
+        parsed.incomplete_ancestor = bool(meta["incomplete"])
+        return parsed
+
+    version = header.get("version")
+    unsupported = "" if version == 3 or version == "3" else f"unsupported_version:{type(version).__name__}"
+    raw_cwd = header.get("cwd")
+    cwd = raw_cwd if isinstance(raw_cwd, str) and raw_cwd else "(unknown)"
+    return PiParsedSession(
+        path=path,
+        header=header,
+        version=version,
+        cwd=cwd,
+        session_id=str(header.get("id") or ""),
+        timestamp=str(header.get("timestamp") or ""),
+        parent_session=pi_parent_session_id(header.get("parentSession")),
+        selected=selected,
+        leaf_count=int(meta["leaf_count"]),
+        malformed_lines=malformed,
+        skipped_no_id=int(meta["skipped_no_id"]),
+        duplicate_ids=int(meta["duplicate_ids"]),
+        incomplete_ancestor=bool(meta["incomplete"]),
+        unsupported_reason=unsupported,
+    )
+
+
+def pi_session_in_scope(parsed: PiParsedSession, repo_root: Path, scope: str) -> bool:
+    return is_in_scope(parsed.cwd, repo_root, scope)
+
+
+def pi_is_unscopable(parsed: PiParsedSession, repo_root: Path, scope: str) -> bool:
+    if scope != "current" or pi_session_in_scope(parsed, repo_root, scope):
+        return False
+    cwd_unknown = parsed.cwd in {"", "(unknown)"}
+    return bool(parsed.unsupported_reason or cwd_unknown)
+
+
+def record_pi_parse_issues(
+    parsed: PiParsedSession,
+    event_counts: Counter[str],
+    limitations: list[str] | None,
+) -> None:
+    rel = str(parsed.path)
+    if parsed.malformed_lines:
+        event_counts["pi_malformed_line"] += parsed.malformed_lines
+        if limitations is not None:
+            limitations.append(
+                f"{rel}: {parsed.malformed_lines} malformed JSONL line(s); evidence is incomplete"
+            )
+    if parsed.unsupported_reason:
+        event_counts["pi_unsupported_format"] += 1
+        if parsed.unsupported_reason.startswith("unsupported_version"):
+            event_counts["pi_unsupported_version"] += 1
+        elif parsed.unsupported_reason == "missing_header":
+            event_counts["pi_missing_header"] += 1
+        if limitations is not None:
+            limitations.append(
+                f"{rel}: {parsed.unsupported_reason}; not counted as a complete Pi session"
+            )
+        return
+    if parsed.selected:
+        event_counts["pi_branch_selected"] += 1
+    if parsed.leaf_count > 1:
+        event_counts["pi_unmerged_leaves"] += parsed.leaf_count - 1
+        if limitations is not None:
+            limitations.append(
+                f"{rel}: selected last recorded id/parentId branch among {parsed.leaf_count} leaves; "
+                "branches were not merged and the selection is not guaranteed to match the UI"
+            )
+    if parsed.incomplete_ancestor:
+        event_counts["pi_incomplete_ancestor"] += 1
+        if limitations is not None:
+            limitations.append(f"{rel}: selected branch has incomplete ancestors")
+    if parsed.parent_session:
+        event_counts["pi_parent_session_unfollowed"] += 1
+        if limitations is not None:
+            limitations.append(
+                f"{rel}: parentSession not followed; unique task counts across forked sessions are not claimed"
+            )
+    if parsed.duplicate_ids:
+        event_counts["pi_duplicate_entry_id"] += parsed.duplicate_ids
+    if parsed.skipped_no_id:
+        event_counts["pi_entry_without_id"] += parsed.skipped_no_id
+        if limitations is not None:
+            limitations.append(
+                f"{rel}: {parsed.skipped_no_id} tree row(s) without id were not mined"
+            )
+
+
+def pi_message_payload(entry: dict[str, Any]) -> dict[str, Any]:
+    message = entry.get("message")
+    if isinstance(message, dict):
+        return message
+    return entry
+
+
+def pi_text_from_content(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+    if not isinstance(content, list):
+        return ""
+    parts: list[str] = []
+    for block in content:
+        if not isinstance(block, dict):
+            continue
+        btype = str(block.get("type") or "text")
+        if btype in {"image", "thinking", "toolCall", "tool_call"}:
+            continue
+        if btype in {"text", ""}:
+            text = block.get("text")
+            if isinstance(text, str) and text:
+                parts.append(text)
+    return "\n".join(parts)
+
+
+def pi_user_intent_text(text: str) -> str:
+    if not text:
+        return ""
+    return PI_SKILL_BLOCK_RE.sub("", text).strip()
+
+
+def pi_sample_text(category: str) -> str:
+    return f"pi {category}"
+
+
+def pi_safe_model_token(value: Any) -> str:
+    if not isinstance(value, str):
+        return "unparsed"
+    text = value.strip()
+    if re.fullmatch(r"[A-Za-z0-9._:+-]{1,80}", text) and not PI_SECRET_HINT_RE.search(text):
+        return text
+    return "unparsed"
+
+
+def is_pi_continuation_text(text: str) -> bool:
+    stripped = text.strip()
+    for name, pattern in USER_SIGNAL_PATTERNS:
+        if name == "approval_gate" and pattern.search(stripped):
+            return True
+    return bool(PI_CONTINUE_RE.fullmatch(stripped))
+
+
+def pi_toolcall_usage_text(block: dict[str, Any]) -> str:
+    nested = block.get("toolCall")
+    source = nested if isinstance(nested, dict) else block
+    name = str(source.get("name") or "")
+    arguments: Any = source.get("arguments")
+    if isinstance(arguments, str):
+        stripped = arguments.strip()
+        if stripped.startswith("{") and stripped.endswith("}"):
+            try:
+                loaded = json.loads(stripped)
+            except json.JSONDecodeError:
+                loaded = None
+            if isinstance(loaded, dict):
+                arguments = loaded
+    parts = [name]
+    if isinstance(arguments, dict):
+        for key in PI_PATH_KEYS:
+            value = arguments.get(key)
+            if isinstance(value, str) and value:
+                parts.append(value)
+    elif isinstance(arguments, str) and arguments:
+        parts.append(arguments)
+    return "\n".join(part for part in parts if part)
+
+
+def iter_pi_toolcall_blocks(message: dict[str, Any]) -> list[dict[str, Any]]:
+    content = message.get("content")
+    if not isinstance(content, list):
+        return []
+    return [
+        block
+        for block in content
+        if isinstance(block, dict) and str(block.get("type") or "") in {"toolCall", "tool_call"}
+    ]
+
+
+def mine_pi_selected_entries(
+    parsed: PiParsedSession,
+    counts: Counter[str],
+    examples: dict[str, list[Example]],
+    event_counts: Counter[str],
+    limit: int,
+) -> None:
+    prev_terminal_stop = False
+    for entry in parsed.selected:
+        etype = str(entry.get("type") or "")
+        if etype in PI_NON_INTENT_TYPES:
+            continue
+        if etype == "model_change":
+            event_counts["pi_model_change"] += 1
+            model_id = pi_safe_model_token(entry.get("modelId") or entry.get("model"))
+            event_counts[f"pi_model_change:{model_id}"] += 1
+            add_example(
+                examples,
+                Example(
+                    "pi",
+                    "pi_model_change",
+                    parsed.cwd,
+                    parsed.session_id,
+                    parsed.path.name,
+                    pi_sample_text("model_change"),
+                ),
+                limit,
+            )
+            prev_terminal_stop = False
+            continue
+        if etype == "compaction":
+            event_counts["pi_compaction"] += 1
+            prev_terminal_stop = False
+            continue
+        if etype != "message":
+            continue
+
+        message = pi_message_payload(entry)
+        role = str(message.get("role") or "")
+        if role == "user":
+            intent = pi_user_intent_text(pi_text_from_content(message.get("content")))
+            if intent and not skip_injected_text(intent):
+                if prev_terminal_stop and is_pi_continuation_text(intent):
+                    event_counts["pi_continuation_candidate"] += 1
+                    add_example(
+                        examples,
+                        Example(
+                            "pi",
+                            "pi_continuation_candidate",
+                            parsed.cwd,
+                            parsed.session_id,
+                            parsed.path.name,
+                            "continuation candidate after stop",
+                        ),
+                        limit,
+                    )
+                for name, pattern in USER_SIGNAL_PATTERNS:
+                    if pattern.search(intent.strip()):
+                        category = f"user_{name}"
+                        counts[category] += 1
+                        add_example(
+                            examples,
+                            Example(
+                                "pi",
+                                category,
+                                parsed.cwd,
+                                parsed.session_id,
+                                parsed.path.name,
+                                pi_sample_text(category),
+                            ),
+                            limit,
+                        )
+            prev_terminal_stop = False
+        elif role == "assistant":
+            if message.get("model"):
+                event_counts["pi_assistant_model"] += 1
+                token = pi_safe_model_token(message.get("model"))
+                event_counts[f"pi_assistant_model:{token}"] += 1
+                add_example(
+                    examples,
+                    Example(
+                        "pi",
+                        "pi_assistant_model",
+                        parsed.cwd,
+                        parsed.session_id,
+                        parsed.path.name,
+                        pi_sample_text("assistant_model"),
+                    ),
+                    limit,
+                )
+            stop = str(message.get("stopReason") or "")
+            if stop in PI_STOP_REASONS:
+                event_counts[f"pi_stop_{stop}"] += 1
+            elif stop:
+                event_counts["pi_stop_unknown"] += 1
+            prev_terminal_stop = stop in {"stop", "length"}
+        elif role == "toolResult":
+            if message.get("isError"):
+                tool_name = str(message.get("toolName") or "")
+                result_text = pi_text_from_content(message.get("content"))
+                category = f"failure_{classify_failure(tool_name + chr(10) + result_text)}"
+                counts[category] += 1
+                add_example(
+                    examples,
+                    Example(
+                        "pi",
+                        category,
+                        parsed.cwd,
+                        parsed.session_id,
+                        parsed.path.name,
+                        pi_sample_text("tool_error"),
+                    ),
+                    limit,
+                )
+            prev_terminal_stop = False
+
+
+def scan_pi_session(
+    path: Path,
+    repo_root: Path,
+    scope: str,
+    counts: Counter[str],
+    examples: dict[str, list[Example]],
+    event_counts: Counter[str],
+    limitations: list[str],
+    limit: int,
+) -> None:
+    parsed = parse_pi_session_file(path)
+    if pi_is_unscopable(parsed, repo_root, scope):
+        event_counts["pi_unscopable"] += 1
+        if parsed.malformed_lines:
+            event_counts["pi_malformed_line"] += parsed.malformed_lines
+        if parsed.unsupported_reason:
+            event_counts["pi_unsupported_format"] += 1
+            if parsed.unsupported_reason.startswith("unsupported_version"):
+                event_counts["pi_unsupported_version"] += 1
+            elif parsed.unsupported_reason == "missing_header":
+                event_counts["pi_missing_header"] += 1
+        elif parsed.cwd in {"", "(unknown)"}:
+            event_counts["pi_missing_cwd"] += 1
+        limitations.append(f"{parsed.path}: unscopable incomplete Pi input; not mined")
+        return
+    if not pi_session_in_scope(parsed, repo_root, scope):
+        return
+    record_pi_parse_issues(parsed, event_counts, limitations)
+    if parsed.unsupported_reason:
+        return
+    counts["sessions_pi"] += 1
+    if parsed.timestamp:
+        counts[f"pi_session_date:{parsed.timestamp[:10]}"] += 1
+    mine_pi_selected_entries(parsed, counts, examples, event_counts, limit)
+
+
+def scan_pi_skill_usage(
+    path: Path,
+    repo_root: Path,
+    scope: str,
+    cutoff_date: str,
+    include_output: bool,
+    skill_markers: dict[str, tuple[str, ...]],
+    root_markers: tuple[str, ...],
+    skill_prefix: str,
+    inventory: dict[str, SkillInventoryEntry],
+    records: list[SkillUsageRecord],
+    limitations: list[str] | None,
+    event_counts: Counter[str] | None = None,
+) -> None:
+    parsed = parse_pi_session_file(path)
+    local_events: Counter[str] = event_counts if event_counts is not None else Counter()
+    if pi_is_unscopable(parsed, repo_root, scope):
+        local_events["pi_unscopable"] += 1
+        if limitations is not None:
+            limitations.append(f"{parsed.path}: unscopable incomplete Pi input; not mined")
+        return
+    if not pi_session_in_scope(parsed, repo_root, scope):
+        return
+    if cutoff_date and parsed.timestamp[:10] >= cutoff_date:
+        return
+    record_pi_parse_issues(parsed, local_events, limitations)
+    if parsed.unsupported_reason:
+        return
+
+    for entry in parsed.selected:
+        # Evidence locations refer to the file, not the selected-branch ordinal.
+        index = entry["_source_line"]
+        etype = str(entry.get("type") or "")
+        if etype in PI_NON_INTENT_TYPES or etype in {"model_change", "compaction"}:
+            continue
+        if etype != "message":
+            continue
+        message = pi_message_payload(entry)
+        role = str(message.get("role") or "")
+        if role == "user":
+            intent = pi_user_intent_text(pi_text_from_content(message.get("content")))
+            add_skill_usage_record(
+                records,
+                intent,
+                "pi",
+                "user_explicit",
+                parsed.cwd,
+                parsed.session_id,
+                parsed.path.name,
+                index,
+                skill_markers,
+                root_markers,
+                skill_prefix,
+                inventory,
+                emitted_text=pi_sample_text("user_explicit"),
+            )
+        elif role == "assistant":
+            text = pi_text_from_content(message.get("content"))
+            add_skill_usage_record(
+                records,
+                text,
+                "pi",
+                "assistant_reference",
+                parsed.cwd,
+                parsed.session_id,
+                parsed.path.name,
+                index,
+                skill_markers,
+                root_markers,
+                skill_prefix,
+                inventory,
+                emitted_text=pi_sample_text("assistant_reference"),
+            )
+            for block in iter_pi_toolcall_blocks(message):
+                usage_text = pi_toolcall_usage_text(block)
+                nested = block.get("toolCall")
+                source = nested if isinstance(nested, dict) else block
+                call_name = str(source.get("name") or "")
+                if not is_skill_load_call(call_name, usage_text):
+                    continue
+                add_skill_usage_record(
+                    records,
+                    usage_text,
+                    "pi",
+                    "skill_load",
+                    parsed.cwd,
+                    parsed.session_id,
+                    parsed.path.name,
+                    index,
+                    skill_markers,
+                    root_markers,
+                    skill_prefix,
+                    inventory,
+                    emitted_text=pi_sample_text("skill_load"),
+                )
+        elif role == "toolResult" and include_output:
+            text = pi_text_from_content(message.get("content"))
+            add_skill_usage_record(
+                records,
+                text,
+                "pi",
+                "tool_output",
+                parsed.cwd,
+                parsed.session_id,
+                parsed.path.name,
+                index,
+                skill_markers,
+                root_markers,
+                skill_prefix,
+                inventory,
+                emitted_text=pi_sample_text("tool_output"),
+            )
+
+
 def scan_memory_file(
     path: Path,
     repo_root: Path,
@@ -1286,6 +1956,8 @@ def build_skill_usage_report(
     codex_homes: list[Path],
     claude_homes: list[Path],
     grok_homes: list[Path] | None = None,
+    pi_homes: list[Path] | None = None,
+    limitations: list[str] | None = None,
 ) -> dict[str, Any]:
     skill_roots = [Path(value) for value in args.skill_usage_root or []]
     skill_prefix = args.skill_usage_prefix.strip()
@@ -1301,6 +1973,7 @@ def build_skill_usage_report(
     skill_markers, root_markers = build_skill_usage_markers(skill_prefix, skill_roots, inventory)
     records: list[SkillUsageRecord] = []
     grok_homes = grok_homes or []
+    pi_homes = pi_homes or []
 
     if "codex" in sources:
         for codex_home in codex_homes:
@@ -1350,6 +2023,24 @@ def build_skill_usage_report(
                         inventory,
                         records,
                     )
+    if "pi" in sources:
+        for pi_home in pi_homes:
+            kept, escaped = iter_pi_session_paths(pi_home)
+            record_pi_escaped_sources(escaped, None, limitations)
+            for path in kept:
+                scan_pi_skill_usage(
+                    path,
+                    repo_root,
+                    args.scope,
+                    args.skill_usage_before_date,
+                    args.skill_usage_include_output,
+                    skill_markers,
+                    root_markers,
+                    skill_prefix,
+                    inventory,
+                    records,
+                    limitations,
+                )
 
     by_category: Counter[str] = Counter()
     by_skill: Counter[str] = Counter()
@@ -1460,10 +2151,14 @@ def candidate_recommendations(counts: Counter[str]) -> list[str]:
         recommendations.append("shell-guidelines: avoid reserved variable names such as status and path in all Shell code.")
     if counts["user_analysis_only"] or counts["user_scope_rejected"]:
         recommendations.append("analyze/execute skills: honor analysis-only and rejected-scope signals before mutating files.")
-    if counts["user_approval_gate"] or counts["memory_failure_pattern"]:
-        recommendations.append("smart-commit/implement-change: keep explicit approval and completed-write gates machine-checkable.")
+    if counts["user_approval_gate"]:
+        recommendations.append(
+            "implement-change: treat confirmation-like user text as a cue to investigate existing authority in context; never infer commit or write permission from the confirmation regex, and do not add machine-checkable approval gates."
+        )
     if counts["failure_review_artifact_invalid"]:
-        recommendations.append("review-change: validate design_ref/design_version before invoking lower-plane reviewers.")
+        recommendations.append(
+            "review-change: keep reviewers read-only and let the calling agent adjudicate findings; do not use a lower-plane reviewer protocol."
+        )
     if counts["failure_python_yaml_missing"] or counts["failure_plugin_manifest_missing"]:
         recommendations.append("plugin workflows: run validation through uvx --with pyyaml and verify manifests before declaring success.")
     if counts["context_doc_offload_candidate"]:
@@ -1495,9 +2190,11 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     codex_homes = resolve_home_args(args.codex_home, Path.home() / ".codex")
     claude_homes = resolve_home_args(args.claude_home, Path.home() / ".claude")
     grok_homes = resolve_home_args(args.grok_home, Path.home() / ".grok")
+    pi_homes = resolve_home_args(args.pi_home, Path.home() / ".pi" / "agent")
     counts: Counter[str] = Counter()
     event_counts: Counter[str] = Counter()
     examples: dict[str, list[Example]] = defaultdict(list)
+    limitations: list[str] = []
 
     if args.skill_usage_only:
         return {
@@ -1507,12 +2204,22 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
             "codex_homes": [str(path) for path in codex_homes],
             "claude_homes": [str(path) for path in claude_homes],
             "grok_homes": [str(path) for path in grok_homes],
+            "pi_homes": [str(path) for path in pi_homes],
+            "pi_branch_policy": "last_recorded_id_parentId" if "pi" in sources else "",
             "counts": {},
             "event_counts": {},
             "recommendations": [],
             "examples": {},
+            "limitations": limitations,
             "skill_usage": build_skill_usage_report(
-                args, repo_root, sources, codex_homes, claude_homes, grok_homes
+                args,
+                repo_root,
+                sources,
+                codex_homes,
+                claude_homes,
+                grok_homes,
+                pi_homes,
+                limitations,
             ),
         }
 
@@ -1527,6 +2234,21 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     if "grok" in sources:
         for grok_home in grok_homes:
             scan_grok_home(grok_home, repo_root, args.scope, counts, examples, event_counts, args.limit)
+    if "pi" in sources:
+        for pi_home in pi_homes:
+            kept, escaped = iter_pi_session_paths(pi_home)
+            record_pi_escaped_sources(escaped, event_counts, limitations)
+            for path in kept:
+                scan_pi_session(
+                    path,
+                    repo_root,
+                    args.scope,
+                    counts,
+                    examples,
+                    event_counts,
+                    limitations,
+                    args.limit,
+                )
     if "codex-memory" in sources:
         for codex_home in codex_homes:
             memory_path = codex_home / "memories" / "MEMORY.md"
@@ -1541,10 +2263,17 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         scan_context_docs(repo_root, counts, examples, args.limit)
 
     skill_usage = build_skill_usage_report(
-        args, repo_root, sources, codex_homes, claude_homes, grok_homes
+        args, repo_root, sources, codex_homes, claude_homes, grok_homes, pi_homes
     )
 
-    for key in ("sessions_codex", "sessions_claude", "sessions_grok", "memory_files", "context_docs"):
+    for key in (
+        "sessions_codex",
+        "sessions_claude",
+        "sessions_grok",
+        "sessions_pi",
+        "memory_files",
+        "context_docs",
+    ):
         counts[key] += 0
 
     serialized_examples = {
@@ -1558,10 +2287,13 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         "codex_homes": [str(path) for path in codex_homes],
         "claude_homes": [str(path) for path in claude_homes],
         "grok_homes": [str(path) for path in grok_homes],
+        "pi_homes": [str(path) for path in pi_homes],
+        "pi_branch_policy": "last_recorded_id_parentId" if "pi" in sources else "",
         "counts": dict(counts),
         "event_counts": dict(event_counts),
         "recommendations": candidate_recommendations(counts),
         "examples": serialized_examples,
+        "limitations": limitations,
         "skill_usage": skill_usage,
     }
 
@@ -1577,9 +2309,13 @@ def print_markdown_report(report: dict[str, Any], limit: int) -> None:
     print(f"- codex_homes: {','.join(report['codex_homes'])}")
     print(f"- claude_homes: {','.join(report['claude_homes'])}")
     print(f"- grok_homes: {','.join(report.get('grok_homes') or [])}")
+    print(f"- pi_homes: {','.join(report.get('pi_homes') or [])}")
+    if report.get("pi_branch_policy"):
+        print(f"- pi_branch_policy: {report['pi_branch_policy']}")
     print(f"- codex_sessions: {counts['sessions_codex']}")
     print(f"- claude_sessions: {counts['sessions_claude']}")
     print(f"- grok_sessions: {counts['sessions_grok']}")
+    print(f"- pi_sessions: {counts['sessions_pi']}")
     print(f"- memory_files: {counts['memory_files']}")
     print(f"- context_docs: {counts['context_docs']}")
 
@@ -1640,6 +2376,12 @@ def print_markdown_report(report: dict[str, Any], limit: int) -> None:
                     f"file={example['file']}:{example['line']}"
                 )
                 print(f"    {example['text']}")
+
+    limitations = report.get("limitations") or []
+    if limitations:
+        print("\n## Evidence Limitations")
+        for item in limitations:
+            print(f"- {item}")
 
     print("\n## Candidate Recommendations")
     recommendations = report["recommendations"]

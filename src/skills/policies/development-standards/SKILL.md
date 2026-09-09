@@ -16,6 +16,16 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 3. Compose the matching language, security, error-handling, architecture, testing, or domain skill only when its boundary is active.
 4. Let the lifecycle workflow own mutation, review, repair, continuation, and close decisions.
 
+## Goals, Discretion, And Risk
+
+- Deliver the main goal, its necessary conditions, user-fixed technical choices, and applicable inviolable boundaries.
+- Authorized best-effort secondary outcomes may be substituted, degraded, or dropped during implementation. Record the discretion and its effect. The design does not need to enumerate every feature that might fail.
+- Discretion comes from the current request, approved design, or applicable project convention. Do not grant it after the fact to pass review, silently weaken a required outcome, or drop a named secondary capability that the main goal actually depends on.
+- Ordinary bugs, one failed attempt, or unknown feasibility do not by themselves make a requirement unsupported. Investigate enough to explain a tradeoff; do not exhaust every alternative.
+- Choose controls from actual exposure, exploitability, expected loss, state value, blast radius, recovery cost, and control cost. Do not require a scoring system or a zero-risk proof.
+- Remote hosts, multi-repository work, Ansible, and deploy wording do not by themselves make the target production. Use trusted project facts; do only the minimum check needed when the environment is unclear.
+- Authorized rebuildable development state may be updated, rebuilt, or replaced with fix-forward recovery. Protect unique data, credentials, shared hosts, and production commitments. A change that would exceed approved production goals, commitments, risk, or authority needs narrow authorization before the affected action. In-scope adaptations and already-authorized deployments continue without renewed approval.
+
 ## Scoped Implementation
 
 - Implement only requested behavior and approved supporting work.
@@ -23,7 +33,8 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 - Do not refactor adjacent code, reformat unrelated files, remove pre-existing dead code, or add features that were not requested.
 - Match established repository structure, naming, style, and ownership unless the approved change explicitly replaces them.
 - Avoid single-use abstractions, speculative configuration, hypothetical extension points, and defensive branches for impossible states.
-- Fail closed on required errors. Do not add silent fallback, guessed defaults, or degraded success unless the approved design or a current caller contract names that behavior. A missing case is an explicit failure, not a recovery.
+- Fail closed on errors that the main goal, a required contract, or a hard boundary depends on. A missing required case is an explicit failure, not a recovery.
+- Do not add silent fallback, guessed defaults, or undeclared degraded success for required behavior. Authorized best-effort secondary degradation does not need every fallback named in the design.
 - Do not swallow errors or keep a legacy path "just in case". Prefer a clean break over dual-running old and new behavior. Route classified fallback or degraded mode through `error-patterns` when that boundary is active.
 - Remove imports, variables, helpers, configuration, and documentation made obsolete by the current change.
 
@@ -36,7 +47,9 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 
 ## Compatibility And Migration
 
-- Do not add or preserve compatibility behavior unless a current public or persisted contract, interoperability requirement, or approved migration policy requires it.
+- Do not add or preserve compatibility behavior unless a current public or persisted contract, interoperability requirement, approved migration policy, or retained-state need requires it.
+- Authorized disposable development state may rebuild or replace rather than preserve in-place compatibility.
+- Retained existing data still needs corresponding migration evidence even when the runtime may be rebuilt.
 - Distinguish internal implementation freedom from caller-visible APIs, stored data, wire formats, automation entry points, and generated compatibility surfaces.
 - When compatibility is required, name its owner, supported versions, evidence, retirement condition, and migration path.
 - Remove obsolete compatibility paths when their approved retirement condition is met; update affected producers, consumers, tests, generated surfaces, and stable docs together.
@@ -49,6 +62,7 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 - Compare correctness risk, maintenance activity, security response, transitive surface, update burden, license, runtime fit, and ecosystem ownership.
 - Do not add a dependency for small transparent local logic whose implementation and verification are cheaper than the dependency lifecycle.
 - Do not build custom cryptography, authentication protocols, parsers for complex standards, or concurrency primitives when a suitable maintained implementation exists.
+- When the user or approved design specifies a library for a goal, that library is a boundary. Choose glue, helpers, and local algorithms; do not swap the specified library from preference, and do not require the user to design each glue function.
 
 ## Maintainability
 
@@ -82,9 +96,10 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 
 ## Verification And Review
 
-- Define success criteria before implementation and select the smallest realistic oracle that proves the changed boundary.
-- Reproduce bugs or establish equivalent before-state evidence when practical, then verify the narrow change and declared broader scope.
-- Do not weaken tests, schemas, compatibility checks, security checks, or other oracles merely to make implementation pass.
+- Define success criteria before implementation and select the smallest realistic oracle that proves the changed user-visible boundary and hard constraints.
+- Parser, existence, or golden checks do not replace user-goal scenarios that the change claims to satisfy.
+- Reproduce bugs or establish equivalent before-state evidence when practical, then verify the narrow change and declared broader scope. A missing perfect reproducer does not freeze unrelated authorized work.
+- Do not weaken tests, schemas, compatibility checks, security checks, or other required oracles merely to make implementation pass. Authorized secondary tradeoffs are disclosed adapted results, not deleted assertions.
 - Review the approved diff, direct dependencies, and executable evidence. Pre-existing or unrelated debt does not expand the current task.
 
 ## Progressive Disclosure
@@ -94,9 +109,10 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 
 ## Completion Check
 
-- Current approved requirements and contracts are satisfied.
+- Current approved requirements, main goal, and required contracts are satisfied.
+- Authorized best-effort secondary tradeoffs are disclosed, with evidence, rather than silent.
 - The implementation is the smallest durable option for the declared horizon.
 - Changed lines are request-traceable and unrelated work is untouched.
 - Compatibility and dependencies have current owners and evidence where applicable.
 - Temporary mechanisms have explicit exit conditions.
-- Declared verification passes without weakening the oracle.
+- Declared verification passes without weakening a required oracle.
