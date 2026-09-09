@@ -37,6 +37,16 @@ class SemanticSkillContractTests(unittest.TestCase):
             [], self.checker.validate_semantic_contracts(load_contract(), REPO_ROOT)
         )
 
+    def test_undistributed_dependency_is_rejected(self) -> None:
+        contract = copy.deepcopy(load_contract())
+        contract["skills"]["design-change"]["semantic_requires"] = ["web-fetch"]
+
+        errors = self.checker.validate_semantic_contracts(contract, REPO_ROOT)
+
+        self.assertTrue(
+            any("undistributed skill: web-fetch" in error for error in errors)
+        )
+
     def test_unknown_dependency_is_rejected(self) -> None:
         contract = copy.deepcopy(load_contract())
         contract["skills"]["design-change"]["semantic_requires"] = ["missing"]

@@ -6,7 +6,7 @@ This repository is the authored source and generated portable payload for a coll
 
 - `src/skills/`: nested authored source
 - `skills/`: generated root-flat distribution
-- `contracts/skills.toml`: public ID, source, discovery, role, permission, and semantic-composition inventory
+- `contracts/skills.toml`: public ID, source, discovery, distribution, role, permission, and semantic-composition inventory
 - `skills/use-coding-skills/references/routing.toml`: installed trigger and composition guidance
 - `docs/architecture/`: stable maintenance truth
 - `docs/plans/`: stage artifacts, excluded from default docs search

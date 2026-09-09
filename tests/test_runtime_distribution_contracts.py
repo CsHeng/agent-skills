@@ -31,13 +31,20 @@ class RuntimeDistributionContractTests(unittest.TestCase):
 
     def test_authored_and_generated_trees_have_exact_39_skill_mapping(self) -> None:
         generated = {path.name for path in (REPO_ROOT / "skills").glob("*/")}
+        distributed = {
+            skill_id: entry
+            for skill_id, entry in self.skills.items()
+            if entry.get("distributed", True) is True
+        }
         self.assertEqual(39, len(self.skills))
-        self.assertEqual(set(self.skills), generated)
+        self.assertEqual(set(distributed), generated)
+        self.assertNotIn("web-fetch", generated)
+        self.assertFalse(self.skills["web-fetch"].get("distributed", True))
         source_map = json.loads(
             (REPO_ROOT / "skills/.source-map.json").read_text(encoding="utf-8")
         )
         self.assertEqual(
-            {skill_id: entry["source"] for skill_id, entry in self.skills.items()},
+            {skill_id: entry["source"] for skill_id, entry in distributed.items()},
             source_map,
         )
 
@@ -59,6 +66,8 @@ class RuntimeDistributionContractTests(unittest.TestCase):
         self.assertEqual(39, index["canonical_skill_count"])
         self.assertEqual(set(self.skills), set(by_id))
         self.assertEqual([], by_id["implement-change"]["semantic_requires"])
+        self.assertTrue(by_id["implement-change"]["distributed"])
+        self.assertFalse(by_id["web-fetch"]["distributed"])
 
     def test_source_map_digest_is_deterministic(self) -> None:
         source_map = REPO_ROOT / "skills/.source-map.json"

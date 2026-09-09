@@ -17,6 +17,7 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from skill_activation import (
     has_authored_codex_invocation_policy,
+    is_distributed,
     validate_activation_contract,
 )
 
@@ -60,6 +61,10 @@ def validate_semantic_contracts(
             elif target not in public_entries:
                 errors.append(
                     f"{skill_name}: semantic_requires references unknown skill: {target}"
+                )
+            elif not is_distributed(public_entries[target]):
+                errors.append(
+                    f"{skill_name}: semantic_requires references undistributed skill: {target}"
                 )
             else:
                 adjacency[skill_name].add(target)
@@ -317,6 +322,10 @@ def validate_trigger_cases(
                 errors.append(f"trigger case {label}: unknown owner: {owner}")
             else:
                 owned_cases[owner].add(label)
+                if not is_distributed(owner_entry):
+                    errors.append(
+                        f"trigger case {label}: owner is not distributed: {owner}"
+                    )
                 if owner_entry.get("default_role") == "evaluator":
                     errors.append(
                         f"trigger case {label}: composition-only evaluator cannot own a trigger case: {owner}"
@@ -360,6 +369,10 @@ def validate_trigger_cases(
                 errors.append(f"trigger case {label}: unknown overlay: {overlay}")
                 continue
             overlay_cases[overlay].add(label)
+            if not is_distributed(overlay_entry):
+                errors.append(
+                    f"trigger case {label}: overlay is not distributed: {overlay}"
+                )
             if overlay == owner:
                 errors.append(f"trigger case {label}: owner cannot also be an overlay")
 
@@ -401,6 +414,12 @@ def validate_trigger_cases(
             )
 
     for public_id, entry in sorted(public_entries.items()):
+        if not is_distributed(entry):
+            if owned_cases[public_id] or overlay_cases[public_id]:
+                errors.append(
+                    f"{public_id}: undistributed skill cannot own or overlay a trigger case"
+                )
+            continue
         mode = entry.get("activation_mode")
         if mode == "native" and not owned_cases[public_id]:
             errors.append(f"{public_id}: native skill must own at least one trigger case")
@@ -537,6 +556,10 @@ def validate_routing_contracts(
                 errors.append(
                     f"{skill_name}: support route {intent} targets unknown skill: {target}"
                 )
+            elif not is_distributed(target_entry):
+                errors.append(
+                    f"{skill_name}: support route {intent} targets undistributed skill: {target}"
+                )
             elif target_entry.get("default_role") == "evaluator":
                 errors.append(
                     f"{skill_name}: support route {intent} cannot target an evaluator: {target}"
@@ -610,13 +633,30 @@ def validate() -> list[str]:
             if not entry.get("requires_explicit_user_request", False):
                 errors.append(f"{skill_name}: direct mutation requires an explicit user request guard")
 
-    source_dirs = canonical_skill_dirs()
-    missing_manifest = sorted(source_dirs - canonical_ids)
-    stale_manifest = sorted(canonical_ids - source_dirs)
-    if missing_manifest:
-        errors.append("canonical skills missing contract entries: " + ", ".join(missing_manifest))
-    if stale_manifest:
-        errors.append("contract skills missing canonical directories: " + ", ".join(stale_manifest))
+    generated_ids = canonical_skill_dirs()
+    distributed_ids = {
+        name
+        for name, entry in skills.items()
+        if isinstance(entry, dict) and is_distributed(entry)
+    }
+    extra_generated = sorted(generated_ids - distributed_ids)
+    missing_generated = sorted(distributed_ids - generated_ids)
+    unknown_generated = sorted(set(extra_generated) - canonical_ids)
+    leaked_generated = sorted(set(extra_generated) & canonical_ids)
+    if unknown_generated:
+        errors.append(
+            "canonical skills missing contract entries: " + ", ".join(unknown_generated)
+        )
+    if leaked_generated:
+        errors.append(
+            "generated surface contains undistributed skills: "
+            + ", ".join(leaked_generated)
+        )
+    if missing_generated:
+        errors.append(
+            "distributed skills missing canonical directories: "
+            + ", ".join(missing_generated)
+        )
 
     declared_sources = [
         entry.get("source")

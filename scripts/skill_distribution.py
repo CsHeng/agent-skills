@@ -19,6 +19,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.skill_activation import (  # noqa: E402
     derived_implicit_invocation,
+    is_distributed,
     project_openai_metadata,
 )
 
@@ -116,6 +117,11 @@ def render_surface(repo_root: Path, destination: Path) -> None:
     for skill_id, raw_entry in sorted(contract["skills"].items()):
         if not isinstance(raw_entry, dict):
             raise DistributionError(f"{skill_id}: skill entry must be a table")
+        distributed = raw_entry.get("distributed", True)
+        if not isinstance(distributed, bool):
+            raise DistributionError(f"{skill_id}: distributed must be a boolean")
+        if not is_distributed(raw_entry):
+            continue
         source = _skill_source(repo_root, skill_id, raw_entry)
         generated_skill = destination / skill_id
         shutil.copytree(source, generated_skill, symlinks=False)

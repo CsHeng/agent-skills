@@ -175,15 +175,6 @@ negative = [
 lexical_hints = ["multiarch", "buildx", "amd64 arm64"]
 
 [[trigger_cases]]
-id = "web-content-retrieval"
-owner = "web-fetch"
-negative = [
-  "Search local repository files or select an ad hoc local CLI.",
-  "Control a signed-in browser UI rather than retrieve page content.",
-]
-lexical_hints = ["fetch URL", "read PDF", "web content"]
-
-[[trigger_cases]]
 id = "application-logging"
 owner = "logging-standards"
 negative = [

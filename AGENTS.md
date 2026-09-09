@@ -7,7 +7,7 @@ This repository authors and distributes the `coding` collection of 39 portable A
 ## Truth And Generated Surfaces
 
 - `src/skills/` is authored Skill truth.
-- `contracts/skills.toml` owns public IDs, authored sources, discovery projection, roles, permissions, and optional semantic dependencies.
+- `contracts/skills.toml` owns public IDs, authored sources, discovery projection, distribution, roles, permissions, and optional semantic dependencies.
 - The installed routing reference owns native trigger cases, direct-match bypass, support routes, and one-primary-response composition; it defines no runtime mode or lifecycle.
 - `skills/` and `skills.index.json` are tracked generated output; do not edit them by hand.
 - `docs/architecture/` contains stable architecture truth.
@@ -27,7 +27,7 @@ This repository authors and distributes the `coding` collection of 39 portable A
 - Keep Skills provider-neutral and self-contained under the standard Agent Skills directory shape.
 - Keep frontmatter descriptions precise enough for native discovery.
 - Store only real semantic dependencies in `semantic_requires`; do not add executable workflow contracts, artifact validators, task graph compilers, mutable ledgers, replay logic, provider adapters, or prompt-space lifecycle gates.
-- Preserve all 39 public IDs and authored-to-generated parity.
+- Preserve all 39 public IDs. Distributed skills keep authored-to-generated parity; undistributed IDs stay contracted and authored but are omitted from `skills/`.
 - Use `apply_patch` for source edits and preserve unrelated working-tree changes.
 
 ## Validation

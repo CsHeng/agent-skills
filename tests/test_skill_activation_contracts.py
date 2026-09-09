@@ -59,6 +59,34 @@ class SkillActivationContractTests(unittest.TestCase):
             },
         )
 
+    def test_invalid_distributed_flag_is_rejected(self) -> None:
+        contract = copy.deepcopy(load_contract())
+        contract["skills"]["analyze-project"]["distributed"] = "no"
+
+        errors = self.activation.validate_activation_contract(
+            contract, REPO_ROOT, check_sources=False
+        )
+
+        self.assertTrue(
+            any("analyze-project: distributed must be a boolean" in error for error in errors)
+        )
+
+    def test_undistributed_skill_skips_generated_source_checks(self) -> None:
+        contract = copy.deepcopy(load_contract())
+        contract["skills"] = {
+            "fixture": {
+                **contract["skills"]["analyze-project"],
+                "distributed": False,
+            }
+        }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            errors = self.activation.validate_activation_contract(
+                contract, Path(tmp), check_sources=True
+            )
+
+        self.assertEqual([], errors)
+
     def test_missing_or_invalid_mode_and_role_are_rejected(self) -> None:
         contract = copy.deepcopy(load_contract())
         contract["skills"]["analyze-project"].pop("activation_mode")
@@ -151,6 +179,8 @@ policy:
     def test_canonical_tree_matches_activation_projection(self) -> None:
         contract = load_contract()
         for skill_id, entry in contract["skills"].items():
+            if not self.activation.is_distributed(entry):
+                continue
             with self.subTest(skill=skill_id):
                 expected = self.activation.derived_implicit_invocation(contract, entry)
                 metadata = (

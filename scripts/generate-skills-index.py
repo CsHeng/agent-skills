@@ -19,6 +19,7 @@ if str(SCRIPT_DIR) not in sys.path:
 from skill_activation import (
     derived_implicit_invocation,
     effective_provider_state,
+    is_distributed,
 )
 
 CONTRACT_PATH = REPO_ROOT / "contracts" / "skills.toml"
@@ -98,6 +99,7 @@ def build_index() -> dict[str, Any]:
             "category": entry["category"],
             "activation_mode": entry["activation_mode"],
             "default_role": entry["default_role"],
+            "distributed": is_distributed(entry),
             "implicit_invocation": derived_implicit_invocation(contract, entry),
             "effective_provider_state": effective_provider_state(contract, entry),
             "owned_trigger_cases": sorted(owned_cases[skill_name]),

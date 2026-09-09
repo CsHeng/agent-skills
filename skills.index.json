@@ -28,6 +28,7 @@
       "activation_mode": "native",
       "category": "workflow",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -52,6 +53,7 @@
       "activation_mode": "native",
       "category": "discipline",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -76,6 +78,7 @@
       "activation_mode": "native",
       "category": "discipline",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -100,6 +103,7 @@
       "activation_mode": "composition",
       "category": "workflow",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -122,6 +126,7 @@
       "activation_mode": "native",
       "category": "discipline",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -146,6 +151,7 @@
       "activation_mode": "explicit",
       "category": "tool",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -170,6 +176,7 @@
       "activation_mode": "native",
       "category": "workflow",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -194,6 +201,7 @@
       "activation_mode": "conditional",
       "category": "policy",
       "default_role": "overlay",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -218,6 +226,7 @@
       "activation_mode": "native",
       "category": "tool",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -242,6 +251,7 @@
       "activation_mode": "native",
       "category": "discipline",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -266,6 +276,7 @@
       "activation_mode": "conditional",
       "category": "discipline",
       "default_role": "overlay",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -290,6 +301,7 @@
       "activation_mode": "explicit",
       "category": "manual-tool",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -314,6 +326,7 @@
       "activation_mode": "conditional",
       "category": "policy",
       "default_role": "overlay",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -338,6 +351,7 @@
       "activation_mode": "native",
       "category": "workflow",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -362,6 +376,7 @@
       "activation_mode": "native",
       "category": "discipline",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -386,6 +401,7 @@
       "activation_mode": "conditional",
       "category": "discipline",
       "default_role": "overlay",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -410,6 +426,7 @@
       "activation_mode": "native",
       "category": "policy",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -434,6 +451,7 @@
       "activation_mode": "conditional",
       "category": "policy",
       "default_role": "overlay",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -458,6 +476,7 @@
       "activation_mode": "native",
       "category": "discipline",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -482,6 +501,7 @@
       "activation_mode": "baseline",
       "category": "session",
       "default_role": "overlay",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -504,6 +524,7 @@
       "activation_mode": "native",
       "category": "workflow",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -528,6 +549,7 @@
       "activation_mode": "conditional",
       "category": "policy",
       "default_role": "overlay",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -552,6 +574,7 @@
       "activation_mode": "conditional",
       "category": "policy",
       "default_role": "overlay",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -576,6 +599,7 @@
       "activation_mode": "native",
       "category": "workflow",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -600,6 +624,7 @@
       "activation_mode": "composition",
       "category": "review-component",
       "default_role": "evaluator",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -622,6 +647,7 @@
       "activation_mode": "composition",
       "category": "review-component",
       "default_role": "evaluator",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -644,6 +670,7 @@
       "activation_mode": "composition",
       "category": "review-component",
       "default_role": "evaluator",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -666,6 +693,7 @@
       "activation_mode": "conditional",
       "category": "policy",
       "default_role": "overlay",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -690,6 +718,7 @@
       "activation_mode": "native",
       "category": "policy",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -714,6 +743,7 @@
       "activation_mode": "conditional",
       "category": "policy",
       "default_role": "overlay",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -738,6 +768,7 @@
       "activation_mode": "explicit",
       "category": "discipline",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -762,6 +793,7 @@
       "activation_mode": "native",
       "category": "tool",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -786,6 +818,7 @@
       "activation_mode": "explicit",
       "category": "manual-tool",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -810,6 +843,7 @@
       "activation_mode": "native",
       "category": "policy",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -834,6 +868,7 @@
       "activation_mode": "composition",
       "category": "workflow",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -856,6 +891,7 @@
       "activation_mode": "native",
       "category": "discipline",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -880,6 +916,7 @@
       "activation_mode": "conditional",
       "category": "discipline",
       "default_role": "overlay",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -904,6 +941,7 @@
       "activation_mode": "native",
       "category": "session",
       "default_role": "primary",
+      "distributed": true,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -957,8 +995,7 @@
         "sops-age-guardrails",
         "sync-truth",
         "testing-strategy",
-        "tool-decision-tree",
-        "web-fetch"
+        "tool-decision-tree"
       ],
       "semantic_transitive_requires": [
         "analyze-project",
@@ -994,14 +1031,14 @@
         "sops-age-guardrails",
         "sync-truth",
         "testing-strategy",
-        "tool-decision-tree",
-        "web-fetch"
+        "tool-decision-tree"
       ]
     },
     {
       "activation_mode": "native",
       "category": "tool",
       "default_role": "primary",
+      "distributed": false,
       "effective_provider_state": {
         "claude": {
           "model_visibility": "default-visible",
@@ -1016,9 +1053,7 @@
       "implicit_invocation": true,
       "may_mutate_repo": false,
       "overlay_trigger_cases": [],
-      "owned_trigger_cases": [
-        "web-content-retrieval"
-      ],
+      "owned_trigger_cases": [],
       "semantic_requires": [],
       "semantic_transitive_requires": []
     }

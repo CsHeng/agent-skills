@@ -36,6 +36,5 @@
   "sync-truth": "src/skills/workflows/sync-truth",
   "testing-strategy": "src/skills/disciplines/testing-strategy",
   "tool-decision-tree": "src/skills/disciplines/tool-decision-tree",
-  "use-coding-skills": "src/skills/session/use-coding-skills",
-  "web-fetch": "src/skills/tools/web-fetch"
+  "use-coding-skills": "src/skills/session/use-coding-skills"
 }

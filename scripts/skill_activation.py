@@ -25,6 +25,11 @@ EXPECTED_CODEX_PROJECTION = {
 CLAUDE_DEFAULT_VISIBILITY = "default-visible"
 
 
+def is_distributed(entry: dict[str, Any]) -> bool:
+    """Return whether a skill is projected onto the root-flat install surface."""
+    return entry.get("distributed", True) is True
+
+
 def activation_modes(contract: dict[str, Any]) -> dict[str, dict[str, Any]]:
     modes = contract.get("activation_modes")
     if not isinstance(modes, dict):
@@ -193,8 +198,11 @@ def validate_activation_contract(
             errors.append(f"{skill_name}: invalid default_role: {role}")
         if mode == "baseline" and role != "overlay":
             errors.append(f"{skill_name}: baseline activation requires default_role=overlay")
+        distributed = entry.get("distributed", True)
+        if not isinstance(distributed, bool):
+            errors.append(f"{skill_name}: distributed must be a boolean")
 
-        if not check_sources:
+        if not check_sources or not is_distributed(entry):
             continue
         skill_dir = repo_root / "skills" / skill_name
         skill_path = skill_dir / "SKILL.md"

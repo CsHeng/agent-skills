@@ -21,4 +21,4 @@ Use a local Git checkout plus one child symlink per public ID. Update the checko
 
 ## 2026-08-07 — Generated Root-Flat Distribution
 
-`src/skills/` is authored truth. `skills/` is the generated root-flat payload, and every public Skill must be self-contained under its own standard Agent Skills directory. Provider plugin manifests package that same payload without changing semantics.
+`src/skills/` is authored truth. `skills/` is the generated root-flat payload for distributed public IDs, and each distributed Skill must be self-contained under its own standard Agent Skills directory. Undistributed public IDs stay contracted and authored but are omitted from that payload. Provider plugin manifests package that same payload without changing semantics.
