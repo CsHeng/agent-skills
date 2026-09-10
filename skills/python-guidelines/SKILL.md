@@ -130,9 +130,11 @@ PROHIBITED: Assume cache env vars are pre-set in the user's shell; pass them exp
    - Avoid `typing.Any` unless there is a hard constraint and document the reason.
    - Prefer `ty check` for static type checking in local and CI workflows.
 3. Enforce formatting and linting
-   - Use Ruff for formatting and linting.
-   - Keep Ruff configuration in `pyproject.toml`.
-   - Prefer running via `uv tool run` to avoid ad-hoc environments.
+   - Use the project-pinned Ruff from the owning environment (`uv run ruff`), not an unpinned `uv tool run`.
+   - Keep Ruff configuration in `pyproject.toml`. Do not invent a numeric line-length lint gate that fights the formatter.
+   - Treat safe lint fixes (`ruff check --fix --no-unsafe-fixes`) as distinct from format (`ruff format`). Do not enable unsafe fixes through flags or configuration.
+   - Do not chain `ruff check --fix && ruff format`: residual diagnostics exit 1 and would skip format. After `--fix`, continue on exit 1, fail on real tool errors, then format.
+   - Finish with unsuppressed `ruff check` and `ruff format --check` on the authorized changed files. Do not rewrite strings, comments, or behavior to satisfy pure line length.
 4. Implement predictable error handling
    - Catch specific exceptions; avoid `except Exception:` unless it is a boundary with structured logging and re-raise/wrap.
    - Avoid bare `except:` in production code.
@@ -147,11 +149,25 @@ PROHIBITED: Assume cache env vars are pre-set in the user's shell; pass them exp
 
 ## Operational Commands (Examples)
 
+Use the owning project's versioned command entrypoint. This Bash example assumes an existing uv lockfile; run from the owning project root and replace the namespace and authorized file list. Exit 1 from the initial fix pass means remaining diagnostics, not permission to skip format or accept the result. Other tool failures and all final check failures stop execution.
+
 ```bash
-uv tool run ruff format .
-uv tool run ruff check .
-uv tool run ty check .
-uv tool run pytest -q
+set -euo pipefail
+export UV_PROJECT_ENVIRONMENT="$HOME/.cache/uv-projects/<namespace>"
+export RUFF_CACHE_DIR="$HOME/.cache/ruff/<namespace>"
+export PYTHONDONTWRITEBYTECODE=1
+export PYTHONPYCACHEPREFIX="$HOME/.cache/python/<namespace>"
+files=(path/to/changed.py)
+
+uv run --locked ruff check --fix --no-unsafe-fixes -- "${files[@]}" || {
+  ruff_exit_code=$?
+  [ "$ruff_exit_code" -eq 1 ] || exit "$ruff_exit_code"
+}
+uv run --locked ruff format -- "${files[@]}"
+uv run --locked ruff check -- "${files[@]}"
+uv run --locked ruff format --check -- "${files[@]}"
+uv run --locked ty check .
+uv run --locked pytest -q -o "cache_dir=$HOME/.cache/pytest/<namespace>"
 ```
 
 ## Rules (Hard Constraints)
@@ -213,8 +229,10 @@ PROHIBITED: Hardcode secrets or configuration values in source code.
 REQUIRED: Redact sensitive values in logs (tokens, passwords, keys).
 
 ### Code Quality
-REQUIRED: Use Ruff as the formatter and linter.
+REQUIRED: Use project-pinned Ruff as the formatter and linter.
 REQUIRED: Keep tool configuration in `pyproject.toml`.
+REQUIRED: Distinguish safe lint fixes from format; run format even when residual lint remains; keep final lint and format checks unsuppressed.
+PROHIBITED: `--unsafe-fixes`, chaining `ruff check --fix && ruff format`, invented line-length lint gates, and rewriting strings or comments only to satisfy pure line length.
 
 ### Documentation
 REQUIRED: Use docstrings for public modules/classes/functions.
@@ -223,7 +241,7 @@ PREFERRED: Use Google-style docstrings for public APIs and include usage expecta
 ## Checklist
 
 - Type hints on public functions
-- Ruff format + lint configured and runnable via uv
+- Project-pinned Ruff format + lint on authorized changed files, with safe fixes distinct from format
 - ty check configured and runnable via uv
 - `pyproject.toml` is the config SSOT
 - No secrets committed

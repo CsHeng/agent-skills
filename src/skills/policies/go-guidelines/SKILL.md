@@ -38,7 +38,7 @@ Load both purpose profiles only when one approved project genuinely owns both a 
    - Declare the minimum supported Go version in `go.mod`.
    - Run `go mod tidy` when imports or tool dependencies change, then review the module diff.
 2. Use the standard toolchain first.
-   - Format changed Go files with `gofmt`.
+   - Format changed Go files with `gofmt` and any already configured project formatting step. Do not invent a fixed-column wrapping rule, column linter, or extra formatter dependency.
    - Run `go test ./...` to compile packages and execute tests.
    - Run `go vet ./...` for suspicious constructs not rejected by compilation.
    - Run project-owned analyzers such as Staticcheck or golangci-lint when configured; do not introduce an aggregator only to satisfy this skill.

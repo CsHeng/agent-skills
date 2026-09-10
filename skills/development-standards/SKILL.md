@@ -87,6 +87,14 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 - Treat trends and changed-code gates as preferable to arbitrary repository-wide targets when legacy baselines cannot satisfy a justified policy immediately.
 - Record technical debt only when its impact, scope, owner, priority, and retirement evidence are actionable; do not create dashboards or recurring process by default.
 
+## Formatting
+
+- Follow the target repository's owned formatter and configuration. Do not invent numeric column limits or a conflicting pure-format lint gate.
+- Run that formatter on authorized changed files before final read-only checks.
+- Do not rewrite strings, comments, or behavior to satisfy pure line-length style.
+- Do not silently disable an existing explicit project hard rule when the formatter cannot satisfy it; surface a configuration decision once.
+- Markdown no-hard-wrap policy stays with `organize-docs`. Do not hard-wrap Markdown prose to a column width here.
+
 ## Custom CLI Conventions
 
 - Follow repository-local command conventions first.
