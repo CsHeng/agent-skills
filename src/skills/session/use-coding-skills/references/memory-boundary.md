@@ -26,6 +26,8 @@ Agent memory is a recall layer, not the primary source of truth.
 
 Capability, guidance, and task-delegation state are different facts. Runtime restores tools and installed guidance; recover task decisions from repository truth, current host results, still-valid approvals, actual changes, unadjudicated reports, and continuable executors.
 
+For authority, reconcile the current project plan or approval summary with trusted task-specific user approvals, including later additions that supersede earlier restrictions. Keep the effective target, side effects, exclusions, and remaining decisions distinct from uncompleted checks. The truth order above does not make an outdated project paragraph override a later explicit approval. A summary cannot grant new permission or restore a superseded gate; if the approval basis cannot be established, ask only about that missing boundary.
+
 Do not treat a compact or memory summary of running, failed, or missing handles as current executor state. Do not overwrite source from a summary, do not accept an unverified candidate, and do not redispatch or recreate work only because a handle is absent.
 
 Do not read arbitrary historical JSONL, transcripts, or raw sessions to bypass host workspace, permission, or capability checks. If the host cannot resume a session, report that gap and choose a bounded rebuild or local continue; do not claim continuation is already supported, and do not disguise a new session as the original executor.

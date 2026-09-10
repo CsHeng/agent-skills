@@ -12,6 +12,12 @@ Discretion comes from the current request, an approved design, or an applicable 
 
 When the user specifies a library or equivalent technical choice to achieve a goal, that choice binds. Glue, helpers, and local algorithms stay with the executor. Without authorized substitution, do not replace the specified library for preference, and do not ask the user to design each glue function.
 
+## Delivery Endpoint
+
+Align the useful delivery endpoint to the kind of work even when the current activity is design. Applications and services consider commit, push, existing-environment deploy, and post-deploy verification. Libraries, tools, and Skills use the relevant publish, install, or handoff endpoint. Record whether that endpoint is proposed or user-confirmed. It is not default operational permission.
+
+Ask only about a real unresolved delivery decision: which endpoint belongs to this work, whether an explicit source-only or design-only request excludes it now, or whether a later production action would exceed approved authority. Do not ask the user to approve commit, push, deploy, publish, or install merely because the endpoint was named, and do not expand standing permission into a narrower request.
+
 ## Investigate Facts; Ask Only The Owner
 
 Discoverable facts in authorized code, docs, config, and tools belong to targeted agent investigation. Keep that investigation proportional to the current decision; do not escalate it into a repository-wide audit. Local implementation choices that are already in an executor's scope stay with that executor under project conventions and the confirmed constraints. Changing models or reviewers does not send those local choices back to the user.

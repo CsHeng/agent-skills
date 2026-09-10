@@ -14,6 +14,13 @@ This repository authors and distributes the `coding` collection of 39 portable A
 - `docs/plans/` is stage history and is excluded from default documentation search by `docs/.ignore`.
 - Provider plugin manifests are optional distribution surfaces, not workflow authority.
 
+## Instruction Scope
+
+- Harness-global instructions own persistent user preferences and thin compaction/recovery reminders. Do not rely only on a task-loaded Skill to retain those preferences, and do not put task-specific permissions or lifecycle procedures in global instructions.
+- Project `AGENTS.md` owns repository policy. The project's current design, plan, or approval summary records the task's effective objective, delivery endpoint, authorized actions and targets, exclusions, and unresolved decisions; those records document explicit approval rather than grant it.
+- Skills own portable workflow and domain methods, including how to maintain and reconcile those project records. Session summaries are recall, not another approval source or a parallel live plan.
+- Keep this ownership split when changing guidance here. A Skill edit does not authorize editing harness-global files; update those files only within separately approved scope. Keep superseded task restrictions in history rather than as contradictory current gates.
+
 ## Skill Composition
 
 - Directly matched Skills do not require the optional `use-coding-skills` router.

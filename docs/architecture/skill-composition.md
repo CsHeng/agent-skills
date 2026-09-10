@@ -12,6 +12,8 @@ This repository defines portable semantic capabilities, not an agent loop or an 
 | Reusable analysis, design, planning, implementation, review, documentation, policy, testing, tool, and Git methods | the selected Skills |
 | Mutation, destructive action, external effect, publication, and deployment authority | user and repository or environment policy |
 
+Harness-global instructions own persistent user preferences and thin compaction/recovery reminders; project `AGENTS.md` owns repository policy. Current project design, plan, or approval summaries record task-specific objectives, delivery endpoints, explicit authorizations, exclusions, and unresolved decisions. Skills own portable methods for maintaining and reconciling those records, not a host's persistence mechanism. Editing a Skill does not authorize a global-instruction change, and global preferences do not confer task-specific operational permission.
+
 One primary Skill owns the response order and conclusion. Matching session, discipline, policy, tool, or review-component Skills may contribute bounded semantic overlays. A directly named or confidently matched Skill runs without `use-coding-skills`; the router is only ambiguity and session-boundary guidance.
 
 ## Independent Capabilities
@@ -37,6 +39,8 @@ Plans fix acceptable results, ownership, constraints, and factual dependencies w
 A child returns a candidate and evidence, not business acceptance. Evidence applies to an identified candidate; reuse reliable applicable checks and verify changed combinations and missing acceptance. Successful startup, report delivery, source export, local tests, and final acceptance remain separate facts.
 
 For the same task, prefer a valid original worker or reviewer when the host supports safe continuation. Reconcile current baseline, permissions, actual results, and executor state before follow-up or post-compaction creation. Worker and reviewer remain separate roles and contexts. A justified fresh review remains possible; a reconstructed context is not native-session continuity. These are portable methods, not a claim that any particular host supplies shell, persistent sessions, steering, or measured savings.
+
+Compaction and handoff carry one current objective and approval baseline with its project references and approval provenance. Superseded restrictions stay historical rather than competing with newer explicit approvals in split-turn summaries. Missing verification remains an execution obligation, not missing permission; approval is not verification success. Summaries are recall and cannot grant authority or substitute for reconciliation with current trusted evidence.
 
 ## Task And Delivery Authority
 

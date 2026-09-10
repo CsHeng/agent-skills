@@ -32,13 +32,18 @@ Use these rules only after this skill has matched an explicit routing or ambiguo
 
 ## Compact Instructions
 
+Persistent compaction/recovery preferences belong in harness-global instructions, not solely in a task-loaded Skill. This Skill supplies the portable method; project-owned design, plan, or approval summaries record task-specific decisions. Neither those records nor a compact summary grants approval, and this guidance does not guarantee that a host retains or reloads it.
+
 When compacting or handing off long conversations, preserve in priority order:
 
-1. Architecture decisions and durable contracts.
-2. Modified files and key changes.
-3. Current verification status.
-4. Open TODOs, recovery notes, unadjudicated reports, still-valid executors, and next gates.
-5. Tool outputs only as pass/fail or the smallest required evidence.
+1. Current objective, delivery endpoint, and effective task-scoped approval baseline: approved actions and targets, remaining exclusions and owner decisions, and the source of each approval with the owning project-record references.
+2. Architecture decisions and durable contracts.
+3. Modified files and key changes.
+4. Current verification status, separate from permission status.
+5. Open TODOs, recovery notes, unadjudicated reports, still-valid executors, and next gates.
+6. Tool outputs only as pass/fail or the smallest required evidence.
+
+Reconcile history and split-turn context into one current account. Mark restrictions superseded by matching later explicit approval as historical, not active blockers; do not concatenate old pending gates with their approved replacements. Unfinished implementation or verification is not missing authority, and an approval does not establish that a check passed.
 
 ## Task Continuity
 
