@@ -21,6 +21,18 @@ Do not use it when a necessary scope, design, execution-order, prerequisite, or 
 - Treat task membership, authority, and capability as separate facts. Commit, push, publication, deployment, destructive history changes, and external mutation need matching authority, not merely implementation approval. Consume existing trusted permission for the same requested target and side effects without re-asking; standing permission does not add work to a design-only or otherwise narrower request. A push includes its entire outgoing history and triggered CI/CD, not just this task's tip commit.
 - Return `needs-authority`, `replan`, or `redesign` before performing work outside the approved boundary.
 
+## Task Workflow Tool (Conditional)
+
+When the host exposes a task-level workflow tool that owns task ids, revisions, dependency readiness, evidence bindings, and dispositions, use it as the normalization surface for the approved work:
+
+- Normalize from the approved plan or the bounded request into that tool's task and acceptance records. Code owns ids, revisions, readiness, and completion mechanics; its operations are the only way you mutate that state.
+- Align changed user intent before mutating obligations: confirm, amend, pause, or cancel for the delivered input instead of assuming the old goal still applies.
+- Amend through the tool's validated transaction when scope, tasks, or criteria change. Do not rewrite status to imply work that never happened or acceptance that has no evidence.
+- Record real evidence with explicit provenance, and keep the acceptance judgment separate: a host observation is not automatically a passing test, and a completed child apply is an integration fact, not acceptance.
+- Update external plan or project records only when their meaning changes, not after every task transition.
+
+When the host exposes no such tool, keep the existing behavior and semantic ownership: track work through the project's normal records, report progress and remaining work in the final response, and never fabricate ledger, hash, handle, or revision bookkeeping.
+
 ## Goals, Discretion, And Continuation
 
 Main goals, necessary conditions, specified technical choices, and inviolable boundaries remain binding. Already-authorized best-effort secondary work may be adapted or omitted based on evidence while the main goal continues; do not self-grant that discretion or relabel a required result. Investigate facts and generate execution products rather than asking for them. After a blocking question is answered, resume the original authorized work in this task; do not terminate on confirmation.
