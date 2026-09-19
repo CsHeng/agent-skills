@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -35,6 +36,14 @@ def run_extract(args: list[str], isolated_home: Path) -> subprocess.CompletedPro
 def write_jsonl(path: Path, rows: list[dict[str, object]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows))
+
+
+def write_markdown_lines(path: Path, line_count: int) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "".join(f"- context line {index}\n" for index in range(1, line_count + 1)),
+        encoding="utf-8",
+    )
 
 
 def pi_header(
@@ -892,6 +901,74 @@ default_role = "primary"
             self.assertEqual(
                 inventory["claude_policy_source"], "contract-effective-state"
             )
+
+
+class ContextDocExtractSessionSignalsTest(unittest.TestCase):
+    def build_context_repo(self, root: Path, *, git_managed: bool) -> Path:
+        repo = root / "repo"
+        docs = repo / "docs"
+        docs.mkdir(parents=True)
+        write_markdown_lines(repo / "AGENTS.md", 90)
+        write_markdown_lines(repo / "README.md", 170)
+        write_markdown_lines(repo / "CLAUDE.md", 90)
+        (docs / "AGENTS.md").symlink_to("../AGENTS.md")
+        (docs / "CLAUDE.md").symlink_to("../CLAUDE.md")
+        if git_managed:
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
+        return repo
+
+    def run_context_docs(self, repo: Path, isolated_home: Path) -> dict[str, object]:
+        return json.loads(
+            run_extract(
+                [
+                    "--scope",
+                    "current",
+                    "--repo-root",
+                    str(repo),
+                    "--sources",
+                    "context-docs",
+                    "--format",
+                    "json",
+                    "--limit",
+                    "10",
+                ],
+                isolated_home,
+            ).stdout
+        )
+
+    def assert_agents_and_readme_only(self, payload: dict[str, object]) -> None:
+        counts = payload["counts"]
+        self.assertEqual(counts["context_docs"], 2)
+        self.assertEqual(counts["context_doc_name:AGENTS.md"], 1)
+        self.assertEqual(counts["context_doc_name:README.md"], 1)
+        self.assertNotIn("context_doc_name:CLAUDE.md", counts)
+        self.assertEqual(counts["context_doc_symlink_or_duplicate"], 1)
+        self.assertEqual(counts["context_doc_offload_candidate"], 2)
+        examples = payload["examples"]["context_doc_offload_candidate"]
+        self.assertEqual(
+            {example["file"] for example in examples},
+            {"AGENTS.md", "README.md"},
+        )
+        reasons = " ".join(example["text"] for example in examples)
+        self.assertIn("large AI context doc", reasons)
+        self.assertIn("large human-facing doc", reasons)
+        self.assertNotIn("CLAUDE.md", json.dumps(payload))
+
+    @unittest.skipUnless(shutil.which("git"), "git is required")
+    def test_git_discovery_excludes_regular_and_symlink_claude_docs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo = self.build_context_repo(root, git_managed=True)
+            payload = self.run_context_docs(repo, root / "isolated-home")
+            self.assert_agents_and_readme_only(payload)
+
+    def test_fallback_discovery_excludes_regular_and_symlink_claude_docs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo = self.build_context_repo(root, git_managed=False)
+            payload = self.run_context_docs(repo, root / "isolated-home")
+            self.assert_agents_and_readme_only(payload)
 
 
 class PiExtractSessionSignalsTest(unittest.TestCase):

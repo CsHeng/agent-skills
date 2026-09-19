@@ -1,24 +1,19 @@
 # Legacy CLAUDE.md Migration
 
-Read this reference only when the repository root already had a `CLAUDE.md` path at the start of the requested documentation work. `AGENTS.md` is the maintained AI-facing truth root; `CLAUDE.md` remains only as compatibility for consumers that still look for that filename.
+Use this reference for an existing `CLAUDE.md` inside the authorized documentation scope. `AGENTS.md` is the only maintained AI-facing truth root. Migrate one way; never recreate `CLAUDE.md` as a file or compatibility link. The default scope is the repository root; nested paths require inclusion in the requested scope.
 
-## Initial State
+## Path Handling
 
-Record the initial path type before mutation:
+Inspect both paths without following symlinks before mutation. Do not overwrite an existing `AGENTS.md`; if it is a symlink or another unsafe type, resolve that boundary before writing through it.
 
-- absent: return to the main workflow without creating `CLAUDE.md`
-- regular file: migrate still-valid unique guidance before replacing the file
-- symlink to `AGENTS.md`: preserve it without rewriting either path solely for compatibility
-- broken symlink or symlink to another target: inspect the target and preserve any unique guidance before replacement
-- directory, device, or another unsafe type: stop instead of overwriting it
+- `CLAUDE.md` absent: maintain `AGENTS.md` only.
+- `CLAUDE.md` is a symlink, including a dangling link or a link to another target: unlink only; never edit, write through, or replace the link target. Reading or migrating the target is not a prerequisite for deleting the link.
+- `CLAUDE.md` is a regular file and `AGENTS.md` is absent: rename `CLAUDE.md` to `AGENTS.md`, preserving its content. Then maintain valid AI guidance there and move human-facing material to `README.md` only within the authorized scope.
+- Both are regular files: read both and merge only still-valid unique guidance into `AGENTS.md`, omitting duplicate or superseded rules. Never overwrite existing `AGENTS.md` content or discard still-valid `CLAUDE.md` guidance. Delete the legacy file only after every retained rule is verifiably owned by `AGENTS.md`. Resolve genuinely conflicting current rules instead of guessing.
+- `CLAUDE.md` is a directory, device, socket, or another unsafe type: stop and request a decision instead of deleting or overwriting it.
 
-## Migration
+## Final State
 
-1. Read the existing `CLAUDE.md` content without editing through a symlink.
-2. Classify its guidance as still valid and unique, already present in `AGENTS.md`, stale, or human-facing material that belongs in `README.md`.
-3. If `AGENTS.md` is absent, create it from the still-valid AI-facing guidance. If both files exist, merge only unique durable guidance into `AGENTS.md`; do not preserve contradictory or duplicate instructions.
-4. Verify that `AGENTS.md` owns every retained AI-facing rule before replacing the legacy path.
-5. Replace the existing root path with the relative symlink `CLAUDE.md -> AGENTS.md`. Do not use an absolute target.
-6. Verify that `CLAUDE.md` is a symlink, its textual target is `AGENTS.md`, and resolving it reaches the repository root's maintained `AGENTS.md`.
+Removing a symlink does not create `AGENTS.md`. If it is still absent after cleanup, create it from current repository evidence and authorized guidance, not by blindly copying an arbitrary link target. If valid guidance cannot be established, report that remaining gap instead of inventing instructions.
 
-Never remove or replace a regular file until its retained guidance is verifiably owned elsewhere. If the content or target cannot be read safely, stop and request a decision instead of guessing.
+Verify that a valid `AGENTS.md` exists and that `CLAUDE.md` does not exist as a file, symlink, or dangling symlink. Preserve unrelated guidance and files. Never remove a regular legacy file before its retained guidance is safely owned elsewhere; never recreate the compatibility link.

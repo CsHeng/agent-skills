@@ -17,7 +17,7 @@ from urllib.parse import unquote
 
 
 EXIT_RE = re.compile(r"Process exited with code (\d+)")
-DOC_NAMES = {"AGENTS.md", "README.md", "CLAUDE.md"}  # CLAUDE.md is legacy input only.
+DOC_NAMES = {"AGENTS.md", "README.md"}
 
 DOC_OFFLOAD_RE = re.compile(
     r"workflow|validation|troubleshoot|runbook|deploy|commit|skill|agent|"
@@ -719,7 +719,7 @@ def context_doc_reason(path: Path, text: str) -> str:
     fence_count = text.count("```") // 2
     workflow_hits = len(DOC_OFFLOAD_RE.findall(text))
 
-    if path.name in {"AGENTS.md", "CLAUDE.md"} and line_count >= 80:
+    if path.name == "AGENTS.md" and line_count >= 80:
         return "large AI context doc"
     if path.name == "README.md" and line_count >= 160:
         return "large human-facing doc"

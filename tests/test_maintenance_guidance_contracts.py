@@ -28,14 +28,22 @@ def final_level_two_section(text: str) -> str:
 
 
 class MaintenanceGuidanceContractTests(unittest.TestCase):
-    def test_organize_docs_uses_conditional_claude_compatibility(self) -> None:
+    def test_organize_docs_retires_legacy_claude_without_compatibility_link(
+        self,
+    ) -> None:
         skill_path = REPO_ROOT / "skills/organize-docs/SKILL.md"
         skill = skill_path.read_text(encoding="utf-8")
 
         self.assertIn(
-            "When root `CLAUDE.md` is absent, do not create it",
+            "When root `CLAUDE.md` is absent, maintain `AGENTS.md` only",
             skill,
         )
+        self.assertIn(
+            "The final state is a valid `AGENTS.md` and no root `CLAUDE.md` path",
+            skill,
+        )
+        self.assertIn("repository-wide legacy-file cleanup", skill)
+        self.assertNotIn("retain `CLAUDE.md`", skill)
         self.assertNotIn("`CLAUDE.md` remains a symlink", skill)
 
         migration_links = [
@@ -48,19 +56,48 @@ class MaintenanceGuidanceContractTests(unittest.TestCase):
         migration = (skill_path.parent / migration_links[0]).read_text(
             encoding="utf-8"
         )
-        self.assertIn("relative symlink `CLAUDE.md -> AGENTS.md`", migration)
-        self.assertIn("Never remove or replace a regular file", migration)
+        self.assertIn("unlink only", migration)
+        self.assertIn(
+            "never edit, write through, or replace the link target",
+            migration,
+        )
+        self.assertIn(
+            "Reading or migrating the target is not a prerequisite for deleting the link",
+            migration,
+        )
+        self.assertIn("rename `CLAUDE.md` to `AGENTS.md`", migration)
+        self.assertIn("merge only still-valid unique guidance", migration)
+        self.assertIn(
+            "Never overwrite existing `AGENTS.md` content or discard "
+            "still-valid `CLAUDE.md` guidance",
+            migration,
+        )
+        self.assertIn(
+            "Removing a symlink does not create `AGENTS.md`",
+            migration,
+        )
+        self.assertIn(
+            "does not exist as a file, symlink, or dangling symlink",
+            migration,
+        )
+        self.assertIn(
+            "directory, device, socket, or another unsafe type",
+            migration,
+        )
+        self.assertNotIn("relative symlink `CLAUDE.md -> AGENTS.md`", migration)
 
-    def test_skill_miner_treats_claude_as_legacy_input(self) -> None:
+    def test_skill_miner_scopes_project_context_to_readme_and_agents(self) -> None:
         skill = (REPO_ROOT / "skills/skill-miner/SKILL.md").read_text(
             encoding="utf-8"
         )
 
-        self.assertIn("existing legacy `CLAUDE.md`", skill)
-        self.assertNotIn(
-            "tracked `AGENTS.md`, `CLAUDE.md`, and `README.md`",
-            skill,
-        )
+        project_context_lines = [
+            line for line in skill.splitlines() if "Project context docs:" in line
+        ]
+        self.assertEqual(1, len(project_context_lines))
+        self.assertIn("`README.md`", project_context_lines[0])
+        self.assertIn("`AGENTS.md`", project_context_lines[0])
+        self.assertNotIn("CLAUDE.md", skill)
 
     def test_organize_docs_decision_lifecycle_reference_resolves(self) -> None:
         skill_path = REPO_ROOT / "skills/organize-docs/SKILL.md"

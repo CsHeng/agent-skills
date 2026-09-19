@@ -20,7 +20,7 @@ Read these sources when available:
 - Claude memory: `~/.claude/projects/**/memory/*.md` and other `~/.claude/**/memory/*.md`
 - Grok sessions: `~/.grok/sessions/<urlencoded-workspace>/prompt_history.jsonl` and per-session `events.jsonl`
 - Pi sessions: `~/.pi/agent/sessions/**/*.jsonl`
-- Project context docs: tracked `AGENTS.md` and `README.md` files under the target repo, plus an existing legacy `CLAUDE.md` as compatibility-migration evidence; symlinks that resolve to an already scanned document are deduplicated
+- Project context docs: tracked `AGENTS.md` and `README.md` files under the target repo; symlinks that resolve to an already scanned document are deduplicated
 
 Additional homes use the same directory shapes under their own Codex, Claude, Grok, or Pi home roots. Pi scanning is read-only and limited to `sessions/**/*.jsonl`; do not read auth, settings, databases, other runtime stores, or subagent private state.
 

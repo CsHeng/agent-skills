@@ -1,6 +1,6 @@
 ---
 name: organize-docs
-description: "Use for docs organization: README/AGENTS ownership, conditional legacy CLAUDE.md migration, stable truth roots, docs layout, docs/.ignore, stage artifacts, canonical terminology, search boundaries, and Markdown prose wrapping."
+description: "Use for docs organization: README/AGENTS ownership, one-way legacy CLAUDE.md cleanup into AGENTS.md, stable truth roots, docs layout, docs/.ignore, stage artifacts, canonical terminology, search boundaries, and Markdown prose wrapping."
 ---
 
 # Organize Docs
@@ -30,10 +30,11 @@ Write or update long-lived project truth after an explicit user request, an expl
 
 - `README.md` stays human-facing.
 - `AGENTS.md` is the maintained AI-facing truth root.
-- `CLAUDE.md` is a conditional compatibility path, never a separately maintained truth root.
-- Record whether the repository root's `CLAUDE.md` is absent, a regular file, or a symlink before changing documentation topology.
-- When root `CLAUDE.md` is absent, do not create it or add a compatibility symlink.
-- When root `CLAUDE.md` exists, read [Legacy CLAUDE.md Migration](references/legacy-claude-migration.md), preserve its still-valid unique guidance in `AGENTS.md`, and retain `CLAUDE.md` only as a relative symlink to `AGENTS.md`.
+- `CLAUDE.md` is a conditional legacy input, never a separately maintained truth root and never a compatibility surface to recreate.
+- Record the repository root `CLAUDE.md` path type before mutation: absent, regular file, symlink, or an unsafe type.
+- When root `CLAUDE.md` is absent, maintain `AGENTS.md` only; do not create `CLAUDE.md` or add a compatibility link.
+- When root `CLAUDE.md` exists, read [Legacy CLAUDE.md Migration](references/legacy-claude-migration.md) and retire it one way: unlink symlinks directly without modifying their targets; rename or merge regular-file guidance into `AGENTS.md` before removing the legacy path. The final state is a valid `AGENTS.md` and no root `CLAUDE.md` path, including a dangling symlink.
+- The root `CLAUDE.md` migration is bounded to that repository root path; Skill activation never authorizes a repository-wide legacy-file cleanup.
 - Stable truth roots and stage artifact roots must be explicit.
 - Default docs search should avoid stage artifacts when the repository needs that search-boundary.
 - Stage artifacts can support history, but they do not become default truth automatically.
@@ -56,11 +57,11 @@ Write or update long-lived project truth after an explicit user request, an expl
 
 ## Workflow
 
-1. Assess the current doc layout: `README.md`, `AGENTS.md`, the initial root `CLAUDE.md` state, `docs/`, and local docs policy files.
+1. Assess the current doc layout: `README.md`, `AGENTS.md`, the recorded initial root `CLAUDE.md` path type, `docs/`, and local docs policy files.
 2. Classify stable truth roots versus stage artifact roots using repository-local policy first.
 3. Preserve or establish docs-local search-boundary files such as `docs/.ignore` when default search should exclude history.
 4. Keep human-facing guidance in `README.md` and AI-operational rules in `AGENTS.md`.
-5. Apply the linked root `CLAUDE.md` compatibility migration only when the recorded initial state shows that path already existed; never create it for a repository that lacked it.
+5. Apply the linked one-way root `CLAUDE.md` migration only when the recorded initial state shows that path already existed; never create it for a repository that lacked it and never recreate a compatibility link.
 6. Align canonical terminology across stable docs, path names, test names, and code references when the task is terminology cleanup.
 7. Move or summarize content into stable docs domains without treating plans, drafts, or other stage artifacts as default truth.
 8. For durable decision work, apply the owner-local lifecycle reference before promoting or retiring truth and preserve stage history by default.
