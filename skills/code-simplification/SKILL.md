@@ -1,18 +1,18 @@
 ---
 name: code-simplification
-description: "Use for read-only, evidence-first audits that identify behavior-preserving code simplifications from current repository truth, consumer evidence, compatibility history, and trust or durability boundaries. Do not use for applying refactors, ordinary implementation cleanup, performance-only tuning, or review limited to the current diff."
+description: "Audit code simplification read-only, or explicitly assess replacing bespoke mechanisms with mature frameworks and structural refactor/rewrite alternatives. Not for applying refactors, ordinary implementation cleanup, unsolicited architecture audits, performance-only tuning, or review limited to the current diff."
 ---
 
 # Code Simplification
 
-Identify code that can become smaller or clearer without changing owned behavior. Return audit evidence only; do not edit files, create a plan implicitly, or delegate the audit.
+By default, identify behavior-preserving simplifications. Only when explicitly requested to assess structural alternatives, mature-framework replacement, or refactor/rewrite tradeoffs, use [Structural Alternatives](references/structural-alternatives.md) instead of treating every proposal as a local deletion. Both modes return read-only decision evidence; do not edit files, create a plan implicitly, or delegate the audit.
 
 ## Authority Boundary
 
 - Keep the audit read-only. Do not mutate the repository, generate files, run destructive commands, or spawn another agent.
 - Treat behavior, public contracts, compatibility, persisted data, security, auditability, and operational recovery as protected boundaries rather than removable complexity.
 - Route an explicitly authorized, sufficiently bounded candidate application to `implement-change`; use `design-change` when a material product, compatibility, ownership, or acceptance decision remains unresolved, or the user requests a design artifact. An audit recommendation or `recommend-design` disposition is evidence, not mutation authority or a mandatory design phase for already settled work. Route review of an exact current diff through `review-change`.
-- Do not turn ordinary task-local cleanup, performance work, or style preferences into a repository simplification audit.
+- Do not turn ordinary task-local cleanup, performance work, or style preferences into a repository simplification audit. Structural reevaluation is an explicit entry, not a periodic requirement, implementation substep, or reason to reopen every settled choice.
 
 ## Workflow
 

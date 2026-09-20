@@ -21,9 +21,15 @@ Planning records stable, acceptable behavior, non-goals, important reasons, exte
 
 At planning time, write known write surfaces, dependencies, and resources directly. Mark remaining local investigation as conditional delegation instead of inventing exact files. Ordinary implementation is not blocked by missing delegation metadata.
 
-Before actual dispatch, the parent refines the host-needed read scope, exact source write set, execution environment, and necessary inputs from the current host contract and the already approved slice. Refinement inside that slice is execution and does not reopen the whole plan. Do not finish the executor's algorithm and implementation design merely to fill filenames, and do not reopen settled questions because the executor model changed.
+Before actual dispatch, the parent uses already known scope, inputs, initial write regions, environment, and the host contract. Necessary permission and input checks are not a new economic-research phase. Do not search, probe, estimate time, or call another model solely to decide whether delegation pays. With insufficient context, perform the next useful implementation action locally unless the user explicitly requires delegation. Do not finish the executor's investigation to fill filenames or reopen choices because its model changed.
 
 A task already claimed delegation-ready must actually be ready. If approval explicitly fixed a file, interface, or ordering restriction, do not expand it; an observed inventory is not that restriction. If it approved only a module-level range, the parent may refine files and coordinate ownership inside that range. Reassigning in-range resources is usually the parent's job; only a change to a user-reserved decision rises to a human. Dispatch refinement is not scope expansion.
+
+## Independent Work And Delivery Time
+
+Record independence and join expectations during normal planning, not through a separate estimation exercise. Two substantive independent tasks may both go to children while the parent coordinates and waits; an asynchronous singleton may overlap other useful work. Neither parent busyness nor minimum batch size is a goal. Keep trivial or tightly coupled work local when already apparent, without numerical time, file-count, or task-count cutoffs.
+
+A new main should receive goals, rationale, necessary inputs, initial write regions, protected boundaries, expected independent groups, and explicit integration/acceptance joins. Initial regions are refinable context, not a complete read set or user-approved file whitelist. Actual result scope and shared-resource conflicts still need reconciliation. Failed checks and same-task repair do not add new planning phases.
 
 ## Authority, Capability, And Delivery
 

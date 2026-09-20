@@ -61,3 +61,11 @@ Ordinary implementation readiness needs relevant objectives, allowed changes, pr
 Plans may still describe dependencies, safe isolation, verification, authority, and recovery because those facts make a bounded change executable. When delegated implementation is explicitly requested, they may also carry optional provider-neutral execution and reasoning profiles, one repository owner, repository-relative write sets, resource locks, isolation, and convergence ownership. These semantics remain guidance consumed and translated by the active coding agent rather than model bindings, host tool arguments, or state for a repository-owned controller.
 
 Writable delegated slices belong to one repository root. Multi-repository plans split repository-owned writes or retain cross-repository integration in the active parent; they do not prescribe a host working directory, snapshot, worktree, staging path, scheduler, or concrete route.
+
+## Execution Economics And Explicit Reassessment
+
+Planning records known independent slices, initial write regions, factual inputs, shared resources, and parent joins for a fresh main. Implementation judges delegation only from that plan and already collected context; it does not run a separate estimation/search phase. Insufficient context defaults to the next useful local action unless explicit delegation is required. Accepted end-to-end time, not parent busyness or minimum call counts, is the objective within quality, authority, and budget constraints.
+
+Implementation consumes settled design/plan without automatically activating upstream stages. In-goal file discovery and repair are execution, not renewed user approval. Real hard-boundary contradictions are reported to the owner rather than silently redesigning.
+
+Code-simplification retains its ordinary read-only audit and an explicit structural-alternatives entry. The latter can evaluate mature-framework replacement or substantial refactor/rewrite when requested, without periodic audits, implicit plans, or mutation. Verification strategy selection and routine regression work remain separate. Close includes owned execution-resource disposition without changing closure permissions.

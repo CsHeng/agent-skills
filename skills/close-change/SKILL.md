@@ -34,6 +34,12 @@ Do not expand standing permissions into this task at closure, and do not cut sho
 
 Judge delivery by current evidence for the specified version at the requested endpoint, not by local checks, a delegated summary, or an adjacent artifact. A push includes every still-unpushed commit that would travel with it and the CI/CD side effects that push would trigger; those belong to the operation boundary. Name that gap when the extra history or triggered pipeline is outside covered authority, rather than pushing a truncated subset or silently widening permission.
 
+## Execution Resource Disposition
+
+Before closure, account for active delegated work, unintegrated results, pending review or repair, and task workspaces that are still needed. Child process exit alone does not end a logical assignment. Mark owned execution resources as reclaimed, explicitly retained for a stated need, or unresolved. Do not leave retention implicit indefinitely.
+
+Closure stays a semantic judgment. The authorized implementation owner or managed executor performs supported cleanup of resources it owns; this Skill does not gain repository mutation authority. Consume already covered task-resource cleanup authority without reasking for each temporary directory, but do not infer permission to delete arbitrary user branches or other workspaces from business acceptance.
+
 ## Outcomes
 
 - `closed`: the requested change boundary is complete for the stated purpose, including when authorized secondary tradeoffs are disclosed and the main goal still holds

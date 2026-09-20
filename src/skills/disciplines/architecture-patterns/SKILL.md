@@ -47,3 +47,11 @@ When this skill owns an architecture decision, lead with the selected option and
 - what observable trigger justifies the next architecture increment
 
 When `design-change`, `plan-change`, or a domain skill owns the response, contribute these semantics as an overlay rather than emitting a second report template.
+
+## Reuse Before Taking Ownership
+
+For a material open choice, check the existing project, host primitives, official tools, and credible mature implementations before adding a durable general-purpose mechanism. Identify the missing responsibility and prefer a thin integration over duplicating mature state, protocol, or lifecycle machinery. Stop investigation once the decision is supported.
+
+Use the user's declared maintenance horizon, team conventions, and intended expansion as decision inputs. Adopting an established framework now does not require implementing every future feature now. An already selected framework is not disqualified merely because the current slice is small. Reopen settled choices only on explicit reassessment or concrete changed constraints, not on every plan or implementation.
+
+Bespoke work may win on demonstrated reliability, licensing/platform, integration, or performance grounds. State the actual gap and ownership tradeoff; inability to recall a third-party capability is not proof of its absence.

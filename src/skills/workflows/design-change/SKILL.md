@@ -55,3 +55,9 @@ Use guarded rollback only when a concrete hazard makes it safer than forward rep
 Keep Markdown paragraphs and list items naturally unwrapped. When a document has several independent scopes, use stable unique labels rather than restarting ambiguous numbered lists.
 
 When the user explicitly asks to grill, stress-test, harden, challenge, or interrogate a design or plan, read `references/stress-test-mode.md`. Ordinary bounded clarification does not enable that mode.
+
+## Reuse And Decision Horizon
+
+Before taking ownership of a new durable general-purpose mechanism, verify relevant project facilities, host primitives, official tools, and credible mature implementations. Research only the material open choice; stop when the evidence is sufficient. Prefer a thin adapter when a reliable owner already supplies the responsibility. A bespoke alternative needs a concrete capability gap or reliability, integration, platform, licensing, or performance reason.
+
+Honor user-declared maintenance horizons and explicit framework selections. Current slice simplicity is not evidence against a mature framework selected for long-term maintenance; adopting it does not authorize speculative features. Settled choices are not automatically reconsidered during planning or implementation. A user can explicitly request structural alternatives through code-simplification; its evidence may justify a larger refactor or rewrite without sunk-cost bias, but is not implementation authority.

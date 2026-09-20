@@ -35,6 +35,10 @@ If the requested operation, branch, base, or target is ambiguous, resolve that s
 
 Do not load every reference up front. List and Compare do not require a new location, ignore setup, or context transfer.
 
+## Host-Managed Task Workspaces
+
+A host that provides isolated task workspaces under an approved execution contract does not thereby ask the model to activate this Skill or perform duplicate creation/cleanup. Use this Skill for an explicit Git worktree operation. Keep needed input versions and environment separate: parent dirty state does not prohibit implementation or another dispatch, while a normal new checkout does not automatically inherit uncommitted input. Do not require automatic commit/stash to begin. Same-task continuation can reuse one workspace; final disposition belongs to the authorized owner, not a process-exit shortcut.
+
 ## Shared Boundaries
 
 - Follow applicable repository instructions. A repository-defined worktree location takes precedence; only when no policy exists, default new worktrees to `./.agents/worktrees/<branch-slug>/`. A different declared location is not itself a reason to stop.

@@ -15,7 +15,7 @@ Do not measure maturity by test count or impose universal coverage percentages. 
 
 ## Strategy Mapping
 
-Record this chain before adding tests:
+When this Skill is actively selecting or auditing a strategy, record the relevant mapping below. Routine tests under an established strategy consume it directly; they do not need a new strategy artifact:
 
 ```text
 boundary -> oracle -> fixture/environment -> owning suite -> CI/release lane -> diagnosis owner
@@ -120,6 +120,12 @@ Do not schedule a full backup/restore exercise for ordinary logic that leaves pe
 Migration of retained state must exercise the upgrade of realistic existing state, not only empty-database initialization. Changes to backup or restore must verify restore behavior. Authorized disposable development state may prove recovery by rebuild or replace; do not force in-place upgrade for state that is approved to discard.
 
 Reuse reliable evidence that still matches the final candidate. Later edits that change the covered behavior, fixture, environment, recovery implementation, or retained-state conditions invalidate the old result and need a fresh check of the affected path. Refreshing a production backup is not by itself a reason to redo every recovery proof. Local greens do not prove uncovered combinations or state transitions; those still need verification. Do not invent a scoring rubric or a standing drill catalog to force this scaling.
+
+## Proportionate Safeguards
+
+A new hash, restore proof, replay mechanism, deployment rehearsal, or test gate is additional functionality, not free safety. Tie it to the affected behavior and a concrete failure mode; prefer an existing Git/object identity or project primitive when it already provides the needed guarantee. Preserve real integrity and recovery requirements, but do not add an independent identity chain or full lifecycle drill solely because a slice, revision, or prose instruction changed.
+
+Review only the relevant suite and instructions for a bounded change. Do not expand a local fix into a repository-wide test cleanup or prove instruction meaning with hardcoded prose keywords. Offline scenario review may expose contradictions, but does not establish improved model behavior or economic outcomes.
 
 ## Oracle Integrity
 

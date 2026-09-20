@@ -57,6 +57,12 @@ Prefer existing ownership and ecosystems when they materially reduce integration
 
 Record the hard constraint or ecosystem advantage when selecting an option that differs from the repository default.
 
+## Decision Horizon And Mature Ownership
+
+The smallest current patch is not necessarily the smallest lifetime responsibility. For open material choices, verify what the project, host, and mature ecosystem already own before implementing a parallel mechanism. Count replacement glue and dependency maintenance as well as local code. A mature framework can be appropriate for a user-declared long-lived project even while only its present features are used.
+
+Settled choices are not rescored each round. An explicit structural-reassessment request can compare a one-time refactor or rewrite against future maintenance without defending sunk cost; ordinary implementation does not activate that inquiry. Research ends when the relevant decision is supported, not after every candidate has been exhausted.
+
 ## Supply And Demand
 
 Describe demand with current or observed evidence: request rate, data volume, growth rate, latency objective, failure tolerance, deployment frequency, number of callers, number of independent owners, incident load, or operator toil.

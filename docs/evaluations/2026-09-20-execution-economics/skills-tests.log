@@ -1,0 +1,39 @@
+......................F.F................... [ 39%]
+...................................................................    [100%]
+=================================== FAILURES ===================================
+_ FormattingPolicyContractTests.test_long_string_survives_format_then_passes_lint _
+
+self = <test_formatting_policy_contracts.FormattingPolicyContractTests testMethod=test_long_string_survives_format_then_passes_lint>
+
+    def test_long_string_survives_format_then_passes_lint(self) -> None:
+        formatted = run_ruff(
+            "format",
+            "--stdin-filename",
+            "sample.py",
+            "-",
+            stdin=CLEAN_SOURCE,
+        )
+>       self.assertEqual(0, formatted.returncode, formatted.stderr)
+E       AssertionError: 0 != 1 : /opt/pyvenv/bin/python3: No module named ruff
+
+tests/test_formatting_policy_contracts.py:69: AssertionError
+_ FormattingPolicyContractTests.test_semantic_lint_still_fails_under_repo_config _
+
+self = <test_formatting_policy_contracts.FormattingPolicyContractTests testMethod=test_semantic_lint_still_fails_under_repo_config>
+
+    def test_semantic_lint_still_fails_under_repo_config(self) -> None:
+        formatted = run_ruff(
+            "format",
+            "--stdin-filename",
+            "sample.py",
+            "-",
+            stdin=SEMANTIC_LINT_SOURCE,
+        )
+>       self.assertEqual(0, formatted.returncode, formatted.stderr)
+E       AssertionError: 0 != 1 : /opt/pyvenv/bin/python3: No module named ruff
+
+tests/test_formatting_policy_contracts.py:159: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_formatting_policy_contracts.py::FormattingPolicyContractTests::test_long_string_survives_format_then_passes_lint - AssertionError: 0 != 1 : /opt/pyvenv/bin/python3: No module named ruff
+FAILED tests/test_formatting_policy_contracts.py::FormattingPolicyContractTests::test_semantic_lint_still_fails_under_repo_config - AssertionError: 0 != 1 : /opt/pyvenv/bin/python3: No module named ruff
+2 failed, 109 passed, 174 subtests passed in 6.94s

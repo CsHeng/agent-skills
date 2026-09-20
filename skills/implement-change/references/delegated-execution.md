@@ -4,9 +4,15 @@ Use this method for a bounded worker assignment, its follow-up, or an invocation
 
 ## Choose A Cohesive Slice
 
-Prefer substantive work with its own acceptable result and local feedback loop, not one worker per file or separate code and test workers by default. Investigate only uncertainties that affect the division of work before dispatch; the worker can discover local callers and implementation details. A separate explorer is useful for independent facts, not a mandatory predecessor.
+Prefer substantive work with its own acceptable result and local feedback loop, not one worker per file or separate code and test workers by default. Judge dispatch using the plan and context already collected. Do not search, probe, invoke another model, or estimate duration solely to decide whether to open a worker. When evidence is insufficient, the main performs the next useful implementation action; worker discovery stays with the worker. A separate explorer is useful for a substantive independent question, not a mandatory dispatch-assessment predecessor.
 
 Prefer parallel ready slices with stable shared contracts, nonconflicting writes and resources, and clear convergence ownership. Shared generators, registries, lockfiles, fixtures, ports, and external state need owners; disjoint filenames alone do not establish independence. A useful singleton is valid where the host and call policy permit it. Retain trivial or tightly coupled work locally; call count and parent token share are not delivery goals.
+
+## Async And Explicit Joins
+
+A submission receipt is not child completion, source integration, or acceptance. Use the host's notification and state facilities; do not add sleep/status polling as a substitute for event delivery. Continue useful independent work when available, or wait normally when all ready work is already assigned. Await a result at its real dependency or integration join, not reflexively after submission. Foreground-only hosts cannot provide parent/child overlap; use them only when their actual benefits justify the overhead.
+
+Parallel writing tasks retain separate results in managed workspaces. Same-task follow-up reuses context and work rather than allocating a new workspace per role invocation. Read-only review needs a stable candidate; a concurrent writer must not silently change that reviewed version.
 
 ## Dispatch Brief
 
@@ -14,14 +20,14 @@ Carry enough information for an executor without the original conversation to un
 
 - the slice's result and relationship to the parent objective, including which outcomes are main goals or necessary conditions and which are authorized best-effort secondary work;
 - protected behavior, acceptance, non-goals, important rationale, authorized tradeoff boundaries, relevant environment facts, and local choices left to the executor;
-- accessible evidence and inputs, repository ownership, allowed reads and exact writes required by the host;
+- accessible evidence and input version, repository ownership, initial write regions, explicit forbidden boundaries, and actual host capability constraints;
 - actual tools, execution environment, shared-resource and isolation boundaries, required checks, and when to return a decision or blocker.
 
 The brief carries authority and discretion; a child does not self-grant production permission, extra scope, or after-the-fact best-effort status. Glue around specified technology and in-brief secondary adaptation stay with the executor. Do not ask the child, or the user through the child, for execution products the slice can generate.
 
 Keep simple briefs short. If documents are uncommitted, ignored, in another checkout, or absent from a snapshot, supply bounded excerpts or a genuinely readable source; naming a path does not transmit its contents. Do not assume either complete or absent inheritance of parent instructions. Use observable host context, not wholesale conversation or Skill copying.
 
-Refine files inside approved module scope before dispatch without pre-solving every implementation detail. Respect explicitly fixed file, interface, and ordering restrictions; distinguish them from an observed planning inventory or baseline SHA. Coordinate scope-contained ownership adjustments in the parent without renewed user approval when the original authority covers them; a child never expands its own writes. Exact host write capabilities remain binding for that dispatch even when the broader plan permits refinement. Actual host capability and permission govern execution: a Skill does not grant shell, private reviewer commands, isolation, or a persistent session.
+Use known initial write regions inside the approved scope; do not pre-solve implementation or investigate missing filenames merely to qualify dispatch. Respect explicitly fixed file, interface, and ordering restrictions; distinguish them from an observed planning inventory or baseline SHA. Coordinate scope-contained ownership adjustments through the supported parent/host path without renewed user approval when the original authority covers them. Discovering another in-goal file does not itself expand user authority; a child must still respect explicit forbidden boundaries and real host capabilities. Exact host write capabilities remain binding for that dispatch even when the broader plan permits refinement. Actual host capability and permission govern execution: a Skill does not grant shell, private reviewer commands, isolation, or a persistent session.
 
 ## Local Feedback And Return
 

@@ -67,12 +67,13 @@ lexical_hints = ["implementation plan", "task DAG", "plan change"]
 id = "code-simplification-audit"
 owner = "code-simplification"
 negative = [
+  "Reevaluate architecture automatically during each approved implementation task.",
   "Perform ordinary cleanup while implementing an approved task.",
   "Tune performance without a repository simplification audit.",
   "Apply an explicitly authorized bounded candidate through implement-change, or resolve a material outstanding tradeoff through design-change.",
   "Review only the current diff instead of auditing current repository structure.",
 ]
-lexical_hints = ["simplify codebase", "code entropy", "remove accidental complexity"]
+lexical_hints = ["simplify codebase", "code entropy", "remove accidental complexity", "replace bespoke framework", "structural alternatives", "refactor or rewrite"]
 
 [[trigger_cases]]
 id = "bounded-change-execution"

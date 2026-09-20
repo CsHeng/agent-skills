@@ -1,0 +1,21 @@
+check: contract-package
+contracts ok
+check: generated-root-flat
+check: install-surface
+root-flat install surface ok
+check: index
+check: diagrams
+check: ruff
+Using CPython 3.13.5 interpreter at: /usr/bin/python3
+Creating virtual environment at: /home/oai/.cache/uv-projects/agent-skills
+WARN Retry attempt #0. Sleeping 649.412423ms before the next attempt
+WARN Retry attempt #0. Sleeping 706.303323ms before the next attempt
+WARN Retry attempt #0. Sleeping 73.454957ms before the next attempt
+WARN Retry attempt #0. Sleeping 604.370227ms before the next attempt
+WARN Retry attempt #0. Sleeping 99.351469ms before the next attempt
+WARN Retry attempt #0. Sleeping 57.0394ms before the next attempt
+WARN Retry attempt #0. Sleeping 899.728588ms before the next attempt
+WARN Retry attempt #1. Sleeping 1.501810284s before the next attempt
+WARN Retry attempt #1. Sleeping 780.165819ms before the next attempt
+WARN Retry attempt #1. Sleeping 1.969998421s before the next attempt
+WARN Retry attempt #1. Sleeping 1.515051371s before the next attempt
