@@ -110,7 +110,7 @@ Do not turn uncertain inputs into a weighted score. Avoid false precision becaus
 
 Pass the approved decision to planning by reference. Break structural investment into reversible increments that buy information early, preserve an exit path, and delay irreversible cost until evidence requires it.
 
-Plan tasks may implement, verify, or stage the choice. They must not silently rescore the approved tradeoff. Route changed demand, ownership, hard constraints, or upgrade triggers back to design.
+Plan tasks may implement, verify, or stage the choice. They must not silently rescore the approved tradeoff. Report concrete changed demand, ownership, hard constraints, or upgrade triggers to the decision owner; do not automatically reopen design from implementation. The owner can explicitly request a structural reassessment without treating previous investment as a reason to retain the old choice.
 
 ## Failure Modes
 
