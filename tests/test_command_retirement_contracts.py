@@ -2,13 +2,10 @@ from __future__ import annotations
 
 import importlib.util
 import os
-import subprocess
-import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 from types import ModuleType
-
-import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -35,43 +32,15 @@ class CommandRetirementContractTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.checker = load_checker()
 
-    def test_every_command_has_one_retirement_disposition(self) -> None:
+    def test_retired_commands_are_not_active_product_entrypoints(self) -> None:
         contract = load_contract()
-        retirement = contract["command_retirement"]
-        classified = {
-            command
-            for field in ("absorbed_by_skill", "thin_wrappers", "archive_only")
-            for command in retirement[field]
-        }
-        active = {path.stem for path in (REPO_ROOT / "commands").glob("*.md")}
-        archived = {
-            path.stem for path in (REPO_ROOT / "archived/commands").glob("*.md")
-        }
+        self.assertFalse(any((REPO_ROOT / "commands").glob("*.md")))
+        self.assertNotIn("check-secrets", contract["skills"])
+        self.assertNotIn("command_retirement", contract)
 
-        self.assertEqual(classified, active | archived)
-        self.assertFalse(active & archived)
-        self.assertEqual(["check-secrets"], retirement["archive_only"])
-        self.assertNotIn(
-            "check-secrets",
-            set(contract["skills"]),
-        )
-        self.assertEqual(
-            [],
-            self.checker.validate_command_retirement_contract(contract, REPO_ROOT),
-        )
-
-    def test_command_archive_is_inert_and_search_suppressed(self) -> None:
-        active_root = REPO_ROOT / "commands"
-        archive_root = REPO_ROOT / "archived/commands"
-
-        self.assertFalse(any(active_root.glob("*.md")))
-        self.assertEqual(12, len(list(archive_root.glob("*.md"))))
-        self.assertFalse(any(archive_root.rglob("SKILL.md")))
-        self.assertFalse(any(path.is_symlink() for path in archive_root.rglob("*")))
-        self.assertEqual(
-            "commands/",
-            (REPO_ROOT / "archived/.ignore").read_text(encoding="utf-8").strip(),
-        )
+    def test_product_validation_has_no_historical_inventory_owner(self) -> None:
+        # History may be absent from a standalone product checkout.
+        self.assertFalse(hasattr(self.checker, "validate_command_retirement_contract"))
 
     def test_provider_adapters_remain_active(self) -> None:
         retained_paths = (
@@ -86,7 +55,9 @@ class CommandRetirementContractTests(unittest.TestCase):
         )
         if os.environ.get("STANDALONE_CHECK_ACTIVE") == "1":
             retained_paths = tuple(
-                path for path in retained_paths if path != ".codex-marketplace/plugins/coding"
+                path
+                for path in retained_paths
+                if path != ".codex-marketplace/plugins/coding"
             )
         for relative_path in retained_paths:
             with self.subTest(path=relative_path):
@@ -136,16 +107,16 @@ class CommandRetirementContractTests(unittest.TestCase):
                 self.assertNotIn("HARNESS_CLI", skill)
                 self.assertNotIn("scripts/harness", skill)
                 self.assertNotIn("host harness", skill.lower())
-                self.assertFalse((REPO_ROOT / "skills" / public_id / "scripts" / "harness").exists())
+                self.assertFalse(
+                    (REPO_ROOT / "skills" / public_id / "scripts" / "harness").exists()
+                )
 
     def test_executable_workflow_runtime_is_retired(self) -> None:
         self.assertFalse((REPO_ROOT / "src" / "runtime" / "harness").exists())
         self.assertFalse((REPO_ROOT / "integrations" / "pi").exists())
 
     def test_smart_commit_already_owns_target_repository_binding(self) -> None:
-        skill = (REPO_ROOT / "skills/smart-commit/SKILL.md").read_text(
-            encoding="utf-8"
-        )
+        skill = (REPO_ROOT / "skills/smart-commit/SKILL.md").read_text(encoding="utf-8")
 
         self.assertIn('TARGET_REPO="$(git -C "$INVOCATION_CWD"', skill)
         self.assertIn('git -C "$TARGET_REPO"', skill)

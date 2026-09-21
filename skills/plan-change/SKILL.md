@@ -46,6 +46,10 @@ A writable delegated task belongs to one repository root. Split a multi-reposito
 
 `implement-change` owns any later projection of an approved factual predecessor into a compatible host mechanism. A hard predecessor is eligible only when approved implementation order requires it and no parent-owned synthesis, authority, cross-task coordination, finding adjudication, final acceptance, or continuation decision occurs between the tasks. Verification or repair labor may have factual dependencies but does not by itself require an intervening parent decision. Do not compile a plan into a static worker-to-reviewer-to-repair chain that bypasses parent semantic adjudication.
 
+## Document Ownership
+
+Follow the project's declared design/plan owner, which may be a separate repository. Resolve owner-root variables before writing, include external document and product paths in the authorized write set, and keep the plan genuinely accessible to the executor. Invocation cwd is not a substitute for user authority. Do not copy an external plan into every product repository or make distributed Skills depend on a particular coordination checkout.
+
 ## Fresh-Main Handoff
 
 Carry the effective goals, chosen design and rationale, required acceptance, covered authority, real dependencies, expected independent groups, and parent joins in the plan or accessible references. Do not rely on the prior conversation being present. Ensure uncommitted or out-of-checkout design/plan inputs are genuinely available to the executor; naming a path is not transmitting it. Keep the investigation transcript out unless a bounded piece is necessary.

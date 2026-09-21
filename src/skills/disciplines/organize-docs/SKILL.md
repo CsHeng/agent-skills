@@ -35,7 +35,7 @@ Write or update long-lived project truth after an explicit user request, an expl
 - When root `CLAUDE.md` is absent, maintain `AGENTS.md` only; do not create `CLAUDE.md` or add a compatibility link.
 - When root `CLAUDE.md` exists, read [Legacy CLAUDE.md Migration](references/legacy-claude-migration.md) and retire it one way: unlink symlinks directly without modifying their targets; rename or merge regular-file guidance into `AGENTS.md` before removing the legacy path. The final state is a valid `AGENTS.md` and no root `CLAUDE.md` path, including a dangling symlink.
 - The root `CLAUDE.md` migration is bounded to that repository root path; Skill activation never authorizes a repository-wide legacy-file cleanup.
-- Stable truth roots and stage artifact roots must be explicit.
+- Stable truth roots and stage artifact roots must be explicit. Repository policy may name an external owner for designs, plans, evaluations and archives; resolve its declared root instead of assuming the invocation repository owns every document. Keep product-required guidance self-contained and do not require the external checkout for standalone product checks.
 - Default docs search should avoid stage artifacts when the repository needs that search-boundary.
 - Stage artifacts can support history, but they do not become default truth automatically.
 - Keep currently effective design or plan prose limited to live goals, authorized discretion, ownership, delivery endpoints, and real pause conditions. Leave superseded gates and historical exemptions in stage history and cite them shortly when needed. Do not copy old exemption lists into every live task, treat document length as a quality gate, or migrate unrelated historical plans unless that cleanup is the requested work.
@@ -66,12 +66,12 @@ Write or update long-lived project truth after an explicit user request, an expl
 7. Move or summarize content into stable docs domains without treating plans, drafts, or other stage artifacts as default truth.
 8. For durable decision work, apply the owner-local lifecycle reference before promoting or retiring truth and preserve stage history by default.
 9. When explicitly consolidating plan artifacts, inventory all source plan roots, choose domain-based target directories under the canonical stage root, move files with date-first names, and update references after the move.
-10. Normalize Markdown prose wrapping with the bundled processing workflow: unwrap fixed-width paragraphs and list-item continuations across stable, stage, and archived docs that are in the requested scope, then decompose genuinely over-broad content at semantic boundaries.
+10. Normalize active Markdown prose in the requested scope with the bundled processing workflow, then decompose genuinely over-broad content at semantic boundaries. Preserved archived originals may be excluded; moving history alone does not authorize rewriting its prose.
 11. Update stable docs only after explicit user approval, explicit drift follow-up from `analyze-project`, or an approved-plan `sync-truth` handoff with current evidence.
 
 ## Markdown Prose Processing
 
-Use the bundled normalizer instead of recreating a temporary parser. It scans Git-visible Markdown, including tracked and untracked files while excluding ignored/cache material and symlinks.
+Use the bundled normalizer instead of recreating a temporary parser. It scans Git-visible Markdown, including tracked and untracked files while excluding ignored/cache material and symlinks. Use repeatable `--exclude <literal-repository-relative-prefix>` for explicitly preserved history, for example `--exclude archived`; active files remain checked. Optional `--immutable-manifest` compatibility remains available for projects that deliberately retain pinned originals, but neither local history nor hash locks are required.
 
 Resolve the installed tool and target repository once:
 

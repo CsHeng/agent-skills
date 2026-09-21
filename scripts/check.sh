@@ -47,8 +47,5 @@ run_gate diagrams "$check_python" scripts/generate-workflow-diagrams.py --check
 run_gate ruff "$check_uv" run ruff check scripts/skill_distribution.py scripts/flatten-skills.py scripts/check-install-surface.py
 run_gate ty "$check_uv" run ty check scripts/skill_distribution.py scripts/flatten-skills.py scripts/check-install-surface.py
 run_gate pytest "$check_uv" run pytest -o "cache_dir=$PYTEST_CACHE_DIR"
-markdown_args=(--root "$repo_root" --mode check)
-if [[ "${STANDALONE_CHECK_ACTIVE:-0}" != "1" ]]; then
-  markdown_args+=(--immutable-manifest contracts/markdown-prose.toml)
-fi
+markdown_args=(--root "$repo_root" --mode check --exclude archived)
 run_gate markdown "$check_python" src/skills/disciplines/organize-docs/scripts/normalize-markdown-prose.py "${markdown_args[@]}"

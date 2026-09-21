@@ -6,17 +6,16 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
-
-import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from skill_activation import (
+from skill_activation import (  # noqa: E402 - script-local imports follow path bootstrap
     derived_implicit_invocation,
     effective_provider_state,
     is_distributed,
@@ -57,12 +56,8 @@ def transitive_requirements(
 def trigger_case_index(
     manifest: dict[str, Any],
 ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
-    owned: dict[str, list[str]] = {
-        skill_id: [] for skill_id in manifest
-    }
-    overlaid: dict[str, list[str]] = {
-        skill_id: [] for skill_id in manifest
-    }
+    owned: dict[str, list[str]] = {skill_id: [] for skill_id in manifest}
+    overlaid: dict[str, list[str]] = {skill_id: [] for skill_id in manifest}
     routing_entries = [
         entry for entry in manifest.values() if entry.get("routing_contract")
     ]
@@ -90,7 +85,10 @@ def build_index() -> dict[str, Any]:
     manifest = contract.get("skills")
     if not isinstance(manifest, dict):
         raise SystemExit("contracts/skills.toml must contain [skills.*] entries")
-    adjacency = {skill_id: list(entry.get("semantic_requires", [])) for skill_id, entry in manifest.items()}
+    adjacency = {
+        skill_id: list(entry.get("semantic_requires", []))
+        for skill_id, entry in manifest.items()
+    }
     owned_cases, overlay_cases = trigger_case_index(manifest)
     skills = []
     for skill_name, entry in sorted(manifest.items()):
@@ -115,11 +113,7 @@ def build_index() -> dict[str, Any]:
         if "routing_contract" in entry:
             record["routing_contract"] = entry["routing_contract"]
         skills.append(record)
-    command_retirement = contract.get("command_retirement")
-    if not isinstance(command_retirement, dict):
-        raise SystemExit("contracts/skills.toml must contain [command_retirement]")
     return {
-        "command_retirement": command_retirement,
         "generated_from": "contracts/skills.toml",
         "canonical_skill_count": len(skills),
         "skills": skills,
@@ -132,7 +126,9 @@ def formatted_index() -> str:
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="Fail if skills.index.json is stale")
+    parser.add_argument(
+        "--check", action="store_true", help="Fail if skills.index.json is stale"
+    )
     return parser.parse_args(argv)
 
 
@@ -145,7 +141,10 @@ def main(argv: list[str]) -> int:
             return 1
         current = INDEX_PATH.read_text(encoding="utf-8")
         if current != rendered:
-            print("skills.index.json is stale; run scripts/generate-skills-index.py", file=sys.stderr)
+            print(
+                "skills.index.json is stale; run scripts/generate-skills-index.py",
+                file=sys.stderr,
+            )
             return 1
         return 0
     INDEX_PATH.write_text(rendered, encoding="utf-8")

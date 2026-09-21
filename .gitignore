@@ -8,3 +8,4 @@
 # Project-specific
 /.claude/
 /.herdr-runs/
+.mise.local.toml

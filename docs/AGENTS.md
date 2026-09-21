@@ -1,17 +1,7 @@
-# Docs Agent Notes
+# Product Documentation
 
-## Truth Boundary
+`docs/architecture/`, `quickstart.md` and current product decisions own self-contained Skill use and maintenance truth. Generated `.puml` and `.svg` semantic views remain repository-owned; do not edit them by hand.
 
-- `docs/architecture/` and other stable `docs/` domains contain long-lived project truth.
-- `docs/plans/` contains stage artifacts and history, not default current truth.
-- `docs/architecture/skill-composition.md` is the canonical semantic composition view.
-- `docs/architecture/diagrams/*.puml` and `docs/architecture/generated/*.svg` are generated from repository-owned semantic composition data; do not edit them by hand.
-- `archived/` is inert history outside default documentation and Skill discovery.
+Shared boundaries and all new designs/plans belong to `$AGENT_ARCHITECTURE_DIR/docs/`; use its `plans/skills/` and `evaluations/skills/` domains for this product. Historical originals live in its `archived/skills/` tree. Product checks must not require these external records or local `docs/plans` files.
 
-## Search Policy
-
-- Default stable search: `rg -n "pattern" docs`
-- Explicit stage-history search: `rg --no-ignore -n "pattern" docs/plans`
-- `docs/.ignore` affects search tools, not Git tracking. Keep valuable stage artifacts in Git.
-
-Write stable truth from the current repository state. Preserve durable rationale, conditions, exceptions, and consequences, while leaving one-time migration narration in stage history.
+Default search here covers product truth. Honor the architecture owner's search boundary when reading stage artifacts, using explicit paths and `rg --no-ignore`. Git tracking and search exclusion are distinct. Preserve product rationale, exceptions and compatibility obligations; do not copy the shared architecture explanation back into this tree.

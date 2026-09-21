@@ -4,7 +4,7 @@
 
 ### Decision
 
-This repository owns 40 provider-neutral semantic Agent Skills, declarative authoring contracts, generated portable distribution, static conformance, stable documentation, and optional plugin manifests. It owns no workflow engine, artifact validator, task graph compiler, mutable execution ledger, provider adapter, actor or model binding, attempt scheduler, or replay protocol.
+This repository owns provider-neutral semantic Agent Skills, declarative authoring contracts, generated portable distribution, static conformance, stable documentation, and optional plugin manifests. It owns no workflow engine, artifact validator, task graph compiler, mutable execution ledger, provider adapter, actor or model binding, attempt scheduler, or replay protocol.
 
 The active coding agent owns request interpretation, Skill selection, sequencing, evidence judgment, conditional review, finding adjudication, and the final response. Review runs only for explicit intent, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment. Standalone review starts from the supplied bounded target without synthesizing upstream work; evaluators remain read-only and the calling agent owns any accepted repair.
 
@@ -13,7 +13,7 @@ The active coding agent owns request interpretation, Skill selection, sequencing
 - Public Skill IDs remain stable and portable across compatible agent products.
 - Mechanically enforced workflow behavior belongs outside this repository and is neither imported nor named as a dependency.
 - Repository scripts validate only authored inventory, metadata, reference closure, generated parity, documentation, and ordinary code quality.
-- Earlier runtime, provider-binding, generated lifecycle, fixed phase, workflow-mode, and mandatory-review decisions are superseded. Their historical detail remains in `docs/plans/` and `archived/`, outside current stable truth.
+- Earlier runtime, provider-binding, generated lifecycle, fixed phase, workflow-mode, and mandatory-review decisions are superseded. Their historical detail is retained under `$AGENT_ARCHITECTURE_DIR/docs/plans/skills/` and `$AGENT_ARCHITECTURE_DIR/archived/skills/`, outside current product truth.
 
 ## 2026-08-20 — Live Child Links Are The Recommended Local Path
 

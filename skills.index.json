@@ -1,27 +1,5 @@
 {
   "canonical_skill_count": 39,
-  "command_retirement": {
-    "absorbed_by_skill": [
-      "close-change",
-      "design-change",
-      "implement-change",
-      "plan-change",
-      "review-change",
-      "sync-truth"
-    ],
-    "archive_destination": "archived/commands",
-    "archive_only": [
-      "check-secrets"
-    ],
-    "archive_ready": true,
-    "thin_wrappers": [
-      "analyze-project",
-      "review-design",
-      "review-implementation",
-      "review-plan",
-      "smart-commit"
-    ]
-  },
   "generated_from": "contracts/skills.toml",
   "skills": [
     {

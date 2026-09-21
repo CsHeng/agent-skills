@@ -9,7 +9,9 @@ This repository is the authored source and generated portable payload for a coll
 - `contracts/skills.toml`: public ID, source, discovery, distribution, role, permission, and semantic-composition inventory
 - `skills/use-coding-skills/references/routing.toml`: installed trigger and composition guidance
 - `docs/architecture/`: stable maintenance truth
-- `docs/plans/`: stage artifacts, excluded from default docs search
+- Evolution material is maintained under `$AGENT_ARCHITECTURE_DIR/docs/plans/skills/` and `docs/evaluations/skills/`; inert originals live in that repository's `archived/skills/`. Product checks and installation do not need that checkout.
+
+The local `mise.toml` declares `AGENT_ARCHITECTURE_DIR`, `AGENT_SKILLS_DIR`, and `PI_EXTENSIONS_DIR`. Use those resolved roots for cross-repository maintenance; `.mise.local.toml.example` documents layout overrides. Shared ownership and vocabulary live at `$AGENT_ARCHITECTURE_DIR/docs/architecture/repository-boundaries.md`.
 
 The repository contains no workflow engine, artifact validator, task graph compiler, mutable task ledger, replay system, provider adapter, or user-settings integration. Compatible agent environments may use the Skills independently and may implement their own mechanics without consuming these private authoring contracts.
 

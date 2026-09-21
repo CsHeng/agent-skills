@@ -1,10 +1,3 @@
-[command_retirement]
-archive_destination = "archived/commands"
-archive_ready = true
-absorbed_by_skill = ["close-change", "design-change", "implement-change", "plan-change", "review-change", "sync-truth"]
-thin_wrappers = ["analyze-project", "review-design", "review-implementation", "review-plan", "smart-commit"]
-archive_only = ["check-secrets"]
-
 [activation_modes.native]
 codex_allow_implicit_invocation = true
 claude_effective_visibility = "default-visible"

@@ -86,8 +86,7 @@ class CheckOrchestrationTests(unittest.TestCase):
                         f"{temporary / 'home/.cache/pytest/agent-skills'}",
                         "python3:src/skills/disciplines/organize-docs/scripts/"
                         "normalize-markdown-prose.py "
-                        f"--root {REPO_ROOT} --mode check --immutable-manifest "
-                        "contracts/markdown-prose.toml",
+                        f"--root {REPO_ROOT} --mode check --exclude archived",
                     ],
                     commands,
                 )

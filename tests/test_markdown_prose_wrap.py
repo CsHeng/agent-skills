@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
-import os
 import subprocess
 import sys
 import tempfile
@@ -11,13 +10,9 @@ from pathlib import Path
 from types import ModuleType
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SCRIPT_PATH = (
-    REPO_ROOT
-    / "skills/organize-docs/scripts/normalize-markdown-prose.py"
-)
+SCRIPT_PATH = REPO_ROOT / "skills/organize-docs/scripts/normalize-markdown-prose.py"
 BOUNDARY_CHECKER = (
-    REPO_ROOT
-    / "src/skills/disciplines/organize-docs/scripts/check-doc-boundaries.sh"
+    REPO_ROOT / "src/skills/disciplines/organize-docs/scripts/check-doc-boundaries.sh"
 )
 
 
@@ -138,7 +133,7 @@ Start a separate rendered line.
 
     def test_preserves_toml_frontmatter_blocks(self) -> None:
         module = load_module()
-        source = '''+++
+        source = """+++
 artifact_kind = "plan"
 contract_version = 3
 
@@ -149,7 +144,7 @@ task_id = "PDR-010"
 
 One paragraph
 continues here.
-'''
+"""
 
         result = module.transform_markdown(source)
 
@@ -366,8 +361,12 @@ Follow-up:
             )
 
             self.assertEqual(write_result.returncode, 0, write_result.stderr)
-            self.assertEqual(history.read_text(encoding="utf-8"), "Legacy wrapped\nparagraph.\n")
-            self.assertEqual(readme.read_text(encoding="utf-8"), "Mutable wrapped paragraph.\n")
+            self.assertEqual(
+                history.read_text(encoding="utf-8"), "Legacy wrapped\nparagraph.\n"
+            )
+            self.assertEqual(
+                readme.read_text(encoding="utf-8"), "Mutable wrapped paragraph.\n"
+            )
 
             check_result = subprocess.run(
                 [
@@ -395,7 +394,9 @@ Follow-up:
             history = root / "docs/plans/history.md"
             history.parent.mkdir(parents=True)
             history.write_text("Legacy wrapped\nparagraph.\n", encoding="utf-8")
-            subprocess.run(["git", "-C", str(root), "add", "docs/plans/history.md"], check=True)
+            subprocess.run(
+                ["git", "-C", str(root), "add", "docs/plans/history.md"], check=True
+            )
             manifest = root / "immutable.toml"
             manifest.write_text(
                 "version = 1\n\n[[exceptions]]\n"
@@ -407,9 +408,63 @@ Follow-up:
             with self.assertRaises(module.MarkdownNormalizationError):
                 module.load_immutable_manifest(root, manifest)
 
-    def test_repository_boundary_checker_honors_immutable_manifest(self) -> None:
-        if os.environ.get("STANDALONE_CHECK_ACTIVE") == "1":
-            self.skipTest("stage history is intentionally absent from standalone copies")
+    def test_excluded_history_does_not_disable_active_prose_checks(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / "archived").mkdir()
+            history = root / "archived/history.md"
+            history.write_text("Keep original\nwrapping.\n")
+            active = root / "README.md"
+            active.write_text("Active wrapped\nparagraph.\n")
+            args = [
+                sys.executable,
+                str(SCRIPT_PATH),
+                "--root",
+                str(root),
+                "--exclude",
+                "archived",
+            ]
+            checked = subprocess.run(args + ["--mode", "check"], capture_output=True)
+            self.assertEqual(1, checked.returncode)
+            written = subprocess.run(args + ["--mode", "write"], capture_output=True)
+            self.assertEqual(0, written.returncode, written.stderr)
+            self.assertEqual("Keep original\nwrapping.\n", history.read_text())
+            self.assertEqual("Active wrapped paragraph.\n", active.read_text())
+            for invalid in (".", "..", "/tmp", "docs/*"):
+                result = subprocess.run(
+                    args + ["--exclude", invalid], capture_output=True
+                )
+                self.assertEqual(2, result.returncode)
+
+    def test_stage_tree_is_optional_but_local_history_must_be_search_suppressed(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            docs = root / "docs"
+            docs.mkdir()
+            (docs / "AGENTS.md").write_text("# Ownership\n")
+            (docs / "README.md").write_text("# Documentation\n")
+
+            def check() -> subprocess.CompletedProcess[str]:
+                return subprocess.run(
+                    ["bash", str(BOUNDARY_CHECKER)],
+                    cwd=root,
+                    text=True,
+                    capture_output=True,
+                )
+
+            self.assertEqual(0, check().returncode)
+            (docs / "plans").mkdir()
+            (docs / "plans/example.md").write_text("# Plan\n")
+            self.assertNotEqual(0, check().returncode)
+            (docs / ".ignore").write_text("plans/\n")
+            self.assertEqual(0, check().returncode)
+            (root / ".gitignore").write_text("docs/plans/\n")
+            self.assertNotEqual(0, check().returncode)
+
+    def test_repository_boundary_checker_without_local_stage_dependency(self) -> None:
         result = subprocess.run(
             ["bash", str(BOUNDARY_CHECKER)],
             cwd=REPO_ROOT,

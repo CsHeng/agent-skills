@@ -5,17 +5,16 @@ from __future__ import annotations
 
 import re
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
-
-import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from skill_activation import (
+from skill_activation import (  # noqa: E402 - script-local imports follow path bootstrap
     has_authored_codex_invocation_policy,
     is_distributed,
     validate_activation_contract,
@@ -41,7 +40,9 @@ def validate_semantic_contracts(
         return ["skill contract must contain [skills.*] entries"]
 
     errors: list[str] = []
-    public_entries = {name: entry for name, entry in skills.items() if isinstance(entry, dict)}
+    public_entries = {
+        name: entry for name, entry in skills.items() if isinstance(entry, dict)
+    }
     adjacency: dict[str, set[str]] = {name: set() for name in public_entries}
 
     for skill_name, entry in sorted(skills.items()):
@@ -57,7 +58,9 @@ def validate_semantic_contracts(
             errors.append(f"{skill_name}: semantic_requires contains duplicates")
         for target in requirements:
             if target == skill_name:
-                errors.append(f"{skill_name}: semantic_requires cannot reference itself")
+                errors.append(
+                    f"{skill_name}: semantic_requires cannot reference itself"
+                )
             elif target not in public_entries:
                 errors.append(
                     f"{skill_name}: semantic_requires references unknown skill: {target}"
@@ -124,76 +127,6 @@ def validate_semantic_contracts(
             errors.append(
                 f"{skill_name}: semantic_requires must match routing targets; "
                 f"expected={sorted(expected_targets)} actual={sorted(declared_targets)}"
-            )
-
-    return errors
-
-
-def validate_command_retirement_contract(
-    contract: dict[str, Any], repo_root: Path = REPO_ROOT
-) -> list[str]:
-    retirement = contract.get("command_retirement")
-    if not isinstance(retirement, dict):
-        return ["skill contract must contain [command_retirement]"]
-
-    errors: list[str] = []
-    archive_destination = retirement.get("archive_destination")
-    if archive_destination != "archived/commands":
-        errors.append(
-            "command_retirement.archive_destination must be 'archived/commands'"
-        )
-    if retirement.get("archive_ready") is not True:
-        errors.append("command_retirement.archive_ready must be true after parity")
-
-    groups: dict[str, list[str]] = {}
-    for field in ("absorbed_by_skill", "thin_wrappers", "archive_only"):
-        values = retirement.get(field)
-        if not isinstance(values, list) or not all(
-            isinstance(value, str) and value for value in values
-        ):
-            errors.append(
-                f"command_retirement.{field} must be an array of non-empty strings"
-            )
-            groups[field] = []
-        else:
-            groups[field] = values
-
-    classified = [item for values in groups.values() for item in values]
-    if len(classified) != len(set(classified)):
-        errors.append("command retirement classifications must be disjoint")
-    if groups.get("archive_only") != ["check-secrets"]:
-        errors.append("check-secrets must be the only archive-only command")
-
-    active_root = repo_root / "commands"
-    archive_root = repo_root / str(archive_destination)
-    active_commands = {
-        path.stem for path in active_root.glob("*.md") if path.is_file()
-    }
-    archived_commands = {
-        path.stem for path in archive_root.glob("*.md") if path.is_file()
-    }
-    duplicates = sorted(active_commands & archived_commands)
-    if duplicates:
-        errors.append(
-            "command docs cannot be active and archived simultaneously: "
-            + ", ".join(duplicates)
-        )
-    actual_commands = active_commands | archived_commands
-    expected_commands = set(classified)
-    if actual_commands != expected_commands:
-        errors.append(
-            "command retirement inventory differs; "
-            f"expected={sorted(expected_commands)} actual={sorted(actual_commands)}"
-        )
-
-    skills = contract.get("skills")
-    public_ids = set(skills) if isinstance(skills, dict) else set()
-    for command_name in groups.get("absorbed_by_skill", []) + groups.get(
-        "thin_wrappers", []
-    ):
-        if command_name not in public_ids:
-            errors.append(
-                f"command retirement owner is not a public skill: {command_name}"
             )
 
     return errors
@@ -289,14 +222,20 @@ def validate_trigger_cases(
     skills: dict[str, Any], routing_contract: dict[str, Any]
 ) -> list[str]:
     errors: list[str] = []
-    public_entries = {name: entry for name, entry in skills.items() if isinstance(entry, dict)}
+    public_entries = {
+        name: entry for name, entry in skills.items() if isinstance(entry, dict)
+    }
     raw_cases = routing_contract.get("trigger_cases")
     if not isinstance(raw_cases, list) or not raw_cases:
         return ["routing contract requires non-empty [[trigger_cases]] entries"]
 
     seen_ids: set[str] = set()
-    owned_cases: dict[str, set[str]] = {public_id: set() for public_id in public_entries}
-    overlay_cases: dict[str, set[str]] = {public_id: set() for public_id in public_entries}
+    owned_cases: dict[str, set[str]] = {
+        public_id: set() for public_id in public_entries
+    }
+    overlay_cases: dict[str, set[str]] = {
+        public_id: set() for public_id in public_entries
+    }
     case_id_pattern = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
     for index, raw_case in enumerate(raw_cases, start=1):
@@ -306,7 +245,9 @@ def validate_trigger_cases(
         case_id = raw_case.get("id")
         label = str(case_id or f"#{index}")
         if not isinstance(case_id, str) or not case_id_pattern.fullmatch(case_id):
-            errors.append(f"trigger case {label}: id must be a stable kebab-case string")
+            errors.append(
+                f"trigger case {label}: id must be a stable kebab-case string"
+            )
         elif case_id in seen_ids:
             errors.append(f"duplicate trigger case id: {case_id}")
         else:
@@ -384,9 +325,7 @@ def validate_trigger_cases(
 
     composition = routing_contract.get("composition")
     baseline_target = (
-        composition.get("rendering_baseline")
-        if isinstance(composition, dict)
-        else None
+        composition.get("rendering_baseline") if isinstance(composition, dict) else None
     )
     baseline_skills = [
         public_id
@@ -422,7 +361,9 @@ def validate_trigger_cases(
             continue
         mode = entry.get("activation_mode")
         if mode == "native" and not owned_cases[public_id]:
-            errors.append(f"{public_id}: native skill must own at least one trigger case")
+            errors.append(
+                f"{public_id}: native skill must own at least one trigger case"
+            )
         elif mode == "conditional" and not (
             owned_cases[public_id] or overlay_cases[public_id]
         ):
@@ -449,7 +390,9 @@ def validate_routing_contracts(
     repo_root: Path = REPO_ROOT,
 ) -> list[str]:
     errors: list[str] = []
-    public_entries = {name: entry for name, entry in skills.items() if isinstance(entry, dict)}
+    public_entries = {
+        name: entry for name, entry in skills.items() if isinstance(entry, dict)
+    }
     routing_entries = [
         (skill_name, entry)
         for skill_name, entry in sorted(skills.items())
@@ -509,7 +452,9 @@ def validate_routing_contracts(
         )
 
     if not isinstance(environment_instructions, dict):
-        errors.append(f"{skill_name}: routing contract requires [environment_instructions]")
+        errors.append(
+            f"{skill_name}: routing contract requires [environment_instructions]"
+        )
     else:
         for field in ("allowed", "forbidden"):
             values = environment_instructions.get(field)
@@ -594,7 +539,9 @@ def validate() -> list[str]:
     for skill_name, entry in sorted(skills.items()):
         category = entry.get("category")
         source_value = entry.get("source")
-        source_path = REPO_ROOT / source_value if isinstance(source_value, str) else None
+        source_path = (
+            REPO_ROOT / source_value if isinstance(source_value, str) else None
+        )
         if source_path is None:
             errors.append(f"{skill_name}: source must be a repository-relative path")
             continue
@@ -611,7 +558,9 @@ def validate() -> list[str]:
         if metadata_path.is_file() and has_authored_codex_invocation_policy(
             metadata_path.read_text(encoding="utf-8")
         ):
-            errors.append(f"{skill_name}: authored source contains derived Codex invocation policy")
+            errors.append(
+                f"{skill_name}: authored source contains derived Codex invocation policy"
+            )
         forbidden = sorted(forbidden_contract_fields & set(entry))
         if forbidden:
             errors.append(
@@ -625,13 +574,19 @@ def validate() -> list[str]:
             errors.append(f"{skill_name}: manual-tool must use explicit activation")
 
         if entry.get("may_mutate_repo", False):
-            has_guard = entry.get("requires_explicit_user_request", False) or entry.get("requires_approved_plan", False)
+            has_guard = entry.get("requires_explicit_user_request", False) or entry.get(
+                "requires_approved_plan", False
+            )
             if not has_guard:
-                errors.append(f"{skill_name}: mutation-capable skills need explicit request or approved-plan guard")
+                errors.append(
+                    f"{skill_name}: mutation-capable skills need explicit request or approved-plan guard"
+                )
 
         if skill_name in {"sync-truth", "organize-docs"}:
             if not entry.get("requires_explicit_user_request", False):
-                errors.append(f"{skill_name}: direct mutation requires an explicit user request guard")
+                errors.append(
+                    f"{skill_name}: direct mutation requires an explicit user request guard"
+                )
 
     generated_ids = canonical_skill_dirs()
     distributed_ids = {
@@ -680,13 +635,17 @@ def validate() -> list[str]:
         if path.is_dir()
     )
     if generated_runtime_dirs:
-        errors.append("generated skill-local harness bundles remain: " + ", ".join(generated_runtime_dirs))
+        errors.append(
+            "generated skill-local harness bundles remain: "
+            + ", ".join(generated_runtime_dirs)
+        )
 
     errors.extend(validate_activation_contract(contract, REPO_ROOT, check_sources=True))
     errors.extend(validate_semantic_only_surface())
     errors.extend(validate_routing_contracts(skills))
     errors.extend(validate_semantic_contracts(contract))
-    errors.extend(validate_command_retirement_contract(contract))
+    if any((REPO_ROOT / "commands").glob("*.md")):
+        errors.append("retired command wrappers must not be active entrypoints")
     return errors
 
 

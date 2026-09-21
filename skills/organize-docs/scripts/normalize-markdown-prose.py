@@ -489,7 +489,9 @@ def discover_markdown_files(root: Path) -> list[Path]:
     )
 
 
-def load_immutable_manifest(root: Path, manifest_path: Path) -> tuple[ImmutableException, ...]:
+def load_immutable_manifest(
+    root: Path, manifest_path: Path
+) -> tuple[ImmutableException, ...]:
     """Load pinned, Git-visible `docs/plans` exceptions without enrollment shortcuts."""
 
     resolved_root = root.expanduser().resolve(strict=True)
@@ -511,7 +513,9 @@ def load_immutable_manifest(root: Path, manifest_path: Path) -> tuple[ImmutableE
         )
     entries = manifest.get("exceptions")
     if not isinstance(entries, list) or not entries:
-        raise MarkdownNormalizationError("immutable manifest requires non-empty exceptions")
+        raise MarkdownNormalizationError(
+            "immutable manifest requires non-empty exceptions"
+        )
 
     visible_paths = {
         markdown_file.relative_to(resolved_root)
@@ -548,7 +552,9 @@ def load_immutable_manifest(root: Path, manifest_path: Path) -> tuple[ImmutableE
                 f"immutable exception sha256 must be lowercase hexadecimal: {raw_path}"
             )
         if relative_path in seen_paths or digest in seen_digests:
-            raise MarkdownNormalizationError("immutable manifest contains duplicate path or sha256")
+            raise MarkdownNormalizationError(
+                "immutable manifest contains duplicate path or sha256"
+            )
         candidate = resolved_root / relative_path
         if (
             relative_path not in visible_paths
@@ -587,11 +593,16 @@ def validate_immutable_findings(
             )
 
 
-def analyze_repository(root: Path) -> list[FileAnalysis]:
-    """Analyze every Git-visible Markdown file under a repository root."""
+def analyze_repository(
+    root: Path, excluded: tuple[Path, ...] = ()
+) -> list[FileAnalysis]:
+    """Analyze Git-visible Markdown outside explicitly excluded relative prefixes."""
 
     analyses: list[FileAnalysis] = []
     for markdown_file in discover_markdown_files(root):
+        relative = markdown_file.relative_to(root.resolve())
+        if any(relative.is_relative_to(prefix) for prefix in excluded):
+            continue
         try:
             source = markdown_file.read_text(encoding="utf-8")
         except UnicodeDecodeError as error:
@@ -706,9 +717,26 @@ def parse_args(arguments: list[str]) -> argparse.Namespace:
         type=Path,
         help="TOML with exact stage-history path and SHA-256 exceptions",
     )
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        type=Path,
+        default=[],
+        help="Exclude a literal repository-relative file or subtree (repeatable)",
+    )
     parsed = parser.parse_args(arguments)
     if parsed.limit < 0:
         parser.error("--limit must be non-negative")
+    for prefix in parsed.exclude:
+        if (
+            prefix.is_absolute()
+            or not prefix.parts
+            or ".." in prefix.parts
+            or any(char in str(prefix) for char in "*?[]")
+        ):
+            parser.error(
+                "--exclude requires a nonempty literal repository-relative prefix"
+            )
     return parsed
 
 
@@ -723,7 +751,7 @@ def main(arguments: list[str]) -> int:
             if parsed.immutable_manifest is not None
             else ()
         )
-        analyses = analyze_repository(root)
+        analyses = analyze_repository(root, tuple(parsed.exclude))
         validate_immutable_findings(root, analyses, exceptions)
         mutable = mutable_analyses(root, analyses, exceptions)
         print_summary(mutable)
@@ -740,13 +768,11 @@ def main(arguments: list[str]) -> int:
                 print(f"normalized={analysis.file_path.relative_to(root)}")
             if parsed.immutable_manifest is not None:
                 exceptions = load_immutable_manifest(root, parsed.immutable_manifest)
-            post_write_analyses = analyze_repository(root)
+            post_write_analyses = analyze_repository(root, tuple(parsed.exclude))
             validate_immutable_findings(root, post_write_analyses, exceptions)
             remaining = [
                 analysis
-                for analysis in mutable_analyses(
-                    root, post_write_analyses, exceptions
-                )
+                for analysis in mutable_analyses(root, post_write_analyses, exceptions)
                 if analysis.result.join_count > 0
             ]
             if remaining:
