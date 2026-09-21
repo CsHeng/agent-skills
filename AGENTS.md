@@ -12,7 +12,7 @@ This repository authors and distributes the `coding` collection of 39 portable A
 - `skills/` and `skills.index.json` are tracked generated output; do not edit them by hand.
 - `docs/architecture/` contains stable architecture truth.
 - Shared boundaries, all new designs/plans and retained evaluations belong to `$AGENT_ARCHITECTURE_DIR/docs/`; historical commands belong to its `archived/skills/` tree. Do not create product-local evolution records.
-- Resolve the three source roots from this repository's mise configuration; cross-repository maintenance must not guess checkout layout. Standalone product checks and runtime never require the architecture checkout.
+- Resolve the three source roots and `AGENT_TMP_ROOT` from this repository's mise configuration; retained runtime and temporary artifacts belong under `$AGENT_TMP_ROOT/skills/`, and cross-repository maintenance must not guess checkout layout. Standalone product checks and runtime never require the architecture checkout.
 - Provider plugin manifests are optional distribution surfaces, not workflow authority.
 
 ## Instruction Scope
