@@ -90,9 +90,9 @@ Access to a developer shell, CI secret, cloud profile, agent socket, production 
 
 ## Gate Design
 
-Run narrow affected gates during implementation and the declared aggregate gates before completion.
+Run narrow affected gates during implementation and the declared aggregate gates before completion. Guard critical consumer paths with a few representative workflow or E2E scenarios rather than multiplying cheap assertions or covering every permutation through the most expensive lane. A required lane must fail or report unavailable when its prerequisite is missing; an optional local skip is not passing evidence for that lane.
 
-Order gates by diagnosis value and cost: deterministic static and local evidence first, isolated integration and compatibility next, release-artifact and workflow evidence after that, and runtime-authorized observation last. A higher lane must add evidence unavailable below rather than repeat the same assertion with more infrastructure.
+Order gates by diagnosis value and cost: deterministic static and local evidence first, isolated integration and compatibility next, release-artifact and workflow evidence after that, and runtime-authorized observation last. A higher lane must add evidence unavailable below rather than repeat the same assertion with more infrastructure. For a consequential E2E, retain a bounded, redacted, repeatable proof appropriate to the boundary (such as the invocation, fixture identity and definitive output, or UI recording plus observable assertions). An artifact without an independently established expected result is not an oracle.
 
 ## Coverage
 

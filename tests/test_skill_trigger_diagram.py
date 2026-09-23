@@ -22,16 +22,6 @@ class SkillTriggerDiagramTests(unittest.TestCase):
 
     def test_diagrams_show_semantic_composition_only(self) -> None:
         self.assertEqual({"skill-composition"}, set(self.generator.DIAGRAMS))
-        content = "\n".join(self.generator.DIAGRAMS.values())
-        for mechanical in (
-            "exactly one review",
-            "ledger",
-            "attempt",
-            "replay",
-            "scheduler",
-            "provider adapter",
-        ):
-            self.assertNotIn(mechanical, content.lower())
 
 
 if __name__ == "__main__":

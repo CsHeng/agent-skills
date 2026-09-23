@@ -37,48 +37,6 @@ class SessionSurfaceContractTests(unittest.TestCase):
         )
         self.assertEqual("use-coding-skills", session_case["owner"])
 
-    def test_instruction_scope_separates_preferences_records_and_methods(self) -> None:
-        instructions = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
-        scope = instructions.split("## Instruction Scope\n", 1)[1].split("\n## ", 1)[0]
-
-        for concern in (
-            "Harness-global instructions",
-            "persistent user preferences",
-            "Project `AGENTS.md`",
-            "current design, plan, or approval summary",
-            "Skills own portable workflow and domain methods",
-            "separately approved scope",
-        ):
-            with self.subTest(concern=concern):
-                self.assertIn(concern, scope)
-
-    def test_compaction_prioritizes_current_authority_not_superseded_gates(
-        self,
-    ) -> None:
-        skill = (SESSION_SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
-        compact = skill.split("## Compact Instructions\n", 1)[1].split("\n## ", 1)[0]
-        priorities = [line for line in compact.splitlines() if line[:1].isdigit()]
-
-        self.assertIn("effective task-scoped approval baseline", priorities[0])
-        self.assertIn("source of each approval", priorities[0])
-        self.assertIn("not solely in a task-loaded Skill", compact)
-        self.assertIn("one current account", compact)
-        self.assertIn("historical, not active blockers", compact)
-        self.assertIn("verification is not missing authority", compact)
-        self.assertIn("approval does not establish that a check passed", compact)
-
-    def test_recovery_does_not_invent_or_revoke_approval_from_memory(self) -> None:
-        memory = (SESSION_SKILL_ROOT / "references/memory-boundary.md").read_text(
-            encoding="utf-8"
-        )
-
-        self.assertIn("trusted task-specific user approvals", memory)
-        self.assertIn("outdated project paragraph", memory)
-        self.assertIn(
-            "cannot grant new permission or restore a superseded gate", memory
-        )
-        self.assertIn("ask only about that missing boundary", memory)
-
 
 if __name__ == "__main__":
     unittest.main()

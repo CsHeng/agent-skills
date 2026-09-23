@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import importlib.util
+import io
+import json
 import os
-import subprocess
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
-
+from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = REPO_ROOT / "scripts/run-standalone-check.py"
@@ -41,15 +43,46 @@ class StandaloneCheckTests(unittest.TestCase):
                 self.module.run([str(command)], root, {"PATH": os.environ["PATH"]})
             self.assertNotIn("secret-output", str(raised.exception))
 
-    def test_script_contains_provider_isolation_and_cleanup_boundary(self) -> None:
-        text = SCRIPT.read_text(encoding="utf-8")
-        self.assertIn("TemporaryDirectory", text)
-        self.assertIn("PI_CONFIG_DIR", text)
-        self.assertIn("PI_CODING_AGENT_DIR", text)
-        self.assertIn('"HOME": str(isolated_home)', text)
-        self.assertIn('"XDG_CACHE_HOME": str(root / "cache")', text)
-        self.assertIn("exit 97", text)
-        self.assertNotIn("CODEX_HOME", text)
+    def test_main_isolates_children_and_cleans_up_on_success_or_failure(self) -> None:
+        for fails in (False, True):
+            with self.subTest(fails=fails):
+                environments: list[dict[str, str]] = []
+
+                def capture_run(
+                    command: list[str], cwd: Path, env: dict[str, str],
+                    *, should_fail: bool = fails, observed: list[dict[str, str]] = environments,
+                ) -> None:
+                    observed.append(env.copy())
+                    self.assertTrue((cwd.parent / "bin" / "pi").is_file())
+                    if should_fail:
+                        raise RuntimeError("fixture check failed")
+
+                output = io.StringIO()
+                with (
+                    patch.object(self.module, "copy_repository") as copy,
+                    patch.object(self.module, "run", side_effect=capture_run),
+                    patch.dict(os.environ, {"CODEX_HOME": "ambient-secret", "PI_API_KEY": "ambient-secret"}),
+                    redirect_stdout(output),
+                ):
+                    status = self.module.main()
+                root = copy.call_args.args[1].parent
+                report = json.loads(output.getvalue())
+                self.assertEqual(status, 1 if fails else 0)
+                self.assertTrue(report["pi_blocked"])
+                self.assertEqual(report["checks"], "pending" if fails else "pass")
+                self.assertTrue(environments)
+                for env in environments:
+                    self.assertEqual(
+                        set(env),
+                        {"HOME", "PATH", "TMPDIR", "XDG_CACHE_HOME", "PI_CONFIG_DIR", "PI_CODING_AGENT_DIR", "STANDALONE_CHECK_ACTIVE", "PYTHONDONTWRITEBYTECODE"},
+                    )
+                    self.assertEqual(env["HOME"], str(root / "home"))
+                    self.assertEqual(env["XDG_CACHE_HOME"], str(root / "cache"))
+                    self.assertEqual(env["PI_CONFIG_DIR"], env["PI_CODING_AGENT_DIR"])
+                    self.assertEqual(env["PI_CONFIG_DIR"], str(root / "pi-config"))
+                    self.assertEqual(env["TMPDIR"], str(root / "tmp"))
+                    self.assertEqual(env["PATH"].split(os.pathsep)[0], str(root / "bin"))
+                self.assertFalse(root.exists())
 
 
 if __name__ == "__main__":

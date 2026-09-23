@@ -30,6 +30,8 @@ boundary -> oracle -> fixture/environment -> owning suite -> CI/release lane -> 
 
 A missing verification layer is not repaired by duplicating lower-value unit tests.
 
+Start acceptance from the critical consumer outcome and plausible failure modes, then choose the smallest real boundary that can prove each invariant. Keep a few risk-representative cross-boundary scenarios for behavior that isolated tests cannot see; use focused unit or integration checks for detailed logic and diagnosis. Neither an E2E-only rule nor a mandatory new test for every change protects an invariant by itself. A passing scenario with expected results invented from the same implementation is still a weak oracle.
+
 ## Classification Contract
 
 When classifying or auditing existing checks, read [Test Layering And Suite Audit](references/test-layering-and-suite-audit.md).
@@ -78,11 +80,11 @@ Add a numeric gate only when:
 - failure diagnosis is actionable
 - raising the threshold will not incentivize low-semantic tests
 
-Critical paths may justify stronger gates than glue or generated code. Generated internals usually need version pinning, deterministic generation, compilation, and boundary fixtures rather than handwritten coverage.
+Critical paths may justify stronger gates than glue or generated code. Generated internals usually need pinned build inputs, deterministic generation, compilation, and boundary fixtures rather than handwritten coverage. Pin actual dependencies for reproducibility; do not gate on a literal dependency version repeated in documentation.
 
 ## Red-Green Verification
 
-- For behavior changes and bug fixes, write or identify a failing test or narrow reproducer before implementation when a correct seam exists.
+- For behavior changes and bug fixes, first identify the failing consumer outcome and an independent expected result; write or identify a failing test or narrow reproducer before implementation when a correct seam exists. A post-change regression test is useful when it closes a real behavior gap, not just because code changed.
 - Confirm the oracle fails for the expected reason, not a typo or environment error.
 - A missing perfect agent-runnable reproducer does not freeze other authorized work; use the tightest available equivalent evidence and keep unblocked work moving.
 - Implement the smallest change that makes the reproducer pass.
@@ -99,7 +101,7 @@ Match documentation checks to the property that can actually fail:
 - Frontmatter, schemas, command identifiers, paths, and other machine-readable fields embedded in Markdown: parse and validate the structured field or stable identifier.
 - Executable examples: compile or run the example through the real interface.
 - Generated documentation: regenerate it and compare the owned source and generated surface.
-- Prompt or instruction Markdown: test observable consumer behavior with an evaluation or integration scenario when that evidence is worth its cost; machine consumption alone does not make prose a unit-test interface.
+- Prompt or instruction Markdown: test observable consumer behavior with an evaluation or integration scenario when that evidence is worth its cost; machine consumption alone does not make prose a unit-test interface. An offline fixture can prove loading or workflow mechanics, not that a live model follows the instruction.
 
 When efficacy measurement is requested or a bounded risk judgment justifies it, use [Agent Skill Evaluation](references/agent-skill-evaluation.md) with the necessary execution authority and budget. Ordinary Skill editing does not require a live experiment, and maintenance checks do not establish behavioral or economic gains.
 

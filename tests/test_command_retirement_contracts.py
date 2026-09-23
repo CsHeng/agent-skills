@@ -63,63 +63,9 @@ class CommandRetirementContractTests(unittest.TestCase):
             with self.subTest(path=relative_path):
                 self.assertTrue((REPO_ROOT / relative_path).exists())
 
-    def test_active_truth_does_not_publish_retired_commands(self) -> None:
-        active_truth = (
-            "README.md",
-            "AGENTS.md",
-            "docs/quickstart.md",
-            "docs/architecture/install-surface.md",
-            "docs/architecture/maintenance-contract.md",
-            "docs/architecture/skill-composition.md",
-        )
-        retired_entries = tuple(
-            f"`/{public_id}`"
-            for public_id in (
-                "analyze-project",
-                "design-change",
-                "plan-change",
-                "implement-change",
-                "review-change",
-                "sync-truth",
-                "close-change",
-            )
-        )
-        for relative_path in active_truth:
-            with self.subTest(path=relative_path):
-                content = (REPO_ROOT / relative_path).read_text(encoding="utf-8")
-                self.assertNotIn("commands/", content)
-                for retired_entry in retired_entries:
-                    self.assertNotIn(retired_entry, content)
-
-    def test_absorbed_workflows_are_semantic_only(self) -> None:
-        for public_id in (
-            "close-change",
-            "design-change",
-            "implement-change",
-            "plan-change",
-            "review-change",
-            "sync-truth",
-        ):
-            with self.subTest(skill=public_id):
-                skill = (REPO_ROOT / "skills" / public_id / "SKILL.md").read_text(
-                    encoding="utf-8"
-                )
-                self.assertNotIn("HARNESS_CLI", skill)
-                self.assertNotIn("scripts/harness", skill)
-                self.assertNotIn("host harness", skill.lower())
-                self.assertFalse(
-                    (REPO_ROOT / "skills" / public_id / "scripts" / "harness").exists()
-                )
-
     def test_executable_workflow_runtime_is_retired(self) -> None:
         self.assertFalse((REPO_ROOT / "src" / "runtime" / "harness").exists())
         self.assertFalse((REPO_ROOT / "integrations" / "pi").exists())
-
-    def test_smart_commit_already_owns_target_repository_binding(self) -> None:
-        skill = (REPO_ROOT / "skills/smart-commit/SKILL.md").read_text(encoding="utf-8")
-
-        self.assertIn('TARGET_REPO="$(git -C "$INVOCATION_CWD"', skill)
-        self.assertIn('git -C "$TARGET_REPO"', skill)
 
 
 if __name__ == "__main__":

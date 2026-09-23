@@ -24,11 +24,3 @@ class SkillConsolidationContractTests(unittest.TestCase):
         self.assertFalse(RETIRED & set(self.contract["skills"]))
         self.assertFalse(RETIRED & {path.name for path in SKILL_ROOT.glob("*/")})
         self.assertFalse(RETIRED & case_owners)
-
-    def test_successor_guidance_remains_owned_by_retained_skills(self) -> None:
-        architecture = (SKILL_ROOT / "architecture-patterns" / "references" / "clean-boundaries.md").read_text(encoding="utf-8")
-        standards = (SKILL_ROOT / "development-standards" / "SKILL.md").read_text(encoding="utf-8")
-        logging = (SKILL_ROOT / "logging-standards" / "references" / "security-and-audit-logging.md").read_text(encoding="utf-8")
-        self.assertIn("dependency direction", architecture.lower())
-        self.assertIn("repository-owned quality gates", standards.lower())
-        self.assertIn("tamper evidence", logging.lower())

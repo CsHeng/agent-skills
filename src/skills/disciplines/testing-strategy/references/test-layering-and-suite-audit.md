@@ -60,7 +60,7 @@ Performance, security, resilience, compatibility, and migration usually modify a
 
 ## Smallest-Sufficient-Layer Rule
 
-Start with the lowest realistic boundary that can prove the invariant, not the lowest boundary that can produce a green assertion.
+Start by naming the critical consumer outcome and credible ways it can fail. Then use the lowest realistic boundary that can prove each invariant, not the lowest boundary that can produce a green assertion. Keep a small set of risk-representative cross-boundary scenarios for the outcome itself; a trivial happy path chosen only for ease of passing is not sufficient evidence.
 
 Promote or add evidence only when the higher boundary contributes information unavailable below:
 
@@ -93,7 +93,7 @@ Weak or tautological patterns include:
 - reproducing the source algorithm in test code
 - asserting every manifest field by restating the manifest without a separately owned contract
 - rendering and validating through the same untrusted helper while checking only existence
-- snapshotting natural-language sentences, headings, or keyword collections
+- snapshotting natural-language sentences, headings, keyword collections, or dependency versions copied from documentation
 - accepting any error, broad status range, or non-empty output when exact behavior matters
 
 Use `replace` when the protected invariant is valuable but the current oracle is not independent. Use `delete` only when no meaningful invariant remains or another owned oracle already proves it at equal or stronger fidelity.
