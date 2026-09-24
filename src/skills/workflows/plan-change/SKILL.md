@@ -32,6 +32,10 @@ Do not use it while a necessary design decision or scope approval is unresolved,
 
 Read `references/delivery-and-delegation.md` when the plan must record delivery endpoints, two-stage planning versus dispatch, cohesive worker slices, required versus missing authority, decision-versus-fact classification, compact live plan versus historical exemptions, same-task continuation without handles, or its implementation-approval summary. Ordinary local plans that do not claim those arrangements may omit it.
 
+## Task Granularity
+
+Use independently verifiable outcomes and blocker boundaries as task boundaries. If one part can be accepted or blocked while another can still advance, make them independently trackable; split local source work from externally gated verification when their prerequisites differ. Keep stable task IDs for independently deliverable owner packages instead of replacing them with an umbrella item. Commands, file counts and elapsed-time estimates are not task boundaries. An overall milestone may aggregate acceptance, but its grouping must not become a prerequisite for every local result or join. Record only the upstream outputs actually required by each consumer; retain final integration and review obligations without making them barriers to unrelated work.
+
 ## Conditional Decisions
 
 Use `language-decision-tree` only when a task creates or replaces a persisted project, service, tool, or automation boundary. Record the selected language and rationale only for affected tasks.
