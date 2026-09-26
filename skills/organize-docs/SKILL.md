@@ -110,3 +110,21 @@ bash "$CHECK_DOC_BOUNDARIES"
 `ORGANIZE_DOCS_SKILL_ROOT` is the directory that contains this `SKILL.md`. Do not use a target-repository relative path for bundled skill scripts; target repositories do not own them.
 
 The checker calls the same bundled normalizer in `check` mode, so detection and rewriting cannot drift. It preserves symlinks, fenced and indented code blocks, frontmatter, Markdown tables, headings, reference definitions, HTML-only lines, thematic breaks, and intentional hard breaks.
+
+### Manifest Mode For Declared Documentation Layouts
+
+When a repository declares its documentation placement in a machine-readable manifest instead of prose, resolve the bundled layout checker the same way and point it at that manifest:
+
+```bash
+ORGANIZE_DOCS_SKILL_ROOT="/absolute/path/to/organize-docs"
+LAYOUT_CHECKER="$(realpath "$ORGANIZE_DOCS_SKILL_ROOT/scripts/check-documentation-layout.py")"
+cd "$(git rev-parse --show-toplevel)"
+python3 "$LAYOUT_CHECKER" --root . --manifest testing/documentation-layout.json
+```
+
+- The manifest is the placement authority: declared roots and their material classes, required indexes, stage-bundle shape, archive class shape, link-resolution scope, relocation manifests, and named exception classes.
+- Implemented capabilities are `declared-roots`, `stage-shape`, `archive-shape`, `root-shape`, `index-closure`, `link-resolution`, and `migration-conservation`; the manifest maps them to its own gate identifiers.
+- One installed implementation serves every repository, so no checker copy is vendored into a documentation tree and no repository needs another repository's checkout at runtime.
+- A violation is repair or an explicit declared exception with a reason; never silence a finding by narrowing the scan or deleting the assertion underneath it.
+- Archived and staged scopes report unresolved links as named exemptions rather than failures, because retained historical bodies are not rewritten to satisfy a gate.
+- Exit status is `0` on pass, `1` on undeclared violations, and `2` on an unusable manifest or missing checker.
