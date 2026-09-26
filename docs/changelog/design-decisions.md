@@ -13,7 +13,7 @@ The active coding agent owns request interpretation, Skill selection, sequencing
 - Public Skill IDs remain stable and portable across compatible agent products.
 - Mechanically enforced workflow behavior belongs outside this repository and is neither imported nor named as a dependency.
 - Repository scripts validate only authored inventory, metadata, reference closure, generated parity, documentation, and ordinary code quality.
-- Earlier runtime, provider-binding, generated lifecycle, fixed phase, workflow-mode, and mandatory-review decisions are superseded. Their historical detail is retained under `$AGENT_ARCHITECTURE_DIR/docs/plans/skills/` and `$AGENT_ARCHITECTURE_DIR/archived/skills/`, outside current product truth.
+- Earlier runtime, provider-binding, generated lifecycle, fixed phase, workflow-mode, and mandatory-review decisions are superseded. Their historical detail is retired to `$AGENT_ARCHITECTURE_DIR/archived/agent-skills/plans/`, outside current product truth; only active change bundles remain under `$AGENT_ARCHITECTURE_DIR/docs/plans/skills/`, registered in that domain's index.
 
 ## 2026-08-20 — Live Child Links Are The Recommended Local Path
 
