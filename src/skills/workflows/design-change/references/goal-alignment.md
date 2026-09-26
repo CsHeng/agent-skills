@@ -4,7 +4,7 @@ Use this reference only when a concrete goal-means mismatch, acceptance ambiguit
 
 ## Goals, Means, And Hard Constraints
 
-Separate the outcome the user wants, the hard constraints that already bind the work, and the implementation means that remain replaceable. A named tool or approach is not proof that the goal is unclear. Do not overwrite an approved decision with a preferred alternative.
+Separate the outcome the user wants, the hard constraints that already bind the work, and the implementation means that remain replaceable. Unless explicitly fixed by the user, a plan's task granularity, dependency edges, ordering, and investigation or verification route are derived means, not additional user intent; correcting a mistaken representation does not reopen the goal. A named tool or approach is not proof that the goal is unclear. Do not overwrite an approved decision with a preferred alternative.
 
 Main goals, their necessary conditions, user-fixed technical choices, and applicable inviolable boundaries must be met. Authorized best-effort secondary work may be substituted, degraded, or omitted during implementation when evidence supports that adaptation, while the main goal continues. Record that discretion and its limits; do not pre-enumerate every feature that might fail, and do not require design investigation to implementation depth.
 

@@ -7,7 +7,7 @@ Read this reference when a plan must record delivery endpoints, two-stage planni
 Keep four kinds of information distinct in the plan and approval summary:
 
 - Goals, required acceptance, authority, and explicitly designated file/interface/order restrictions are binding. Changing them needs the corresponding owner decision.
-- Observed touch files, baseline SHAs, inferred implementation details, and environment snapshots are planning context. Refresh them when facts change; do not promote them to immutable approval gates merely because the user approved the plan.
+- Observed touch files, baseline SHAs, inferred implementation details such as task granularity and dependency edges, and environment snapshots are planning context. Refresh them when facts change; do not promote them to immutable approval gates merely because the user approved the plan.
 - Exact write sets, source identities, locks, and compare-and-apply preconditions required by an execution host are mechanical capabilities for that invocation. The parent may refine or redispatch inside existing authority, but an executor must not bypass these guards.
 - Verification evidence describes a particular result or version. Drift may require selective invalidation and re-verification; that is not automatically a change to permission or goals.
 
