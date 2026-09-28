@@ -69,25 +69,29 @@ Write or update long-lived project truth after an explicit user request, an expl
 10. Normalize active Markdown prose in the requested scope with the bundled processing workflow, then decompose genuinely over-broad content at semantic boundaries. Preserved archived originals may be excluded; moving history alone does not authorize rewriting its prose.
 11. Update stable docs only after explicit user approval, explicit drift follow-up from `analyze-project`, or an approved-plan `sync-truth` handoff with current evidence.
 
+## Bundled Scripts
+
+```bash
+SKILL_DIR="$(cd "$(dirname "<path to this SKILL.md>")" && pwd)"
+```
+
 ## Markdown Prose Processing
 
 Use the bundled normalizer instead of recreating a temporary parser. It scans Git-visible Markdown, including tracked and untracked files while excluding ignored/cache material and symlinks. Use repeatable `--exclude <literal-repository-relative-prefix>` for explicitly preserved history, for example `--exclude archived`; active files remain checked. Optional `--immutable-manifest` compatibility remains available for projects that deliberately retain pinned originals, but neither local history nor hash locks are required.
 
-Resolve the installed tool and target repository once:
+Set the target repository once:
 
 ```bash
-ORGANIZE_DOCS_SKILL_ROOT="/absolute/path/to/organize-docs"
-MARKDOWN_PROSE_TOOL="$(realpath "$ORGANIZE_DOCS_SKILL_ROOT/scripts/normalize-markdown-prose.py")"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 ```
 
 Run the workflow in order:
 
 ```bash
-python3 "$MARKDOWN_PROSE_TOOL" --root "$REPO_ROOT" --mode count
-python3 "$MARKDOWN_PROSE_TOOL" --root "$REPO_ROOT" --mode preview
-python3 "$MARKDOWN_PROSE_TOOL" --root "$REPO_ROOT" --mode write
-python3 "$MARKDOWN_PROSE_TOOL" --root "$REPO_ROOT" --mode check
+python3 "$SKILL_DIR/scripts/normalize-markdown-prose.py" --root "$REPO_ROOT" --mode count
+python3 "$SKILL_DIR/scripts/normalize-markdown-prose.py" --root "$REPO_ROOT" --mode preview
+python3 "$SKILL_DIR/scripts/normalize-markdown-prose.py" --root "$REPO_ROOT" --mode write
+python3 "$SKILL_DIR/scripts/normalize-markdown-prose.py" --root "$REPO_ROOT" --mode check
 ```
 
 - `count` establishes scope without dumping candidates.
@@ -98,33 +102,27 @@ python3 "$MARKDOWN_PROSE_TOOL" --root "$REPO_ROOT" --mode check
 
 ## Validation
 
-- When docs truth boundaries are part of the change, resolve the checker from this skill directory before switching to the target repository:
+- When docs truth boundaries are part of the change, run the bundled checker before switching to the target repository:
 
 ```bash
-ORGANIZE_DOCS_SKILL_ROOT="/absolute/path/to/organize-docs"
-CHECK_DOC_BOUNDARIES="$(realpath "$ORGANIZE_DOCS_SKILL_ROOT/scripts/check-doc-boundaries.sh")"
 cd "$(git rev-parse --show-toplevel)"
-bash "$CHECK_DOC_BOUNDARIES"
+bash "$SKILL_DIR/scripts/check-doc-boundaries.sh"
 ```
-
-`ORGANIZE_DOCS_SKILL_ROOT` is the directory that contains this `SKILL.md`. Do not use a target-repository relative path for bundled skill scripts; target repositories do not own them.
 
 The checker calls the same bundled normalizer in `check` mode, so detection and rewriting cannot drift. It preserves symlinks, fenced and indented code blocks, frontmatter, Markdown tables, headings, reference definitions, HTML-only lines, thematic breaks, and intentional hard breaks.
 
 ### Manifest Mode For Declared Documentation Layouts
 
-When a repository declares its documentation placement in a machine-readable manifest instead of prose, resolve the bundled layout checker the same way and point it at that manifest:
+When a repository declares its documentation placement in a machine-readable manifest instead of prose, point the bundled layout checker at that manifest:
 
 ```bash
-ORGANIZE_DOCS_SKILL_ROOT="/absolute/path/to/organize-docs"
-LAYOUT_CHECKER="$(realpath "$ORGANIZE_DOCS_SKILL_ROOT/scripts/check-documentation-layout.py")"
 cd "$(git rev-parse --show-toplevel)"
-python3 "$LAYOUT_CHECKER" --root . --manifest testing/documentation-layout.json
+python3 "$SKILL_DIR/scripts/check-documentation-layout.py" --root . --manifest testing/documentation-layout.json
 ```
 
 - The manifest is the placement authority: declared roots and their material classes, required indexes, stage-bundle shape, archive class shape, link-resolution scope, relocation manifests, and named exception classes.
 - Implemented capabilities are `declared-roots`, `stage-shape`, `archive-shape`, `root-shape`, `index-closure`, `link-resolution`, and `migration-conservation`; the manifest maps them to its own gate identifiers.
-- One installed implementation serves every repository, so no checker copy is vendored into a documentation tree and no repository needs another repository's checkout at runtime.
+- The check is advisory: it reports placement findings for the current task. A repository keeps its manifest as declaration data and does not wire the checker into its tasks, tests, or tool dependencies, and no checker copy is vendored into it.
 - A violation is repair or an explicit declared exception with a reason; never silence a finding by narrowing the scan or deleting the assertion underneath it.
 - Archived and staged scopes report unresolved links as named exemptions rather than failures, because retained historical bodies are not rewritten to satisfy a gate.
 - Exit status is `0` on pass, `1` on undeclared violations, and `2` on an unusable manifest or missing checker.

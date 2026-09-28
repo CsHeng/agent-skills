@@ -50,22 +50,26 @@ Do not decide what future agents should write into memory. Mine existing memory 
 
 ## Parser
 
+```bash
+SKILL_DIR="$(cd "$(dirname "<path to this SKILL.md>")" && pwd)"
+```
+
 Use:
 
 ```bash
-python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py --scope current --repo-root "$(git rev-parse --show-toplevel)"
+python3 "$SKILL_DIR/scripts/extract-session-signals.py" --scope current --repo-root "$(git rev-parse --show-toplevel)"
 ```
 
 For all local history:
 
 ```bash
-python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py --scope all
+python3 "$SKILL_DIR/scripts/extract-session-signals.py" --scope all
 ```
 
 For multiple local homes, repeat the home options:
 
 ```bash
-python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py \
+python3 "$SKILL_DIR/scripts/extract-session-signals.py" \
   --scope all \
   --codex-home ~/.codex \
   --codex-home /path/to/another/.codex \
@@ -80,7 +84,7 @@ python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py 
 For machine-readable aggregation:
 
 ```bash
-python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py \
+python3 "$SKILL_DIR/scripts/extract-session-signals.py" \
   --scope all \
   --format json \
   --limit 0
@@ -89,7 +93,7 @@ python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py 
 For measuring whether an external skill bundle actually influenced sessions before retiring it:
 
 ```bash
-python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py \
+python3 "$SKILL_DIR/scripts/extract-session-signals.py" \
   --scope all \
   --skill-usage-only \
   --skill-usage-root /path/to/external-skill-bundle \
@@ -100,7 +104,7 @@ python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py 
 For the current repository, keep all-agent history scope separate from the inventory boundary and supply the contract explicitly:
 
 ```bash
-python3 /absolute/path/to/skills/skill-miner/scripts/extract-session-signals.py \
+python3 "$SKILL_DIR/scripts/extract-session-signals.py" \
   --scope all \
   --skill-usage-only \
   --skill-usage-root /absolute/path/to/repo/skills \

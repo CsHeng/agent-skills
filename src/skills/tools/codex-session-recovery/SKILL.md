@@ -30,10 +30,12 @@ Recover or migrate Codex conversation history at the session-file layer. This sk
 
 ## Script
 
-Use the installed skill path appropriate to the current environment:
+```bash
+SKILL_DIR="$(cd "$(dirname "<path to this SKILL.md>")" && pwd)"
+```
 
 ```bash
-python3 /absolute/path/to/codex-session-recovery/scripts/merge-codex-sessions.py \
+python3 "$SKILL_DIR/scripts/merge-codex-sessions.py" \
   --source-home /path/to/old/.codex \
   --source-home /path/to/another/.codex \
   --destination-home "$HOME/.codex" \
@@ -43,7 +45,7 @@ python3 /absolute/path/to/codex-session-recovery/scripts/merge-codex-sessions.py
 Apply only after reviewing a clean audit and stopping all relevant Codex processes:
 
 ```bash
-python3 /absolute/path/to/codex-session-recovery/scripts/merge-codex-sessions.py \
+python3 "$SKILL_DIR/scripts/merge-codex-sessions.py" \
   --source-home /path/to/old/.codex \
   --source-home /path/to/another/.codex \
   --destination-home "$HOME/.codex" \
