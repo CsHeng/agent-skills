@@ -35,23 +35,9 @@ Do not rank candidates by line count alone. Prefer high-confidence removal of an
 
 ## Output
 
-For each material candidate, record:
+Record every material candidate with the required evidence and any applicable conditional extension defined in [Candidate Evidence](references/candidate-evidence.md). The reference separates the core that every candidate needs from the fields that apply only when removal depends on non-consumption or touches a compatibility, durability, or trust boundary.
 
-- a stable candidate ID, candidate class, exact scope, removal level (`concept` or exact `representation`), and current owner
-- broader concept responsibility and owner, plus the exact representation's independent responsibility and ownership chain when the intent-evidence gate applies
-- complexity signal and the exact proposed cut or collapse, including authored, generated, and compatibility forms in the owned removal unit
-- production, test, documentation, generated, dynamic-entrypoint, public API, persisted-data, wire-format, migration, and compatibility consumers as applicable
-- liveness interpretation and, when low or absent consumption materially supports removal, an explicit classification as confirmed redundancy, incomplete wiring, retained compatibility or migration intent, or unresolved evidence, plus whether the exact representation is required
-- observable behavior or guarantees lost by the cut and whether accepting that loss requires a product decision
-- rationale and history evidence that protects, defeats, or preserves the current surface
-- invariants and protected boundaries that must remain true
-- compatibility, persistence, security, audit, and recovery impact
-- net maintenance reduction after replacement glue, tests, documentation, generated artifacts, and dependency lifecycle are counted
-- confidence, risk, and unresolved evidence
-- disposition
-- smallest decisive executable oracle or substitute verification required before implementation
-
-Lead with the strongest candidates and keep each record concise. Keep `no-safe-cut` conclusions when they prevent unsafe deletion; do not manufacture a quota of findings.
+Lead with the strongest candidates and keep each record concise. A candidate outside a boundary states that and does not expand the full record; do not drop causal, ownership, or compatibility evidence to shorten a candidate that does touch it. Keep `no-safe-cut` conclusions when they prevent unsafe deletion; do not manufacture a quota of findings.
 
 ## Operating Rules
 

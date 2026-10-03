@@ -1,23 +1,29 @@
 # Candidate Evidence
 
-Use this matrix for every simplification candidate that might remove a concept, branch, adapter, layer, or durable state.
+Use the required evidence below for every simplification candidate that might remove a concept, branch, adapter, layer, or durable state. Add the conditional evidence whenever its condition holds; it is then required, not optional. A candidate outside a boundary does not fill the conditional rows, but required causal, ownership, and reachability evidence is never dropped to shorten a record.
 
-## Evidence Matrix
+## Required Evidence
 
 | Boundary | Questions | Strong evidence |
 | --- | --- | --- |
 | Identity and ownership | What stable candidate ID, class, exact scope, and current owner identify this cut? Is the removal unit a whole concept or an exact representation? | One bounded removal unit and accountable authored owner are traced across every generated, compatibility, or alternate form without conflating the concept with a representation. |
-| Responsibility | What responsibility does the broader concept carry? When the conditional gate applies, what does the exact representation contribute independently, and who owns each responsibility? Where else is either behavior implemented? | Entry points, call graph, state transitions, tests, contracts, and generated ownership distinguish the concept responsibility from the representation responsibility rather than inferring one from the other. |
-| Consumers and liveness | Which production, test, documentation, generated, dynamic-entrypoint, public API, persisted-data, wire-format, migration, compatibility, vendored, fixture, public-package, operator, plugin, or external-caller surfaces depend on it? What does that evidence establish about current reachability rather than owner intent? | Direct caller and service-reachability traces, dependency graphs, configuration inventories, protocol contracts, package manifests, fixtures, loaders, and repository history bound the liveness claim to searched surfaces and distinguish consumption of the concept from consumption of each representation. |
-| Exact representation requirement when non-consumption matters | If low or absent consumption materially supports the cut, does current approved truth require the exact concept or representation, require only the broader concept, or require neither? | Stable ownership truth, current contracts, explicit deprecation or replacement, completed migration evidence, and accountable history distinguish a redundant representation from incomplete wiring or unresolved intent; search silence alone is not decisive. |
+| Concept responsibility | What responsibility does the broader concept carry, and where else is that behavior implemented? | Entry points, call graph, state transitions, tests, contracts, and generated ownership establish the concept responsibility rather than inferring it from a representation. |
+| Consumers and liveness | Which production, test, documentation, generated, dynamic-entrypoint, public API, persisted-data, wire-format, migration, compatibility, vendored, fixture, public-package, operator, plugin, or external-caller surfaces depend on it? What does that evidence establish about current reachability rather than owner intent? | Direct caller and service-reachability traces, dependency graphs, configuration inventories, protocol contracts, package manifests, fixtures, loaders, and repository history bound the liveness claim to searched surfaces. |
 | Behavior loss | What observable behavior or guarantee would the cut remove? Does accepting that loss require a product decision? | Before-state behavior, negative guarantees, product ownership, and explicit decision authority are named. |
 | Rationale and history | Why does the surface exist, and what evidence preserves or defeats that reason now? | Current stable truth, change history, compatibility policy, incidents, and owner evidence agree. |
-| Compatibility | Is the surface public, serialized, versioned, migrated, or retained for older consumers? | Compatibility policy, deprecation state, release history, adapters, and fixture formats. |
-| Durability | Does it protect persisted data, retries, idempotency, audit trails, recovery, or restart behavior? | Storage schemas, migration paths, replay tests, failure-path tests, and operational procedures. |
-| Trust | Does it enforce validation, authorization, isolation, redaction, provenance, or tamper evidence? | Security contracts, negative tests, threat boundaries, and audit requirements. |
 | Change pressure | Is the apparent duplication temporary convergence, an active migration, or stable accidental complexity? | Recent history, open transition paths, owner statements in stable truth, and repeated change patterns. |
 | Net reduction | After replacement glue, tests, documentation, generated artifacts, and dependency lifecycle are counted, is the system materially cheaper to maintain? | A bounded before-and-after ownership and maintenance inventory shows a net reduction. |
 | Verification | What independent oracle could prove the smaller shape preserves behavior? | Existing contract, component, workflow, or runtime oracle with a clear diagnosis owner. |
+
+## Conditional Evidence
+
+| Boundary | Applies when | Questions | Strong evidence |
+| --- | --- | --- | --- |
+| Representation responsibility | the removal case materially depends on low or absent consumption | What does the exact representation contribute independently of the broader concept, and who owns each responsibility? | The exact representation's independent responsibility and ownership chain distinguish it from the broader concept. |
+| Exact representation requirement | the removal case materially depends on low or absent consumption | Does current approved truth require the exact concept or representation, require only the broader concept, or require neither? | Stable ownership truth, current contracts, explicit deprecation or replacement, completed migration evidence, and accountable history distinguish a redundant representation from incomplete wiring or unresolved intent; search silence alone is not decisive. |
+| Compatibility | the candidate touches a public, serialized, versioned, migrated, or retained-older-consumer surface | Is the surface public, serialized, versioned, migrated, or retained for older consumers? | Compatibility policy, deprecation state, release history, adapters, and fixture formats. |
+| Durability | the candidate touches persisted data, retries, idempotency, audit trails, recovery, or restart behavior | Does it protect persisted data, retries, idempotency, audit trails, recovery, or restart behavior? | Storage schemas, migration paths, replay tests, failure-path tests, and operational procedures. |
+| Trust | the candidate touches validation, authorization, isolation, redaction, provenance, or tamper evidence | Does it enforce validation, authorization, isolation, redaction, provenance, or tamper evidence? | Security contracts, negative tests, threat boundaries, and audit requirements. |
 
 ## Conditional Intent-Evidence Gate
 
@@ -40,32 +46,37 @@ This gate refines evidence for the existing four dispositions; it creates no add
 
 ## Candidate Record
 
+The following is an information checklist, not a required rendering template. Combine related facts in concise prose when that preserves the evidence; do not emit a separate label or empty section for every item. An explicit caller schema still applies. Establish which conditional boundaries the candidate touches before omitting their evidence; unresolved applicability is a limitation, not proof that a boundary is absent.
+
 ```text
+Required for every candidate:
 candidate ID:
 candidate class:
 exact scope:
 removal level (concept or exact representation):
-current owner and representation ownership chain:
+current owner:
 location:
 broader concept responsibility and owner:
-exact representation responsibility and owner when the conditional gate applies:
 complexity signal:
 exact cut or collapse:
 consumer evidence:
-liveness interpretation (confirmed redundancy, incomplete wiring, retained compatibility or migration intent, or unresolved evidence when the conditional gate applies):
-exact representation requirement evidence when the conditional gate applies:
 behavior or guarantees lost:
 product decision required:
 rationale and history evidence:
 protected invariants:
-compatibility and durability evidence:
-trust and recovery evidence:
 net maintenance reduction:
 confidence:
 risk:
 unresolved evidence:
 smallest decisive oracle:
 disposition:
+
+Add only when the condition applies:
+exact representation responsibility and owner (when the conditional gate applies):
+liveness interpretation: confirmed redundancy, incomplete wiring, retained compatibility or migration intent, or unresolved evidence (when the conditional gate applies):
+exact representation requirement evidence (when the conditional gate applies):
+compatibility and durability evidence (required when the candidate touches that boundary):
+trust and recovery evidence (required when the candidate touches that boundary):
 ```
 
 If the user explicitly authorizes applying a candidate and its scope, protected behavior, and acceptance are sufficient, hand it to `implement-change`. Use `design-change` for a material unresolved tradeoff or a requested design artifact, not as a prerequisite for already settled implementation. The audit and its dispositions do not authorize mutation or choose the implementation plan.

@@ -1,34 +1,15 @@
-# Preference Contract
+# Interaction And Decision Boundaries
 
-These preferences guide local coding work without binding the behavior to one agent implementation.
+Use explicit user and project preferences where they apply. Shared expression guidance belongs to `output-styles`; this reference does not assume an expertise level or define another response format. Do not persist inferred preferences into user or project configuration without authority.
 
-## Interaction
+## Clarification And Task Intent
 
-- Assume senior engineering context.
-- Lead with conclusion, recommendation, or exact next action.
-- Avoid baseline concept teaching unless requested.
-- Avoid emotional language, praise, motivational tone, and small talk.
-- Use reasonable engineering assumptions instead of stopping for minor ambiguity.
-- Ask only when a missing constraint changes the decision or could cause unsafe work.
-- Treat judgment, viability, or risk questions as counsel: surface material tradeoffs and challenge a weak path before irreversible cost is incurred.
-- Treat a concrete task, approved plan, or specification as execution: follow the bounded brief, flag a material missed risk once, and do not add unrequested scope.
+- Use reasonable engineering assumptions for minor ambiguity. Ask when a missing constraint materially changes the decision or could cause unsafe work, not merely because a preferred process detail is absent.
+- Treat judgment, viability and risk questions as counsel: explain material tradeoffs and challenge a weak path before irreversible cost is incurred.
+- Treat a concrete task, approved plan or specification as execution: follow the bounded brief, surface a material missed risk without repeatedly reopening settled advice, and do not add unrequested scope.
 
-## Engineering Bias
+## Engineering Decisions
 
-- Prefer controllable, observable, debuggable, and verifiable systems.
-- Prefer local repo patterns over new abstractions.
-- Keep edits scoped to the requested repo, runtime, workflow, and behavior surface.
-- Distinguish fact, inference, judgment, and uncertainty when accuracy matters.
+Prefer existing repository patterns and systems that can be controlled, observed, debugged and verified. Keep edits within the authorized repository, runtime, workflow and behavior surface.
 
-## Risk Surfaces
-
-Pay special attention to:
-
-- data path
-- control boundary
-- state owner
-- permission model
-- trust boundary
-- failure surface
-- recovery policy
-- verification point
+When they affect a decision, inspect the data path, control boundary, state owner, permissions, trust boundary, failure surface, recovery policy and verification point. These are reasoning concerns, not sections to append to every answer.

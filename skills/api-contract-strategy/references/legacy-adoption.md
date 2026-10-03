@@ -45,9 +45,7 @@ Do not rewrite all tests, replace stable adapters, or declare a partial schema c
 
 - Preserve valuable smoke and regression journeys.
 - Add workflows for cross-operation behavior, not contract-shaped endpoint catalogs.
-- Move stable multi-operation HTTP semantics into Arazzo or an equivalent structured source when runner support fits.
-- Retain project-owned Python or Shell as lifecycle glue for process, database, fixture, restart, readiness, and cleanup concerns.
-- Remove duplicated business HTTP steps from lifecycle glue only after structured-runner equivalence is proven.
+- Move stable multi-operation HTTP semantics and lifecycle glue according to [Structured Contract Stack](structured-contract-stack.md) when runner support fits.
 - Treat browser tests as evidence only for browser-owned behavior.
 
 ## CDC Decision

@@ -75,4 +75,4 @@ The calling agent adjudicates candidates as accepted, rejected, deferred, or req
 - `needs-design-decision`: architecture intent must change
 - `needs-plan-change`: implementation scope or acceptance conditions are insufficient
 
-Return one verdict with candidate findings and relevant verification gaps. Review and verification remain distinct evidence; neither invents the other.
+Return findings first, ordered by severity, followed by one verdict and relevant verification gaps. Tie each finding to precise file, line, or artifact references where available; do not invent precision. If no material findings remain, say so and identify any residual risks or unverified areas. Review and verification remain distinct evidence; neither invents the other.

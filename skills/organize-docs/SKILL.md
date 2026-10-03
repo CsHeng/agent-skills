@@ -1,6 +1,6 @@
 ---
 name: organize-docs
-description: "Use for docs organization: README/AGENTS ownership, one-way legacy CLAUDE.md cleanup into AGENTS.md, stable truth roots, docs layout, docs/.ignore, stage artifacts, canonical terminology, search boundaries, and Markdown prose wrapping."
+description: "Use for docs organization: README/AGENTS ownership, one-way legacy CLAUDE.md cleanup into AGENTS.md, stable truth roots, docs layout, docs/.ignore, stage artifacts, canonical terminology, search boundaries, and clear Markdown written in its intended form."
 ---
 
 # Organize Docs
@@ -51,9 +51,15 @@ Write or update long-lived project truth after an explicit user request, an expl
 - When terminology changes, update docs, paths, tests, and code references together instead of appending corrective notes that leave old terms active.
 - Prefer context-appropriate relative file paths and command examples over absolute paths in stable docs.
 - For Git projects, when a repo root needs to be made explicit, prefer `cd "$(git rev-parse --show-toplevel)"` before relative commands.
-- Do not hard-wrap Markdown prose to a fixed column. Keep each natural paragraph or list item on one physical line unless Markdown syntax, tables, code blocks, frontmatter, or intentional hard breaks require separate lines.
-- Keep each searchable statement or contract on one physical line so `rg` and `grep` can match it without reconstructing adjacent lines.
-- When a natural line becomes unwieldy, rewrite the content into multiple complete paragraphs, bullets, numbered steps, headings, or table rows at semantic boundaries. Do not insert fixed-column newlines inside one paragraph or list item.
+
+## Writing Stable Docs
+
+Use the intended structure and prose conventions while drafting and revising, rather than relying on a routine restyling pass afterward. Follow repository conventions and the shared `output-styles` baseline for clear language and restrained Markdown; do not create a second formatting policy.
+
+- Organize durable material with real headings, paragraphs, and lists. Use tables or code blocks when they make comparisons or examples easier to use.
+- Keep each natural paragraph or list item on one physical line. This is a searchability rule, not a fixed column width: `rg` and `grep` must match a complete statement without reconstructing adjacent lines.
+- When a line becomes unwieldy, split at real semantic boundaries into separate paragraphs, bullets, numbered steps, headings, or table rows. Preserve conditions, exceptions, rationale, failure modes, and consequences when splitting.
+- Do not hard-wrap prose to a fixed column. Markdown syntax, tables, code blocks, frontmatter, and intentional hard breaks may require separate lines.
 
 ## Workflow
 
@@ -66,63 +72,15 @@ Write or update long-lived project truth after an explicit user request, an expl
 7. Move or summarize content into stable docs domains without treating plans, drafts, or other stage artifacts as default truth.
 8. For durable decision work, apply the owner-local lifecycle reference before promoting or retiring truth and preserve stage history by default.
 9. When explicitly consolidating plan artifacts, inventory all source plan roots, choose domain-based target directories under the canonical stage root, move files with date-first names, and update references after the move.
-10. Normalize active Markdown prose in the requested scope with the bundled processing workflow, then decompose genuinely over-broad content at semantic boundaries. Preserved archived originals may be excluded; moving history alone does not authorize rewriting its prose.
+10. Write or revise the requested Markdown in its final natural-line form, decomposing genuinely over-broad content at semantic boundaries. Preserved archived originals may be excluded from prose changes; moving history alone does not authorize rewriting its prose.
 11. Update stable docs only after explicit user approval, explicit drift follow-up from `analyze-project`, or an approved-plan `sync-truth` handoff with current evidence.
-
-## Bundled Scripts
-
-```bash
-SKILL_DIR="$(cd "$(dirname "<path to this SKILL.md>")" && pwd)"
-```
-
-## Markdown Prose Processing
-
-Use the bundled normalizer instead of recreating a temporary parser. It scans Git-visible Markdown, including tracked and untracked files while excluding ignored/cache material and symlinks. Use repeatable `--exclude <literal-repository-relative-prefix>` for explicitly preserved history, for example `--exclude archived`; active files remain checked. Optional `--immutable-manifest` compatibility remains available for projects that deliberately retain pinned originals, but neither local history nor hash locks are required.
-
-Set the target repository once:
-
-```bash
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-```
-
-Run the workflow in order:
-
-```bash
-python3 "$SKILL_DIR/scripts/normalize-markdown-prose.py" --root "$REPO_ROOT" --mode count
-python3 "$SKILL_DIR/scripts/normalize-markdown-prose.py" --root "$REPO_ROOT" --mode preview
-python3 "$SKILL_DIR/scripts/normalize-markdown-prose.py" --root "$REPO_ROOT" --mode write
-python3 "$SKILL_DIR/scripts/normalize-markdown-prose.py" --root "$REPO_ROOT" --mode check
-```
-
-- `count` establishes scope without dumping candidates.
-- `preview` shows bounded `current || continuation` pairs without mutation.
-- `write` removes only continuation newlines and aborts if non-whitespace Markdown prose content or fence, heading, table, or list structure changes.
-- `check` fails if any natural paragraph, list item, or blockquote still spans physical lines.
-- After mechanical normalization, inspect genuinely long lines. Split unrelated claims into real Markdown blocks with blank lines or list markers; never reintroduce column-based wrapping.
 
 ## Validation
 
-- When docs truth boundaries are part of the change, run the bundled checker before switching to the target repository:
+Run repository-owned checks relevant to the boundaries affected by the change. Clear prose does not prove that links, ownership, or document placement are correct, and does not replace an existing required check.
 
-```bash
-cd "$(git rev-parse --show-toplevel)"
-bash "$SKILL_DIR/scripts/check-doc-boundaries.sh"
-```
+When documentation truth boundaries change, run the bundled boundary checker. When inspecting a declared documentation manifest, use the advisory layout checker. Read [Documentation Checks And Repair](references/drift-repair-tools.md) for those invocations; ordinary prose edits do not require an additional formatting pass.
 
-The checker calls the same bundled normalizer in `check` mode, so detection and rewriting cannot drift. It preserves symlinks, fenced and indented code blocks, frontmatter, Markdown tables, headings, reference definitions, HTML-only lines, thematic breaks, and intentional hard breaks.
+## Repairing Observed Drift
 
-### Manifest Mode For Declared Documentation Layouts
-
-When a repository declares its documentation placement in a machine-readable manifest instead of prose, point the bundled layout checker at that manifest:
-
-```bash
-cd "$(git rev-parse --show-toplevel)"
-python3 "$SKILL_DIR/scripts/check-documentation-layout.py" --root . --manifest testing/documentation-layout.json
-```
-
-- The manifest is the placement authority: declared roots and their material classes, required indexes, stage-bundle shape, archive class shape, link-resolution scope, relocation manifests, and named exception classes.
-- Implemented capabilities are `declared-roots`, `stage-shape`, `archive-shape`, `root-shape`, `index-closure`, `link-resolution`, and `migration-conservation`; the manifest maps them to its own gate identifiers.
-- The check is advisory: it reports placement findings for the current task. A repository keeps its manifest as declaration data and does not wire the checker into its tasks, tests, or tool dependencies, and no checker copy is vendored into it.
-- A violation is repair or an explicit declared exception with a reason; never silence a finding by narrowing the scan or deleting the assertion underneath it.
-- Archived and staged scopes report unresolved links as named exemptions rather than failures, because retained historical bodies are not rewritten to satisfy a gate.
-- Exit status is `0` on pass, `1` on undeclared violations, and `2` on an unusable manifest or missing checker.
+Repair only observed drift within the authorized scope. For a few affected lines, edit them directly; for an authorized mechanical cleanup, use the bundled normalizer described in the linked reference rather than creating another parser. Neither Skill activation nor a failed check authorizes a repo-wide restyling or changes to preserved history.

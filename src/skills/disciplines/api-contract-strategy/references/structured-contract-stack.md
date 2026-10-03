@@ -46,7 +46,7 @@ Generate human reference documentation from OpenAPI. Do not maintain an endpoint
 
 Use Arazzo for a small number of outcomes that require multiple operations, chained values, or state transitions. Keep workflow count proportional to business journeys, reference stable OpenAPI operation IDs, pass secrets as masked runtime inputs, and use synthetic examples.
 
-Select a CLI/CI runner that follows OpenAPI references and verifies response status, schema, content type, success criteria, server overrides, and deterministic exit status. Prefer Redocly Respect when those capabilities, its supported Arazzo revision, and the repository runtime fit. Pin the executable revision; do not require Redocly hosted services.
+Select a CLI/CI runner with the OpenAPI reference resolution, response verification, runtime input, server override, and deterministic exit capabilities described in [Tool Selection](tool-selection.md). Pin the executable revision; do not require Redocly hosted services.
 
 Retain Python or Shell only as lifecycle glue when it owns dynamic process, database, fixture, restart, readiness, or cleanup orchestration. After runner equivalence is proven, remove duplicated business HTTP steps from that glue.
 

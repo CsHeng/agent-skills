@@ -24,7 +24,7 @@ Out-of-scope:
 
 ## Progressive Disclosure
 
-- Code review DEPTH workflow and checklist: `references/review-checklist.md`
+- Language-specific read-only review checks: `references/review-checklist.md`
 
 ## Deterministic Steps
 

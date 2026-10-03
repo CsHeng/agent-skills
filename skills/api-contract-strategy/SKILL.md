@@ -35,21 +35,17 @@ Do not emit a competing implementation plan when design, planning, or implementa
 7. Stage legacy adoption using [legacy adoption](references/legacy-adoption.md). Preserve useful existing oracles.
 8. Record rejected approaches and observable upgrade triggers.
 
-## Core Defaults
+## Selection Defaults
 
-- Keep a wire contract in the provider repository unless the contract has a genuinely independent owner or lifecycle.
-- Prefer OpenAPI-first when several languages or agents need shared wire truth and provider boundary generation is practical; require complete deterministic export and stale-output rejection before selecting code-first or annotation-first.
-- Keep one OpenAPI root, split maintained source by stable API domain when scale or ownership demands it, and treat bundles, generated boundary code, and human reference documentation as projections.
-- Treat schema compatibility and semantic compatibility as different evidence.
-- Validate provider behavior through the real protocol boundary, not internal function calls.
-- Test consumer-owned serialization, mapping, authentication, error, retry, offline, and persistence assumptions; do not extensively retest generated internals.
-- Use Arazzo or an equivalent structured workflow specification for a small set of cross-operation business journeys, not one file per endpoint; keep environment lifecycle glue outside the HTTP workflow.
-- Prefer a CLI/CI runner with OpenAPI-linked validation and deterministic exits; use Redocly Respect when its supported Arazzo revision and runtime capabilities fit.
-- Keep UI / E2E evidence narrow and user-visible.
-- Keep runtime probes orthogonal to pre-merge correctness.
-- Prefer explicit workspace inputs over inferred sibling paths.
-- Prefer simple local generation for small first-party teams and reproducible versioned artifacts only when release independence requires them.
-- Do not automatically add Pact/CDC, a broker, a contract repository, full generated clients, hosted tooling, or a GUI collection.
+Start from these defaults. The owning reference holds the conditions, exceptions, and upgrade triggers that change them; read it when that decision is actually on the table.
+
+- Keep a wire contract in the provider repository unless ownership or release lifecycle is genuinely independent ([contract lifecycle](references/contract-lifecycle.md)).
+- Prefer OpenAPI-first when several languages or agents need shared wire truth and provider boundary generation is practical; choose code-first or annotation-first only under the complete deterministic export and stale-output conditions in [structured contract stack](references/structured-contract-stack.md).
+- Keep one maintained root, split by stable API domain only under scale or ownership pressure, and treat bundles, generated boundary code, and human reference documentation as projections ([structured contract stack](references/structured-contract-stack.md)).
+- Treat schema compatibility and semantic compatibility as distinct evidence, validate provider behavior through the real protocol boundary, keep consumer evidence consumer-owned, and keep UI and runtime probes narrow and orthogonal ([verification layers](references/verification-layers.md)).
+- Use Arazzo for a small set of cross-operation business journeys and one pinned CLI/CI runner; do not automatically add Pact/CDC, a broker, an independent contract repository, full generated clients, hosted tooling, or a GUI collection ([tool selection](references/tool-selection.md), [legacy adoption](references/legacy-adoption.md)).
+- Prefer explicit workspace inputs over inferred sibling paths ([contract lifecycle](references/contract-lifecycle.md)).
+- Prefer simple local generation for small first-party teams, and add reproducible versioned artifacts only when release independence requires them ([contract lifecycle](references/contract-lifecycle.md)).
 
 ## Output Contract
 
@@ -63,6 +59,8 @@ When the user explicitly requests a comprehensive assessment, preserve:
 4. Incremental migration plan.
 5. Tool choices, alternatives, and operational cost.
 6. Rejected approaches and upgrade triggers.
+
+A local compatibility, tooling, or migration question does not require this list; answer the decision at hand and name only the conditions that change it.
 
 When another workflow owns the response, contribute these results as a semantic overlay rather than an independent report.
 

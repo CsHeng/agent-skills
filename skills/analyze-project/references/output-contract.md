@@ -8,9 +8,9 @@ Read this reference when the requested truth map, audit, or material drift needs
 - When the primary intent is runtime, infrastructure, security, language, or another domain diagnosis, return project-truth evidence to that primary skill and do not render a standalone project report.
 - Never concatenate independent report templates from multiple matched skills.
 
-## Default: Selective Terse
+## Answer The Requested Scope
 
-Use this mode unless the user explicitly requests a comprehensive project audit.
+Answer the requested question directly, with enough detail to explain the evidence and any material uncertainty.
 
 1. Lead with one conclusion that answers the user's actual question.
 2. Emit only the relevant facts, boundaries, status, operating guidance, or gaps.
@@ -20,15 +20,15 @@ Use this mode unless the user explicitly requests a comprehensive project audit.
 
 Choose only the analysis concerns the question or evidence gap needs: project scope, truth roots, terminology, search boundaries, architecture, operations, status, and drift are available concerns, not a mandatory full reading or analysis checklist. Do not investigate unrelated axes merely to omit them from the final answer.
 
-## Full Audit Mode
+## Comprehensive Audits
 
-Use full-audit mode only when the user explicitly requests comprehensive project orientation, a complete truth map, or an audit covering most analysis axes. A degraded or untrusted document-health result does not by itself authorize a long report.
+Expand to comprehensive project orientation, a complete truth map, or an audit covering most analysis axes only when the user requests that scope. A degraded or untrusted document-health result does not by itself authorize a long report.
 
-Read [Full Project Truth Audit](full-audit-output.md) for the full-audit semantic sections. Continue to use the selected `output-styles` mode inside those sections.
+Read [Full Project Truth Audit](full-audit-output.md) for the audit's semantic sections. Apply the shared `output-styles` baseline without adding a second report.
 
 ## Evidence
 
-- Use the `output-styles` labels `fact`, `inferred`, `judgment`, and `uncertain` when the distinction matters.
+- Distinguish directly observed evidence from derived interpretations, recommendations, and unresolved behavior when the difference affects the answer. Explain the distinction in prose; use labels only when they help the reader.
 - Distinguish evidence provenance as `documented`, `code`, `runtime`, or `external` only when it affects confidence or conflict resolution.
 - Use paths relative to the selected project root unless the user explicitly requests absolute paths or the evidence necessarily lives outside that project.
 - Give file references an exact start line in `path:line` form.

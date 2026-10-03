@@ -54,21 +54,13 @@ Do not extensively test generated client internals. Test the generator/version c
 
 ## Workflow Runner
 
-Use Arazzo for structured cross-operation outcomes when workflows need sequencing, value chaining, and success criteria linked to stable OpenAPI operation IDs.
+Select an Arazzo-aware CLI/CI runner that links OpenAPI operations, verifies response status, schema, content type, and success criteria, accepts runtime inputs and server overrides, masks secrets, and returns deterministic exits. Prefer Redocly Respect when its supported Arazzo revision and the repository runtime fit; pin the Arazzo revision the selected runner can execute, because lint support for a newer revision is not execution support.
 
-Prefer Redocly Respect when the repository needs an Arazzo-aware CLI runner with OpenAPI-linked response checks, runtime inputs, server overrides, masked secrets, and deterministic exits. Pin the Arazzo revision that the selected runner can execute; lint support for a newer revision is not execution support.
-
-Do not create one workflow file per endpoint. OpenAPI already owns the valid operation shapes.
-
-Retain an existing workflow runner when it already exercises the important scenario with lower operational cost.
-
-Do not default to Bruno, Postman, Yaak, or another GUI collection. Add one only for a named GUI collaboration requirement, and keep it a generated or synchronized projection rather than contract truth.
+Retain an existing workflow runner when it already exercises the important scenario with lower operational cost. Workflow authoring, workflow count, and GUI or ad hoc interaction are owned by [Structured Contract Stack](structured-contract-stack.md).
 
 ## CDC / Pact
 
-Do not automatically recommend Pact.
-
-Select CDC only for independent consumer release, hidden assumptions, inaccessible consumer evidence, or long-lived version matrices. Price broker operation, provider states, publishing, version selection, and matrix growth.
+Do not automatically recommend Pact. The selection conditions and lifecycle cost are owned by [Legacy Adoption](legacy-adoption.md); price broker operation, provider states, publishing, version selection, and matrix growth before recommending it.
 
 ## Common Rejections
 

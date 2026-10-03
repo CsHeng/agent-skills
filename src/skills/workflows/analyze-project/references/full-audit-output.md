@@ -1,41 +1,28 @@
 # Full Project Truth Audit
 
-Use this reference only when the user explicitly requests comprehensive project orientation or a full truth audit. The local-question and evidence-expansion branches do not inherit its sections or minimums. Incomplete documentation may require deeper investigation of a specific gap without activating this full-audit report.
+Use this reference when the user requests comprehensive project orientation or a full truth audit. A local question or incomplete documentation can require deeper investigation of one gap without requiring this broader report.
 
-## Semantic Sections
+## Audit Concerns
 
-Cover these concerns once, in this order, combining adjacent sections when that improves density:
+Choose the concerns relevant to the requested audit and cover them once. These are information responsibilities, not mandatory headings or a fixed presentation order:
 
-1. `Project Summary`: purpose, current conclusion, and the few facts that define the project.
-2. `Truth Map`: project scope, stable truth roots, stage artifact roots, root reference files, search policy, document health, verification basis, and stage-artifact pressure.
-3. `Terminology Inventory`: important repository-local terms whose meaning affects architecture, operation, lifecycle, compatibility, or status.
-4. `Search Boundaries`: default includes and excludes, controlling ignore files, and any explicit historical or generated search path used.
-5. `Architecture Boundaries`: ownership, dependency direction, control/data path, or system boundaries relevant to the audit.
-6. `How To Operate`: validated entrypoints, commands, gates, or operational sequence.
-7. `Current Status`: implemented, in progress, planned, unverified, and out-of-scope items that materially define current state.
-8. `Open Gaps / Drift Signals`: only actual gaps or drift, with the complete drift semantics from `output-contract.md`.
+- Project purpose, scope, current conclusion and the facts that define it.
+- Stable truth roots, stage artifact roots, root reference files, document health and verification basis.
+- Repository-local terminology that affects architecture, operation, lifecycle, compatibility or status.
+- Search boundaries, controlling ignore files and any explicit historical or generated search path used.
+- Ownership, dependency direction, control/data paths and other relevant architecture boundaries.
+- Validated entrypoints, commands and operating conditions.
+- Implemented, in-progress, planned, unverified and out-of-scope work that materially affects current state.
+- Actual gaps or drift, using the responsibilities in [Output Contract](output-contract.md).
 
-## Rendering Rules
+Apply the shared `output-styles` baseline. Combine related concerns or omit inapplicable sections; do not manufacture empty sections to fill a template. If missing evidence affects a requested conclusion, state the gap rather than omit the limitation. Keep each finding understandable with the evidence needed to verify it.
 
-- Lead with the compact conclusion before the first section.
-- Use each necessary heading once; omit a heading only when the user narrowed the requested audit scope.
-- Keep each top-level finding readable on its own and attach only the evidence needed to verify it.
-- Use `fact`, `inferred`, `judgment`, and `uncertain` for epistemic status; use evidence provenance separately when useful.
-- Do not repeat the conclusion after the audit.
-- Prefer compact bullets and tables over deeply nested one-field-per-line blocks.
+## Required Truth-Map Information
 
-## Truth Map Minimum
+For a requested complete truth map, identify the analyzed scope, stable truth roots and root reference files with precise source references, stage roots, search policy used, and whether historical stage material influenced the answer. Describe document health as `healthy`, `degraded` or `untrusted`, and the verification basis as `documentation-led`, `mixed verification` or `code reconstruction`.
 
-State:
+Those facts may share a compact paragraph, list or table. Distinguish observation, inference and judgment when it matters, but do not require epistemic labels or one heading per field.
 
-- analyzed project scope
-- stable truth roots and root reference files with exact `path:line` references
-- stage artifact roots
-- search policy used
-- document health: `healthy`, `degraded`, or `untrusted`
-- basis: `documentation-led`, `mixed verification`, or `code reconstruction`
-- whether stage artifacts exerted pressure on the answer
+## Drift Evidence
 
-## Drift Minimum
-
-For every emitted drift signal, preserve its stable label, type, severity, summary, stable-source evidence, verification evidence, and allowed recommended action. Do not emit placeholder or empty drift signals.
+Emit drift only when it exists. Preserve each finding's stable label, type, severity, summary, stable-source evidence, verification evidence and allowed recommended action as defined in [Output Contract](output-contract.md). Stable finding IDs support follow-up; they are not a general numbering scheme for the answer.

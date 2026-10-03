@@ -61,9 +61,7 @@ Question: Does an important cross-operation scenario work?
 
 Cover critical journeys, historical regressions, deployment smoke, and state transitions across operations. Prefer business sequences such as login -> create -> update -> query -> delete.
 
-Use Arazzo or an equivalent structured workflow source to reference stable OpenAPI operations when sequencing and value chaining matter. Execute it with a conforming CLI runner; keep environment lifecycle orchestration outside the workflow specification.
-
-Do not create one workflow file per endpoint. That duplicates the Wire Contract.
+Use Arazzo or an equivalent structured workflow source to reference stable OpenAPI operations when sequencing and value chaining matter; authoring and runner selection are owned by [Structured Contract Stack](structured-contract-stack.md). Keep environment lifecycle orchestration outside the workflow specification.
 
 ## Critical UI / E2E
 

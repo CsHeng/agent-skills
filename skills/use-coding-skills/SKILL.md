@@ -13,7 +13,6 @@ Optional routing and session-boundary guidance for local coding work. Keep this 
 - Treat agent memories, sessions, logs, caches, and generated summaries as recall or staging evidence.
 - Keep scope bound to the named repository, product surface, or workflow.
 - Treat explicit read-only wording literally.
-- Match response language to user input language unless file conventions require otherwise.
 - Prefer current local evidence and live runtime checks over stale memory when verification is cheap.
 - Verify current external facts before relying on versions, project support, APIs, protocols, pricing, laws, or ecosystem state.
 - Do not write agent-specific rules when a skill can express the behavior in an agent-agnostic way.
@@ -58,4 +57,4 @@ Same-task follow-up is not a phase-boundary gate. Keep the existing direct-match
 - Read `references/routing.toml` and `references/routing.md` when task routing or skill composition is ambiguous.
 - Read `references/phase-boundary-decision-tree.md` when choosing how to preserve or discard context between completed coding phases.
 - Read `references/memory-boundary.md` when a task touches memories, sessions, logs, generated summaries, stale recalled facts, or recovery after compaction.
-- Read `references/preference-contract.md` when tuning session defaults, response style, or user preference capture.
+- Read `references/preference-contract.md` for clarification, counsel versus execution, and boundaries on applying explicit user or project preferences.

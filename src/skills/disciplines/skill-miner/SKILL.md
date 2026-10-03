@@ -9,6 +9,8 @@ Extract reusable skill improvements from agent history and project context witho
 
 Agent memory files are staging evidence, not long-term truth. Prefer extracting durable knowledge into repo code, repo docs, repo-local skills, or generic skills. After extraction, classify the corresponding memory entries as cleanup candidates instead of preserving them as the final source of truth.
 
+Mining returns candidates with their source evidence. The user or calling agent adjudicates promotion and memory maintenance and authorizes any separate edit.
+
 ## Scope
 
 Default scope is the current Git repository. If no Git root exists, use the current working directory. Use all-history scope only when the user explicitly asks to search all local agent homes. When the user names additional agent homes, include those homes explicitly instead of assuming only the current host home.
@@ -50,77 +52,26 @@ Do not decide what future agents should write into memory. Mine existing memory 
 
 ## Parser
 
+Resolve the skill directory from this file:
+
 ```bash
 SKILL_DIR="$(cd "$(dirname "<path to this SKILL.md>")" && pwd)"
 ```
 
-Use:
+Run the bundled read-only parser for the current repository:
 
 ```bash
 python3 "$SKILL_DIR/scripts/extract-session-signals.py" --scope current --repo-root "$(git rev-parse --show-toplevel)"
 ```
 
-For all local history:
-
-```bash
-python3 "$SKILL_DIR/scripts/extract-session-signals.py" --scope all
-```
-
-For multiple local homes, repeat the home options:
-
-```bash
-python3 "$SKILL_DIR/scripts/extract-session-signals.py" \
-  --scope all \
-  --codex-home ~/.codex \
-  --codex-home /path/to/another/.codex \
-  --claude-home ~/.claude \
-  --claude-home /path/to/another/.claude \
-  --grok-home ~/.grok \
-  --grok-home /path/to/another/.grok \
-  --pi-home ~/.pi/agent \
-  --pi-home /path/to/another/.pi/agent
-```
-
-For machine-readable aggregation:
-
-```bash
-python3 "$SKILL_DIR/scripts/extract-session-signals.py" \
-  --scope all \
-  --format json \
-  --limit 0
-```
-
-For measuring whether an external skill bundle actually influenced sessions before retiring it:
-
-```bash
-python3 "$SKILL_DIR/scripts/extract-session-signals.py" \
-  --scope all \
-  --skill-usage-only \
-  --skill-usage-root /path/to/external-skill-bundle \
-  --skill-usage-prefix external-skill-prefix \
-  --skill-usage-before-date YYYY-MM-DD
-```
-
-For the current repository, keep all-agent history scope separate from the inventory boundary and supply the contract explicitly:
-
-```bash
-python3 "$SKILL_DIR/scripts/extract-session-signals.py" \
-  --scope all \
-  --skill-usage-only \
-  --skill-usage-root /absolute/path/to/repo/skills \
-  --skill-usage-prefix coding \
-  --skill-usage-contract /absolute/path/to/repo/contracts/skills.toml \
-  --format json \
-  --limit 0
-```
+All-history scope, multiple homes, machine-readable aggregation, and skill-usage measurement add scope and interpretation that ordinary current-repository mining does not need; use [Parser Modes](references/parser-modes.md) when the task requires one of them.
 
 The script is read-only and accepts only named parameters. `--codex-home`, `--claude-home`, `--grok-home`, and `--pi-home` are repeatable; comma-separated values are also accepted. Default sources include `grok` and `pi`. `--pi-home` defaults to `~/.pi/agent`. Grok workspace directories under `sessions/` are URL-encoded absolute paths; scope `current` matches those decoded paths to `--repo-root`. Default repository scope remains `current`; cross-repo Pi history still requires `--scope all`.
 
-Pi v3 JSONL files are interpreted on the last determinable recorded `id`/`parentId` branch and that selection is reported rather than treated as the UI current branch. Exclusive branches are not concatenated. Mine raw tree messages, not compaction summaries or `retainedTail` copies. Version 1/2 and other unsupported or malformed files are disclosed as incomplete evidence, not counted as complete sessions. Do not follow `parentSession` outside the selected files; unrecognized forks are limitations, not unique-task claims. Strip injected `<skill ...>...</skill>` blocks and keep the remaining user tail as intent; skill injection is not an explicit user invocation. Count assistant `stop`, `toolUse`, `error`, `aborted`, and `length` separately from model-change events and from the assistant's actual model. Ordinary `stop` is not completion, premature stop, or missing approval; a later continue/approval prompt is only a candidate relationship.
+Interpret session evidence before treating it as intent:
 
-Skill usage evidence is separated into explicit `$skill` user requests, assistant references, skill-file loads, and optional tool outputs. A model activation is only a heuristic summary: a skill load without an explicit user request in the same session is inferred activation, while raw records remain an upper bound rather than an exact invocation count. Installed flat paths resolve through exact current-inventory public ID directories; loads that cannot resolve to a current public ID are excluded instead of entering a repository-wide fallback bucket. Injected prompts, instruction blocks, available-skill inventories, and Claude tool-result wrappers do not count as user intent. `--skill-usage-contract` reports declared contract state, Codex source policy/defaults, and Claude frontmatter/default visibility as separate fields.
-
-Raw examples are disabled by default. Set a positive `--limit` only when bounded session excerpts are required. Pi samples are categorical summaries and omit thinking, images, and raw tool payloads; text sanitization is not a guarantee that arbitrary secrets are safe. Use `--skill-usage-include-output` only when tool output itself is evidence; it is off by default because directory listings and inventory dumps can inflate usage counts. For Pi, skill-usage matching uses structured tool names and path-like arguments rather than flattened payloads, and include-output still does not lift the sensitive-content boundary.
+- Pi v3 JSONL files are interpreted on the last determinable recorded `id`/`parentId` branch and that selection is reported rather than treated as the UI current branch. Exclusive branches are not concatenated. Mine raw tree messages, not compaction summaries or `retainedTail` copies. Version 1/2 and other unsupported or malformed files are disclosed as incomplete evidence, not counted as complete sessions. Do not follow `parentSession` outside the selected files; unrecognized forks are limitations, not unique-task claims. Strip injected `<skill ...>...</skill>` blocks and keep the remaining user tail as intent; skill injection is not an explicit user invocation. Count assistant `stop`, `toolUse`, `error`, `aborted`, and `length` separately from model-change events and from the assistant's actual model. Ordinary `stop` is not completion, premature stop, or missing approval; a later continue/approval prompt is only a candidate relationship.
+- Raw examples are disabled by default. Set a positive `--limit` only when bounded session excerpts are required. Pi samples are categorical summaries and omit thinking, images, and raw tool payloads; treat any excerpt as potentially sensitive because sanitization is not a guarantee that arbitrary secrets are safe.
 
 ## Output Rules
 
@@ -138,7 +89,9 @@ Raw examples are disabled by default. Set a positive `--limit` only when bounded
 
 ## Promotion Rules
 
-Promote to a generic skill only when the pattern recurs across repositories or across task types. Promote to a repo-local skill when the pattern depends on repository topology, runtime inventory, local hostnames, or domain-specific operational truth. Promote stable operational facts to scoped repo docs or code-owned truth. Do not promote one-time runtime snapshots; use them only as evidence, and do not preserve them as durable memory unless no repo or skill surface can own them.
+Apply promotion only after ordinary mining surfaces a recurring pattern. Promote to a generic skill only when the pattern recurs across repositories or across task types. Promote to a repo-local skill when the pattern depends on repository topology, runtime inventory, local hostnames, or domain-specific operational truth. Promote stable operational facts to scoped repo docs or code-owned truth. Do not promote one-time runtime snapshots; use them only as evidence, and do not preserve them as durable memory unless no repo or skill surface can own them.
+
+Promotion is a recommendation. Name the recurring source evidence for each candidate, and let the user or calling agent adjudicate promotion and authorize any skill edit; mining does not promote or edit by itself.
 
 ## Memory Cleanup
 
@@ -149,4 +102,4 @@ When memory entries have been extracted into durable repo truth:
 - preserve only short pointers when useful for historical lookup
 - never edit agent memory files directly unless the user explicitly requests memory maintenance through the active memory workflow
 
-The preferred end state is repo-owned truth plus lean agent memory, not agent-specific memory as a parallel documentation system.
+Cleanup entries are recommendations; the user or calling agent authorizes memory maintenance. The preferred end state is repo-owned truth plus lean agent memory, not agent-specific memory as a parallel documentation system.

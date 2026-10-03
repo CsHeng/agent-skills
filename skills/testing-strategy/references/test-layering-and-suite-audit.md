@@ -193,7 +193,7 @@ Choose one primary disposition per row. A split may create child rows with diffe
 
 ## Audit Output
 
-Use a table or equivalent structured ledger with:
+Use a table or equivalent structured output with:
 
 | Field | Content |
 | --- | --- |
@@ -207,4 +207,4 @@ Use a table or equivalent structured ledger with:
 | Coordination | Producer, consumers, shared contract, write-set dependency, external dependency, parallel eligibility |
 | Evidence status | Fact, inference, uncertainty, and verification needed |
 
-Publish one shared audit and coordination ledger before implementation planning. Create an independently approved and executed repo-local `plan-change` only for a repository with accepted changes. Common motivation does not create a dependency; parallel eligibility requires frozen cross-repository contracts, non-overlapping write sets, and no dependency on another plan's output. Otherwise record the exact inter-plan dependency.
+Base each disposition on the recorded evidence and report the real ownership and dependency boundaries it implies. Whether a separate plan, explicit approval, or a cross-repository coordination record is needed follows the user's request and the owning project's policy; this audit does not require them. Common motivation alone is not a dependency. Assess parallel work from the actual shared inputs, read/write boundaries and producer-consumer dependencies. Coordinate overlapping writes and contract changes, and state any required predecessor output; do not require a formal freeze or treat the existence of another plan as a dependency.

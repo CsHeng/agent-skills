@@ -37,7 +37,7 @@ The workspace contract is a development input, not a production dependency.
 
 Keep maintained OpenAPI source with its provider owner by default. Use one root and domain-grouped fragments when the contract is too large or contentious for one file.
 
-Treat the resolved bundle as generated output. Commit it when portability, reviewability, or agent context matters and fail stale-output checks; otherwise generate it into an ignored build root. In either case, pin the tool and expose one deterministic project-owned lint and bundle command.
+The bundle form, committed-versus-ignored choice, stale-output protection, and pinned project-owned lint and bundle command are owned by [Structured Contract Stack](structured-contract-stack.md).
 
 ## Development Generation
 

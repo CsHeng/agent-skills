@@ -87,9 +87,21 @@ Do not add a runtime field, public continuation skill, or durable actor binding.
 
 ## Readiness And Profiles
 
-Local readiness is the ordinary check that objective, authorized writes, protected behavior, factual dependencies, delivery endpoints, and acceptance evidence are coherent. It does not require delegation profiles, parallel policy, exact dispatch paths, or a fixed review budget.
+Local readiness is the ordinary coherence check from the plan's readiness step; it does not require delegation profiles, parallel policy, exact dispatch paths, or a fixed review budget.
 
 Assess delegation readiness only for slices actually delegated or claimed delegation-ready, using the existing semantic profiles and facts. Keep that vocabulary provider-neutral. Plans that do not claim delegation readiness may omit profiles. Claiming delegation-ready without those facts is fabrication, not planning.
+
+Use semantic capability descriptions rather than provider names or exact model settings. Profiles express intent, not a route binding; a compatible host may use a default or retain the task when no mapping exists. A later explicit user-selected execution or reasoning route is invocation authority rather than plan metadata and may be preserved through ephemeral compatible-host parameters without amending the plan, but it never authorizes mutating durable route configuration. A plan must not prescribe how a particular product schedules actors, binds models, records attempts, or resumes sessions.
+
+## Plan Record
+
+An execution-grade plan should let a fresh executor find the currently effective facts directly; do not copy this reference into the plan. Record the objective, non-goals, future phases, task IDs, real dependencies, scope slices, ownership, completion conditions, delivery endpoints, verification evidence, authorized discretion, and known write surfaces covered above, plus:
+
+- recovery policy and any guarded rollback trigger
+- review decision and, when review ran, its verdict and adjudication summary
+- truth-sync targets when stable truth will change
+
+Keep the live plan compact: distinguish user decisions, investigable facts, implementation products to generate, technical verification, and already approved adaptations. New evidence updates the currently effective paragraphs; valuable history stays in stage records and is cited shortly. Document length is not a gate.
 
 ## Examples
 

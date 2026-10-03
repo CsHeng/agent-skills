@@ -5,13 +5,15 @@ description: "Use when the user explicitly asks to group current working-tree di
 
 # Smart Commit
 
-Analyze git repository changes, exclude files that should not be committed, group remaining changes by business purpose, and execute focused local commits automatically when the user's request includes both semantic grouping and local commit creation.
+Group the current working-tree changes by business purpose and create focused local commits when the request combines semantic grouping with local commit creation.
 
 ## Scope
 
-This skill handles the full workflow from change analysis to commit execution.
+This skill covers change analysis through commit execution. It creates new local commits; an explicit request to reorganize or squash existing commits belongs to `smart-squash`.
 
-This skill may be selected implicitly only when the user explicitly asks to group current working-tree changes by business domain or purpose and create the resulting focused local commits. A generic request to commit, inspect diffs, summarize status, or clean up history does not match this skill. Once the intent matches, default to committing eligible changes without a confirmation gate. Stop for human confirmation only when Git is already tracking or staging a file that appears unsafe or inappropriate to commit.
+Select this skill only when the user explicitly asks to group working-tree changes by business domain or purpose and create the resulting focused local commits. A generic request to commit, inspect diffs, summarize status, or clean up history does not match this skill. Once the request matches, default to committing eligible changes without a confirmation gate. Stop for confirmation only when Git is already tracking or staging content that appears unsafe to version.
+
+Committing does not grant push authority. Decide whether push is in scope only from the user's own instruction; never infer it from this skill, a commit request, or a successful commit. Never use `--force`, `--no-verify`, or another safety bypass.
 
 ## Target Repository Binding
 
@@ -31,99 +33,29 @@ Rules:
 
 ## Workflow
 
-### Phase 0: Recent Commit Detection (Optional)
+### Phase 0: Recent Unpushed Context (Optional)
 
-Before analyzing working tree changes, optionally check for related recent commits:
+When the branch has unpushed commits, you may check whether the most recent ones touch the same files as the current changes:
 
 ```bash
-# Check recent unpushed commits
 if git -C "$TARGET_REPO" rev-parse @{u} >/dev/null 2>&1; then
   git -C "$TARGET_REPO" log @{u}..HEAD --oneline -5
+  git -C "$TARGET_REPO" log @{u}..HEAD --name-only --format="" -3 | sort -u
 else
-  # No upstream: show recent 5 commits from HEAD
   git -C "$TARGET_REPO" log --oneline -5
 fi
-
-# Count total unpushed commits
-if git -C "$TARGET_REPO" rev-parse @{u} >/dev/null 2>&1; then
-  UNPUSHED_COUNT=$(git -C "$TARGET_REPO" log @{u}..HEAD --oneline | wc -l)
-else
-  # No upstream: cannot determine "unpushed" count, skip this check
-  UNPUSHED_COUNT=0
-fi
 ```
 
-#### Detection Logic
+Overlap between recent unpushed commits and the current changes is useful context, not a gate. Report it and continue with a new focused commit unless the user explicitly asked to amend or squash.
 
-Implementation approach: Heuristic-based file overlap detection (shell + git).
+Amend only on an explicit user request, after staging the intended files:
 
-```bash
-# Get files changed in working tree
-WORKING_FILES=$(git -C "$TARGET_REPO" diff --name-only HEAD 2>/dev/null | sort || git -C "$TARGET_REPO" diff --name-only --cached | sort)
-
-# Get files from recent 3 unpushed commits
-if git -C "$TARGET_REPO" rev-parse @{u} >/dev/null 2>&1; then
-  RECENT_COMMITS=$(git -C "$TARGET_REPO" log @{u}..HEAD --oneline -3 --format="%H")
-else
-  RECENT_COMMITS=$(git -C "$TARGET_REPO" log --oneline -3 --format="%H")
-fi
-
-# Skip detection if working tree is empty
-if [ -n "$WORKING_FILES" ]; then
-  # Check file overlap
-  for commit in $RECENT_COMMITS; do
-    commit_files=$(git -C "$TARGET_REPO" show --name-only --format="" "$commit" | sort)
-    overlap=$(comm -12 <(echo "$WORKING_FILES") <(echo "$commit_files") | wc -l)
-    total_working=$(echo "$WORKING_FILES" | wc -l)
-
-    # If >50% overlap, consider related
-    if [ $overlap -gt 0 ] && [ $((overlap * 2)) -ge $total_working ]; then
-      echo "Related commit detected: $commit"
-    fi
-  done
-fi
-```
-
-- Analyze working tree changes (files, business logic)
-- Check if recent 3-5 unpushed commits touch same files/logic
-- If high correlation is detected (>50% file overlap), report it as context but continue with a new focused commit unless the user explicitly asked to amend or squash.
-
-#### Related Commit Output
-
-If related commits are detected, report them without blocking automatic commit execution:
-
-```
-检测到最近的提交与当前变更相关：
-  ce1a0ca feat(makefile): add get_current_ips function
-  320dd25 feat(makefile): add mode-detector.sh skeleton
-
-当前变更也涉及 Makefile 相关功能；默认创建新的独立提交。
-```
-
-If the user explicitly asked to amend:
 ```bash
 git -C "$TARGET_REPO" add -- <files>
 git -C "$TARGET_REPO" commit --amend --no-edit
 ```
 
-If the user explicitly asked to squash or reorganize history, invoke smart-squash instead of continuing.
-
-#### Large History Warning
-
-If >10 unpushed commits are detected, warn but do not block automatic commit execution:
-
-```
-检测到 78 个未推送提交。
-
-建议后续使用 smart-squash 整理历史；本次默认继续创建当前提交。
-```
-
-#### Implementation Constraints
-
-- This detection is optional and does not block core smart-commit flow
-- Only checks recent 3-5 commits for performance
-- Uses `git -C "$TARGET_REPO" commit --amend` only when the user explicitly requested amend, not rebase
-- Detection can be skipped with `--no-detect` flag (future enhancement)
+If the user asked to squash or reorganize history, invoke `smart-squash` instead of continuing here. When many unpushed commits exist, note that `smart-squash` can reorganize them later; do not block the current commit.
 
 ### Phase 1: Collect and Exclude
 
@@ -167,16 +99,9 @@ Do not ask for confirmation for ordinary eligible changes. Stop and ask the user
 
 Untracked excluded files do not require confirmation; leave them untracked and continue with eligible tracked/staged/untracked source files.
 
-#### Exclusion Output
+#### Exclusion Reporting
 
-Present excluded files as a clear list:
-
-```
-Excluded files:
-  ✗ .env.local          — contains credentials
-  ✗ dist/bundle.js      — generated artifact
-  ✗ debug.log           — temporary file
-```
+List excluded files with the path and the reason, so the user can see what was left out and why.
 
 ### Phase 2: Semantic Grouping
 
@@ -203,30 +128,7 @@ Generate a commit message for each group following conventional commits:
 
 ### Phase 3: Present Plan and Execute Automatically
 
-#### Present the Commit Plan
-
-Display the full plan in a structured format:
-
-```
-━━━ Smart Commit Plan ━━━
-
-Excluded (N files):
-  ✗ file — reason
-  ...
-
-Commit 1/M: feat: add user authentication
-  + src/auth/login.ts
-  + src/auth/middleware.ts
-  + tests/auth/login.test.ts
-
-Commit 2/M: chore: update dependency configuration
-  + package.json
-  + package-lock.json
-
-━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-#### Execute Commits
+Show the plan before executing: each commit group with its message and the files it includes, plus the excluded files and why they were excluded. A single group needs only its message and files; do not force a fixed template or decorative panel around the report.
 
 Execute each eligible commit group sequentially without waiting for a confirmation prompt:
 
@@ -244,15 +146,15 @@ After all commits complete, run `git -C "$TARGET_REPO" log --oneline -<N>` to sh
 
 ## Constraints
 
-- Determine whether push is in scope from the user's information instead of imposing a skill-level prohibition or default
+- Determine whether push is in scope from the user's information instead of imposing a skill-level prohibition or default; a commit request alone does not grant push authority
 - Never force — no `--force`, `--no-verify`, or other safety bypasses
 - Automatic execution after matching the domain-grouping commit request — present the plan, then commit eligible groups without a separate confirmation prompt
 - Human confirmation required only for tracked or staged content that appears unsafe or inappropriate to commit
 - Preserve working state — only commit files included in the plan; leave other changes untouched
 - Partial user scope stays partial — rejected groups remain unstaged or restored to their previous staged state
 - Respect .gitignore — never attempt to add files matched by .gitignore
-- Recent commit detection — optional context that may suggest amending or squashing, but default execution still creates new commits
-- Large history warning — suggests smart-squash when >10 unpushed commits exist, but does not block default execution
+- Recent-commit context is optional and never blocks a new focused commit
+- Large unpushed history suggests `smart-squash` for later cleanup, but does not block default execution
 
 ## Edge Cases
 
