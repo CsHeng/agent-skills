@@ -22,9 +22,8 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 - Authorized best-effort secondary outcomes may be substituted, degraded, or dropped during implementation. Record the discretion and its effect. The design does not need to enumerate every feature that might fail.
 - Discretion comes from the current request, approved design, or applicable project convention. Do not grant it after the fact to pass review, silently weaken a required outcome, or drop a named secondary capability that the main goal actually depends on.
 - Ordinary bugs, one failed attempt, or unknown feasibility do not by themselves make a requirement unsupported. Investigate enough to explain a tradeoff; do not exhaust every alternative.
-- Choose controls from actual exposure, exploitability, expected loss, state value, blast radius, recovery cost, and control cost. Do not require a scoring system or a zero-risk proof.
-- Remote hosts, multi-repository work, Ansible, and deploy wording do not by themselves make the target production. Use trusted project facts; do only the minimum check needed when the environment is unclear.
-- Authorized rebuildable development state may be updated, rebuilt, or replaced with fix-forward recovery. Protect unique data, credentials, shared hosts, and production commitments. A change that would exceed approved production goals, commitments, risk, or authority needs narrow authorization before the affected action. In-scope adaptations and already-authorized deployments continue without renewed approval.
+- Calibrate protective effort to actual exposure, expected loss, and control cost; `security-guardrails` owns security-control calibration and `infrastructure-triage` owns operational recovery calibration. Do not require a scoring system or a zero-risk proof.
+- Environment wording alone — remote hosts, multi-repository work, Ansible, deploy language — does not make the target production; use trusted project facts and the minimum check needed when the environment is unclear. Authorized rebuildable development state may be updated, rebuilt, or replaced with fix-forward recovery; protect unique data, credentials, shared hosts, and production commitments, and get narrow authorization before an action would exceed approved production goals, commitments, risk, or authority. In-scope adaptations and already-authorized deployments continue without renewed approval.
 
 ## Scoped Implementation
 
@@ -54,7 +53,9 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 - When compatibility is required, name its owner, supported versions, evidence, retirement condition, and migration path.
 - Remove obsolete compatibility paths when their approved retirement condition is met; update affected producers, consumers, tests, generated surfaces, and stable docs together.
 
-## Dependency Selection
+## Local Dependency Selection
+
+This Skill owns the local implementation dependency decision, not the material open design choice or the architecture-boundary comparison; apply the shared reuse principle to the smallest owned behavior.
 
 - Understand the approved requirement and relevant current code before choosing a solution. Search for a suitable repository-owned helper, type, or pattern; then standard-library and native-platform capabilities; then installed dependencies; only then consider a new implementation or dependency under the lifecycle-cost rules below.
 - Treat this as a candidate-search order, not an unconditional solution ranking. Stop at a candidate that satisfies the owned behavior, compatibility, trust, error, deployment, and maintenance constraints. Do not reuse a similar-looking helper with different semantics or replace an approved dependency merely because a standard-library alternative exists; repository conventions and contracts take precedence over ladder position.

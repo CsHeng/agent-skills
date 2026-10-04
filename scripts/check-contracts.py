@@ -75,6 +75,15 @@ def validate_semantic_contracts(
             errors.append(
                 f"{skill_name}: review-component evaluators cannot invoke semantic dependencies"
             )
+        if entry.get("category") == "review-component":
+            if entry.get("may_spawn_agent", False):
+                errors.append(
+                    f"{skill_name}: review-component evaluators cannot delegate; may_spawn_agent must be false"
+                )
+            if entry.get("may_mutate_repo", False):
+                errors.append(
+                    f"{skill_name}: review-component evaluators are read-only; may_mutate_repo must be false"
+                )
         if "use-coding-skills" in requirements:
             errors.append(
                 f"{skill_name}: public skills cannot depend on the optional session router"

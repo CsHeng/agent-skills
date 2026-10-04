@@ -117,11 +117,7 @@ When auditing an existing suite, find tests and checkers that read Markdown and 
 
 ## State, Recovery, And Evidence Reuse
 
-Do not schedule a full backup/restore exercise for ordinary logic that leaves persistence and recovery paths untouched. A new revision, repair, candidate digest, or template-only change does not by itself invalidate still-valid recovery evidence. Unique or irreplaceable data keeps its protection regardless of project-stage labels; still obey applicable repository requirements.
-
-Migration of retained state must exercise the upgrade of realistic existing state, not only empty-database initialization. Changes to backup or restore must verify restore behavior. Authorized disposable development state may prove recovery by rebuild or replace; do not force in-place upgrade for state that is approved to discard.
-
-Reuse reliable evidence that still matches the final candidate. Later edits that change the covered behavior, fixture, environment, recovery implementation, or retained-state conditions invalidate the old result and need a fresh check of the affected path. Refreshing a production backup is not by itself a reason to redo every recovery proof. Local greens do not prove uncovered combinations or state transitions; those still need verification. Do not invent a scoring rubric or a standing drill catalog to force this scaling.
+Oracle selection for change-sensitive state — retained-state migration, backup/restore behavior, rebuild-versus-replace for authorized disposable state — belongs to `executable-oracle-architecture-selector`. Under an established strategy, reuse reliable evidence that still matches the final candidate: later edits that change covered behavior, fixtures, environments, or recovery and retained-state conditions invalidate the old result and need a fresh check of the affected path, while local greens never prove uncovered combinations or state transitions. Do not schedule a full backup/restore exercise for ordinary logic that leaves persistence and recovery paths untouched, and do not invent a scoring rubric or a standing drill catalog to force this scaling; unique or irreplaceable data keeps its protection regardless of project-stage labels, and applicable repository requirements still apply.
 
 ## Proportionate Safeguards
 
@@ -146,7 +142,7 @@ Review only the relevant suite and instructions for a bounded change. Do not exp
 - Isolate databases, ports, caches, temporary files, and environment variables.
 - Build subprocess environments from an explicit allowlist starting with an empty mapping; add only required variables and use temporary homes or caches where needed.
 - Inherit the ambient environment only when ambient-environment behavior is the named subject of the test; document the exception, exclude sensitive variables, and redact failure output.
-- Do not require live credentials, production state, or hardware unless the owning plan explicitly authorizes that evidence.
+- Do not require live credentials, production state, or hardware unless the current change's explicit authorization — the user request or an approved plan — covers that evidence; a plan artifact is not the only authorization carrier, and ordinary local fixtures remain the default.
 
 ## Test Design
 

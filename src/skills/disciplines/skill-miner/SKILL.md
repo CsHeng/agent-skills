@@ -64,7 +64,7 @@ Run the bundled read-only parser for the current repository:
 python3 "$SKILL_DIR/scripts/extract-session-signals.py" --scope current --repo-root "$(git rev-parse --show-toplevel)"
 ```
 
-All-history scope, multiple homes, machine-readable aggregation, and skill-usage measurement add scope and interpretation that ordinary current-repository mining does not need; use [Parser Modes](references/parser-modes.md) when the task requires one of them.
+All-history scope is an explicit expansion beyond the default current repository; multiple homes, machine-readable aggregation, and skill-usage measurement each add inputs or interpretation without changing that history scope. Use [Parser Modes](references/parser-modes.md) when the task requires one of them.
 
 The script is read-only and accepts only named parameters. `--codex-home`, `--claude-home`, `--grok-home`, and `--pi-home` are repeatable; comma-separated values are also accepted. Default sources include `grok` and `pi`. `--pi-home` defaults to `~/.pi/agent`. Grok workspace directories under `sessions/` are URL-encoded absolute paths; scope `current` matches those decoded paths to `--repo-root`. Default repository scope remains `current`; cross-repo Pi history still requires `--scope all`.
 

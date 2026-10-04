@@ -1,13 +1,13 @@
 ---
 name: review-implementation
-description: "Read-only evaluator for one exact implementation diff and bounded brief. Return causally qualified candidate findings; direct review requests and all repair decisions belong to review-change and the implementing agent."
+description: "Read-only evaluator for one exact implementation diff and bounded brief. Return causally qualified candidate findings; direct review requests belong to review-change, and repair decisions stay with the calling implementing agent."
 ---
 
 # Review Implementation
 
 Review only the supplied objective, non-goals, acceptance criteria, exact changed files or diff, declared verification, and a small justified supporting-file set. Do not mutate files, delegate recursively, invoke another workflow, search for adjacent debt, or authorize repair.
 
-Check that evidence applies to the actual candidate and protected behavior, not merely a successful process, report, or source export. On follow-up, inspect the supplied new content, prior dispositions, unresolved findings, and affected regression boundaries; do not accept a repair claim without evidence or repeat a full audit solely because a round changed.
+Check that evidence applies to the actual candidate and protected behavior, not merely a successful process, report, or source export. This causal filter describes the default diff-scoped target: when the caller's brief legitimately supplies a whole artifact or surface instead of a diff, that supplied target is the review scope and defects anywhere in it are in scope rather than suppressed as pre-existing. On follow-up, inspect the supplied new content, prior dispositions, unresolved findings, and affected regression boundaries; do not accept a repair claim without evidence or repeat a full audit solely because a round changed.
 
 A blocking candidate must be caused or newly activated by the current diff, violate a named requirement or oracle, have a concrete material consequence, carry sufficient evidence, and admit a smallest fix inside the approved scope. Moving or formatting unchanged code does not activate a pre-existing defect. Omit unrelated, future-phase, stylistic, speculative, and low-confidence observations.
 

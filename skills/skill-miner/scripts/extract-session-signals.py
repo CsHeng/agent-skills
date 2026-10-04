@@ -2157,7 +2157,7 @@ def candidate_recommendations(counts: Counter[str]) -> list[str]:
         )
     if counts["failure_review_artifact_invalid"]:
         recommendations.append(
-            "review-change: keep reviewers read-only and let the calling agent adjudicate findings; do not use a lower-plane reviewer protocol."
+            "review-change: keep reviewers read-only and let the calling agent adjudicate findings; do not run the reviewer as its own lifecycle phase."
         )
     if counts["failure_python_yaml_missing"] or counts["failure_plugin_manifest_missing"]:
         recommendations.append("plugin workflows: run validation through uvx --with pyyaml and verify manifests before declaring success.")

@@ -12,7 +12,7 @@ Decide whether a bounded change is complete for the requested close purpose.
 - implementation and required verification are complete
 - the user wants an explicit handoff, merge, release, cleanup, or closure judgment
 
-Do not use it while design, planning, implementation, review, required truth sync, or requested authorization is unresolved. A local status query or cleanup suggestion alone does not require this Skill.
+Do not use it while design, planning, or implementation is still being produced, or when the user only wants a local status query or cleanup suggestion; neither needs a closure judgment. Entering to judge closure is valid once implementation and required verification are complete, even when a required review, truth sync, or authority later turns out to be missing: that produces the corresponding `needs-review`, `needs-truth-sync`, or `needs-authority` outcome below. Judging readiness and reporting a real gap is this Skill's job; it is not a claim that closure already happened, and an entry exclusion is not a way to hide an unresolved gap.
 
 ## Closure Judgment
 

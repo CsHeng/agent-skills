@@ -48,11 +48,11 @@ fi
 
 Overlap between recent unpushed commits and the current changes is useful context, not a gate. Report it and continue with a new focused commit unless the user explicitly asked to amend or squash.
 
-Amend only on an explicit user request, after staging the intended files:
+Amend only on an explicit user request, after staging the intended files, and scope the amend to those paths too, so pre-existing staging for other work is not swept in:
 
 ```bash
 git -C "$TARGET_REPO" add -- <files>
-git -C "$TARGET_REPO" commit --amend --no-edit
+git -C "$TARGET_REPO" commit --amend --no-edit -- <files>
 ```
 
 If the user asked to squash or reorganize history, invoke `smart-squash` instead of continuing here. When many unpushed commits exist, note that `smart-squash` can reorganize them later; do not block the current commit.
@@ -80,7 +80,8 @@ Evaluate each changed/untracked file against these categories:
 | Category | Examples | Action |
 |----------|----------|--------|
 | Secrets & credentials | API keys, tokens, passwords, .env files, private keys | Exclude, warn user; stop if tracked or staged |
-| Generated artifacts | build/, dist/, *.pyc, __pycache__, node_modules/ | Exclude |
+| Foreign or unowned generated output | build/, dist/, *.pyc, __pycache__/, node_modules/, local caches and intermediate artifacts not intended as deliverables | Exclude; usually already matched by .gitignore |
+| Intentional tracked generated deliverables | Committed generated mirrors, generated clients or docs, checked-in build outputs, and lock files that a source change in the same group requires | Include with the group whose source change produces or requires them |
 | Large binaries | Images >1MB, compiled binaries, archives | Exclude, note reason |
 | Temporary files | *.tmp, *.swp, *.log, .DS_Store | Exclude |
 | IDE/editor config | .idea/, .vscode/settings.json (user-specific) | Exclude |
@@ -88,13 +89,15 @@ Evaluate each changed/untracked file against these categories:
 
 Apply judgment beyond these rules — analyze file content semantically when the filename alone is ambiguous. For example, a `.json` file could be configuration (commit) or generated output (exclude).
 
+Treat "generated" as a question of ownership and intent, not as a blanket category. A file the repository already tracks as a deliverable — for example a generated distribution mirror, a generated client or API document, a checked-in lock file, or a build output the project commits on purpose — is committable and belongs to the group whose source change produced or updated it. Foreign or unowned build output, caches, and ignored intermediates stay excluded. When it is unclear whether a tracked generated file is an intentional deliverable, check the repository's own conventions and `.gitignore` before excluding it; do not exclude a file merely because its name or directory looks generated.
+
 When uncertain, include the file only if it is a normal source, config, test, docs, or lockfile change. If uncertainty is about whether a tracked or staged file should be versioned at all, stop and ask for human confirmation before committing.
 
 #### Human Confirmation Gate
 
 Do not ask for confirmation for ordinary eligible changes. Stop and ask the user before any commit only when Git is already tracking or staging content that appears unsafe or inappropriate to version:
 
-- A tracked or staged file appears to contain secrets, credentials, local machine state, generated output, temporary logs, personal IDE settings, or other content that should not be in Git.
+- A tracked or staged file appears to contain secrets, credentials, local machine state, foreign or unowned generated output, temporary logs, personal IDE settings, or other content that should not be in Git.
 - The safe path would require removing a tracked file from Git or changing `.gitignore` before committing.
 
 Untracked excluded files do not require confirmation; leave them untracked and continue with eligible tracked/staged/untracked source files.
@@ -133,12 +136,24 @@ Show the plan before executing: each commit group with its message and the files
 Execute each eligible commit group sequentially without waiting for a confirmation prompt:
 
 ```bash
-# For each group:
+# For each group: register new untracked files so the pathspec can match them,
+# then commit only that group's paths with a trailing pathspec.
 git -C "$TARGET_REPO" add -- <file1> <file2> ...
-git -C "$TARGET_REPO" commit -m "<message>"
+git -C "$TARGET_REPO" commit -m "<message>" -- <file1> <file2> ...
 ```
 
-Between commits, verify the previous commit succeeded before proceeding. If a commit fails, stop and report the error — do not continue with remaining commits.
+The trailing `-- <paths>` is what scopes the commit: Git records the current working-tree content of exactly those paths and leaves staged changes to every other path staged and out of this commit. A bare `git commit` after a path-level `git add` records the entire index, so it would silently absorb another group's already-staged changes; never use it here. The preceding `add` exists only to make new untracked files known to Git, because a pathspec commit cannot match a file Git has never seen.
+
+Because a pathspec commit takes the working-tree content of each named path, every unstaged change in a named path is committed too, and the recipe cannot split one path at hunk level. If two groups touch the same file, they cannot be separated here: whichever group commits first takes that file's entire current working-tree content, including the other group's changes to it, and the second group then has nothing left for that file. Do not claim per-hunk separation for this recipe. Treat a shared file as belonging to one group, or use the index-commit exception below only when the user explicitly needs a hunk-level split.
+
+A genuine hunk-level split needs an index commit, not a pathspec commit: stage exactly that group's hunks with `git add -p`, confirm with `git status` that nothing else is staged, then run a bare `git commit` and verify the resulting tree. This is the one place a bare `git commit` is correct, and it is valid only while the index holds exactly that group; if another group already has staged changes, sequence the commits (commit the staged group first, or set it aside with `git stash --staged`) before hunk-staging. Never combine `git add -p` with a pathspec commit: a pathspec commit records the whole working-tree content of the named paths and ignores the staged hunks, silently committing the other group's unstaged changes in that file.
+
+Between commits, verify the previous commit succeeded before proceeding. If a commit fails, stop and report the error — do not continue with remaining commits. After each commit, confirm that its recorded tree contains only that group's paths:
+
+```bash
+git -C "$TARGET_REPO" show --stat --oneline HEAD
+git -C "$TARGET_REPO" show --name-only --format="" HEAD
+```
 
 If the user explicitly requested only some groups, stage and commit only the requested groups. Leave rejected or deferred groups uncommitted and visible in the working tree; do not silently absorb them into approved commits.
 
@@ -151,6 +166,9 @@ After all commits complete, run `git -C "$TARGET_REPO" log --oneline -<N>` to sh
 - Automatic execution after matching the domain-grouping commit request — present the plan, then commit eligible groups without a separate confirmation prompt
 - Human confirmation required only for tracked or staged content that appears unsafe or inappropriate to commit
 - Preserve working state — only commit files included in the plan; leave other changes untouched
+- Group-scoped commits — always pass the group's paths as a trailing pathspec (`git commit -m "<message>" -- <paths>`); never run a bare `git commit` that records the whole index and absorbs another group's staged changes
+- Generated output is judged by ownership and intent — intentionally tracked generated deliverables are committed with the owning group, while foreign or unowned generated output is excluded
+- Shared-file limitation is disclosed — a path-scoped commit commits the whole current content of each named path, so two groups touching one file cannot be separated by this recipe
 - Partial user scope stays partial — rejected groups remain unstaged or restored to their previous staged state
 - Respect .gitignore — never attempt to add files matched by .gitignore
 - Recent-commit context is optional and never blocks a new focused commit
@@ -162,4 +180,5 @@ After all commits complete, run `git -C "$TARGET_REPO" log --oneline -<N>` to sh
 - All files excluded: Present exclusion list, explain why nothing remains to commit
 - Single logical group: Create one commit — no need to force multiple groups
 - Merge conflicts present: Stop and inform the user to resolve conflicts first
-- Partial staging: If some files are already staged, incorporate them into the plan and note the pre-existing staging
+- Partial staging: If some files are already staged, incorporate them into the plan, note the pre-existing staging, and let each path-scoped commit carry only its own group; staged changes in other paths stay staged. Never replace the scoped commit with a whole-index `git commit` to include them.
+- Two groups touch one file: The recipe cannot split a single file across commits at hunk level. Pick one owning group, or use deliberate `git add -p` staging with an explicit tree check; state the limitation to the user instead of claiming a clean split.

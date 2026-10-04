@@ -13,12 +13,12 @@ Optimize for meaningful boundary evidence, clear ownership, deterministic compat
 
 ## Authority Boundaries
 
-This is a lower-plane discipline. It advises the active sovereign workflow and does not own lifecycle transitions, repository mutation, review, repair, or completion.
+This is advisory guidance for the active workflow: it does not own lifecycle transitions, repository mutation, review, repair, or completion, and the owning workflow keeps action, continuation, and response ownership.
 
 Keep adjacent authorities separate:
 
-- `executable-oracle-architecture-selector` selects contract, example, scenario, property, model, characterization, meta, or runtime oracle methods.
-- `api-contract-strategy` decomposes API ownership, compatibility, provider, consumer, workflow, and generation boundaries after an API contract oracle is selected.
+- `executable-oracle-architecture-selector` selects contract, example, scenario, property, model, characterization, meta, or runtime oracle methods when that evidence strategy is genuinely unresolved.
+- `api-contract-strategy` decomposes API ownership, compatibility, provider, consumer, workflow, and generation boundaries once a contract oracle is established — a selected method or an existing OpenAPI/conformance setup already in place.
 - `testing-strategy` turns the selected boundaries into concrete suites, fixtures, environments, CI lanes, and diagnosis ownership.
 - `architecture-patterns` owns monorepo versus multi-repository structure, service boundaries, independent lifecycle choices, and their economics.
 

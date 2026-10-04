@@ -25,6 +25,7 @@ Out-of-scope:
 ## Progressive Disclosure
 
 - Language-specific read-only review checks: `references/review-checklist.md`
+- Host-specific operational commands (parser, analyzer, approved verbs): `references/operational-checks.md`
 
 ## Deterministic Steps
 
@@ -39,15 +40,15 @@ Out-of-scope:
    - Variables: `$PascalCase` for script-scoped, `$camelCase` for local.
    - Parameters: PascalCase with `[Parameter()]` attributes.
 4. Use cross-platform path handling
-   - Use `Join-Path` instead of string concatenation with `\` or `/`.
+   - Use `Join-Path` for path construction instead of string concatenation with `\` or `/`.
    - Use `$PSScriptRoot` for script-relative paths.
-   - Use `[System.IO.Path]::Combine()` for complex path assembly.
+   - Narrow exception: a single `[System.IO.Path]::Combine()` call is allowed only to join three or more trusted literal segments in one expression, and never with a rooted later segment, which silently discards the earlier path.
 5. Validate inputs and handle errors
    - Use `[CmdletBinding()]` and `[Parameter(Mandatory)]` for input validation.
    - Use `try/catch/finally` for structured error handling.
    - Prefer `$PSCmdlet.ThrowTerminatingError()` over `throw` in advanced functions.
 6. Use linting and syntax checks
-   - Run `pwsh -Command "[System.Management.Automation.Language.Parser]::ParseFile()"` for syntax validation.
+   - Run the parser check in `references/operational-checks.md`; it exits non-zero when `Parser::ParseFile` reports diagnostics.
    - Run `Invoke-ScriptAnalyzer` with default rules.
 
 ## Rules (Hard Constraints)
@@ -66,10 +67,10 @@ REQUIRED: Set `$ErrorActionPreference = 'Stop'` for fail-fast behavior.
 PROHIBITED: Use `$ErrorActionPreference = 'SilentlyContinue'` except in explicitly documented exception-handling blocks.
 
 ### Cross-Platform
-REQUIRED: Use `Join-Path` for all path construction.
+REQUIRED: Use `Join-Path` for all path construction, subject only to the narrow `[System.IO.Path]::Combine()` exception in Deterministic Steps 4.
 REQUIRED: Use `$PSScriptRoot` for script-relative paths.
 PROHIBITED: Hardcode Windows-style paths (`C:\...`) without platform guards.
-PROHIBITED: Use backslash `\` as path separator in string literals; use `Join-Path` or `[IO.Path]::Combine()`.
+PROHIBITED: Use backslash `\` or forward slash `/` as a path separator in string literals; construct paths with `Join-Path` (or the narrow `[IO.Path]::Combine()` exception).
 PREFERRED: Test scripts with `pwsh` on macOS before deploying to Windows.
 
 ### Naming
@@ -95,27 +96,9 @@ PREFERRED: Use `$PSCmdlet.ThrowTerminatingError()` in advanced functions for pro
 - Native commands: `grep`, `sed`, `awk` are available on macOS but not Windows. Use PowerShell cmdlets (`Select-String`, `-replace`, `ForEach-Object`) for portable scripts.
 - Module paths differ: use `$env:PSModulePath` and `Join-Path` for portable module references.
 
-## Operational Checks (Examples)
+## Operational Checks
 
-```powershell
-# Syntax validation (PowerShell parser)
-pwsh -Command "
-  \$errors = \$null
-  [System.Management.Automation.Language.Parser]::ParseFile(
-    'path/to/script.ps1',
-    [ref]\$null,
-    [ref]\$errors
-  )
-  if (\$errors) { \$errors | ForEach-Object { Write-Error \$_ } }
-  else { Write-Output 'Syntax OK' }
-"
-
-# PSScriptAnalyzer
-pwsh -Command "Invoke-ScriptAnalyzer -Path 'path/to/script.ps1' -Severity Warning,Error"
-
-# Check approved verbs
-pwsh -Command "Get-Verb | Sort-Object Verb"
-```
+Validate syntax, linting, and approved verbs with the host-specific commands in `references/operational-checks.md`; the parser check exits non-zero when diagnostics are present.
 
 ## Checklist
 

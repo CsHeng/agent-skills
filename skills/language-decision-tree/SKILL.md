@@ -61,10 +61,12 @@ These are preferences, not global mandates. Repository-local architecture and ru
 
 When a persisted implementation uses multiple languages:
 
-- Shell owns environment discovery and orchestration only.
-- The selected primary implementation owns validation, parsing, state, and business rules.
+- Shell owns environment discovery and orchestration, together with validation of its own launcher inputs: argument presence and shape, environment variables it dereferences, and paths it resolves.
+- The selected primary implementation owns domain parsing, state, and business rules; a launcher must not re-implement or duplicate those checks.
 - Do not split one business rule across multiple languages.
 - Keep language boundaries callable and testable without relying on generated command strings.
+
+Ad hoc command composition never requires this language-planning gate; use `tool-decision-tree` for those choices.
 
 ## Recording
 

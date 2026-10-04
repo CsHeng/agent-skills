@@ -60,11 +60,11 @@ Each material candidate should include:
 - consequence and confidence
 - smallest in-scope repair, when one exists
 
-Exclude pre-existing, unrelated, future-phase, speculative, and low-confidence observations from blocking findings. A critical out-of-scope security or data-loss risk may require a manual decision but never silently expands repair authority.
+Scope the causal filter to the requested target. When the target is a diff or bounded change, a blocking finding must be caused or newly activated by that change, and defects outside it stay excluded from blocking findings. When the requested target is a whole artifact or surface, defects anywhere in that supplied target are in scope; a pre-existing-versus-new distinction never suppresses an in-target defect. Exclude unrelated, future-phase, speculative, and low-confidence observations from blocking findings either way. A critical out-of-scope security or data-loss risk may require a manual decision but never silently expands repair authority.
 
 Check both omitted main goals or required results and overstrong invented gates. A secondary target wrongly raised into a gate, or an exhaustive secondary-feature catalog demanded where best-effort discretion already exists, is a defect. Using best-effort language to drop a required result, or deleting its oracle to manufacture a pass, is also a defect. An authorized secondary adaptation recorded with evidence is not automatically a finding. Security or oracle labels affect actual risk judgment; they do not create a fixed review count, per-file review loop, or evaluator repair right.
 
-The calling agent adjudicates candidates as accepted, rejected, deferred, or requiring a plan/design decision. The reviewer never performs the repair and never decides lifecycle continuation.
+The calling agent adjudicates candidates as accepted, rejected, deferred, or escalated to a plan or design decision; detailed reason categories refine those broad dispositions without moving the decision. Four levels stay distinct: the evaluator's return category (`pass`, `candidate-findings`, `manual-decision-required`) reports one bounded evaluation, the caller's per-finding dispositions decide what each candidate means for authorized work, the verdict below is the reviewer's judgment for this invocation, and deliverable readiness is the owning workflow's separate judgment. `candidate-findings` alone implies neither `needs-fixes`, accepted findings, repair authority, nor a next lifecycle phase, and a `pass` verdict does not by itself make a design, plan, implementation, or closure ready. The reviewer never performs the repair and never decides lifecycle continuation.
 
 ## Verdicts
 

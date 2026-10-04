@@ -78,6 +78,35 @@ class SemanticSkillContractTests(unittest.TestCase):
         contract = load_contract()
         self.assertNotIn("semantic_requires", contract["skills"]["review-change"])
 
+    def test_review_component_evaluators_cannot_delegate(self) -> None:
+        contract = copy.deepcopy(load_contract())
+        contract["skills"]["review-design"]["may_spawn_agent"] = True
+
+        errors = self.checker.validate_semantic_contracts(contract, REPO_ROOT)
+
+        self.assertTrue(any("cannot delegate" in error for error in errors))
+
+    def test_review_component_evaluators_stay_read_only(self) -> None:
+        contract = copy.deepcopy(load_contract())
+        contract["skills"]["review-plan"]["may_mutate_repo"] = True
+
+        errors = self.checker.validate_semantic_contracts(contract, REPO_ROOT)
+
+        self.assertTrue(any("read-only" in error for error in errors))
+
+    def test_review_components_declare_non_delegating_metadata(self) -> None:
+        contract = load_contract()
+        for skill_name in ("review-design", "review-implementation", "review-plan"):
+            self.assertFalse(contract["skills"][skill_name]["may_spawn_agent"])
+            self.assertFalse(contract["skills"][skill_name]["may_mutate_repo"])
+
+    def test_review_change_keeps_its_own_delegation_ability(self) -> None:
+        contract = load_contract()
+        self.assertTrue(contract["skills"]["review-change"]["may_spawn_agent"])
+        self.assertEqual(
+            [], self.checker.validate_semantic_contracts(contract, REPO_ROOT)
+        )
+
     def test_delegation_profile_vocabulary_is_provider_neutral(self) -> None:
         path = (
             REPO_ROOT

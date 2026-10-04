@@ -21,4 +21,4 @@ Read the supplied approved design or scope, the bounded plan target, and only ex
 
 ## Return
 
-Return `pass`, `candidate-findings`, or `manual-decision-required`. Each candidate includes location, evidence, impact, causal class, violated requirement, confidence, smallest in-scope fix, and recommended disposition. Require a design or scope decision instead of silently expanding the plan.
+Return `pass`, `candidate-findings`, or `manual-decision-required`. Each candidate includes location, evidence, impact, causal class, violated requirement, confidence, smallest in-scope fix, and recommended disposition. Require a design or scope decision instead of silently expanding the plan. The calling agent adjudicates every candidate and owns repair authorization and continuation.

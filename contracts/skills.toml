@@ -322,7 +322,7 @@ category = "review-component"
 activation_mode = "composition"
 default_role = "evaluator"
 may_mutate_repo = false
-may_spawn_agent = true
+may_spawn_agent = false
 
 [skills.review-design]
 source = "src/skills/review-components/review-design"
@@ -330,7 +330,7 @@ category = "review-component"
 activation_mode = "composition"
 default_role = "evaluator"
 may_mutate_repo = false
-may_spawn_agent = true
+may_spawn_agent = false
 
 [skills.review-plan]
 source = "src/skills/review-components/review-plan"
@@ -338,4 +338,4 @@ category = "review-component"
 activation_mode = "composition"
 default_role = "evaluator"
 may_mutate_repo = false
-may_spawn_agent = true
+may_spawn_agent = false

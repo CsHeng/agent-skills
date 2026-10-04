@@ -48,6 +48,8 @@ Homebrew `gnubin` directories can shadow same-named commands under `/bin` and `/
 - GNU `stat -f` requests file-system information and can emit plausible stdout while rejecting BSD format operands. If `stat` exits nonzero, discard its stdout rather than treating partial output as file metadata.
 - Treat the first option or format error as a dialect mismatch signal. Stop the batch, inspect `command -V stat`, select an explicit dialect, and validate the corrected command on one representative target before applying it to the remaining targets.
 
+Persisted scripts are not an ad hoc command choice: `shell-guidelines` owns their PATH, shebang, and portability handling, including its gnubin shadow audit for scripts that depend on a specific command dialect.
+
 Preferred tools with explicit fallbacks:
 - File discovery: `fd` -> `find`
 - Text search: `rg` -> `grep`

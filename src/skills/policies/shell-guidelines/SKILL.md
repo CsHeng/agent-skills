@@ -41,7 +41,8 @@ Out-of-scope:
    - For Bash entrypoints that install an `ERR` trap, use `set -Eeuo pipefail` so the trap is inherited by functions, command substitutions, and subshells.
 3. Quote and validate inputs
    - Quote all variable expansions unless intentionally relying on splitting/globbing.
-   - Validate arguments count and basic shape before performing work.
+   - Validate the launcher's own inputs: argument presence and shape, environment variables it dereferences, and paths it resolves.
+   - Leave domain parsing and state validation to the main implementation the launcher starts.
    - Avoid `eval` and executing untrusted input.
 4. Prefer simple, readable structure
    - Keep scripts small and linear where possible.
@@ -92,7 +93,7 @@ REQUIRED: Name shell script files using hyphen style (kebab-case): `my-script.sh
 - macOS login `zsh` runs `path_helper` (via `/etc/zprofile`), which can override PATH changes from `.zshenv`. For tasks explicitly testing `zsh -lc`, put the final Homebrew PATH setup in `.zprofile` after `path_helper`, using the host's `brew shellenv`.
 - Homebrew `curl` is commonly keg-only; prefer `export PATH="$(brew --prefix curl)/bin:$PATH"` when you need modern curl/TLS features.
 - Non-interactive bash sources `$BASH_ENV`; set it to a file that exports the PATH you expect (including Homebrew) if your automation runs `bash` non-interactively.
-- Homebrew `*/libexec/gnubin` directories can replace macOS/BSD command semantics even when the host is macOS. Run this skill's bundled `scripts/audit-homebrew-command-shadowing.py` when an option behaves unexpectedly or a script depends on a specific command dialect.
+- A resolved command's dialect can differ from the host OS when Homebrew `*/libexec/gnubin` directories shadow system commands; `tool-decision-tree` owns the ad hoc diagnostic handling for that. For persisted scripts that depend on a specific command dialect, run this skill's bundled `scripts/audit-homebrew-command-shadowing.py` when an option behaves unexpectedly.
 - Debug quickly: `command -v bash; /usr/bin/env bash --version | head -n1; type -a bash; command -v curl; curl --version | head -n1`.
 
 ### Homebrew Command Shadow Audit

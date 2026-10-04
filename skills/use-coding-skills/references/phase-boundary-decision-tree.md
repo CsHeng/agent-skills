@@ -32,7 +32,7 @@ Compact the relevant context when it must remain available, continuing in the cu
 
 ## Payload Ownership
 
-When PB3 or PB5 applies, use the `Compact Instructions` section in the owning `use-coding-skills` skill for payload priority. Do not duplicate architecture decisions, modified files, verification state, open gates, or tool-output rules here.
+When PB3 or PB5 applies, use the compact payload priority in `memory-boundary.md` for payload priority. Do not duplicate architecture decisions, modified files, verification state, open gates, or tool-output rules here.
 
 ## Boundaries
 

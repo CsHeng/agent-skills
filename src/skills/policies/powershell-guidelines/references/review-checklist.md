@@ -7,9 +7,9 @@ This is a language overlay. The primary reviewer owns findings, severity order, 
 ## Review Checks
 
 - Identify the declared runtime and applicable `#Requires -Version`; check the requirements owned by `powershell-guidelines`.
-- Use `System.Management.Automation.Language.Parser.ParseFile` to validate syntax without running the script. Preserve parser diagnostics that support a finding, and disclose unavailable or unrun validation.
+- Use `System.Management.Automation.Language.Parser.ParseFile` to validate syntax without running the script; treat a non-empty diagnostic set as invalid syntax rather than a clean result. Preserve parser diagnostics that support a finding, and disclose unavailable or unrun validation.
 - Run PSScriptAnalyzer with Warning and Error severity. Connect relevant diagnostics to the reviewed scope instead of dumping all analyzer output.
-- Check `Set-StrictMode -Version Latest`, `$ErrorActionPreference = 'Stop'`, approved verbs, explicit error handling and cross-platform path construction with `Join-Path`.
+- Check `Set-StrictMode -Version Latest`, `$ErrorActionPreference = 'Stop'`, approved verbs, explicit error handling and cross-platform path construction with `Join-Path`; the only permitted alternative is the narrow `[System.IO.Path]::Combine()` exception stated as a rule by `powershell-guidelines`.
 - Check for cmdlet aliases and global variables, including the `PSAvoidUsingCmdletAliases` and `PSAvoidGlobalVars` diagnostics.
 - Inspect custom parameters against the rule below. Built-in cmdlet parameter names are not custom aliases.
 - Anchor material findings to their locations, evidence, impact and smallest viable correction. A candidate diff is optional and must preserve valid PowerShell and the caller's scope; the implementing agent owns adjudication and any mutation.

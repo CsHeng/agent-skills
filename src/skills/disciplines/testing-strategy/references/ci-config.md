@@ -54,7 +54,7 @@ Use this lane when source-level evidence cannot prove artifact composition, pack
 
 Run canaries, synthetic probes, SLO evaluation, and production-only invariants only with explicit deployment, observation, and recovery authority. Use least-privilege runtime credentials and bounded blast radius.
 
-Runtime failure does not authorize rollback unless an approved plan declares the exact guarded trigger, target, and verification. Runtime evidence does not replace pre-merge correctness.
+Runtime failure does not authorize rollback unless the change's approved scope declares the exact guarded trigger, target, and verification. Runtime evidence does not replace pre-merge correctness.
 
 ## Capability Placement
 

@@ -63,9 +63,9 @@ Common boundaries:
 
 ## API Contract Decomposition
 
-For a public multi-client API, select the executable oracle method here first. When contract/schema conformance is selected, use `api-contract-strategy` to decompose wire ownership, provider conformance, consumer adapters, workflow evidence, generation, and compatibility lifecycle.
+Select an executable oracle method here only when the evidence strategy is genuinely unresolved. An existing OpenAPI or conformance setup already establishes the method: consume it directly, and use `api-contract-strategy` to decide wire ownership, provider conformance, consumer adapters, workflow evidence, generation, and compatibility — including generated types versus SDK or adapter choices, which do not need a fresh selection pass.
 
-This selector retains authority over oracle-method selection. `api-contract-strategy` does not rescore the method or own lifecycle execution.
+When selection does happen here, this selector retains authority over oracle-method selection. `api-contract-strategy` does not rescore the method or own lifecycle execution.
 
 ## Phase Defaults
 

@@ -261,6 +261,78 @@ class ExtractSessionSignalsCliTest(unittest.TestCase):
             self.assertEqual(payload["codex_homes"], [str(codex_one), str(codex_two)])
             self.assertEqual(payload["claude_homes"], [str(claude_one)])
 
+    def test_scope_is_independent_of_homes_and_output_format(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            isolated = root / "isolated-home"
+            repo_root = root / "repo"
+            other_root = root / "other"
+            repo_root.mkdir()
+            other_root.mkdir()
+            home_one = root / "codex-one"
+            home_two = root / "codex-two"
+
+            for home, cwd, session_id, day in (
+                (home_one, repo_root, "in-repo", "01"),
+                (home_two, other_root, "out-of-repo", "02"),
+            ):
+                write_jsonl(
+                    home / "sessions" / "2026" / "01" / day / f"{session_id}.jsonl",
+                    [
+                        {
+                            "type": "session_meta",
+                            "payload": {
+                                "cwd": str(cwd),
+                                "id": session_id,
+                                "timestamp": f"2026-01-{day}T00:00:00Z",
+                            },
+                        },
+                        {
+                            "type": "response_item",
+                            "payload": {
+                                "type": "message",
+                                "role": "user",
+                                "content": [{"text": "只分析，不要直接改"}],
+                            },
+                        },
+                    ],
+                )
+
+            common = [
+                "--repo-root",
+                str(repo_root),
+                "--codex-home",
+                str(home_one),
+                "--codex-home",
+                str(home_two),
+                "--sources",
+                "codex",
+                "--limit",
+                "0",
+            ]
+            # Multiple homes plus JSON output must not widen history scope.
+            default_json = json.loads(
+                run_extract([*common, "--format", "json"], isolated).stdout
+            )
+            self.assertEqual(default_json["scope"], "current")
+            self.assertEqual(len(default_json["codex_homes"]), 2)
+            self.assertEqual(default_json["counts"]["sessions_codex"], 1)
+
+            default_markdown = run_extract(
+                [*common, "--format", "markdown"], isolated
+            ).stdout
+            self.assertIn("- scope: current", default_markdown)
+            self.assertIn("- codex_sessions: 1", default_markdown)
+
+            # All-history requires the explicit scope selection.
+            all_scope = json.loads(
+                run_extract(
+                    [*common, "--scope", "all", "--format", "json"], isolated
+                ).stdout
+            )
+            self.assertEqual(all_scope["scope"], "all")
+            self.assertEqual(all_scope["counts"]["sessions_codex"], 2)
+
     def test_grok_home_prompt_and_events(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -1335,7 +1407,7 @@ class PiExtractSessionSignalsTest(unittest.TestCase):
             self.assertIn("investigate existing authority", recs)
             self.assertIn("never infer commit", recs)
             self.assertNotIn("consume existing confirmation as write/commit authority", recs)
-            self.assertIn("do not use a lower-plane reviewer protocol", recs)
+            self.assertIn("do not run the reviewer as its own lifecycle phase", recs)
             self.assertNotIn("provider=test-provider", stdout)
             example_blob = json.dumps(payload["examples"])
             self.assertIn("pi model_change", example_blob)

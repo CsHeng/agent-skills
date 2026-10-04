@@ -1,301 +1,315 @@
 # Python Testing Examples
 
-## Critical Path Testing
+These examples use only the Python standard library, so they can be copied into a scratch directory and exercised with `uv run --no-project python -m unittest` or `python3 -m unittest`. They keep each test independent, gate on fixture readiness, release their own temporary directories and child processes, and report cleanup failures instead of hiding them.
 
-```python
-# test_critical_paths.py
-import pytest
-from unittest.mock import Mock, patch
-from app.payment import PaymentProcessor
-from app.user_management import UserService
+## Runnable Example: Isolated, Readiness-Gated Suite
 
-class TestCriticalPaths:
-    def test_payment_processing_complete_flow(self):
-        """Test complete payment flow with real dependencies"""
-        processor = PaymentProcessor()
+Save the fixture and the three Python files below in one directory.
 
-        # Test successful payment
-        result = processor.process_payment(
-            user_id=123,
-            amount=100.00,
-            payment_method="credit_card"
-        )
+### Fixture: `fixtures/catalog.json`
 
-        assert result.success is True
-        assert result.transaction_id is not None
-        assert result.amount == 100.00
-
-    def test_user_registration_with_validation(self):
-        """Test user registration with all validation rules"""
-        user_service = UserService()
-
-        # Test valid registration
-        user = user_service.register_user(
-            email="test@example.com",
-            password="SecurePass123!",
-            name="Test User"
-        )
-
-        assert user.email == "test@example.com"
-        assert user.is_active is True
-        assert user.id is not None
-
-    @pytest.mark.parametrize("status_code,expected_result", [
-        (200, {"status": "success"}),
-        (400, {"status": "error", "message": "Invalid request"}),
-        (500, {"status": "error", "message": "Internal server error"})
-    ])
-    def test_api_endpoint_error_handling(self, status_code, expected_result):
-        """Test API error handling scenarios"""
-        with patch('requests.post') as mock_post:
-            mock_post.return_value.status_code = status_code
-            mock_post.return_value.json.return_value = expected_result
-
-            response = self.client.call_external_api({"data": "test"})
-
-            assert response == expected_result
+```json
+{"widget": 5, "gadget": 3}
 ```
 
-## AAA Pattern Implementation
+### Module under test: `catalog_store.py`
 
 ```python
-import pytest
-from calculator import Calculator
+"""Small stdlib-only store used by this testing example."""
 
-class TestCalculator:
-    def test_addition_positive_numbers(self):
-        # Arrange
-        calculator = Calculator()
-        operand_a = 5
-        operand_b = 3
+from __future__ import annotations
 
-        # Act
-        result = calculator.add(operand_a, operand_b)
-
-        # Assert
-        assert result == 8
-        assert isinstance(result, (int, float))
-
-    def test_division_by_zero_raises_error(self):
-        # Arrange
-        calculator = Calculator()
-        dividend = 10
-        divisor = 0
-
-        # Act & Assert
-        with pytest.raises(ZeroDivisionError, match="Cannot divide by zero"):
-            calculator.divide(dividend, divisor)
-
-    def test_complex_calculation_chain(self):
-        # Arrange
-        calculator = Calculator()
-        initial_value = 10
-
-        # Act
-        result = (calculator
-                  .add(initial_value, 5)
-                  .multiply(2)
-                  .subtract(3)
-                  .divide(4))
-
-        # Assert
-        assert result == 5.5
-```
-
-## Test Isolation and Independence
-
-```python
-import pytest
-import tempfile
-import shutil
+import json
 from pathlib import Path
 
-class TestFileOperations:
-    @pytest.fixture
-    def temp_directory(self):
-        """Create isolated temporary directory for each test"""
-        temp_dir = tempfile.mkdtemp()
-        yield Path(temp_dir)
-        shutil.rmtree(temp_dir)
 
-    def test_file_creation_and_read(self, temp_directory):
-        """Test file operations in isolated environment"""
-        test_file = temp_directory / "test.txt"
-        test_content = "Hello, World!"
+class FixtureNotReadyError(RuntimeError):
+    """Raised when a required fixture file or endpoint is not ready."""
 
-        # Act
-        test_file.write_text(test_content)
-        read_content = test_file.read_text()
 
-        # Assert
-        assert read_content == test_content
-        assert test_file.exists()
+class CleanupError(RuntimeError):
+    """Raised when a task-owned resource was not released cleanly."""
 
-    def test_file_operations_persistence(self, temp_directory):
-        """This test uses different temp_directory, ensuring isolation"""
-        another_file = temp_directory / "another.txt"
-        another_file.write_text("Different content")
 
-        assert another_file.read_text() == "Different content"
+def load_fixture(path: Path) -> dict[str, int]:
+    """Read the shared seed catalog, failing fast with an explicit reason."""
+
+    if not path.is_file():
+        raise FixtureNotReadyError(
+            f"fixture not ready: {path} is missing; "
+            "set CATALOG_FIXTURE_DIR to a prepared fixture directory"
+        )
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise FixtureNotReadyError(
+            f"fixture not ready: {path} is not valid JSON: {error}"
+        ) from error
+    return {str(key): int(value) for key, value in payload.items()}
+
+
+class CatalogStore:
+    """Persist catalog quantities in one JSON file under a data directory."""
+
+    def __init__(self, data_dir: Path) -> None:
+        self._path = Path(data_dir) / "catalog.json"
+
+    def seed(self, quantities: dict[str, int]) -> None:
+        """Write the starting contents for one test-owned data directory."""
+
+        self._write(quantities)
+
+    def add(self, sku: str, quantity: int) -> None:
+        if quantity <= 0:
+            raise ValueError(f"quantity must be positive, got {quantity}")
+        catalog = self._read()
+        catalog[sku] = catalog.get(sku, 0) + quantity
+        self._write(catalog)
+
+    def quantity(self, sku: str) -> int:
+        return self._read().get(sku, 0)
+
+    def _read(self) -> dict[str, int]:
+        if not self._path.exists():
+            return {}
+        payload = json.loads(self._path.read_text(encoding="utf-8"))
+        return {str(key): int(value) for key, value in payload.items()}
+
+    def _write(self, catalog: dict[str, int]) -> None:
+        self._path.write_text(json.dumps(catalog, sort_keys=True), encoding="utf-8")
 ```
 
-## Performance and Load Testing
+### Worker process: `heartbeat_worker.py`
 
 ```python
-import pytest
+"""Task-owned worker used by the testing example; stdlib only."""
+
+from __future__ import annotations
+
+import signal
+import sys
 import time
-from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
-class TestPerformance:
-    @pytest.mark.slow
-    def test_api_response_time_under_load(self):
-        """Test API response time under concurrent load"""
-        url = "http://localhost:8000/api/test"
-        concurrent_requests = 50
-        max_response_time = 1.0  # seconds
 
-        def make_request():
-            start_time = time.time()
-            response = requests.get(url)
-            end_time = time.time()
-            return end_time - start_time, response.status_code
+def main() -> int:
+    data_dir = Path(sys.argv[1])
+    if sys.argv[2] == "ignore-term":
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    heartbeat = data_dir / "heartbeat"
+    while True:
+        heartbeat.write_text(str(time.monotonic()), encoding="utf-8")
+        time.sleep(0.01)
 
-        with ThreadPoolExecutor(max_workers=concurrent_requests) as executor:
-            futures = [executor.submit(make_request) for _ in range(concurrent_requests)]
-            results = [future.result() for future in futures]
 
-        # Assert all requests succeeded
-        status_codes = [result[1] for result in results]
-        assert all(code == 200 for code in status_codes)
-
-        # Assert response times are within limits
-        response_times = [result[0] for result in results]
-        assert max(response_times) < max_response_time
-        assert sum(response_times) / len(response_times) < max_response_time * 0.8
-
-    @pytest.mark.performance
-    def test_memory_usage_stability(self):
-        """Test memory usage remains stable during extended operation"""
-        import psutil
-        import os
-
-        process = psutil.Process(os.getpid())
-        initial_memory = process.memory_info().rss
-
-        # Perform many operations
-        for _ in range(1000):
-            self.heavy_operation()
-
-        final_memory = process.memory_info().rss
-        memory_increase = final_memory - initial_memory
-
-        # Memory increase is minimal (< 10MB)
-        assert memory_increase < 10 * 1024 * 1024
-
-    def heavy_operation(self):
-        """Simulate memory-intensive operation"""
-        data = list(range(1000))
-        processed_data = [x * 2 for x in data]
-        return sum(processed_data)
+if __name__ == "__main__":
+    raise SystemExit(main())
 ```
 
-## Integration Testing
+### Suite: `test_catalog_store.py`
 
 ```python
-import pytest
-from testcontainers.postgres import PostgresContainer
-from testcontainers.redis import RedisContainer
-from app.database import DatabaseConnection
+"""Runnable suite: per-test isolation, readiness gating, surfaced cleanup."""
 
-@pytest.mark.integration
-class TestDatabaseIntegration:
-    @pytest.fixture(scope="class")
-    def postgres_container(self):
-        """Start PostgreSQL container for integration tests"""
-        with PostgresContainer("postgres:15-alpine") as postgres:
-            yield postgres
+from __future__ import annotations
 
-    @pytest.fixture(scope="class")
-    def database(self, postgres_container):
-        """Configure database connection with test container"""
-        db = DatabaseConnection(
-            host=postgres_container.get_container_host_ip(),
-            port=postgres_container.get_exposed_port(5432),
-            database="test",
-            user="test",
-            password="test"
+import http.server
+import os
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+import unittest
+import urllib.request
+from pathlib import Path
+
+from catalog_store import CatalogStore, CleanupError, load_fixture
+
+FIXTURE_DIR = Path(os.environ.get("CATALOG_FIXTURE_DIR", "fixtures"))
+IGNORE_SIGTERM = os.environ.get("CATALOG_WORKER_IGNORES_SIGTERM") == "1"
+
+
+def start_worker(data_dir: Path, *, ignore_sigterm: bool = False) -> subprocess.Popen[bytes]:
+    """Start a task-owned worker that updates a heartbeat file until stopped."""
+
+    worker = Path(__file__).with_name("heartbeat_worker.py")
+    mode = "ignore-term" if ignore_sigterm else "honor-term"
+    # Subprocess environment allowlist: the worker needs no ambient variables.
+    return subprocess.Popen(
+        [sys.executable, str(worker), str(data_dir), mode],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        env={},
+    )
+
+
+def stop_worker(process: subprocess.Popen[bytes], timeout: float = 5.0) -> None:
+    """Terminate a task-owned worker; surface any ungraceful shutdown."""
+
+    try:
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=timeout)
+                raise CleanupError(
+                    f"worker pid {process.pid} ignored SIGTERM; "
+                    "cleanup killed it and reported the failure"
+                )
+        elif process.returncode != 0:
+            raise CleanupError(
+                f"worker pid {process.pid} already exited with code "
+                f"{process.returncode} before cleanup; the failure was not "
+                "observed by the test"
+            )
+    finally:
+        if process.stderr is not None:
+            process.stderr.close()
+
+
+def wait_for_heartbeat(data_dir: Path, timeout: float = 5.0) -> bool:
+    """Readiness check: poll for the heartbeat instead of sleeping blindly."""
+
+    heartbeat = data_dir / "heartbeat"
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if heartbeat.exists():
+            return True
+        time.sleep(0.01)
+    return False
+
+
+class _HealthHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self) -> None:  # noqa: N802 - BaseHTTPRequestHandler API
+        if self.path != "/health":
+            self.send_error(404)
+            return
+        body = b'{"status": "ok"}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args: object) -> None:
+        """Silence request logging so test output stays deterministic."""
+
+
+class CatalogStoreTest(unittest.TestCase):
+    def setUp(self) -> None:
+        # Readiness gate: fail fast with an explicit reason instead of a
+        # confusing downstream error.
+        self.fixture = load_fixture(FIXTURE_DIR / "catalog.json")
+        # Isolation: every test gets its own temporary data directory, seeded
+        # from the read-only fixture, so runs never inherit mutable state.
+        self._temp_dir = tempfile.TemporaryDirectory(prefix="catalog-test-")
+        self.addCleanup(self._release_temp_dir)
+        self.data_dir = Path(self._temp_dir.name) / "data"
+        self.data_dir.mkdir()
+        self.store = CatalogStore(self.data_dir)
+        self.store.seed(self.fixture)
+
+    def _release_temp_dir(self) -> None:
+        # cleanup() raises when the tree cannot be removed, so a failed cleanup
+        # is reported instead of silently leaking the directory.
+        self._temp_dir.cleanup()
+
+    def test_seeded_quantity_is_visible(self) -> None:
+        self.assertEqual(self.store.quantity("widget"), self.fixture["widget"])
+
+    def test_add_accumulates_within_one_test(self) -> None:
+        self.store.add("widget", 2)
+        self.assertEqual(self.store.quantity("widget"), self.fixture["widget"] + 2)
+
+    def test_each_test_starts_from_the_fixture(self) -> None:
+        # Ordered after test_add_accumulates_within_one_test yet sees no residue.
+        self.assertEqual(self.store.quantity("widget"), self.fixture["widget"])
+
+    def test_invalid_quantity_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            self.store.add("widget", 0)
+
+    def test_table_driven_additions(self) -> None:
+        cases = [("widget", 1), ("gadget", 4)]
+        for sku, quantity in cases:
+            with self.subTest(sku=sku, quantity=quantity):
+                self.store.add(sku, quantity)
+                self.assertEqual(
+                    self.store.quantity(sku), self.fixture[sku] + quantity
+                )
+
+    def test_worker_is_ready_and_released(self) -> None:
+        process = start_worker(self.data_dir, ignore_sigterm=IGNORE_SIGTERM)
+        self.addCleanup(stop_worker, process)
+        self.assertTrue(
+            wait_for_heartbeat(self.data_dir),
+            "worker did not become ready within the readiness timeout",
         )
-        db.create_tables()
-        yield db
-        db.close()
 
-    def test_user_creation_and_retrieval(self, database):
-        """Test complete user creation and retrieval flow"""
-        user_data = {
-            "email": "test@example.com",
-            "name": "Test User"
-        }
 
-        user_id = database.create_user(user_data)
-        assert user_id is not None
+class HealthEndpointTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _HealthHandler)
+        cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
+        cls.thread.start()
+        cls.url = f"http://127.0.0.1:{cls.server.server_address[1]}/health"
 
-        retrieved_user = database.get_user(user_id)
-        assert retrieved_user["email"] == user_data["email"]
-        assert retrieved_user["name"] == user_data["name"]
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.server.shutdown()
+        cls.server.server_close()
+        cls.thread.join(timeout=5.0)
+        if cls.thread.is_alive():
+            raise CleanupError("health server thread did not stop within the timeout")
 
-    def test_transaction_rollback(self, database):
-        """Test transaction rollback on error"""
-        initial_count = database.count_users()
+    def test_health_endpoint_becomes_ready(self) -> None:
+        # Readiness check: poll the endpoint instead of sleeping a fixed time.
+        deadline = time.monotonic() + 5.0
+        while time.monotonic() < deadline:
+            try:
+                with urllib.request.urlopen(self.url, timeout=1.0) as response:
+                    if response.status == 200:
+                        return
+            except OSError:
+                time.sleep(0.05)
+        self.fail("health endpoint did not become ready within the readiness timeout")
 
-        with pytest.raises(ValueError):
-            with database.transaction():
-                database.create_user({"email": "good@example.com", "name": "Good User"})
-                raise ValueError("Simulated error")
 
-        final_count = database.count_users()
-        assert final_count == initial_count
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
 ```
 
-## End-to-End Testing
+### Run recipe and expected outcome
 
-```python
-import pytest
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+Run from the directory holding the files:
 
-@pytest.mark.e2e
-class TestUserWorkflows:
-    @pytest.fixture
-    def browser(self):
-        """Setup browser for E2E tests"""
-        options = webdriver.ChromeOptions()
-        options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
-
-        driver = webdriver.Chrome(options=options)
-        driver.implicitly_wait(10)
-
-        yield driver
-
-        driver.quit()
-
-    def test_complete_user_registration_flow(self, browser):
-        """Test complete user registration from UI"""
-        browser.get("http://localhost:3000/register")
-
-        browser.find_element(By.ID, "email").send_keys("test@example.com")
-        browser.find_element(By.ID, "password").send_keys("SecurePass123!")
-        browser.find_element(By.ID, "confirm_password").send_keys("SecurePass123!")
-        browser.find_element(By.ID, "name").send_keys("Test User")
-
-        browser.find_element(By.ID, "register-button").click()
-
-        WebDriverWait(browser, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "success-message"))
-        )
-
-        assert "dashboard" in browser.current_url
+```bash
+CATALOG_FIXTURE_DIR="$PWD/fixtures" uv run --no-project python -m unittest -v
 ```
+
+Every test builds its own `TemporaryDirectory`, seeds it from the read-only fixture, and releases it during cleanup, so running the same command twice produces the same passing result and leaves `fixtures/catalog.json` byte-identical. `test_each_test_starts_from_the_fixture` runs after a test that mutates the store and still observes the original value, which fails if any two tests share a data directory.
+
+### Negative checks
+
+Point the fixture directory at a nonexistent path to exercise the readiness gate, which fails before any test body runs and reports the missing path (no directory is allocated for this negative check):
+
+```bash
+CATALOG_FIXTURE_DIR="/nonexistent/catalog-fixtures" uv run --no-project python -m unittest
+```
+
+Set `CATALOG_WORKER_IGNORES_SIGTERM=1` to start the worker in its non-cooperative mode, where `stop_worker` kills the process and then raises `CleanupError` so unittest reports the cleanup failure instead of swallowing it:
+
+```bash
+CATALOG_WORKER_IGNORES_SIGTERM=1 uv run --no-project python -m unittest
+```
+
+## How The Suite Embodies The Rules
+
+- Isolation: `setUp` creates a fresh `TemporaryDirectory` and a fresh `CatalogStore` per test, and `start_worker` passes an explicit empty environment, so mutable state and ambient variables never cross test or run boundaries.
+- Readiness: `load_fixture` raises `FixtureNotReadyError` with the missing path, and `wait_for_heartbeat` plus the endpoint loop poll with a bounded deadline instead of sleeping blindly.
+- Cleanup: `stop_worker` releases the child process and surfaces an ungraceful shutdown, `_release_temp_dir` lets `TemporaryDirectory.cleanup` raise, and `HealthEndpointTest.tearDownClass` shuts the server down and fails if its thread survives.
+- Explicit error handling: fixture reads distinguish missing files from invalid JSON, invalid quantities raise `ValueError`, and worker start, signal, and kill errors are wrapped with the operation that failed.

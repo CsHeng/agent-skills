@@ -9,9 +9,7 @@ Manage the requested worktree operation without losing user work or task context
 
 ## When Isolation Is Needed
 
-For ordinary implementation, reuse the current checkout unless an explicit request, applicable repository rule, required branch state, or concrete conflict calls for isolation. Task-local uncommitted documents and unrelated non-overlapping edits do not require a worktree or a preliminary commit. `implement-change` owns the checkout/concurrency judgment; this Skill owns the selected worktree operation, not a universal clean-tree gate.
-
-A confirmed concurrent writer matters when writes or shared resources conflict. Dirty state, timestamps, or the mere presence of an agent process are not enough; do not audit the workstation to rule out hypothetical concurrency. Respect an explicit worktree request without requiring evidence that the user could not work in place.
+Ordinary current-checkout work needs no worktree setup: use isolation for an explicit request, an applicable repository rule, required branch state, or a concrete conflict. `implement-change` owns the checkout and concurrency judgment — including that dirty state, timestamps, or a running agent alone do not require isolation — while this Skill owns the selected worktree operation, not a universal clean-tree gate. A confirmed concurrent writer matters when writes or shared resources actually conflict. Respect an explicit worktree request without requiring evidence that the user could not work in place.
 
 ## Choose The Operation
 

@@ -1,6 +1,6 @@
 # Routing Reference
 
-Use skills as the durable, agent-agnostic behavior surface. Keep AGENTS files as local constraints and thin indexes, not mandatory skill routers or long-form prompt packs.
+Use skills as the durable, agent-agnostic behavior surface. Express reusable behavior in an agent-agnostic skill rather than agent-specific rules. Keep AGENTS files as local constraints and thin indexes, not mandatory skill routers or long-form prompt packs.
 
 ## Contract Ownership
 
@@ -9,10 +9,12 @@ Use skills as the durable, agent-agnostic behavior surface. Keep AGENTS files as
 ## Decision Rules
 
 - Native description matching is the default discovery path.
+- Match cases by the owner skill's frontmatter description and each case's negative boundaries; explicit-invocation cases keep positive overrides. Treat lexical hints as examples only; they are not a keyword router or a second owner map.
 - An explicitly named or confidently matched skill bypasses `use-coding-skills`.
 - An ambiguous multi-stage request or explicit routing question enters `use-coding-skills`, which selects the smallest matching workflow skill.
 - The selected primary skill owns its semantic result. Session, discipline, policy, tool, and review-component skills contribute rendering, method, policy, tooling, or evidence.
 - Review enters through `review-change`; `review-design`, `review-plan`, and `review-implementation` return candidate evidence only.
+- Review is conditional: an explicit request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment. Standalone review does not synthesize earlier phases.
 - One primary skill owns the response order and conclusion. `output-styles` supplies the shared rendering baseline, while other matching skills remain semantic overlays.
 
 ## External Skill Libraries
