@@ -61,6 +61,14 @@ Load both purpose profiles only when one approved project genuinely owns both a 
    - Prefer table-driven tests when they improve coverage and readability.
    - Use `httptest`, fakes, temporary directories, and injected IO instead of global process state when practical.
 
+## Build Output And Local State
+
+- `go run` uses the module/build caches and implicitly compiles a temporary executable. It is acceptable on a developer, CI, or controller host, including a remote host explicitly serving that role, but it is not a delivery mechanism for a managed or production execution target.
+- Pass an explicit `-o` to `go build` and place the binary under the repository's declared scratch or output directory. When the repository declares none, use the platform or global temporary directory; do not leave the implicit `./<name>` binary in the checkout.
+- A repository's declared scratch directory may be an ignored in-repo path such as `tmp/`, `dist/`, or `bin/`, or a directory outside the tree. Follow the repository's declaration rather than assuming an external-only location.
+- `GOCACHE` and `GOMODCACHE` default outside the source tree, but that does not protect the checkout: test binaries, `-coverprofile` output, fuzz corpora, and explicit build outputs can still appear as untracked or ignored files. After verification, inspect ignored and untracked files as well as tracked diffs for task-owned contamination. Remove per-run scratch that is no longer needed; retain declared delivery artifacts or bounded caches according to their ownership contract, and do not delete another owner's data or cache.
+- Build for the target `GOOS` and `GOARCH` on the controller or CI host and ship the binary or image. The managed execution target must not compile, download Go modules, or use `go run`; ordinary artifact/package installation is not runtime compilation.
+
 ## Optional Checks
 
 Use these when the project or risk profile calls for them:
@@ -80,4 +88,6 @@ Pin reproducible Go tools through the owning module rather than assuming a works
 - project-configured analyzers pass when configured
 - returned errors, cancellation, and resource cleanup are explicit
 - tests cover the changed core behavior
+- build, coverage, and test artifacts use the declared scratch and are cleaned up
+- managed or production execution targets receive a prebuilt binary or image, not a compiler or `go run`
 - the matching CLI or API purpose profile has been applied

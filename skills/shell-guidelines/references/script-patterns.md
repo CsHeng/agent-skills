@@ -28,7 +28,9 @@ Out-of-scope:
 4. Keep orchestration linear and make each external mutation visible.
 5. Route back to `language-decision-tree` when the script accumulates structured multi-step parsing, persistent state, complex retry or recovery, concurrency, multi-host distribution, embedded languages, or runtime and dependency management.
 6. Prefer Go for a long-lived operational tool when static distribution, cross-platform delivery, or reduced runtime state materially improves the contract; do not treat this preference as a mandate.
-7. Name Shell script files using hyphen style: `my-script.sh`, not `my_script.sh`.
+7. Keep Shell for constrained native targets (BusyBox ash or POSIX `sh`) and for scripts that must affect the invoking shell. Length or accumulated state alone is not an escalation signal.
+8. For a simple one-shot remote action, prefer the controller's built-in module, local rendering, or a thin transported Shell command over creating a new Go or Python product.
+9. Name Shell script files using hyphen style: `my-script.sh`, not `my_script.sh`.
 
 ## Diagnostics And Logging
 

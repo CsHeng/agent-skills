@@ -1,6 +1,6 @@
 ---
 name: python-guidelines
-description: "Use for Python code, scripts, and services: uv, ruff, ty or mypy, pytest, packaging, CLI/service patterns, and review."
+description: "Use for Python code, scripts, and services: uv, ruff, ty or mypy, pytest, packaging, CLI/service patterns, controller or remote runtime contracts, and review."
 ---
 
 # Python Guidelines
@@ -14,8 +14,17 @@ Apply Python coding and tooling policy to Python files, scripts, CLIs, services 
 - Set `UV_PROJECT_ENVIRONMENT` to an explicit, project-specific path outside the source tree, following the project or host's existing storage contract. Do not let project operations fall back to an in-tree `.venv`, or inherit another project's environment.
 - Environment creation is separate from use. Create only a needed, task-owned environment; an explicit `uv venv "$UV_PROJECT_ENVIRONMENT"` target avoids working-directory ambiguity. Creation can replace an existing environment, so it is not a routine preflight before each check. Do not move, recreate or delete an existing environment merely to apply this guidance.
 - Keep tool caches and bytecode outside the source tree. `UV_CACHE_DIR` controls uv's package/build cache, not the project environment. Use `PYTHONDONTWRITEBYTECODE=1` and a defensive `PYTHONPYCACHEPREFIX`; configure Ruff and pytest caches explicitly when the environment is unknown.
+- Caches and environments outside the tree do not by themselves protect the checkout: coverage data, test writes, and ad-hoc scratch can still appear as untracked or ignored files. After verification, inspect `git status --ignored` for task-owned contamination and remove owned scratch and per-run state.
 
 For cache configuration, one-off dependencies and pytest preflight, read [Tooling And Environments](references/tooling-and-environments.md). That reference supplies setup details, not a second environment policy.
+
+## Controller And Remote Execution
+
+A configuration-management controller's temporary module execution, such as the Python module Ansible writes and runs on a managed host, belongs to the controller. Do not vendor, reimplement, or count that mechanism as this project's Python runtime.
+
+- Prefer the controller's built-in modules, local rendering, or thin transported Shell for a simple one-shot remote action; do not introduce a Python package or service only to carry one remote invocation.
+- For an approved Go replacement of a persistent remote tool, build on the controller or CI for the target OS and architecture and distribute the binary or image; do not compile on the managed target. A retained Python application may use its declared managed interpreter/environment or a prebuilt image. Do not introduce Python into an explicitly constrained native target.
+- When Python crosses a host or controller boundary, state the runtime and output contract explicitly: interpreter and dependency source, invocation, stdout result, and exit behavior.
 
 ## Coding Requirements
 

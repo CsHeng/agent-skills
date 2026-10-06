@@ -1,6 +1,6 @@
 ---
 name: shell-guidelines
-description: "Apply Shell policy to persisted scripts, CI or automation, non-trivial command fragments, and quoting, interpreter, portability, or safety reviews. Use as a conditional language overlay; routine single-layer shell commands do not require activation, and this skill never owns the lifecycle."
+description: "Apply Shell policy to persisted scripts, CI or automation, constrained POSIX or BusyBox targets, non-trivial command fragments, and quoting, interpreter, portability, or safety reviews. Use as a conditional language overlay; routine single-layer shell commands do not require activation, and this skill never owns the lifecycle."
 ---
 
 # Shell Guidelines
@@ -15,6 +15,8 @@ In-scope:
 - Non-trivial Shell fragments whose quoting, expansion, interpreter, pipeline, or failure behavior affects correctness
 - Editing or creating shell scripts (`.sh`, bash/zsh scripts)
 - CI and local automation scripts
+- Shell for an explicitly constrained native runtime such as OpenWrt BusyBox ash or a target contract fixed to POSIX `sh`
+- Shell that must affect the invoking shell, such as a sourced environment, profile, or launcher
 - Code review and syntax audit for shell files
 
 Out-of-scope:
@@ -31,7 +33,7 @@ Out-of-scope:
 ## Deterministic Steps
 
 1. Choose the shell for the target environment
-   - POSIX: `#!/bin/sh`
+   - POSIX or BusyBox ash: `#!/bin/sh`; for ash stay within the ash/POSIX subset and do not introduce Python or Go when the target contract is fixed to that constrained runtime
    - CI/Linux bash: `#!/usr/bin/env bash`
    - zsh scripts: `#!/usr/bin/env zsh`
    - macOS: `/bin/bash` is typically 3.2; if you rely on Bash 4+ features (e.g. `mapfile/readarray`, associative arrays), ensure Homebrew Bash is used via `PATH` or use the host-appropriate absolute shebang (`/opt/homebrew/bin/bash` on Apple Silicon, `/usr/local/bin/bash` on Intel) for internal scripts.
@@ -72,6 +74,7 @@ PREFERRED: Do not emulate this pattern in POSIX `sh`; it has no portable `ERR` t
 
 ### Portability
 REQUIRED: If the target is POSIX `sh`, use only POSIX syntax (`[ ]`, no `[[ ]]`, no arrays).
+REQUIRED: Preserve an explicitly constrained native target's BusyBox ash or POSIX `sh` contract; a language preference is not permission to introduce Python or Go. An incidental minimal base image does not itself establish that constraint.
 PREFERRED: Do not assume macOS `/bin/bash` supports modern bash features; if you use bash-4+ features (e.g. `mapfile/readarray`, associative arrays), require bash 4+ explicitly (shebang/runtime) or provide a compatibility fallback.
 PROHIBITED: Use zsh-only features in scripts intended for bash/sh environments.
 
@@ -81,6 +84,9 @@ PROHIBITED: Implement multi-step structured data parsing in shell when a higher-
 
 ### Persisted Script Escalation
 PREFERRED: Revisit the implementation language through `language-decision-tree` when a persisted Shell script accumulates multi-step structured parsing, persistent state, complex retry or recovery, concurrency, multi-host distribution, embedded languages, or runtime and dependency management.
+PREFERRED: Keep Shell when the script is simple, affects the invoking shell, or runs on a constrained native runtime (BusyBox ash or POSIX `sh`). Script length or accumulated state alone is not an escalation signal; escalation requires an approved boundary plus one of the concrete signals above.
+PREFERRED: For a simple one-shot remote action, prefer the controller's built-in module, local rendering, or a thin transported Shell command over creating a new Go or Python product.
+PREFERRED: Preserve an existing working Shell implementation unless an approved design changes its language boundary; a nearby file extension or the script's age does not authorize a rewrite.
 PREFERRED: Prefer Go for long-lived operational tooling when a single binary, cross-platform delivery, stable CLI contract, or reduced runtime state is a material benefit. This is a preference, not a mandatory replacement language; repository and ecosystem constraints still control the decision.
 PROHIBITED: Split one reusable business rule across Shell and another implementation language.
 
@@ -126,6 +132,8 @@ shellcheck path/to/script.sh
 - No declarations or assignments using prohibited Shell variable names
 - No `eval`/unsafe execution of user input
 - Variables quoted; inputs validated
+- constrained native targets stay on their native shell and introduce no new runtime
+- simple or parent-shell-affecting scripts remain Shell without an approved language change
 - `shellcheck` clean (when available)
 
 ## Error Handling Examples

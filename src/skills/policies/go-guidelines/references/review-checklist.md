@@ -37,7 +37,7 @@ Add `go test -race ./...` only when concurrent behavior or shared state is in th
 - goroutine, channel, timer, and shutdown lifecycle
 - interfaces introduced only at justified consuming boundaries
 - tests that exercise behavior rather than implementation trivia
-- build output and generated files staying inside project policy
+- disposable per-run build output, coverage and test scratch staying in declared scratch and cleaned when no longer needed; durable generated source, declared delivery artifacts and bounded retained caches follow their repository ownership policy rather than blanket cleanup
 
 ## CLI Review Concerns
 

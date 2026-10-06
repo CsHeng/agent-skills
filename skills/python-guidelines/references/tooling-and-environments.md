@@ -48,3 +48,5 @@ Plain `python3` may assume only the standard library. Do not rely on third-party
 - For stdlib-only `uv run --no-project --script` entrypoints, omit the project environment setting unless that environment is actually needed. Still apply bytecode/cache isolation when importing repository files.
 
 For non-trivial scratch logic, write a reviewable script in a task-owned external scratch location instead of nesting source inside shell quoting. Syntax-check it, pass needed dependencies explicitly and remove task-owned temporary material after use. Cache reuse does not grant permission to retain an entire one-shot environment indefinitely.
+
+A project or one-off environment stored outside the tree still does not protect the checkout. Test runs, ad-hoc scripts, and coverage tooling can create untracked or ignored files under the project; inspect `git status --ignored` after verification and remove task-owned scratch and per-run state, without deleting another owner's retained cache.

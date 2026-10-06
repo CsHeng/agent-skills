@@ -75,11 +75,13 @@ Use golden tests only for stable text such as help, completion, or generated con
 ## Build And Delivery
 
 - Use `go build` with an explicit `-o` path for main packages so validation does not leave binaries in the repository root.
-- Write local artifacts to an ignored `dist/`, `bin/`, or repo-external temporary directory according to project policy.
+- Write local artifacts to the repository-declared scratch or output directory, which may be an ignored in-repo `tmp/`, `dist/`, or `bin/`, or a location outside the tree. Use the platform or global temporary directory only when the repository declares none; do not assume an external-only scratch root.
+- Treat `go run` as a developer/CI/controller compile-and-execute convenience, including on a remote development host. Managed and production execution targets run a prebuilt binary or image and never need `go run`, a Go module download, or a source checkout.
+- Build for the target `GOOS` and `GOARCH` on the controller or CI host, then distribute that binary or image to the target.
 - Use `-trimpath` when reproducible path-independent build metadata matters.
 - Inject version, commit, and build date through project-owned build flags when operators need provenance.
-- Deploy prebuilt binaries to production; do not make production depend on `go run`, module downloads, or a source checkout.
 - Add GoReleaser only when release archives, checksums, multiple GOOS/GOARCH targets, package-manager publishing, SBOMs, or signing justify its configuration surface.
+- After verification, remove no-longer-needed per-run outputs, profiles and test scratch, preserve declared delivery artifacts and bounded retained caches, and confirm no new unexpected checkout pollution. Do not delete another owner's pre-existing files.
 
 ## Checklist
 
@@ -89,4 +91,6 @@ Use golden tests only for stable text such as help, completion, or generated con
 - completion is side-effect free and uses shared data sources
 - state-changing commands define preview, confirmation, partial failure, and recovery behavior
 - tests cover core behavior and the material process contract
-- `go build` writes to an explicit artifact path
+- `go build` writes to an explicit artifact path and the implicit binary is absent from the checkout
+- build and test artifacts use the declared scratch and are cleaned up
+- delivery uses a prebuilt binary or image for the target platform
