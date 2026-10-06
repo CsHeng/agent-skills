@@ -79,6 +79,14 @@ This Skill owns the local implementation dependency decision, not the material o
 - Validate external input at the owned boundary and handle failures that can occur under the declared runtime contract.
 - Measure before optimizing and keep performance work tied to an observed bottleneck or explicit objective.
 
+## Plan-Independent Naming
+
+- Name repository implementation assets for stable domain concepts, responsibilities, or verified behavior from the first write, not the current plan's task IDs, stage codes, or review rounds. This includes files, directories, modules, functions, types, variables, tests, fixtures, helper scripts, build targets, configuration keys, and environment variables; calling repository code temporary does not exempt it.
+- Keep plan identifiers in plans, progress records, and acceptance mappings rather than implementation names. One-shot experiments outside the repository may use them, but rename plan-derived implementation identifiers before promoting that code into the repository.
+- Ask whether a name would still explain its responsibility if the current plan disappeared or its tasks were reordered. For example, prefer `autofallback_recovery_test.go` and `servingRecoveryBudget` over `g0_recovery_test.go` and `g0ServingRecoveryBudget`.
+- Judge meaning, not spelling: genuine domain phases and protocol terms are valid names even when they resemble plan labels. Preserve existing compatibility-bound names unless a scoped migration is authorized; identify the compatibility reason rather than silently renaming an interface.
+- Apply this rule to newly introduced or changed implementation names within the approved scope. It does not authorize repository-wide cleanup of historical names or a lexical ban on strings such as `g0` or `phase`.
+
 ## Repository-Owned Quality Gates
 
 - Follow quality gates already owned by the target repository, approved plan, CI contract, or release policy before introducing a new metric.

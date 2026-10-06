@@ -13,4 +13,6 @@ A blocking candidate must be caused or newly activated by the current diff, viol
 
 Check both omitted main goals or required oracles and overstrong invented gates. An authorized best-effort secondary adaptation with evidence is not a defect; relabeling a required result as secondary, deleting its oracle, or replacing a specified library without substitution authority is. Do not demand an exhaustive secondary-feature catalog, a per-file review loop, or user-supplied execution products the change should have generated.
 
+Check newly introduced or changed implementation identifiers for leakage of plan task IDs, stage codes, or review rounds under the plan-independent naming rule in `development-standards`, including tests, fixtures, and helper scripts. Tie a candidate to evidence that the name depends on the current plan rather than explaining domain responsibility; a string match alone is not a finding. Honor genuine domain terminology and compatibility boundaries, and do not expand the review into historical repository-wide renaming.
+
 Return `pass`, `candidate-findings`, or `manual-decision-required`. Each candidate includes location, evidence, impact, causal class, violated requirement, confidence, smallest in-scope fix, and recommended disposition. The calling implementing agent independently adjudicates every candidate and owns any accepted repair.
