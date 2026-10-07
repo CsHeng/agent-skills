@@ -44,7 +44,7 @@ This repository authors and distributes the `coding` collection of portable Agen
 After changing Skills, contracts, tests, or architecture docs, run:
 
 ```bash
-python3 scripts/generate-workflow-diagrams.py
+bash scripts/render-diagrams.sh
 bash scripts/check.sh
 ```
 

@@ -4,6 +4,9 @@ AGENT_SKILLS_DIR = "{{ config_root | dirname }}/agent-skills"
 PI_EXTENSIONS_DIR = "{{ config_root | dirname }}/pi-extensions"
 AGENT_TMP_ROOT = "{{ env.HOME }}/tmp/agent-arch"
 
+[tools]
+"github:plantuml/plantuml" = "1.2026.8"
+
 [tasks.check]
 description = "Check this independent Skills product"
 run = "bash scripts/check.sh"

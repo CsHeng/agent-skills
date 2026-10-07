@@ -1,10 +1,9 @@
 @startuml
+!pragma layout smetana
 title Portable Skill composition
 top to bottom direction
-rectangle "Compatible agent host
-(loop, tools, session)" as host
-rectangle "Active coding agent
-(selection and judgment)" as agent
+rectangle "Compatible agent host\n(loop, tools, session)" as host
+rectangle "Active coding agent\n(selection and judgment)" as agent
 rectangle "Primary Skill" as primary
 rectangle "Session overlay" as session
 rectangle "Discipline / policy overlay" as policy

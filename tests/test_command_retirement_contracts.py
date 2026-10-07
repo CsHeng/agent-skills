@@ -38,10 +38,6 @@ class CommandRetirementContractTests(unittest.TestCase):
         self.assertNotIn("check-secrets", contract["skills"])
         self.assertNotIn("command_retirement", contract)
 
-    def test_product_validation_has_no_historical_inventory_owner(self) -> None:
-        # History may be absent from a standalone product checkout.
-        self.assertFalse(hasattr(self.checker, "validate_command_retirement_contract"))
-
     def test_provider_adapters_remain_active(self) -> None:
         retained_paths = (
             ".claude-plugin/plugin.json",

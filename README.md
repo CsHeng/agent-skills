@@ -28,7 +28,7 @@ The active coding agent selects one primary response owner and any useful overla
 ## Maintain And Check
 
 ```bash
-python3 scripts/generate-workflow-diagrams.py
+bash scripts/render-diagrams.sh
 bash scripts/check.sh
 ```
 

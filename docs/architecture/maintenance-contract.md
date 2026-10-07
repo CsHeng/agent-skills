@@ -2,7 +2,7 @@
 
 `skills/<public-id>/` is the single authored and installable tree. `contracts/skills.toml` owns public IDs, activation mode, default role, mutation guards, and real semantic dependencies; directory paths follow the public IDs. Provider metadata, including effective activation policy, is authored directly alongside each Skill. The installed routing contract owns trigger cases, support routes, and response composition; it has no phase, mode, or gate authority.
 
-The diagram generator maintains architecture views. Static checks inspect the authored tree directly for parseability, inventory, discovery metadata, reference closure, documentation, lint, types, and tests. There is no second tracked Skill tree, generated inventory index, or source/distribution parity gate. Checks do not validate workflow artifacts, enforce a lifecycle, or execute agent behavior.
+Authored `.puml` sources and the Bash `scripts/render-diagrams.sh` entrypoint maintain architecture views through real PlantUML rendering. Static checks inspect the authored tree directly for parseability, inventory, discovery metadata, reference closure, documentation, lint, types, and tests. There is no second tracked Skill tree, generated inventory index, or source/distribution parity gate. Checks do not validate workflow artifacts, enforce a lifecycle, or execute agent behavior.
 
 Global installed content changes only through explicit installation or update. Source editing, Git operations, diagram generation, and maintenance checks do not refresh it. See [install-surface](install-surface.md) for local-path refresh, remote updates, and removal; installation state remains consumer-owned.
 

@@ -1,6 +1,6 @@
 # Product Documentation
 
-`docs/architecture/`, `quickstart.md` and current product decisions own self-contained Skill use and maintenance truth. Generated `.puml` and `.svg` semantic views remain repository-owned; do not edit them by hand.
+`docs/architecture/`, `quickstart.md` and current product decisions own self-contained Skill use and maintenance truth. Author semantic composition diagrams as `.puml` under `docs/architecture/diagrams/` and regenerate tracked `.svg` projections with `bash scripts/render-diagrams.sh`; do not edit generated SVG by hand.
 
 Shared boundaries and all new designs/plans belong to `$AGENT_ARCHITECTURE_DIR/docs/`; use its `plans/skills/` and `evaluations/skills/` domains for this product. Historical originals live in its `archived/agent-skills/` tree. Product checks must not require these external records or local `docs/plans` files.
 

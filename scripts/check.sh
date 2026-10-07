@@ -31,7 +31,7 @@ fi
 
 run_gate contract-package "$check_python" scripts/check-contracts.py
 run_gate install-surface "$check_python" scripts/check-install-surface.py
-run_gate diagrams "$check_python" scripts/generate-workflow-diagrams.py --check
+run_gate diagrams bash scripts/render-diagrams.sh --check
 run_gate ruff "$check_uv" run ruff check scripts/skill_portability.py scripts/check-install-surface.py
 run_gate ty "$check_uv" run ty check scripts/skill_portability.py scripts/check-install-surface.py
 run_gate pytest "$check_uv" run pytest -o "cache_dir=$PYTEST_CACHE_DIR"

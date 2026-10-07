@@ -4,6 +4,7 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -61,6 +62,7 @@ class StandaloneCheckTests(unittest.TestCase):
                 with (
                     patch.object(self.module, "copy_repository") as copy,
                     patch.object(self.module, "run", side_effect=capture_run),
+                    patch.object(self.module, "resolve_plantuml", return_value="/usr/bin/false"),
                     patch.dict(os.environ, {"CODEX_HOME": "ambient-secret", "PI_API_KEY": "ambient-secret"}),
                     redirect_stdout(output),
                 ):
@@ -74,7 +76,17 @@ class StandaloneCheckTests(unittest.TestCase):
                 for env in environments:
                     self.assertEqual(
                         set(env),
-                        {"HOME", "PATH", "TMPDIR", "XDG_CACHE_HOME", "PI_CONFIG_DIR", "PI_CODING_AGENT_DIR", "STANDALONE_CHECK_ACTIVE", "PYTHONDONTWRITEBYTECODE"},
+                        {
+                            "HOME",
+                            "PATH",
+                            "TMPDIR",
+                            "XDG_CACHE_HOME",
+                            "PI_CONFIG_DIR",
+                            "PI_CODING_AGENT_DIR",
+                            "STANDALONE_CHECK_ACTIVE",
+                            "PYTHONDONTWRITEBYTECODE",
+                            "RENDER_DIAGRAMS_PLANTUML",
+                        },
                     )
                     self.assertEqual(env["HOME"], str(root / "home"))
                     self.assertEqual(env["XDG_CACHE_HOME"], str(root / "cache"))
@@ -83,6 +95,21 @@ class StandaloneCheckTests(unittest.TestCase):
                     self.assertEqual(env["TMPDIR"], str(root / "tmp"))
                     self.assertEqual(env["PATH"].split(os.pathsep)[0], str(root / "bin"))
                 self.assertFalse(root.exists())
+
+    def test_main_runs_disposable_standalone_check_with_plantuml_handoff(self) -> None:
+        if os.environ.get("STANDALONE_CHECK_ACTIVE") == "1":
+            self.skipTest("recursive standalone execution")
+        if self.module.resolve_plantuml() is None:
+            self.skipTest("PlantUML unavailable")
+        if shutil.which("uv") is None:
+            self.skipTest("uv unavailable")
+        output = io.StringIO()
+        with redirect_stdout(output):
+            status = self.module.main()
+        report = json.loads(output.getvalue())
+        self.assertEqual(0, status, report)
+        self.assertEqual("pass", report["checks"])
+        self.assertTrue(report["pi_blocked"])
 
 
 if __name__ == "__main__":

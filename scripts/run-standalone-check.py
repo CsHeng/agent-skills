@@ -50,6 +50,26 @@ def copy_repository(source: Path, destination: Path) -> None:
         shutil.copy2(path, target)
 
 
+def resolve_plantuml() -> str | None:
+    for key in ("RENDER_DIAGRAMS_PLANTUML", "PLANTUML"):
+        value = os.environ.get(key)
+        if value and Path(value).is_file():
+            return value
+    if shutil.which("mise"):
+        completed = subprocess.run(
+            ["mise", "which", "plantuml"],
+            cwd=REPO_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if completed.returncode == 0:
+            path = completed.stdout.strip()
+            if path:
+                return path
+    return shutil.which("plantuml")
+
+
 def run(command: list[str], cwd: Path, env: dict[str, str]) -> None:
     completed = subprocess.run(
         command, cwd=cwd, env=env, check=False, capture_output=True
@@ -99,6 +119,11 @@ def main() -> int:
             report["pi_blocked"] = blocked.returncode == 97
             if not report["pi_blocked"]:
                 raise RuntimeError("provider isolation failed")
+
+            plantuml = resolve_plantuml()
+            if not plantuml:
+                raise RuntimeError("PlantUML unavailable for standalone check")
+            env["RENDER_DIAGRAMS_PLANTUML"] = plantuml
 
             run(["git", "init", "-q"], checkout, env)
             run(["git", "add", "-A"], checkout, env)
