@@ -12,7 +12,7 @@ Manage handoff prompts between two main coding-agent sessions. Main A is the cur
 - Require the selected coding CLI: `pi`, `codex`, `claude`, `cursor-agent`, `grok` or Antigravity (`antigravity` / `agy`). Accept an unambiguous user-facing alias and resolve its current Herdr support through `$herdr`.
 - Use the current conversation's established plan unless the user supplies another. Include conversation-only decisions and any uncommitted context the other session needs; an inaccessible path is not a supplied plan.
 - `model` and `thinking` are optional. Preserve the selected CLI's defaults when absent. Resolve explicit overrides through current tool guidance; do not silently substitute a model, discard unsupported thinking or change persistent client settings to force an invocation override. Report an unsupported request for resolution.
-- Review defaults on. `rounds` is a positive integer, default `3`. One round is B's implementation or repair followed by A's review, including the first implementation. Internal subagent turns, tests, self-repairs, waits and clarifications do not consume outer rounds. An explicit no-review request uses one implementation return without claiming review.
+- Review defaults on. `rounds` is a positive integer, default `3`. One round is B's implementation or repair followed by A's review, including the first implementation. This budget limits the Herdr exchange, not completion of the authorized task. Internal subagent turns, tests, self-repairs, waits and clarifications do not consume outer rounds. An explicit no-review request uses one implementation return without claiming review.
 - Use native skip-permission or allow-all execution for the selected CLI and each main's subagents. Requesting this mode authorizes direct execution of the established task; do not add another plan-approval exchange. Carry any project-specific gate instruction as ordinary handoff context, without a generic permission protocol. Keep the user's actual task and explicit exclusions intact.
 
 ## Prepare The Main Sessions
@@ -25,7 +25,7 @@ Default to the current checkout and alternate implementation with review. While 
 
 Use a suitable explicitly named pane or create one adjacent pane through `$herdr`, retaining the caller's focus. Start B in the intended working directory with the selected settings and retain its actual identity for subsequent handoffs. Record which pane and agent this invocation created. Never replace unrelated work merely to obtain an available pane.
 
-B is a main session: it owns implementation choices, verification and internal delegation for the supplied plan. A owns the outer handoff loop, its review and the final response. Neither main needs the other's subagent registry. A may also delegate review work; a review evaluator remains read-only.
+During delegated rounds, B owns implementation choices, verification and internal delegation for the supplied plan as a main session. A owns the outer handoff loop, its review and the final response. Neither main needs the other's subagent registry. A may also delegate review work; a review evaluator remains read-only.
 
 ## Implement, Review And Continue
 
@@ -53,8 +53,12 @@ Prefer the same live main sessions throughout. If B exits, use a supported nativ
 
 ## Finish
 
-Finish when the requested implementation and verification are supported and review has no unresolved supported finding. Report the actual implementation result, review outcome, rounds used and any remaining gap. With review disabled, identify that limit explicitly.
+Finish when the requested implementation and verification are supported and review has no unresolved supported finding. Report the actual implementation result, review coverage, rounds used, any takeover by A and any remaining gap. With review disabled, identify that limit explicitly.
 
-At the round limit, preserve the work and report remaining findings and the exhausted budget. Do not claim success or silently start another round through a replacement agent or local takeover. A genuine missing decision can stop the affected work earlier; ordinary test failures can be repaired within B's implementation turn.
+At the round limit, end the exchange with B and assess the remaining work. Budget exhaustion alone is not a blocker. For supported, recoverable findings within the existing scope and authority, prefer A taking over with `$implement-change` to finish and verify the work. Honor any explicit overall task limit or instruction forbidding takeover; do not reset the Herdr budget by replacing B.
+
+Before A starts writing, settle B and its writing subagents and reconcile the actual changes, unresolved findings and verification evidence. A now owns implementation and finding adjudication for the remainder. Verify the changed candidate and obtain independent review when required by the implementation policy; an earlier review does not establish that A's later changes passed. This continuation does not reopen the exhausted main-to-main loop.
+
+A genuine blocker, missing decision, material plan or design change, or lack of a reasonable recovery path can stop the affected work. Preserve progress and report the actual obstacle and remaining findings. Ordinary repairable defects or test failures remain implementation work, including after the outer round budget is exhausted.
 
 Use `$herdr`'s ownership rules to close only resources created for this invocation after successful completion. Keep unfinished work and useful continuation context. For a reused user pane, preserve that pane and its unrelated state. No commit, worktree deletion or installation is necessary merely to return a result.
