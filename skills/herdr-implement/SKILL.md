@@ -9,7 +9,7 @@ Manage handoff prompts between two main coding-agent sessions. Main A is the cur
 
 ## Inputs And Defaults
 
-- Require the selected coding CLI: `pi`, `codex`, `claude`, `cursor-agent` or `grok`. Accept an unambiguous user-facing alias and resolve its current Herdr support through `$herdr`.
+- Require the selected coding CLI: `pi`, `codex`, `claude`, `cursor-agent`, `grok` or Antigravity (`antigravity` / `agy`). Accept an unambiguous user-facing alias and resolve its current Herdr support through `$herdr`.
 - Use the current conversation's established plan unless the user supplies another. Include conversation-only decisions and any uncommitted context the other session needs; an inaccessible path is not a supplied plan.
 - `model` and `thinking` are optional. Preserve the selected CLI's defaults when absent. Resolve explicit overrides through current tool guidance; do not silently substitute a model, discard unsupported thinking or change persistent client settings to force an invocation override. Report an unsupported request for resolution.
 - Review defaults on. `rounds` is a positive integer, default `3`. One round is B's implementation or repair followed by A's review, including the first implementation. Internal subagent turns, tests, self-repairs, waits and clarifications do not consume outer rounds. An explicit no-review request uses one implementation return without claiming review.
