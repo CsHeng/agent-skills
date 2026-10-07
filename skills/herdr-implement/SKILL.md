@@ -9,21 +9,21 @@ Manage handoff prompts between two main coding-agent sessions. Main A is the cur
 
 ## Inputs And Defaults
 
-- Require the selected coding CLI: `pi`, `codex`, `claude`, `cursor-agent` or `grok`. Accept an unambiguous user-facing alias; Herdr's kind for Cursor Agent is `cursor`.
+- Require the selected coding CLI: `pi`, `codex`, `claude`, `cursor-agent` or `grok`. Accept an unambiguous user-facing alias and resolve its current Herdr support through `$herdr`.
 - Use the current conversation's established plan unless the user supplies another. Include conversation-only decisions and any uncommitted context the other session needs; an inaccessible path is not a supplied plan.
-- `model` and `thinking` are optional. Omit their native options when absent, preserving the selected CLI's defaults. Read the selected client's entry in [CLI Options](references/cli-options.md) and verify current help when needed. Do not silently substitute an explicit model or discard unsupported thinking.
+- `model` and `thinking` are optional. Preserve the selected CLI's defaults when absent. Resolve explicit overrides through current tool guidance; do not silently substitute a model, discard unsupported thinking or change persistent client settings to force an invocation override. Report an unsupported request for resolution.
 - Review defaults on. `rounds` is a positive integer, default `3`. One round is B's implementation or repair followed by A's review, including the first implementation. Internal subagent turns, tests, self-repairs, waits and clarifications do not consume outer rounds. An explicit no-review request uses one implementation return without claiming review.
 - Use native skip-permission or allow-all execution for the selected CLI and each main's subagents. Requesting this mode authorizes direct execution of the established task; do not add another plan-approval exchange. Carry any project-specific gate instruction as ordinary handoff context, without a generic permission protocol. Keep the user's actual task and explicit exclusions intact.
 
 ## Prepare The Main Sessions
 
-Read `$herdr` and verify its environment requirement before control commands. If its installed Skill is unavailable, obtain the tool guidance from `herdr --skill`. Use the installed CLI's command help and returned identifiers, not guessed pane IDs or controls.
+Read the current `$herdr` Skill and satisfy its environment requirements before operating Herdr. That Skill owns Herdr operations and discovery; the selected coding agent's current guidance owns its native launch, permission, model and thinking options. Resolve invocation details from those sources rather than relying on remembered syntax or version-specific mappings.
 
-This main-to-main mode uses native `agent start`, `prompt`, `wait`, `get` and `read`. Its current-checkout and automatic-approval defaults govern this invocation; generic managed-worker handoff defaults do not add a bridge, mandatory worktree, session-ID initialization turn or another permission question.
+Use Herdr's existing capabilities to launch, communicate with and observe the main sessions. This workflow's current-checkout and automatic-approval defaults govern the invocation; generic managed-worker defaults do not require a custom bridge, worktree, initialization turn or another permission question.
 
 Default to the current checkout and alternate implementation with review. While B writes and checks, A leaves those files alone. Before A reviews, B settles its writing and write-producing subagents. Choose a worktree only for an actual isolation need or explicit request, using the existing worktree method. A dirty checkout alone does not require isolation or a preliminary commit.
 
-Use a suitable explicitly named pane or create one adjacent pane through `$herdr`, retaining the caller's focus. Start B with a useful unique name, the intended cwd and the selected native options. Record which pane and agent this invocation created. Never replace unrelated work merely to obtain an available pane.
+Use a suitable explicitly named pane or create one adjacent pane through `$herdr`, retaining the caller's focus. Start B in the intended working directory with the selected settings and retain its actual identity for subsequent handoffs. Record which pane and agent this invocation created. Never replace unrelated work merely to obtain an available pane.
 
 B is a main session: it owns implementation choices, verification and internal delegation for the supplied plan. A owns the outer handoff loop, its review and the final response. Neither main needs the other's subagent registry. A may also delegate review work; a review evaluator remains read-only.
 
@@ -35,7 +35,11 @@ An initial prompt can say:
 
 > Use `$implement-change` to implement this established plan directly: [plan and relevant context]. Use native subagents as you judge useful, with skip permissions. Implement and verify, then return changes, checks and unresolved questions for my `$review-implementation`. Settle writing before returning.
 
-Wait and inspect through `$herdr`. An idle/done state or successful process is an observation point, not an accepted result. Read the actual return and changed files. A transport timeout does not cancel B or start another implementation; inspect its current state and continue waiting when it is still working. If terminal history truncates the result, use `$herdr`'s full-result-file fallback.
+Choose coordination through current `$herdr` guidance and the host's available capabilities. When A has useful independent work, submit B's task without immediately waiting and continue that work. Prefer available event notifications that can reach A. A hook that reports B's state does not by itself deliver a message into A's conversation or resume its turn.
+
+Before A ends its current turn in reliance on an asynchronous return, establish how B's result or need for input will reach the intended main session and resume this handoff. Without that supported return path, keep coordination active. When no independent work remains, native waiting is appropriate; observe both completion and requests for attention. Do not substitute repeated status polling for available notifications or require a custom notification service merely to run this workflow.
+
+A notification, ready state or successful process is an observation point, not an accepted result. Read the actual return and changed files before reviewing. A transport timeout does not cancel B or start another implementation; inspect its current state and continue observing when it is still working. Recover any truncated result through the complete-output access supported by current `$herdr` guidance.
 
 When B is blocked, read the question before responding. Resolve routine execution or approval prompts using the selected automatic-approval mode and existing task instructions. Return to the user only for an actual missing decision or unavailable prerequisite; do not blindly answer an unknown dialog.
 
@@ -45,7 +49,7 @@ Review the stable candidate with `$review-implementation`, checking the real dif
 
 B judges findings against the plan and evidence; it does not apply every suggestion mechanically. A considers any dispute in the next review. Preserve the original goals and still-valid decisions rather than repeating a full design or audit on every round.
 
-Prefer the same live main sessions throughout. If B exits, use a supported native continuation with its explicit session identity, or clearly describe reconstruction from retained context. Never resume an arbitrary latest session. A remains active while coordinating; this Skill does not promise to wake an ended conversation.
+Prefer the same live main sessions throughout. If B exits, use a supported native continuation with its explicit session identity, or clearly describe reconstruction from retained context. Never resume an arbitrary latest session. On A's continuation, reconcile the pending handoff, actual B session and rounds already used before sending more work; a notification does not reset the round budget.
 
 ## Finish
 
