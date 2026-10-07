@@ -37,7 +37,7 @@ class CheckOrchestrationTests(unittest.TestCase):
         fake_bin.mkdir()
         self.write_fake_command(fake_bin, "python3")
         self.write_fake_command(fake_bin, "uv")
-        env = os.environ | {
+        env = {
             "HOME": str(temporary / "home"),
             "PATH": f"{fake_bin}{os.pathsep}{os.environ['PATH']}",
             "ORCHESTRATION_LOG": str(temporary / "commands.log"),
@@ -74,17 +74,15 @@ class CheckOrchestrationTests(unittest.TestCase):
                 self.assertEqual(
                     [
                         "python3:scripts/check-contracts.py",
-                        "python3:scripts/flatten-skills.py --target root-flat --check",
                         "python3:scripts/check-install-surface.py",
-                        "python3:scripts/generate-skills-index.py --check",
                         "python3:scripts/generate-workflow-diagrams.py --check",
-                        "uv:run ruff check scripts/skill_distribution.py scripts/flatten-skills.py "
+                        "uv:run ruff check scripts/skill_portability.py "
                         "scripts/check-install-surface.py",
-                        "uv:run ty check scripts/skill_distribution.py scripts/flatten-skills.py "
+                        "uv:run ty check scripts/skill_portability.py "
                         "scripts/check-install-surface.py",
                         "uv:run pytest -o cache_dir="
                         f"{temporary / 'home/.cache/pytest/agent-skills'}",
-                        "python3:src/skills/disciplines/organize-docs/scripts/"
+                        "python3:skills/organize-docs/scripts/"
                         "normalize-markdown-prose.py "
                         f"--root {REPO_ROOT} --mode check --exclude archived",
                     ],
@@ -98,7 +96,7 @@ class CheckOrchestrationTests(unittest.TestCase):
                     f"{temporary / 'home/.cache/pytest/agent-skills'}"
                 )
                 self.assertEqual(
-                    [expected_cache] * 9,
+                    [expected_cache] * 7,
                     [line for line in log if line.startswith("cache:")],
                 )
 
@@ -106,13 +104,13 @@ class CheckOrchestrationTests(unittest.TestCase):
         with self.temporary_directory() as directory:
             temporary = Path(directory)
             result = self.run_check(
-                temporary, fail_match="scripts/generate-skills-index.py --check"
+                temporary, fail_match="scripts/check-install-surface.py"
             )
             self.assertEqual(23, result.returncode)
-            self.assertIn("check: index", result.stderr)
+            self.assertIn("check: install-surface", result.stderr)
             commands = (temporary / "commands.log").read_text(encoding="utf-8")
             self.assertIn("python3:scripts/check-contracts.py", commands)
-            self.assertIn("python3:scripts/generate-skills-index.py --check", commands)
+            self.assertIn("python3:scripts/check-install-surface.py", commands)
             self.assertNotIn("generate-workflow-diagrams.py", commands)
             self.assertNotIn("uv:run", commands)
 

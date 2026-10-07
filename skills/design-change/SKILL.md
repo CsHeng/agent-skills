@@ -5,59 +5,62 @@ description: "Resolve material design decisions or produce a requested change de
 
 # Design Change
 
-Resolve the material change boundary that is still undecided, or document established decisions when the user requests a design artifact.
+Resolve the decision needed to achieve the user's outcome with a maintainable solution, or document established decisions when a design artifact is requested. Judge options by useful behavior and the operating, deployment, and maintenance burden they leave behind.
 
 ## Use This Skill When
 
 - the user explicitly requests a design artifact
 - a material decision about goals, non-goals, acceptance, ownership, compatibility, or recovery remains unresolved
 
-Do not use it merely because a task mentions architecture or may touch stable truth. An authorized bounded change or approved plan can enter implementation directly; do not route it through this Skill to obtain a `no-design` credential. Code investigation, local technical choices, and already-authorized best-effort secondary adaptation do not automatically require a new design. Design does not need implementation-depth investigation or a catalog of every secondary feature that might later be adapted or omitted. If execution exposes one real boundary conflict, resolve that decision and return to the original task rather than restarting every phase. After the user answers the blocking question, resume the original authorized work; do not end on confirmation or a promise to continue. An explicit request to document settled design decisions still belongs here, but does not authorize subsequent implementation.
+An authorized bounded change or approved plan can enter implementation directly. Code investigation, local technical choices, and in-scope simplification do not require a design phase or a `no-design` credential. Resolve one newly exposed boundary conflict and return to the original task; do not restart every phase or investigate every possible secondary feature.
 
-Do not use it for read-only project explanation or a standalone review request.
+A request to document settled design decisions does not authorize subsequent implementation. Read-only project explanation and standalone review use their own workflows.
+
+## Outcomes And Constraints
+
+Start with the user's problem, the behavior that would resolve it, and the constraints that protect a real interest. Before proposing a mechanism, compatibility promise, or verification requirement, establish the current need and compare its total maintenance cost with a simpler way to meet that need. Apply `development-standards` as the shared baseline; this is ordinary design judgment, not a separate simplification audit or form.
+
+Separate those requirements from the model's proposed means. A guard, compatibility layer, checksum, receipt, task split, or verification method does not become an indispensable user requirement merely because the model wrote it into a design and received general approval. Preserve explicitly user-fixed choices, required behavior, applicable repository contracts, and actual safety and authority boundaries; revise derived mechanisms when a simpler approach still satisfies them.
+
+For a migration or replacement, compare the burden removed with the code, tests, dependencies, deployment steps, and maintenance introduced. Include retaining the current implementation or making a smaller change among viable options. Source-tree cleanliness, language consistency, and a completed inventory do not establish runtime or maintenance benefit. Keep performance claims tied to representative measurements; ordinary tests and documentation need not adopt the product's implementation language or runtime.
+
+Read `references/goal-alignment.md` when an actual goal-means mismatch, material tradeoff, acceptance ambiguity, or authority gap needs resolution. Investigate accessible facts and leave local implementation choices with the executor. Ask the owner only for the decision that changes the outcome or a real boundary, then resume authorized work.
 
 ## Design
 
-1. Establish the relevant current truth, concrete problem, and useful delivery endpoint early. For applications and services, proactively consider commit, push, existing-environment deployment, and post-deploy verification; for libraries, tools, and Skills, identify the relevant release or handoff endpoint. Distinguish proposed delivery from user-confirmed scope and permission; current design-only activity does not itself exclude future delivery from the proposal.
-2. For a design question that actually remains, classify truth and boundary impact and choose `no-design`, `design-lite`, or `design-full` without equating file count with risk. `no-design` is an available conclusion, not a credential every implementation must obtain from this Skill.
-3. When a remaining goal, means, terminology, owner, hard-constraint, non-goal, acceptance, delivery-endpoint, or authority mismatch actually blocks progress, read `references/goal-alignment.md` and clarify only what that decision needs. Distinguish binding main goals and hard constraints from replaceable means and authorized best-effort secondary work. Align the useful delivery endpoint to the kind of work; naming it is not operational permission. Stop once the next authorized step can proceed, then resume the original authorized task.
-4. Compare viable boundary choices only when the change creates or materially alters a persisted architecture boundary. Compose `architecture-patterns` for that decision.
-5. Record the chosen scope, explicit non-goals, future phases, useful delivery endpoint, acceptance evidence, truth impact, recovery policy, implementation surface, and any authorized best-effort secondary discretion. Record those boundaries and that discretion; do not catalog every possible secondary failure or freeze glue around a specified library. An explicit source-only or design-only request stays inside that scope.
-6. Produce a stable, reviewable design artifact when the chosen depth requires one.
-7. Decide whether independent review is required by an explicit user request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment.
-8. When review is required, request a bounded `review-change` evaluation and adjudicate its read-only candidate findings. Repair accepted defects within the confirmed design inputs and recheck affected evidence. Continue while there is an evidence-backed in-scope path; use targeted rereview when changes invalidate prior review evidence or an independent question remains. Do not impose a default repair count, reopen settled findings without new evidence, or change the confirmed goals to manufacture acceptance. Stop for a concrete unresolved decision, unavailable prerequisite, lack of a viable path, or an explicit invocation budget; report the reason and incomplete work. Once the requested artifact meets its requirements and no material issue remains, finish without redundant review.
-
-## Decision States
-
-- `ready_for_approval`: the design and any required review evidence are complete
-- `needs_more_design`: a required design decision remains unresolved
-- `split_scope`: the proposed milestone is not one coherent design surface
-- `manual_checkpoint`: progress depends on a user or external decision; investigable facts and generatable products are not this state
-
-Approval belongs to the user. Do not mark a design approved from review success alone, infer approval from a later implementation request, or continue into planning unless the request already authorizes that next step.
+1. Establish enough current project truth to explain the problem and the useful delivery endpoint. Code describes implemented behavior; documents and diagrams describe human intent and may be out of date. Distinguish proposed delivery from the current request and matching permission; a design-only request remains design-only.
+2. Choose the depth the decision needs: `no-design`, `design-lite`, or `design-full`. File count and documentation length do not establish risk, and these labels are not prerequisites for implementation.
+3. Compare viable options against the outcome and maintenance burden. Check existing project capabilities, host primitives, official tools, and mature implementations before proposing a durable general-purpose mechanism; stop investigating when the choice is supported. Compose `architecture-patterns` only for a material persisted architecture boundary.
+4. State the chosen behavior, material reasons, protected boundaries, ownership, and evidence that will distinguish success from failure. Describe compatibility or recovery machinery only for an actual consumer, state transition, or failure that requires it. Leave replaceable implementation details open.
+5. When a design artifact is needed, make it reviewable at the same level as the decision. Use the project's document owner and conventions; a small design may be a few connected paragraphs.
+6. Obtain independent review when explicitly requested, required by an applicable rule, or justified by concrete risk or uncertainty. Request a bounded `review-change` evaluation; the caller adjudicates findings and repairs accepted defects. Review must examine unnecessary mechanisms and gates as well as missing required behavior.
+7. Recheck evidence affected by accepted changes. Finish when the requested decision or artifact is supported and no material issue remains. Do not add review rounds or broaden acceptance merely to seek more confidence. If a real decision or prerequisite still blocks progress, report that specific remainder and continue independent authorized work.
 
 ## Artifact Guidance
 
-A design artifact should make these items easy to find:
+Make the outcome, current truth, user-fixed constraints, chosen approach and rationale, ownership, necessary acceptance, and useful delivery endpoint easy to find. Include non-goals, recovery, review conclusions, or unresolved approval only where they help a future executor act correctly. Do not turn this guidance into a mandatory form.
 
-- objective, current truth, hard constraints, and any authorized best-effort secondary space
-- scope, non-goals, and future phases without requiring an exhaustive secondary-feature catalog
-- chosen boundary and discarded material alternatives
-- acceptance evidence and truth impact
-- recovery policy, useful delivery endpoint, and any exact approval-sensitive action, without treating the named endpoint as granted operational permission
-- review decision and, when review ran, its verdict and adjudication summary
-- approval status
+Keep the currently effective account separate from history. A source path, version, or short explanation is usually enough to locate supporting evidence; ordinary local designs do not need `design_sha256`, revision digests, baseline hashes, or a provenance chain. Retain an exact identity only where the actual interface or protected operation needs it. Judge evidence by the behavior, inputs, and conditions it covers, and refresh it when a relevant change invalidates that claim.
 
-Keep the live artifact limited to currently effective goals, hard constraints, authorized discretion, ownership, delivery endpoint, acceptance, and real pause conditions. Distinguish user decisions from investigable facts, implementation products to generate, and executor means. Valuable historical revisions belong in stage records and may be cited shortly; do not copy old gate exemptions into the live design.
+Use a diagram when relationships, ownership, or a state transition are clearer visually; let it replace repetitive prose. Keep meaningful explanations and exceptions beside it. Documents and diagrams are not proof of system behavior: test the implementation against the intended outcome, not document bytes, wording, or diagram contents. Implementation changes should be reflected in the existing human-facing explanation rather than enforced by new document tests.
 
-Use guarded rollback only when a concrete hazard makes it safer than forward repair and the trigger, target, and verification are explicit. Otherwise prefer fix-forward recovery.
+Keep Markdown paragraphs and list items naturally unwrapped. Follow declared document ownership rather than copying a design into each affected repository.
 
-Keep Markdown paragraphs and list items naturally unwrapped. When a document has several independent scopes, use stable unique labels rather than restarting ambiguous numbered lists.
+## Authority And Completion
 
-When the user explicitly asks to grill, stress-test, harden, challenge, or interrogate a design or plan, read `references/stress-test-mode.md`. Ordinary bounded clarification does not enable that mode.
+Design describes authority; it does not grant it. Commit, push, publication, installation, deployment, destructive cleanup, and external changes need matching user or project authority. Consume existing approval for the same actions and targets without asking again. A later instruction may authorize the next stage, but review success or a proposed endpoint cannot do so.
 
-## Reuse And Decision Horizon
+Use guarded rollback only when a concrete hazard makes it safer than forward repair and the trigger, target, and verification are understood. Do not create recovery machinery for hypothetical failures of ordinary reversible work.
 
-For a material open design choice, apply the shared reuse principle once: check what the project, host primitives, official tools, and credible mature implementations already provide before designing a durable general-purpose mechanism, and stop researching once the choice is supported.
+- `ready_for_approval`: the requested design and any required review are complete; identify an approval only if one is actually outstanding
+- `needs_more_design`: a material design decision remains unresolved
+- `split_scope`: the proposed milestone does not form a coherent change
+- `manual_checkpoint`: a user or external decision blocks the affected action; accessible facts and agent-generated products do not qualify
 
-This Skill owns only that open design decision and its decision horizon. Honor user-declared maintenance horizons and explicit framework selections; current slice simplicity is not evidence against a mature framework selected for long-term maintenance, and adopting it does not authorize speculative features. A settled choice is not automatically reconsidered during planning or implementation. A user can explicitly request structural alternatives through code-simplification; its evidence may justify a larger refactor or rewrite without sunk-cost bias, but is not implementation authority. Boundary and economic comparison of the options stays with `architecture-patterns`; local implementation dependency selection stays with `development-standards`.
+An explicitly requested design ends at its requested endpoint. A decision made during already-authorized implementation returns to that work once resolved. Do not end merely on confirmation or a promise to continue.
+
+## Related Decisions
+
+Honor explicit framework choices and maintenance horizons without adding speculative features. A settled choice is not automatically reconsidered during planning or implementation; new evidence must identify the material premise that changed. Ordinary subtraction within the current scope stays with the executor. When the user requests a broader simplification assessment, read only `references/simplification.md` in `skills-routing` to select the appropriate code, test, or documentation analysis; its conclusions do not themselves authorize implementation.
+
+When the user explicitly asks to grill, stress-test, harden, challenge, or interrogate a design or plan, read `references/stress-test-mode.md`. Ordinary clarification does not enable that mode.

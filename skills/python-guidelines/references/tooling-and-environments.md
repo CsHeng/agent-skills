@@ -45,8 +45,8 @@ Plain `python3` may assume only the standard library. Do not rely on third-party
 - Run project-owned code through the owning project environment.
 - For a one-off requiring packages, use `uvx --with <package> python3 ...` or `uv run --no-project --with <package> python3 ...`. These are not a reason to create an environment or metadata in the source project.
 - For YAML one-offs, prefer `yq`; if Python is needed, use an explicit dependency such as `uvx --with pyyaml python3 ...`.
-- For stdlib-only `uv run --no-project --script` entrypoints, omit the project environment setting unless that environment is actually needed. Still apply bytecode/cache isolation when importing repository files.
+- Standard-library-only scripts and fragments may use an available `python3` directly without a virtual environment. If using `uv run --no-project --script`, omit the project environment setting unless it is needed. Apply bytecode/cache isolation when importing repository files.
 
-For non-trivial scratch logic, write a reviewable script in a task-owned external scratch location instead of nesting source inside shell quoting. Syntax-check it, pass needed dependencies explicitly and remove task-owned temporary material after use. Cache reuse does not grant permission to retain an entire one-shot environment indefinitely.
+For scratch logic whose quoting or size makes embedding hard to review, write a script in a task-owned external scratch location. A short `python -c` or quoted heredoc is valid when it remains clear and passes data separately from source. Syntax-check substantial scratch code, pass needed dependencies explicitly and remove task-owned temporary material after use. Cache reuse does not grant permission to retain an entire one-shot environment indefinitely.
 
 A project or one-off environment stored outside the tree still does not protect the checkout. Test runs, ad-hoc scripts, and coverage tooling can create untracked or ignored files under the project; inspect `git status --ignored` after verification and remove task-owned scratch and per-run state, without deleting another owner's retained cache.

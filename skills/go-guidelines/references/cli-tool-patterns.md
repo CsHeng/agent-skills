@@ -8,15 +8,16 @@ Build maintained command-line tools with an explicit operator contract, reviewab
 
 Use the standard library `flag` package for a single command with a small stable option set and no meaningful command tree.
 
-Prefer Cobra for a formal internal or external CLI when one or more of these are expected:
+Prefer Cobra when the owned interface needs:
 
 - multiple or nested commands
 - shell completion as a first-class operator feature
 - command and flag deprecation, aliases, groups, or generated documentation
-- a command tree likely to grow across multiple maintainers or agents
 - dynamic argument or flag completion
 
 Kong or another parser may be selected when an approved project explicitly values its typed declaration model and does not need Cobra's broader command ecosystem. Do not add a framework to a small command merely to follow a template.
+
+For a migration, preserve documented or relied-on arguments, outputs, exit behavior, and state changes. An old parser's defaults do not automatically make every abbreviation, diagnostic spelling, or terminal-width wrapping rule a compatibility requirement. Use the chosen parser's native behavior where consumers do not depend on the old detail; do not build a general argparse emulator.
 
 ## Project Shape
 
@@ -54,7 +55,7 @@ Keep secrets out of command arguments when shell history would expose them. Pref
 
 ## Completion
 
-For Cobra tools, expose generated completion for the shells the project supports. Reuse the same typed data source for execution and dynamic completion so command behavior and suggestions do not drift. Completion must be bounded, side-effect free, and fast enough for interactive use.
+When the CLI requires completion, use its parser's support for the shells the project owns. Reuse the same typed data source for execution and dynamic completion so command behavior and suggestions do not drift. Completion must be bounded, side-effect free, and fast enough for interactive use.
 
 ## State-Changing Safety
 
@@ -70,13 +71,14 @@ For Cobra tools, expose generated completion for the shells the project supports
 
 Test core use cases directly with typed requests and injected dependencies. Test CLI adapters through explicit argument slices and injected stdin, stdout, and stderr rather than mutating global process state.
 
-Use golden tests only for stable text such as help, completion, or generated configuration, and normalize colors, timestamps, paths, and other volatile values. Use a subprocess or testscript-style integration test only when process behavior, environment, exit status, or multi-command filesystem effects are the contract under test.
+Use golden tests when the text or exact bytes are part of the required output contract. For structured output consumed by value, compare parsed meaning instead of freezing a previous language's spacing, key order, or number formatting. Test help or completion behavior at the granularity its users need. Use a subprocess or testscript-style integration test when process behavior, environment, exit status, or multi-command filesystem effects are the contract under test. Existing verification in another language may continue to exercise those boundaries.
 
 ## Build And Delivery
 
 - Use `go build` with an explicit `-o` path for main packages so validation does not leave binaries in the repository root.
 - Write local artifacts to the repository-declared scratch or output directory, which may be an ignored in-repo `tmp/`, `dist/`, or `bin/`, or a location outside the tree. Use the platform or global temporary directory only when the repository declares none; do not assume an external-only scratch root.
 - Treat `go run` as a developer/CI/controller compile-and-execute convenience, including on a remote development host. Managed and production execution targets run a prebuilt binary or image and never need `go run`, a Go module download, or a source checkout.
+- Reuse the repository's build/run entrypoint or a small shared launcher for genuinely shared setup and cleanup. Do not copy a private build-and-delete lifecycle into every command solely to keep binaries out of the checkout; retain command-specific cancellation or recovery behavior where needed.
 - Build for the target `GOOS` and `GOARCH` on the controller or CI host, then distribute that binary or image to the target.
 - Use `-trimpath` when reproducible path-independent build metadata matters.
 - Inject version, commit, and build date through project-owned build flags when operators need provenance.

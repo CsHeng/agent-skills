@@ -5,7 +5,7 @@ description: "Implement an explicit bounded repository change or approved plan t
 
 # Implement Change
 
-Complete an explicit bounded repository change or an approved implementation plan while preserving its scope, authority, and acceptance evidence.
+Complete the user's authorized outcome with the smallest durable change. Preserve required behavior and authority; use the plan to organize work without turning incidental methods, tests, or bookkeeping into additional requirements. Apply `development-standards` for necessity, compatibility, and proportionate evidence.
 
 ## Use This Skill When
 
@@ -27,7 +27,7 @@ Implement the settled goals and selected technology; do not automatically reopen
 
 ## Goals, Discretion, And Continuation
 
-Main goals, necessary conditions, specified technical choices, and inviolable boundaries remain binding. Model-inferred task granularity, dependency edges, ordering, investigation or repair routes, and local technical difficulty are revisable representations or diagnosis, not additional user intent or automatic `replan`/`redesign`; correct them inside the confirmed goals and authority without seeking new approval. Explicitly user-fixed choices still bind.
+Main goals, necessary conditions, user-fixed technical choices, and inviolable boundaries remain binding. Model-inferred task granularity, dependency edges, ordering, guards, compatibility assumptions, and verification methods remain revisable within that intent, including after general plan approval. Correct them without new approval when required outcomes and real boundaries stay intact. During long tasks and handoffs, retain the user's purpose and remaining outcomes rather than letting the growing task list replace them.
 
 Already-authorized best-effort secondary work may be adapted or omitted based on evidence while the main goal continues. Do not self-grant that discretion, relabel a required result, or weaken an oracle to pass.
 
@@ -47,7 +47,7 @@ Credentials, tools, and review success are not operational permission; specified
 
 When the host exposes a task-level workflow tool with completion-contract support, read `references/task-workflow-tool.md` and apply its rules for representing the approved obligations, binding evidence to the real inputs of a claimed outcome, reporting provenance and acceptance, amending a mistaken representation, and retaining unfinished or recoverable work. A generic todo list or task display is not such a contract, and tool availability does not grant authority or select a different lifecycle; the main agent owns the meaning and applicability of every obligation.
 
-When the host exposes no such tool, keep the existing behavior and semantic ownership: track work through the project's normal records, report progress and remaining work in the final response, and never fabricate ledger, hash, handle, or revision bookkeeping.
+Use the host's own bookkeeping only where its interface requires it; do not reproduce it in product code, tests, or design/plan documents. With or without such a tool, report actual progress and remaining work without inventing ledger, hash, handle, or revision machinery.
 
 ## Checkout And Concurrent Work
 
@@ -58,7 +58,7 @@ When the host exposes no such tool, keep the existing behavior and semantic owne
    - Host-provided isolation does not itself invoke the separate `git-worktrees` Skill or grant new Git mutation authority. An explicitly requested worktree operation loads that Skill for its own creation, context-transfer, integration, and cleanup guidance; remember that a new checkout never inherits uncommitted context, and that isolation never settles semantic integration or shared-resource conflicts.
 - Judge concurrency from the user's statement, already available host task evidence tied to the same checkout and writes, or unexpected changes observed during this task. Assess shared generated output, Git index/ref operations, and other shared resources as well as file overlap; multiple agents with disjoint safe operations do not automatically need worktrees. An agent process, dirty file, or recent modification timestamp alone is not proof of an active conflicting writer, and do not scan the whole workstation or build a coordination system to rule out hypothetical concurrency.
 - Record the initial state, check the relevant current contents before edits, and reconcile the final diff against owned changes.
-   - A plan's observed file inventory, baseline SHA, or environment snapshot is context, not an immutable goal or a permission boundary unless explicitly designated as one.
+   - A plan's observed files and environment are context, not an immutable goal or permission boundary unless explicitly designated as one. Recording a revision is not a default prerequisite.
    - When drift appears, stop stale writes long enough to read and reconcile it, then continue under the existing goals and authority: preserve other work, merge compatible changes, and reverify affected behavior. Do not ask for new permission merely because a file or revision changed.
    - Pause only the affected path when ownership or a conflict cannot be resolved safely, or when an actual hard boundary changes.
    - Host exact-write capabilities and candidate apply checks remain binding: refresh or redispatch through the supported parent path, never bypass a conflict check. These checks detect some conflicts, not mutual exclusion, and absence of visible activity does not prove there is no other writer.
@@ -76,8 +76,8 @@ When the host exposes no such tool, keep the existing behavior and semantic owne
    - Dispatch substantive independent slices per Delegation And Profiles using the plan and already collected context. Spend no additional search, probe, model-call, or time-estimation budget deciding whether to delegate. If the available context is insufficient, implement the next useful step locally and leave naturally discovered independent work for later delegation.
    - Preserve repository ownership, shared resources, isolation, convergence ownership, and applicable profiles.
    - Encode a hard predecessor only for approved factual order with no intervening parent synthesis, authority, cross-task coordination, finding adjudication, final acceptance, or continuation decision. A verification command is not itself a parent decision.
-5. Check the actual changed surfaces against the approved goal, acceptance, authority, and explicitly fixed boundaries. Refresh incidental planning context and justify in-scope surface changes rather than treating the original touch list or SHA as an automatic reapproval gate.
-6. Remove abstractions, helpers, flags, and fallbacks this slice introduced that the approved behavior does not need. This is a same-slice cut, not a `code-simplification` audit and not a new task; if a cut needs a product tradeoff, stop and return `redesign` or `needs-authority`.
+5. Check the actual changed surfaces against the user's goal, acceptance, authority, and explicitly fixed boundaries. Reassess total implementation and maintenance cost when work grows; an expanding task list does not prove the outcome needs that complexity. Refresh incidental planning context within the existing authority.
+6. Remove unnecessary abstractions, guards, compatibility emulation, tests, fixtures, and documents introduced by this slice. Their appearance in a plan or review does not make them required. This is ordinary implementation cleanup; a broader requested audit uses only `references/simplification.md` in `skills-routing`. A real product tradeoff needs the corresponding owner decision, while removal of an unneeded method stays inside the current task.
 7. Obtain the declared verification and focused checks for the changed behavior, locally or through authorized execution. Reuse reliable evidence still applicable to the final candidate; verify affected combinations and uncovered acceptance rather than automatically repeating every worker check.
 8. Decide whether independent review is required by an explicit user request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment.
 9. When review is required, request a bounded `review-change` evaluation over the current implementation diff with the objective, scope, changed files, declared oracles, and current verification evidence. Each invocation has one target; it does not consume a whole-change review allowance.
@@ -115,7 +115,7 @@ Before treating an unavailable gate as a completion blocker, identify the approv
 
 An authorized best-effort secondary adaptation recorded with evidence is an allowed result and does not rewrite the main-goal baseline. Treating a required result as optional, or deleting its oracle to manufacture a pass, remains forbidden, and ordinary failure or unknown feasibility is not itself proof that a required result is unsupported.
 
-A mistaken test implementation may be corrected within authorized surfaces when an independent approved contract clearly establishes the right behavior; retain that evidence and apply the required review for oracle edits. Changing what counts as correct is a scope or design decision, not an implementation repair. Never weaken assertions, remove a failing requirement, or reduce the objective to manufacture a pass.
+A mistaken or over-specified test may be corrected or removed within the authorized scope when the user's required behavior and consumer evidence establish what actually needs protection. Verify that behavior independently of the removed mechanism; do not preserve a self-invented requirement merely because its test fails. Changing a genuinely required result remains a scope or design decision, and deleting its oracle to manufacture a pass remains forbidden.
 
 ## Recovery
 

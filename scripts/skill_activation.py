@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Shared activation-contract and provider-projection helpers."""
+"""Validate activation contracts and authored provider metadata."""
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
-
 
 VALID_ACTIVATION_MODES = {
     "native",
@@ -15,7 +15,7 @@ VALID_ACTIVATION_MODES = {
     "baseline",
 }
 VALID_DEFAULT_ROLES = {"primary", "overlay", "evaluator"}
-EXPECTED_CODEX_PROJECTION = {
+EXPECTED_CODEX_POLICY = {
     "native": True,
     "conditional": True,
     "composition": False,
@@ -25,19 +25,12 @@ EXPECTED_CODEX_PROJECTION = {
 CLAUDE_DEFAULT_VISIBILITY = "default-visible"
 
 
-def is_distributed(entry: dict[str, Any]) -> bool:
-    """Return whether a skill is projected onto the root-flat install surface."""
-    return entry.get("distributed", True) is True
-
-
 def activation_modes(contract: dict[str, Any]) -> dict[str, dict[str, Any]]:
     modes = contract.get("activation_modes")
     if not isinstance(modes, dict):
         return {}
     return {
-        str(mode): entry
-        for mode, entry in modes.items()
-        if isinstance(entry, dict)
+        str(mode): entry for mode, entry in modes.items() if isinstance(entry, dict)
     }
 
 
@@ -62,73 +55,28 @@ def derived_implicit_invocation(
     return codex_allows_implicit(contract, mode)
 
 
-def effective_provider_state(
-    contract: dict[str, Any], entry: dict[str, Any]
-) -> dict[str, dict[str, Any]]:
-    return {
-        "codex": {
-            "allow_implicit_invocation": derived_implicit_invocation(
-                contract, entry
-            ),
-            "source": "activation-mode-projection",
-        },
-        "claude": {
-            "model_visibility": CLAUDE_DEFAULT_VISIBILITY,
-            "source": "shared-frontmatter-default",
-        },
-    }
-
-
-def _top_level_policy_bounds(lines: list[str]) -> tuple[int, int] | None:
-    for index, line in enumerate(lines):
-        if line == "policy:":
-            end = index + 1
-            while end < len(lines):
-                candidate = lines[end]
-                if candidate and not candidate[0].isspace():
-                    break
-                end += 1
-            return index, end
-    return None
-
-
-def has_authored_codex_invocation_policy(text: str) -> bool:
+def codex_invocation_policy(text: str) -> bool | None:
+    """Read one boolean from the metadata's block-style policy mapping."""
     lines = text.splitlines()
-    bounds = _top_level_policy_bounds(lines)
-    if bounds is None:
+    policy_starts = [index for index, line in enumerate(lines) if line == "policy:"]
+    if len(policy_starts) != 1:
+        return None
+    values: list[str] = []
+    for line in lines[policy_starts[0] + 1 :]:
+        if line and not line[0].isspace() and not line.startswith("#"):
+            break
+        if line.strip().startswith("allow_implicit_invocation:"):
+            match = re.fullmatch(
+                r"  allow_implicit_invocation:\s*(true|false)\s*(?:#.*)?", line
+            )
+            if match is None:
+                return None
+            values.append(match[1])
+    if values == ["true"]:
+        return True
+    if values == ["false"]:
         return False
-    start, end = bounds
-    return any(
-        line.strip().startswith("allow_implicit_invocation:")
-        for line in lines[start + 1 : end]
-    )
-
-
-def project_openai_metadata(text: str, allow_implicit: bool) -> str:
-    """Return provider metadata with one deterministic derived policy value."""
-    lines = text.splitlines()
-    policy_line = (
-        "  allow_implicit_invocation: true"
-        if allow_implicit
-        else "  allow_implicit_invocation: false"
-    )
-    bounds = _top_level_policy_bounds(lines)
-    if bounds is None:
-        if lines and lines[-1] == "":
-            lines.pop()
-        lines.extend(["policy:", policy_line])
-        return "\n".join(lines) + "\n"
-
-    start, end = bounds
-    retained_children = [
-        line
-        for line in lines[start + 1 : end]
-        if not line.strip().startswith("allow_implicit_invocation:")
-    ]
-    while retained_children and retained_children[-1] == "":
-        retained_children.pop()
-    replacement = ["policy:", policy_line, *retained_children]
-    return "\n".join([*lines[:start], *replacement, *lines[end:]]) + "\n"
+    return None
 
 
 def _frontmatter(text: str) -> dict[str, str]:
@@ -162,7 +110,7 @@ def validate_activation_contract(
         errors.append("activation_modes unsupported: " + ", ".join(extra_modes))
     for mode in sorted(VALID_ACTIVATION_MODES & set(modes)):
         configured = modes[mode].get("codex_allow_implicit_invocation")
-        expected = EXPECTED_CODEX_PROJECTION[mode]
+        expected = EXPECTED_CODEX_POLICY[mode]
         if configured is not expected:
             errors.append(
                 f"activation_modes.{mode}.codex_allow_implicit_invocation "
@@ -190,27 +138,31 @@ def validate_activation_contract(
             )
         if mode is None:
             errors.append(f"{skill_name}: missing activation_mode")
-        elif mode not in VALID_ACTIVATION_MODES:
+        elif not isinstance(mode, str) or mode not in VALID_ACTIVATION_MODES:
             errors.append(f"{skill_name}: invalid activation_mode: {mode}")
         if role is None:
             errors.append(f"{skill_name}: missing default_role")
-        elif role not in VALID_DEFAULT_ROLES:
+        elif not isinstance(role, str) or role not in VALID_DEFAULT_ROLES:
             errors.append(f"{skill_name}: invalid default_role: {role}")
         if mode == "baseline" and role != "overlay":
-            errors.append(f"{skill_name}: baseline activation requires default_role=overlay")
-        distributed = entry.get("distributed", True)
-        if not isinstance(distributed, bool):
-            errors.append(f"{skill_name}: distributed must be a boolean")
-
-        if not check_sources or not is_distributed(entry):
+            errors.append(
+                f"{skill_name}: baseline activation requires default_role=overlay"
+            )
+        if not check_sources:
             continue
         skill_dir = repo_root / "skills" / skill_name
         skill_path = skill_dir / "SKILL.md"
         try:
             skill_text = skill_path.read_text(encoding="utf-8")
-        except OSError:
-            skill_text = ""
-        if _frontmatter(skill_text).get("disable-model-invocation", "").lower() == "true":
+        except OSError as exc:
+            errors.append(f"{skill_name}: cannot read SKILL.md: {exc}")
+            continue
+        frontmatter = _frontmatter(skill_text)
+        if frontmatter.get("name") != skill_name:
+            errors.append(f"{skill_name}: frontmatter name must match the Skill ID")
+        if not frontmatter.get("description"):
+            errors.append(f"{skill_name}: frontmatter requires a non-empty description")
+        if frontmatter.get("disable-model-invocation", "").lower() == "true":
             errors.append(
                 f"{skill_name}: unsupported shared frontmatter disable-model-invocation: true"
             )
@@ -219,12 +171,13 @@ def validate_activation_contract(
             metadata_text = metadata_path.read_text(encoding="utf-8")
         except OSError:
             metadata_text = ""
-        expected_metadata = project_openai_metadata(
-            metadata_text, derived_implicit_invocation(contract, entry)
-        )
-        if metadata_text != expected_metadata:
+        if not isinstance(mode, str) or mode not in VALID_ACTIVATION_MODES:
+            continue
+        expected = EXPECTED_CODEX_POLICY[mode]
+        if codex_invocation_policy(metadata_text) is not expected:
             errors.append(
-                f"{skill_name}: Codex invocation projection is stale"
+                f"{skill_name}: Codex invocation policy must match activation_mode "
+                f"{mode}: allow_implicit_invocation: {str(expected).lower()}"
             )
 
     return errors

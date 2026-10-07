@@ -7,7 +7,7 @@ description: "Apply Go-specific policy to existing or approved Go modules, CLI t
 
 ## Purpose
 
-Define the shared Go policy baseline, then load only the architecture reference that matches the implementation archetype. The primary workflow owns lifecycle order and `language-decision-tree` owns any unfixed implementation-language decision.
+Define the shared Go policy baseline, then load only the architecture reference that matches the implementation archetype. The primary workflow owns lifecycle order; an unfixed implementation-language decision uses only `references/language-selection.md` in `skills-routing`.
 
 ## Scope
 
@@ -19,8 +19,8 @@ In-scope:
 
 Out-of-scope:
 
-- choosing whether new persisted code should use Go; see `language-decision-tree`
-- ad hoc agent command and tool selection; see `tool-decision-tree`
+- choosing whether new persisted code should use Go; read `references/language-selection.md` in `skills-routing`
+- ad hoc agent command and tool selection; read `references/tool-selection.md` in `skills-routing`
 - generic resilience or logging policy beyond Go-specific application; see `error-patterns` and `logging-standards`
 
 ## Progressive Disclosure
@@ -56,8 +56,9 @@ Load both purpose profiles only when one approved project genuinely owns both a 
 6. Keep abstractions demand-driven.
    - Define small interfaces at the consuming boundary only when multiple implementations, fakes, or isolation requirements justify them.
    - Do not introduce interfaces, repositories, or layers solely because the code is written in Go.
+   - In a migration, preserve actual consumer contracts rather than reimplementing the prior language's general runtime or library semantics. Use Go's standard library and suitable existing dependencies; exact legacy serialization or parser behavior needs a real compatibility reason.
 7. Test behavior at the narrowest useful boundary.
-   - Use the standard `testing` package by default.
+   - Use the standard `testing` package by default for Go tests. Production Go does not require rewriting useful Python tests, fixture generators, or independent verification tools; their runtime and maintenance costs are separate from production delivery.
    - Prefer table-driven tests when they improve coverage and readability.
    - Use `httptest`, fakes, temporary directories, and injected IO instead of global process state when practical.
 

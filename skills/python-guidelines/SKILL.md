@@ -5,12 +5,13 @@ description: "Use for Python code, scripts, and services: uv, ruff, ty or mypy, 
 
 # Python Guidelines
 
-Apply Python coding and tooling policy to Python files, scripts, CLIs, services and reviews. The primary workflow owns scope, mutation and delivery. Language selection belongs to `language-decision-tree`; agent-side tool choice belongs to `tool-decision-tree`.
+Apply Python coding and tooling policy to Python files, scripts, CLIs, services and reviews. The primary workflow owns scope, mutation and delivery. For an unsettled language or ad hoc tool choice, read only `references/language-selection.md` or `references/tool-selection.md` in `skills-routing`, respectively.
 
 ## Toolchain And Environment
 
-- Use `uv` for project dependencies and tool execution, `pyproject.toml` for configuration, project-pinned Ruff for formatting and linting, and pytest for tests. Prefer `ty`; use mypy or pyright when the project requires it.
-- Resolve the nearest owning Python project, including in multi-project repositories. Run project commands through that environment with `uv run --project <project-root> ...` or from the owning project root.
+- For a Python project with managed dependencies, use `uv` for dependencies and tool execution, `pyproject.toml` for configuration, project-pinned Ruff for formatting and linting, and pytest for tests. Prefer `ty`; use mypy or pyright when the project requires it.
+- A standard-library-only script or short embedded fragment may use an available interpreter directly. Do not create a project environment, package, or service merely to run it; keep inputs separate from source and honor the host's runtime contract.
+- For code owned by a Python project, resolve the nearest owner, including in multi-project repositories. Run project commands through that environment with `uv run --project <project-root> ...` or from the owning project root.
 - Set `UV_PROJECT_ENVIRONMENT` to an explicit, project-specific path outside the source tree, following the project or host's existing storage contract. Do not let project operations fall back to an in-tree `.venv`, or inherit another project's environment.
 - Environment creation is separate from use. Create only a needed, task-owned environment; an explicit `uv venv "$UV_PROJECT_ENVIRONMENT"` target avoids working-directory ambiguity. Creation can replace an existing environment, so it is not a routine preflight before each check. Do not move, recreate or delete an existing environment merely to apply this guidance.
 - Keep tool caches and bytecode outside the source tree. `UV_CACHE_DIR` controls uv's package/build cache, not the project environment. Use `PYTHONDONTWRITEBYTECODE=1` and a defensive `PYTHONPYCACHEPREFIX`; configure Ruff and pytest caches explicitly when the environment is unknown.
@@ -20,9 +21,9 @@ For cache configuration, one-off dependencies and pytest preflight, read [Toolin
 
 ## Controller And Remote Execution
 
-A configuration-management controller's temporary module execution, such as the Python module Ansible writes and runs on a managed host, belongs to the controller. Do not vendor, reimplement, or count that mechanism as this project's Python runtime.
+A configuration-management controller's temporary module execution, such as the Python module Ansible writes and runs on a managed host, belongs to the controller. Preserve Python modules, plugins, and collections where the framework owns that ecosystem; do not vendor, reimplement, or treat framework execution as a language-migration target.
 
-- Prefer the controller's built-in modules, local rendering, or thin transported Shell for a simple one-shot remote action; do not introduce a Python package or service only to carry one remote invocation.
+- For a one-shot remote action, reuse the controller's built-in modules, local rendering, thin transported Shell, or a short Python fragment on the existing target runtime. Select by clarity and actual dependency cost; do not create a package, service, or binary only to carry that invocation.
 - For an approved Go replacement of a persistent remote tool, build on the controller or CI for the target OS and architecture and distribute the binary or image; do not compile on the managed target. A retained Python application may use its declared managed interpreter/environment or a prebuilt image. Do not introduce Python into an explicitly constrained native target.
 - When Python crosses a host or controller boundary, state the runtime and output contract explicitly: interpreter and dependency source, invocation, stdout result, and exit behavior.
 
@@ -51,6 +52,7 @@ A configuration-management controller's temporary module execution, such as the 
 ### Tests And Documentation
 
 - Use pytest by default, testing core behavior directly and keeping CLI plumbing thin. Cover happy and failure paths for critical logic.
+- Choose the verification language independently of the production language. Retain useful Python tests and fixture generators for a Go or Shell product when their controller or CI runtime is affordable; removing Python from production targets does not require removing it from verification.
 - Use docstrings for public modules, classes and functions. Prefer Google-style docstrings for public APIs, including usage expectations when they help maintainability.
 
 ## Operational Commands (Examples)

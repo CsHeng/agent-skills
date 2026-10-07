@@ -22,16 +22,6 @@ run_gate() {
   "$@"
 }
 
-if ! git check-ignore -q .dist/; then
-  echo "ERROR: .dist must remain an ignored local output boundary" >&2
-  exit 1
-fi
-
-if git ls-files --error-unmatch .dist >/dev/null 2>&1; then
-  echo "ERROR: .dist must not contain tracked files" >&2
-  exit 1
-fi
-
 non_exec_shells="$(git ls-files -s -- '*.sh' | awk '$1 != "100755" { print $4 }')"
 if [[ -n "$non_exec_shells" ]]; then
   echo "ERROR: tracked .sh files must be mode 100755 (git update-index --chmod=+x):" >&2
@@ -40,12 +30,10 @@ if [[ -n "$non_exec_shells" ]]; then
 fi
 
 run_gate contract-package "$check_python" scripts/check-contracts.py
-run_gate generated-root-flat "$check_python" scripts/flatten-skills.py --target root-flat --check
 run_gate install-surface "$check_python" scripts/check-install-surface.py
-run_gate index "$check_python" scripts/generate-skills-index.py --check
 run_gate diagrams "$check_python" scripts/generate-workflow-diagrams.py --check
-run_gate ruff "$check_uv" run ruff check scripts/skill_distribution.py scripts/flatten-skills.py scripts/check-install-surface.py
-run_gate ty "$check_uv" run ty check scripts/skill_distribution.py scripts/flatten-skills.py scripts/check-install-surface.py
+run_gate ruff "$check_uv" run ruff check scripts/skill_portability.py scripts/check-install-surface.py
+run_gate ty "$check_uv" run ty check scripts/skill_portability.py scripts/check-install-surface.py
 run_gate pytest "$check_uv" run pytest -o "cache_dir=$PYTEST_CACHE_DIR"
 markdown_args=(--root "$repo_root" --mode check --exclude archived)
-run_gate markdown "$check_python" src/skills/disciplines/organize-docs/scripts/normalize-markdown-prose.py "${markdown_args[@]}"
+run_gate markdown "$check_python" skills/organize-docs/scripts/normalize-markdown-prose.py "${markdown_args[@]}"

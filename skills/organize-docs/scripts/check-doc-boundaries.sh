@@ -26,10 +26,6 @@ if [[ -d "$DOCS_DIR/plans" ]]; then
 fi
 
 NORMALIZER_ARGS=(--root "$ROOT_DIR" --mode check --exclude archived)
-# Optional compatibility for projects that deliberately retain pinned originals.
-if [[ -f "$ROOT_DIR/contracts/markdown-prose.toml" ]]; then
-  NORMALIZER_ARGS+=(--immutable-manifest "$ROOT_DIR/contracts/markdown-prose.toml")
-fi
 PYTHONDONTWRITEBYTECODE=1 \
 PYTHONPYCACHEPREFIX="$HOME/.cache/python/organize-docs" \
 python3 "$SCRIPT_DIR/normalize-markdown-prose.py" "${NORMALIZER_ARGS[@]}"

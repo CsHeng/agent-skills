@@ -4,14 +4,12 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import os
 import re
 import stat
 import subprocess
 import sys
 import tempfile
-import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -22,9 +20,6 @@ EXCLUDED_DIRECTORY_NAMES = {
     "__pycache__",
     "node_modules",
 }
-IMMUTABLE_MANIFEST_VERSION = 1
-SHA256_RE = re.compile(r"[0-9a-f]{64}")
-GLOB_CHARACTERS = frozenset("*?[]{}!")
 
 FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s")
@@ -92,14 +87,6 @@ class FileAnalysis:
     file_path: Path
     source_text: str
     result: TransformResult
-
-
-@dataclass(frozen=True)
-class ImmutableException:
-    """One pinned stage-history file excluded from Markdown rewrite mode."""
-
-    relative_path: Path
-    sha256: str
 
 
 @dataclass
@@ -489,110 +476,6 @@ def discover_markdown_files(root: Path) -> list[Path]:
     )
 
 
-def load_immutable_manifest(
-    root: Path, manifest_path: Path
-) -> tuple[ImmutableException, ...]:
-    """Load pinned, Git-visible `docs/plans` exceptions without enrollment shortcuts."""
-
-    resolved_root = root.expanduser().resolve(strict=True)
-    resolved_manifest = manifest_path.expanduser().resolve(strict=True)
-    try:
-        with resolved_manifest.open("rb") as handle:
-            manifest = tomllib.load(handle)
-    except tomllib.TOMLDecodeError as error:
-        raise MarkdownNormalizationError(
-            f"immutable manifest is invalid TOML: {resolved_manifest}"
-        ) from error
-    if set(manifest) != {"version", "exceptions"}:
-        raise MarkdownNormalizationError(
-            "immutable manifest allows only version and exceptions"
-        )
-    if manifest.get("version") != IMMUTABLE_MANIFEST_VERSION:
-        raise MarkdownNormalizationError(
-            f"immutable manifest version must be {IMMUTABLE_MANIFEST_VERSION}"
-        )
-    entries = manifest.get("exceptions")
-    if not isinstance(entries, list) or not entries:
-        raise MarkdownNormalizationError(
-            "immutable manifest requires non-empty exceptions"
-        )
-
-    visible_paths = {
-        markdown_file.relative_to(resolved_root)
-        for markdown_file in discover_markdown_files(resolved_root)
-    }
-    exceptions: list[ImmutableException] = []
-    seen_paths: set[Path] = set()
-    seen_digests: set[str] = set()
-    for entry in entries:
-        if not isinstance(entry, dict) or set(entry) != {"path", "sha256"}:
-            raise MarkdownNormalizationError(
-                "each immutable exception requires exactly path and sha256"
-            )
-        raw_path = entry["path"]
-        digest = entry["sha256"]
-        if not isinstance(raw_path, str) or not isinstance(digest, str):
-            raise MarkdownNormalizationError(
-                "immutable exception path and sha256 must be strings"
-            )
-        relative_path = Path(raw_path)
-        if (
-            relative_path.is_absolute()
-            or ".." in relative_path.parts
-            or any(character in raw_path for character in GLOB_CHARACTERS)
-            or len(relative_path.parts) < 3
-            or relative_path.parts[:2] != ("docs", "plans")
-            or relative_path.suffix != ".md"
-        ):
-            raise MarkdownNormalizationError(
-                f"immutable exception must be a literal docs/plans Markdown path: {raw_path}"
-            )
-        if not SHA256_RE.fullmatch(digest):
-            raise MarkdownNormalizationError(
-                f"immutable exception sha256 must be lowercase hexadecimal: {raw_path}"
-            )
-        if relative_path in seen_paths or digest in seen_digests:
-            raise MarkdownNormalizationError(
-                "immutable manifest contains duplicate path or sha256"
-            )
-        candidate = resolved_root / relative_path
-        if (
-            relative_path not in visible_paths
-            or not candidate.exists()
-            or not candidate.is_file()
-            or candidate.is_symlink()
-        ):
-            raise MarkdownNormalizationError(
-                f"immutable exception must be a regular Git-visible file: {raw_path}"
-            )
-        actual_digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
-        if actual_digest != digest:
-            raise MarkdownNormalizationError(
-                f"immutable exception digest mismatch: {raw_path}"
-            )
-        seen_paths.add(relative_path)
-        seen_digests.add(digest)
-        exceptions.append(ImmutableException(relative_path, digest))
-    return tuple(exceptions)
-
-
-def validate_immutable_findings(
-    root: Path,
-    analyses: list[FileAnalysis],
-    exceptions: tuple[ImmutableException, ...],
-) -> None:
-    """Ensure every immutable exception still protects a real legacy finding."""
-
-    by_path = {analysis.file_path.relative_to(root): analysis for analysis in analyses}
-    for exception in exceptions:
-        analysis = by_path.get(exception.relative_path)
-        if analysis is None or analysis.result.join_count == 0:
-            raise MarkdownNormalizationError(
-                "immutable exception no longer contains a preserved hard-wrap finding: "
-                f"{exception.relative_path}"
-            )
-
-
 def analyze_repository(
     root: Path, excluded: tuple[Path, ...] = ()
 ) -> list[FileAnalysis]:
@@ -648,21 +531,6 @@ def write_text_atomic(file_path: Path, source: str, replacement: str) -> None:
             os.unlink(temporary_name)
 
 
-def mutable_analyses(
-    root: Path,
-    analyses: list[FileAnalysis],
-    exceptions: tuple[ImmutableException, ...],
-) -> list[FileAnalysis]:
-    """Return analyses eligible for check output and write-mode replacement."""
-
-    immutable_paths = {exception.relative_path for exception in exceptions}
-    return [
-        analysis
-        for analysis in analyses
-        if analysis.file_path.relative_to(root) not in immutable_paths
-    ]
-
-
 def print_summary(analyses: list[FileAnalysis]) -> None:
     """Print deterministic repository-level normalization counts."""
 
@@ -713,11 +581,6 @@ def parse_args(arguments: list[str]) -> argparse.Namespace:
         help="Maximum preview findings to print",
     )
     parser.add_argument(
-        "--immutable-manifest",
-        type=Path,
-        help="TOML with exact stage-history path and SHA-256 exceptions",
-    )
-    parser.add_argument(
         "--exclude",
         action="append",
         type=Path,
@@ -746,18 +609,11 @@ def main(arguments: list[str]) -> int:
     parsed = parse_args(arguments)
     root = parsed.root.expanduser().resolve(strict=True)
     try:
-        exceptions = (
-            load_immutable_manifest(root, parsed.immutable_manifest)
-            if parsed.immutable_manifest is not None
-            else ()
-        )
         analyses = analyze_repository(root, tuple(parsed.exclude))
-        validate_immutable_findings(root, analyses, exceptions)
-        mutable = mutable_analyses(root, analyses, exceptions)
-        print_summary(mutable)
-        affected = [analysis for analysis in mutable if analysis.result.join_count > 0]
+        print_summary(analyses)
+        affected = [analysis for analysis in analyses if analysis.result.join_count > 0]
         if parsed.mode == "preview":
-            print_preview(root, mutable, parsed.limit)
+            print_preview(root, analyses, parsed.limit)
         elif parsed.mode == "write":
             for analysis in affected:
                 write_text_atomic(
@@ -766,13 +622,10 @@ def main(arguments: list[str]) -> int:
                     analysis.result.text,
                 )
                 print(f"normalized={analysis.file_path.relative_to(root)}")
-            if parsed.immutable_manifest is not None:
-                exceptions = load_immutable_manifest(root, parsed.immutable_manifest)
             post_write_analyses = analyze_repository(root, tuple(parsed.exclude))
-            validate_immutable_findings(root, post_write_analyses, exceptions)
             remaining = [
                 analysis
-                for analysis in mutable_analyses(root, post_write_analyses, exceptions)
+                for analysis in post_write_analyses
                 if analysis.result.join_count > 0
             ]
             if remaining:
@@ -784,7 +637,7 @@ def main(arguments: list[str]) -> int:
                 "Markdown prose hard-wrap detected; run preview before write.",
                 file=sys.stderr,
             )
-            print_preview(root, mutable, parsed.limit)
+            print_preview(root, analyses, parsed.limit)
             return 1
     except (MarkdownNormalizationError, OSError) as error:
         print(f"ERROR: {error}", file=sys.stderr)

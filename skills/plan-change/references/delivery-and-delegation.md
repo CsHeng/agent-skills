@@ -1,110 +1,63 @@
 # Delivery And Delegation
 
-Read this reference when a plan must record delivery endpoints, two-stage planning versus dispatch, cohesive worker slices, required versus missing authority, decision-versus-fact classification, compact live plan versus historical exemptions, same-task continuation without handles, or its implementation-approval summary. Ordinary local plans that do not claim those arrangements may skip it.
+Use this reference when delivery, delegated work, or a fresh-main handoff needs more detail. Include the information that changes execution decisions; do not copy this reference into the plan or turn it into a required form.
 
-## Goal Gates And Planning Context
+## User Requirements And Execution Choices
 
-Keep four kinds of information distinct in the plan and approval summary:
+Keep the user's outcome, explicitly fixed choices, necessary acceptance, and real authority or safety boundaries distinct from model-derived implementation choices. General approval does not make every proposed guard, compatibility check, hash, dependency edge, or command immutable. The parent may remove or replace unnecessary mechanisms while preserving the protected behavior and explicit choices.
 
-- Goals, required acceptance, authority, and explicitly designated file/interface/order restrictions are binding. Changing them needs the corresponding owner decision.
-- Observed touch files, baseline SHAs, inferred implementation details such as task granularity and dependency edges, and environment snapshots are planning context. Refresh them when facts change; do not promote them to immutable approval gates merely because the user approved the plan.
-- Exact write sets, source identities, locks, and compare-and-apply preconditions required by an execution host are mechanical capabilities for that invocation. The parent may refine or redispatch inside existing authority, but an executor must not bypass these guards.
-- Verification evidence describes a particular result or version. Drift may require selective invalidation and re-verification; that is not automatically a change to permission or goals.
+Observed files, revisions, environment snapshots, and initial write regions help an executor investigate; they are not default approval boundaries. Avoid collecting exact identities for ordinary local planning. If an execution host requires exact write capabilities or compare-and-apply preconditions, satisfy them through its supported path. Refresh or redispatch a stale candidate rather than bypassing the host check or seeking user approval for an in-scope reconciliation.
 
-When parallel work touches the same file, the implementation owner reads and preserves both changes, reconciles a compatible result, and verifies the affected integration. Plan for that convergence rather than treating any diff as a manual checkpoint. A real conflicting requirement, unresolved ownership, unsafe overwrite, or newly exceeded authority pauses the affected path; unrelated authorized work continues. Branch integration still respects applicable Git and protected-state permissions.
+Evidence supports a behavior under particular inputs and conditions. Changed source may invalidate some claims, but byte differences do not invalidate unrelated results. Judge relevance before deciding what to rerun, and do not use a digest match as a substitute for behavior evidence.
 
-Model maintenance should track semantic progress and real remaining obligations, not force reapproval for each context refresh. A scope-contained repair loop belongs inside the current task; the task dependency DAG need not grow a new node for every failed check.
+For parallel edits, identify the convergence owner who preserves both changes, resolves compatible differences, and verifies their interaction. Only an actual conflicting requirement, unsafe overwrite, unresolved ownership, or exceeded authority pauses the affected path. Branch integration retains applicable Git and protected-state permissions.
 
-## Two-Stage Concretization
+## Delivery And Real Prerequisites
 
-Planning records stable, acceptable behavior, non-goals, important reasons, external behavior, acceptance, delivery endpoints, real dependencies, state ownership, covered and missing authority, any authorized best-effort secondary space, and the space an executor may decide. Do not unconditionally freeze local variable names, helper structure, glue around a specified library, every command, or every failure branch. Do not pre-enumerate every secondary feature that the executor may adapt or omit under already authorized discretion.
+An action can belong to the task, have matching authority, and still lack the capability to run now. Keep these judgments separate. Credentials and available tools do not grant authority, and standing deploy permission does not expand a design-only or source-only request.
 
-At planning time, write known write surfaces, dependencies, and resources directly. Mark remaining local investigation as conditional delegation instead of inventing exact files. Ordinary implementation is not blocked by missing delegation metadata.
+Describe the useful delivery endpoint for the kind of work: a service may need deployment and observation; a library, tool, or Skill may need release, installation, or source handoff. State which endpoint is proposed and which is already authorized. Do not ask for permission merely because an endpoint is mentioned or a required artifact has not yet been generated.
 
-Before actual dispatch, the parent uses already known scope, inputs, initial write regions, environment, and the host contract. Necessary permission and input checks are not a new economic-research phase. Do not search, probe, estimate time, or call another model solely to decide whether delegation pays. With insufficient context, perform the next useful implementation action locally unless the user explicitly requires delegation. Do not finish the executor's investigation to fill filenames or reopen choices because its model changed.
+Consume trusted approval for the same actions, targets, and side effects. List only genuinely uncovered decisions and real prerequisites. An implementation product, technical check, or discoverable fact remains agent work; a missing external account or access capability blocks only the step that uses it. Do not present local completion as end-to-end delivery while a required external result remains absent.
 
-A task already claimed delegation-ready must actually be ready. If approval explicitly fixed a file, interface, or ordering restriction, do not expand it; an observed inventory is not that restriction. If it approved only a module-level range, the parent may refine files and coordinate ownership inside that range. Reassigning in-range resources is usually the parent's job; only a change to a user-reserved decision rises to a human. Dispatch refinement is not scope expansion.
+If proceeding would change the main goal, a user-fixed choice, material production commitments, protected-state risk, or authority, pause that action and obtain the narrow decision needed. Independent authorized work continues. Do not add a new approval for local repair or disclose a newly material production risk only after acting.
 
-## Independent Work And Delivery Time
+When a later user instruction adds delivery authority, reconcile the current plan and affected dependencies with that instruction. Keep superseded restrictions in history, preserve unrelated boundaries, and continue without asking permission merely to record the update.
 
-Record independence and join expectations during normal planning, not through a separate estimation exercise. Two substantive independent tasks may both go to children while the parent coordinates and waits; an asynchronous singleton may overlap other useful work. Neither parent busyness nor minimum batch size is a goal. Keep trivial or tightly coupled work local when already apparent, without numerical time, file-count, or task-count cutoffs.
+## User-Facing Decision
 
-A new main should receive goals, rationale, necessary inputs, initial write regions, protected boundaries, expected independent groups, and explicit integration/acceptance joins. Initial regions are refinable context, not a complete read set or user-approved file whitelist. Actual result scope and shared-resource conflicts still need reconciliation. Failed checks and same-task repair do not add new planning phases.
+When an actual approval is outstanding, explain the outcome and actions the user would authorize, their targets and side effects, existing coverage, and the specific unresolved boundary. Name only relevant commit, push, publication, installation, deployment, cleanup, or live-data actions; do not add an exhaustive permission checklist to a local task.
 
-## Authority, Capability, And Delivery
+For a plan-only request, make clear that the document is a proposal and state the later decision that would enable implementation. For work already authorized, record the effective scope and continue to the requested endpoint. Do not force an extra approval summary or confirmation cycle as a universal plan close.
 
-Whether an action belongs to this task, whether matching authority exists, and whether current capability can perform it are three independent judgments. There is no default operational permission. Standing deploy permission does not turn a design-only or source-only task into deployment. A plan that mentions deploy does not grant deploy permission. Credentials are not permission.
+Local facts, generated artifacts, ordinary verification, dispatch refinement, and accepted repair do not become manual checkpoints. Once the user answers a real blocker, resume the original task instead of stopping on confirmation. Keep the current account concise and avoid approval ledgers or credential chains.
 
-A planning-only current activity is not a reason to exclude the useful delivery endpoint from a proposed plan. Applications and services consider commit, push, existing-environment deploy, and post-deploy verification; libraries, tools, and Skills use the relevant publish, install, or handoff endpoint. Record that endpoint so a later approval can cover it. Ask only about a real unresolved delivery decision, and respect an explicit source-only or design-only scope for the current request.
+## Cohesive Work And Dispatch
 
-When the action is in this task and a trusted project convention or the current request already covers its goals and side effects, check remaining premises and consume that approval. Ask again only for a new goal, real side effect, or boundary conflict. An already approved same-goal deployment that lacks only a generated digest, binding, or similar execution product is not a new approval; generate, verify, and continue.
+Planning records acceptable behavior, meaningful reasons, ownership, dependencies, known write regions, protected boundaries, and how results join. It leaves filenames not yet discovered, local structure, glue, and ordinary investigation to the executor. A plan need not be a ready-to-submit dispatch request.
 
-Record required authority and missing authority separately. Already covered required authority is not a `manual_checkpoint`. Investigable facts and implementation products the executor can generate are not missing authority. A capability gap blocks that step without blocking independently completable authorized work and without reporting local completion as end-to-end delivery.
+Before dispatch, the parent uses the scope, inputs, resources, and host contract already known. Do not add a separate search, probe, model call, or estimation phase solely to decide whether delegation pays. When context is insufficient, take the next useful implementation step and delegate substantive independent work as it becomes apparent. Preserve an explicitly required delegation method within host capabilities.
 
-If a secondary adaptation would change the main goal, or would make a later production action's commitments, risk, goals, or permissions exceed the approved boundary, pause only that affected action and obtain a narrow authorization before the impact. Independent, safe, authorized work continues. Do not reopen the whole design for an in-scope best-effort tradeoff, and do not disclose a newly material production risk only after going live.
+A cohesive worker slice may investigate, implement, test, diagnose, and repair its own bounded result. Do not divide code and its tests between workers by default or reserve all useful investigation for the parent. Explorer work is useful for a separately valuable question, not as a mandatory predecessor.
 
-When the task includes implementation and delivery, the plan states the delivery endpoint and the evidence that endpoint needs. `close-change` still owns later completion judgment. This skill does not rewrite live project permissions.
+Independent slices need compatible interfaces and ownership of shared generators, lockfiles, registries, fixtures, ports, and external state. Different files alone do not prove independence. Retain tightly coupled work locally; a useful singleton is valid when the host permits it. Neither parent busyness, minimum batch size, nor dispatch count is a goal.
 
-## Implementation-Approval Summary
+Each writable worker belongs to one repository. Record the initial write region and shared-resource constraints needed for safe dispatch; use the host's isolation facilities when required. The parent owns cross-repository integration and semantic acceptance. Do not prescribe host-specific worktree paths, schedulers, model routes, or invented locks in a portable plan.
 
-End every plan intended for later implementation with a short, user-facing summary that makes the next decision explicit rather than leaving approval implied among tasks. Classify remaining items as a user decision, an investigable fact, an implementation product to generate, or technical verification. Only a true user or external decision belongs in Manual checkpoints. Use the smallest shape that can state currently effective goals, discretion, and real pause conditions:
+## Parent Judgment And Continuation
 
-- **Decision requested:** whether the user is being asked to authorize implementation now, or the plan is intentionally plan-only.
-- **Approval scope:** the actions, targets, repositories, and side effects the user may approve together, including the exact objective, write or operational surfaces, delivery endpoints, and external effects. List commit, push, publication, deployment, destructive cleanup, configuration, installation, and live-data actions separately; omission means they are not approved.
-- **Already covered:** trusted approval or project policy that already covers a listed action, with its source and matching target/side effects. Do not ask again for that same approval.
-- **Agent-owned execution:** technical checks, investigable facts, and generatable products the agent must execute inside the authorized scope. Do not ask approval for these. Their results still have to be obtained; a new privilege, live side effect, or protected-state boundary remains a real checkpoint.
-- **Manual checkpoints:** each currently unresolved authority, account, credential, access, license, physical prerequisite, or user decision; name the affected task, owner, and why it blocks. Do not disguise it as an implementation subtask.
-- **Continuous-execution boundary:** after the user approves the stated scope and any named checkpoint, continue through ordinary in-scope investigation, dispatch refinement, worker execution, verification, review adjudication, and accepted repair without requesting serial approvals. After the user answers the unique blocker, resume the original authorized task rather than ending on confirmation. Pause only for a new goal, material side effect, protected-state risk, acceptance change, authority gap, or other decision explicitly retained by the user. Independent authorized work continues while only the affected production or protected-state action waits. This is the current scope's continuation rule, not a universal endless-execution engine.
-- **Excluded actions:** state actions intentionally outside the request so a later host/tool step cannot infer them from implementation approval.
+The parent retains objective interpretation, authority, cross-task synthesis, finding adjudication, acceptance, and continuation decisions. Verification and repair commands may be delegated; their execution alone is not an intervening parent decision.
 
-Do not force a user to approve implementation merely because they requested a plan. For a plan-only request, still name the useful delivery endpoint in the proposal, say that no implementation or delivery authority is requested, and name the exact later decision needed. Do not use this summary as a generic lifecycle gate, a task ledger, an approval ledger, a runtime schema, or an excuse to ask the user about local choices the executor can make. Keep historical exemptions and old reviewed revisions in stage records and cite them shortly as provenance; do not copy old gates into the live summary, and do not leave contradictory live pending or excluded gates beside a top-level override sentence. New evidence that changes the stated scope or boundary requires a new, narrow approval; a different model, reviewer, worker, authorized secondary adaptation, or normal repair iteration does not.
+Represent a predecessor only when its output is a genuine input. Preserve an explicit parent join where synthesis, coordination, or acceptance is needed instead of automating a worker-reviewer-repair chain. Ordinary same-task repair does not grow the task graph.
 
-When the user later adds explicit delivery authority such as commit, push, or deploy, update the currently effective plan, this summary, and affected delivery dependencies to the new authorized objective, scope, and endpoint. Continue without asking permission merely to record that approval. Do not rewrite unrelated approved constraints, expand beyond the newly authorized target or scope, treat document annotation or review success as authority, or waive required verification.
+Prefer same-task worker or reviewer continuation when the host supports it and context remains valid. Do not prefill handles, candidate IDs, or session identifiers. If continuation is unavailable, retain or redispatch the task through the supported path without adding a durable actor binding or public continuation protocol.
 
-## Cohesive Slices
+Profiles are optional semantic hints. Use provider-neutral capability descriptions only when they help dispatch; a missing profile mapping does not block implementation. A user's concrete model choice may be passed through compatible invocation parameters but does not authorize changing durable route configuration.
 
-A worker slice may include investigation, implementation, direct tests, command feedback, and in-scope local repair. Do not split by one file per worker or by sending code and tests to different workers by default. The parent should not exhaust implementation detail and then hand off leftover typing.
+## Fresh-Main Handoff
 
-Explorer work is for separately valuable or parallel facts. It is not a startup gate for every worker. The worker may investigate callers and implementation inside its slice.
+A new main should find the effective outcome, rationale, explicit constraints, current authority, real dependencies, known inputs, ownership, integration joins, and remaining work in accessible project records. State which verification still applies and what changed, rather than requiring the next agent to reconstruct a chain of hashes or replay all checks.
 
-Actively look for independent slices whose interfaces and inputs are stable and whose writes and shared resources do not conflict. Do not pad extra calls. A singleton offload is useful when the host and applicable call policy allow it; if the host is narrower, keep the work local, do not invent a second slice, and do not claim wall time will shrink. Shared skills cannot override a host's tighter singleton or delegation limit.
+Use a diagram when relationships or flow are clearer that way, replacing duplicate narrative. Code and observations establish implemented behavior; the plan and diagram communicate intent. Synchronize explanations after implementation without making document wording, bytes, or diagram contents into tests.
 
-Shared interfaces, generators, lockfiles, registries, fixtures, ports, and external state need an explicit owner. Non-overlapping files do not prove independence. Only real dependencies create serial order; document chapter order does not.
-
-For actual delegation, record repository ownership, an exclusive write set, resource locks, safe isolation, and convergence ownership with the active parent. The host owns its execution mechanisms; planning does not implement a lock or prescribe working-directory flags, snapshot paths, schedulers, or handles. Use the current checkout by default where safe and permitted; isolation needs a real policy or state reason, not delegation terminology alone.
-
-## Parent Decisions Versus Labor
-
-Parent-owned verification, repair, and continuation mean adjudication, authority, cross-task synthesis, and final acceptance. They do not mean every test, diagnosis, or repair command must run on the parent. Verification or repair labor may have factual dependencies but does not by itself require an intervening parent decision.
-
-Keep a decision boundary where the parent must synthesize, authorize, coordinate across tasks, adjudicate findings, accept the result, or decide continuation. Compatible hosts may consume true dependencies that have no intermediate decision. Do not compile a plan into a static worker-to-reviewer-to-repair chain that bypasses that adjudication. Concrete DAGs, queues, and workspaces belong to the host.
-
-## Same-Task Interaction
-
-A cohesive task may include several parent-child exchanges. The plan may say that follow-up repair or directed rereview should prefer the same worker or reviewer while the parent keeps adjudication. Do not prefill child handles, candidate IDs, or session identifiers that do not exist yet. Host results and progress records hold those mappings during execution.
-
-Do not add a runtime field, public continuation skill, or durable actor binding. If the current host cannot continue a child, say so at dispatch; do not write a fake ready handle into the plan.
-
-## Readiness And Profiles
-
-Local readiness is the ordinary coherence check from the plan's readiness step; it does not require delegation profiles, parallel policy, exact dispatch paths, or a fixed review budget.
-
-Assess delegation readiness only for slices actually delegated or claimed delegation-ready, using the existing semantic profiles and facts. Keep that vocabulary provider-neutral. Plans that do not claim delegation readiness may omit profiles. Claiming delegation-ready without those facts is fabrication, not planning.
-
-Use semantic capability descriptions rather than provider names or exact model settings. Profiles express intent, not a route binding; a compatible host may use a default or retain the task when no mapping exists. A later explicit user-selected execution or reasoning route is invocation authority rather than plan metadata and may be preserved through ephemeral compatible-host parameters without amending the plan, but it never authorizes mutating durable route configuration. A plan must not prescribe how a particular product schedules actors, binds models, records attempts, or resumes sessions.
-
-## Plan Record
-
-An execution-grade plan should let a fresh executor find the currently effective facts directly; do not copy this reference into the plan. Record the objective, non-goals, future phases, task IDs, real dependencies, scope slices, ownership, completion conditions, delivery endpoints, verification evidence, authorized discretion, and known write surfaces covered above, plus:
-
-- recovery policy and any guarded rollback trigger
-- review decision and, when review ran, its verdict and adjudication summary
-- truth-sync targets when stable truth will change
-
-Keep the live plan compact: distinguish user decisions, investigable facts, implementation products to generate, technical verification, and already approved adaptations. New evidence updates the currently effective paragraphs; valuable history stays in stage records and is cited shortly. Document length is not a gate.
-
-## Examples
-
-These examples are not template gates.
-
-A module-level approved slice may be dispatched with host-exact files inside that module. An exact write set explicitly fixed as an approval boundary may not gain extra paths at dispatch; an incidental planning inventory may be refined within the approved slice. A design-only task stays design-only even when standing deploy permission exists. A planning-only request may still propose future commit, push, deploy, publish, install, or handoff endpoints without granting them. A delivery task with already covered commit, push, and deploy permission records those endpoints and consumes the permission instead of repeating the same approval. A delivery task that already has same-goal deploy approval and lacks only a new digest or binding generates that product, verifies, and continues. After an explicit later addition such as `approved, include commit/push/deploy`, the live plan and approval summary are reconciled to that authorized endpoint and superseded excluded gates move to provenance. A user-specified library with undecided glue leaves the glue to the executor. A best-effort secondary matcher that cannot be expressed is marked unsupported with evidence while the main path continues; the same matcher stays required when the user named it or the main goal depends on it. After the user answers the unique blocker, the same task resumes implementation rather than closing on a promise to continue. If a secondary tradeoff would change later production commitments or risk, independent local work continues and only the affected production action pauses for a narrow authorization. A cohesive parser-fix slice can locate implementation, edit approved files, run existing checks, and repair failures it caused, then return a candidate and evidence without changing a public schema. Two slices that still need an undecided shared schema are not independent.
+Retain bounded supporting history only where it explains a decision or unresolved issue. An execution record should help the next agent finish the user's outcome, not make completing the record a competing goal.

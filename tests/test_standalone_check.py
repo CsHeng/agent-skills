@@ -28,10 +28,10 @@ class StandaloneCheckTests(unittest.TestCase):
             destination = Path(temporary) / "copy"
             destination.mkdir()
             self.module.copy_repository(REPO_ROOT, destination)
-            self.assertTrue((destination / "skills.index.json").is_file())
+            self.assertTrue((destination / "contracts/skills.toml").is_file())
+            self.assertTrue((destination / "skills/analyze-project/SKILL.md").is_file())
             for relative in (".git", ".dist", ".pi", ".venv", "docs/plans", "integrations", "src/runtime"):
                 self.assertFalse((destination / relative).exists(), relative)
-            self.assertEqual(self.module.surface_digest(destination), self.module.surface_digest(destination))
 
     def test_run_redacts_output_and_propagates_failure(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

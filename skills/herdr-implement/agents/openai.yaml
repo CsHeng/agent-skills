@@ -1,0 +1,6 @@
+interface:
+  display_name: "Herdr Implement"
+  short_description: "Hand plans between main coding agents through Herdr"
+  default_prompt: "Use $herdr-implement with agent=pi to implement the current plan and return it for review."
+policy:
+  allow_implicit_invocation: true

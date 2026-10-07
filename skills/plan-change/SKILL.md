@@ -5,87 +5,64 @@ description: "Create a requested implementation plan or resolve execution orderi
 
 # Plan Change
 
-Turn an approved design or explicit bounded scope into a self-contained implementation plan a fresh main agent can follow. Optimize accepted end-to-end delivery within the quality, authority, and budget boundaries, not token count, dispatch count, or keeping the parent continuously coding.
+Turn settled intent into a practical route to the user's outcome. A fresh executor should understand what success means, why the approach is worthwhile, what authority already exists, and what decisions remain open. Completing the task list is not the outcome.
+
+Apply `development-standards` from the start: before adding a mechanism, compatibility obligation, verification lane, or task, identify the current need and whether a simpler route reduces total maintenance burden. This judgment belongs in ordinary planning; it does not require invoking a simplification audit, filling a form, or waiting until implementation to remove unnecessary work.
 
 ## Use This Skill When
 
 - the user requests an implementation plan based on settled design or bounded scope
 - execution ordering, dependencies, coordination, verification, authority, delivery endpoints, or recovery arrangements genuinely need a planning decision
 
-A bounded authorized change can enter implementation directly when those facts are already sufficient. Potential parallelism or ordinary local technical choices do not by themselves require a separate plan. When the user requests a plan artifact, document established decisions without reopening them or proceeding into implementation.
-
-Do not use it while a necessary design decision or scope approval is unresolved, to execute an existing plan, or for a standalone review request.
+A bounded authorized change can enter implementation directly. Potential parallelism and ordinary local technical choices do not require a separate plan. A request for a plan artifact does not itself authorize implementation. An unresolved material design decision belongs with `design-change`; a standalone review uses `review-change`.
 
 ## Plan
 
-1. Load the approved design or bounded scope and preserve its decisions. Clear non-automatable prerequisites before presenting an execution-ready plan; report unresolved account, login, access, credential, license, or physical prerequisites as `manual_checkpoint` instead of hiding them inside implementation tasks.
-2. Split the work into stable task IDs with explicit real dependencies, bounded objectives, ownership, completion conditions, and concrete verification. Treat binding user goals, acceptance, authority, and explicitly fixed restrictions as fixed; treat model-derived granularity, dependency edges, order, verification means, likely files, revisions, and environment snapshots as refinable planning context.
-   - Task IDs coordinate and trace work; they are not implementation names. When a plan proposes repository paths or interfaces, apply the plan-independent naming rule in `development-standards`: name the domain responsibility or behavior, and keep the task-to-artifact mapping in the plan.
-3. Judge task membership, covered versus missing authority, and current capability separately. Consume trusted approval that already covers the same goals and side effects; list only genuinely uncovered authority as `manual_checkpoint`, and never record investigable facts or generatable products as missing authority. Planning does not grant authority.
-4. Name the useful delivery endpoint even when the current activity is planning-only; naming it is not operational permission, and an explicit source-only or design-only request stays inside its scope. Leave remaining local investigation, glue around specified technology, and already-authorized best-effort secondary adaptation to the executor instead of pre-enumerating every path or secondary failure.
-5. Choose executable or substitute evidence for each task. Compose `executable-oracle-architecture-selector` when correctness needs an explicit oracle strategy, and `testing-strategy` when that strategy needs concrete test lanes.
-6. State a fix-forward or explicitly guarded recovery policy for each risky task.
-7. Identify cohesive delegable work from the investigation planning already needs, and record independent groups, shared resources, required predecessor inputs, initial write regions, and parent-owned integration joins.
-   - A hard predecessor is eligible only for approved factual order with no intervening parent synthesis, authority, cross-task coordination, finding adjudication, final acceptance, or continuation decision.
-   - Do not add a separate dispatch-economics or explorer-first phase, and do not prefill host or worker details. Narrative order alone is not a dependency, and unresolved independence stays conditional.
-8. Check that the effective objective, authorized writes, protected behavior, factual dependencies, delivery endpoints, authorized discretion, and acceptance evidence are coherent; assess delegation readiness only for slices actually delegated or claimed delegation-ready.
-9. Decide whether independent review is required by an explicit user request, an applicable repository or approved-scope rule, or an evidence-backed risk or uncertainty judgment.
-10. When review is required, request a bounded `review-change` evaluation and adjudicate its read-only candidate findings.
-    - Repair accepted defects inside the confirmed design and planning scope, and continue evidence-backed in-scope repair and affected verification without a default count limit.
-    - Use targeted rereview when prior evidence becomes stale or an independent question remains.
-    - Do not rewrite confirmed user goals, acceptance, or authority, erase a real unmet dependency, or weaken an oracle to make the plan pass.
-    - Stop for a concrete decision or prerequisite gap, a lack of viable path, or an explicit invocation budget. Finish once the requested plan satisfies its requirements; further review is not a ritual.
-11. Close every implementation-oriented plan with an explicit implementation-approval summary for the user.
-    - Cover the actions, targets, repositories, and side effects the user may approve together; authority already covered; agent-owned checks and generatable products; and remaining real manual checkpoints and pause conditions.
-    - Keep it to currently effective goals, discretion, and real pause conditions, and cite superseded exemptions shortly instead of copying old gates.
-    - Do not hide a future approval request in task prose or ask again for ordinary in-scope execution choices after the stated scope is approved.
+1. Read the current request, relevant design decisions, and enough implementation truth to identify the user-visible result. Preserve the user's goal, explicitly fixed choices, real acceptance, and safety and authority boundaries. Treat model-derived guards, compatibility machinery, hashes, task splits, and verification routes as revisable means even when they appeared in an approved document.
+2. Check that the proposed work still serves that result. For migration or replacement, retain the rationale about operating, deployment, and maintenance burden; do not use inventory closure, language uniformity, or test rewrites as proxies for benefit. Keep a simpler in-scope route available when it preserves the required behavior.
+3. Identify cohesive outcomes, real dependencies, owners, and how each result will be checked. Use task IDs when they help track independent work; do not create a task graph merely to formalize a small change. Paths and names should describe domain responsibility, following `development-standards`, rather than encode plan IDs.
+4. Distinguish task membership, authority, and capability. Consume existing permission for the same goals, targets, and side effects. A true unresolved account, access, credential, license, physical, or owner decision blocks its affected action; discoverable facts and products the agent can generate remain implementation work.
+5. State the useful delivery endpoint and any genuinely uncovered authority. Planning may propose later delivery but cannot grant it, and an explicit source-only or design-only request stays within its current scope. Leave local investigation, glue, and authorized secondary adaptation to the executor.
+6. Choose evidence that tests the required behavior under relevant inputs and conditions. Read only `references/oracle-selection.md` in `skills-routing` when that choice is unresolved, and use `testing-strategy` when concrete coverage or execution lanes need design. Reuse reliable applicable evidence instead of prescribing repeated proof after every source change.
+7. Plan recovery for actual risky transitions, normally fix-forward. Where independent work is useful, identify stable inputs, initial write regions, shared resources, and parent-owned integration and acceptance joins. Do not add explorer-first or dispatch-estimation stages, prefill host handles, or make narrative order a dependency.
+8. Read through the proposed route for omitted outcomes, unnecessary mechanisms, and real blockers. Obtain bounded `review-change` review when requested, required by an applicable rule, or justified by concrete risk or uncertainty. The caller adjudicates findings and repairs accepted defects; rereview only affected or still-uncertain decisions.
+9. Finish once the requested plan explains a supported route to the outcome. Identify any actual decision still needed from the user and the authorized work that can continue. Do not manufacture an implementation-approval request when the current task already provides that authority.
 
-Read `references/delivery-and-delegation.md` when the plan must record delivery endpoints, plan-record contents, two-stage concretization, cohesive worker slices, required versus missing authority, decision-versus-fact classification, delegation readiness and profiles, same-task interaction without handles, or the implementation-approval summary. Ordinary local plans that do not claim those arrangements may omit it.
+Read `references/delivery-and-delegation.md` when a plan needs delivery or approval detail, coordination of delegated slices, or a fresh-main handoff. Its guidance describes useful information, not a required document schema.
 
-## Task Granularity
+## Task Boundaries And Evidence
 
-Use independently verifiable outcomes and blocker boundaries as task boundaries:
+Split work where outcomes can be accepted or blocked independently, including local source work and externally gated verification with different prerequisites. Keep related implementation, tests, feedback, and repair together when they form one useful slice. Commands, files, elapsed-time estimates, and review rounds are not tasks by themselves.
 
-- If one part can be accepted or blocked while another can still advance, make them independently trackable, and split local source work from externally gated verification when their prerequisites differ.
-- Keep stable task IDs for independently deliverable owner packages. A stable ID preserves a still-identical obligation, not the initial decomposition: correcting a mistaken model-inferred split, merge, dependency edge, or order is an in-discretion representation refinement, not a goal change or a reason to re-request covered authority, while explicitly user-fixed restrictions still bind.
-- Commands, file counts, and elapsed-time estimates are not task boundaries. An overall milestone may aggregate acceptance, but its grouping must not become a prerequisite for every local result or join.
-- Record only the upstream outputs each consumer actually needs.
+Task IDs preserve continuity, not the initial decomposition. The parent may correct model-inferred splits, merges, dependencies, or order within the user's goal and authority. An explicitly user-fixed restriction still binds. Do not add a new node for each ordinary failed check or require full inventory completion when evidence supports a simpler route to the requested outcome.
 
-Assign each verification claim, its actual inputs, and its acceptance owner to the corresponding outcome:
+Assign evidence to the result it actually proves. Separate foundation behavior, consumer adoption, and integrated delivery where their inputs differ. A consumer-only change does not invalidate an independent foundation or sibling result. Recheck changed behavior and affected combinations; a different file revision alone does not make unrelated evidence obsolete.
 
-- Separate shared-foundation proof, consumer-adoption proof, and whole-change joins when their prerequisites or acceptance differ. Do not make mutable consumer outputs inputs to foundation acceptance merely because one verification-matrix row groups their checks.
-- Preserve any genuine compatibility dependency and its evidence. Otherwise verify the foundation against its owned inputs and fixtures, and place consumer checks with their owners or the relevant join.
-- Check that a consumer-only change does not invalidate an independent foundation or sibling outcome.
+The implementation establishes actual system behavior; documents and diagrams express intent and explanation. Plan to update that explanation when implementation changes it. Verify the behavior the user requires, not document wording, diagram contents, or the plan's bookkeeping. Do not create tests that freeze those human-facing records.
 
 ## Conditional Decisions
 
-Use `language-decision-tree` only when a task creates or replaces a persisted project, service, tool, or automation boundary. Record the selected language and rationale only for affected tasks.
+Read only `references/language-selection.md` in `skills-routing` when a new persisted project, service, tool, or approved migration actually needs a language decision. Record the rationale where it matters; a product language does not dictate the language of its tests or tooling.
 
-When the approved design contains an architecture decision, reference it and plan reversible implementation increments, ownership, oracles, and observable upgrade triggers. Do not rescore the design during planning. Return `needs_design_decision` if current evidence invalidates an approved design premise.
+Reference settled architecture choices rather than rescoring them. Evidence that invalidates a material premise may require `needs_design_decision`; a simpler implementation of the same goal does not. Neither general plan approval nor a source snapshot makes every proposed precaution a fixed user choice.
 
-Planning fixes acceptable behavior and ownership; dispatch refines host-required files and inputs inside the approved scope. Approving a plan does not turn every observed path or SHA into such a restriction, and in-scope local refinement or safely reconcilable parallel changes do not reopen the whole plan. Retain exact host capabilities and stale-candidate checks at the execution boundary.
+When delegated implementation is requested or planned, read `references/delegation-profiles.toml` if semantic profiles are useful. Record known inputs, repository owner, initial write regions, shared-resource constraints, verification, and the parent join. Do not invent unknown paths or inspect implementation details solely to fill dispatch fields. Host-required exact capabilities remain binding at execution; they are not new human approval obligations.
 
-When the user explicitly requests delegated or subagent-assisted implementation, read `references/delegation-profiles.toml`. Record each useful delegable slice's goal, known inputs, repository owner, initial write regions, shared-resource constraints, isolation and parent join, verification, and any applicable execution or reasoning profile. These are semantic expectations, not an executable dispatch schema or a complete file whitelist. Do not invent unknown paths or pre-investigate local implementation details to qualify a task; preserve explicit fixed restrictions and real host capability requirements, and keep materially unresolved independence conditional.
+A writable delegated task belongs to one repository root. The parent owns cross-repository integration, authority judgments, acceptance, and continuation. Keep genuine dependencies but do not compile them into an automatic worker-reviewer-repair chain that bypasses those decisions. Concrete scheduling, workspaces, and route bindings belong to the host; absent optional profile mappings do not block authorized work.
 
-A writable delegated task belongs to one repository root. Split a multi-repository milestone into repository-owned writable slices, retain cross-repository integration in the active parent, or design an explicit external boundary with its own authority and cleanup. Do not imply that one worker can mutate sibling repositories, or prescribe a host-specific working-directory flag, snapshot, worktree, staging path, or scheduler.
+## Plan And Handoff
 
-`implement-change` owns any later projection of an approved factual predecessor into a compatible host mechanism. Do not compile a plan into a static worker-to-reviewer-to-repair chain that bypasses parent semantic adjudication.
+Use the project's declared document owner, resolving named roots before writing. Ensure the plan and its necessary inputs are accessible to the next executor, including uncommitted or out-of-checkout material. Do not duplicate it across repositories or make product execution depend on a coordination checkout.
 
-## Document Ownership
+Keep a compact current account of the outcome, rationale, user-fixed constraints, covered authority, real dependencies, relevant verification, ownership, and remaining decisions. Link useful historical context without repeating superseded gates. Ordinary local plans do not need mandatory Git identities, design or revision hashes, credentials, or receipt chains. Preserve exact identity requirements only for the interface or protected operation that actually consumes them.
 
-Follow the project's declared design/plan owner, which may be a separate repository. Resolve owner-root variables before writing, include external document and product paths in the authorized write set, and keep the plan genuinely accessible to the executor. Invocation cwd is not a substitute for user authority. Do not copy an external plan into every product repository or make distributed Skills depend on a particular coordination checkout.
-
-## Fresh-Main Handoff
-
-Carry the effective goals, chosen design and rationale, required acceptance, covered authority, real dependencies, expected independent groups, and parent joins in the plan or accessible references. Do not rely on the prior conversation being present. Ensure uncommitted or out-of-checkout design/plan inputs are genuinely available to the executor; naming a path is not transmitting it. Keep the investigation transcript out unless a bounded piece is necessary.
-
-At implementation time dispatch economics uses this plan and already collected context only. Do not budget a second search, probe, model call, or duration-estimation phase to decide whether to delegate. If evidence is insufficient, the main agent performs the next useful implementation action; independent work discovered naturally can be delegated later. An explicit required delegation method remains binding.
+Use a diagram where it makes relationships, sequence, or ownership clearer and removes repetitive prose. Keep reasons and exceptions in concise text; the diagram does not add executable gates. No particular headings, fields, or document length are required by this Skill.
 
 ## Decision States
 
-- `ready_for_approval`: the plan and any required review evidence are complete, and its implementation-approval summary names the exact decision the user can make
-- `needs_design_decision`: the approved design is no longer sufficient
-- `split_scope`: the milestone cannot remain one bounded execution package
-- `manual_checkpoint`: a specific prerequisite or authority decision blocks the affected work; name it in the approval summary instead of hiding it in a later task
+- `ready_for_approval`: the requested plan and any required review are complete; name an approval only if one is outstanding
+- `needs_design_decision`: a material goal or design boundary remains unresolved
+- `split_scope`: the proposed milestone does not form a coherent execution package
+- `manual_checkpoint`: a specific user or external prerequisite blocks the affected action
 
-Approval belongs to the user. A plan's summary makes the next approval actionable but does not grant it; review success does not authorize implementation, and an implementation request does not retroactively approve an unresolved plan.
+A plan describes authority rather than granting it. Review success does not authorize implementation; use the user's effective instructions and matching project permissions. When a planning decision arose during authorized work, resume that work once the decision is resolved.

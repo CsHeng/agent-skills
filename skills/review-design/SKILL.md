@@ -5,7 +5,9 @@ description: "Read-only evaluator for one bounded design brief. Return evidence-
 
 # Review Design
 
-Evaluate only the supplied design target: its changed sections, goals, non-goals, acceptance conditions, and explicitly justified supporting documents. Do not search the repository for additional requirements, mutate the design, delegate recursively, invoke another workflow, or authorize repair. Final adjudication, repair authorization, and continuation decisions stay with the calling agent; this evaluator only returns candidate findings.
+Evaluate only the design target and review scope supplied by the caller: the requested artifact or diff, its goals, non-goals, acceptance conditions, and explicitly justified supporting documents. Do not search the repository for additional requirements, mutate the design, delegate recursively, invoke another workflow, or authorize repair. Final adjudication, repair authorization, and continuation decisions stay with the calling agent; this evaluator only returns candidate findings.
+
+For a whole-design target, defects anywhere in the supplied artifact are in scope, regardless of whether they predate the current change. For an explicitly diff-scoped target, a blocking candidate must be caused or newly activated by that diff; supporting context does not expand the target to unrelated pre-existing defects.
 
 ## Check
 
@@ -18,4 +20,4 @@ Evaluate only the supplied design target: its changed sections, goals, non-goals
 
 ## Return
 
-Return `pass`, `candidate-findings`, or `manual-decision-required`. Each candidate includes location, evidence, impact, causal class, violated requirement, confidence, smallest in-scope fix, and recommended disposition. This is a whole-artifact evaluation: a defect anywhere in the supplied design target is in scope, and a pre-existing-versus-new distinction does not filter it; causal diff filters belong to change- or diff-scoped reviews. Omit unrelated, future-phase, speculative, and low-confidence observations unless a critical security or data-loss concern requires a manual decision.
+Return `pass`, `candidate-findings`, or `manual-decision-required`. Each candidate includes location, evidence, impact, causal class, violated requirement, confidence, smallest in-scope fix, and recommended disposition. Omit unrelated, future-phase, speculative, and low-confidence observations unless a critical security or data-loss concern requires a manual decision.

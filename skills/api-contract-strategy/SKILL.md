@@ -17,7 +17,7 @@ This is advisory guidance for the active workflow: it does not own lifecycle tra
 
 Keep adjacent authorities separate:
 
-- `executable-oracle-architecture-selector` selects contract, example, scenario, property, model, characterization, meta, or runtime oracle methods when that evidence strategy is genuinely unresolved.
+- Read only `references/oracle-selection.md` in `skills-routing` to select contract, example, scenario, property, model, characterization, meta, or runtime oracle methods when that evidence strategy is genuinely unresolved.
 - `api-contract-strategy` decomposes API ownership, compatibility, provider, consumer, workflow, and generation boundaries once a contract oracle is established — a selected method or an existing OpenAPI/conformance setup already in place.
 - `testing-strategy` turns the selected boundaries into concrete suites, fixtures, environments, CI lanes, and diagnosis ownership.
 - `architecture-patterns` owns monorepo versus multi-repository structure, service boundaries, independent lifecycle choices, and their economics.

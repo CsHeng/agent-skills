@@ -7,7 +7,7 @@ description: "Apply Shell policy to persisted scripts, CI or automation, constra
 
 ## Purpose
 
-Define the Shell language-policy overlay for persisted or correctness-sensitive Shell code. The primary workflow owns the task lifecycle, and `tool-decision-tree` owns non-trivial ad hoc tool selection and command composition. Do not load this skill merely because a routine read-only command runs through a shell.
+Define the Shell language-policy overlay for persisted or correctness-sensitive Shell code. The primary workflow owns the task lifecycle; non-trivial ad hoc tool selection and command composition use only `references/tool-selection.md` in `skills-routing`. Do not load this skill merely because a routine read-only command runs through a shell.
 
 ## Scope
 
@@ -21,9 +21,8 @@ In-scope:
 
 Out-of-scope:
 - Routine single-layer commands such as a bounded `rg`, file read, or `git status` when no Shell policy decision is present
-- Agent ad hoc tool choice and command composition (see `tool-decision-tree` skill)
-- Language selection (see `language-decision-tree` skill)
-- Tool selection and progressive search workflow (see `tool-decision-tree` skill)
+- Agent ad hoc tool choice, command composition, and progressive search (read `references/tool-selection.md` in `skills-routing`)
+- Language selection (read `references/language-selection.md` in `skills-routing`)
 
 ## Progressive Disclosure
 
@@ -80,14 +79,13 @@ PROHIBITED: Use zsh-only features in scripts intended for bash/sh environments.
 
 ### Data Handling
 REQUIRED: Quote variables to prevent word splitting and glob expansion.
-PROHIBITED: Implement multi-step structured data parsing in shell when a higher-level language is required by correctness/testability constraints (see the `language-decision-tree` skill).
+PREFERRED: Use an existing structured-data tool or a clear higher-level fragment when Shell parsing would be fragile. Short embedded Python is valid when the interpreter and dependencies are available; pass data through arguments, stdin, or files rather than interpolating it into source. Move a fragment to a named script when that improves readability or reuse, without automatically changing its language.
 
 ### Persisted Script Escalation
-PREFERRED: Revisit the implementation language through `language-decision-tree` when a persisted Shell script accumulates multi-step structured parsing, persistent state, complex retry or recovery, concurrency, multi-host distribution, embedded languages, or runtime and dependency management.
-PREFERRED: Keep Shell when the script is simple, affects the invoking shell, or runs on a constrained native runtime (BusyBox ash or POSIX `sh`). Script length or accumulated state alone is not an escalation signal; escalation requires an approved boundary plus one of the concrete signals above.
-PREFERRED: For a simple one-shot remote action, prefer the controller's built-in module, local rendering, or a thin transported Shell command over creating a new Go or Python product.
-PREFERRED: Preserve an existing working Shell implementation unless an approved design changes its language boundary; a nearby file extension or the script's age does not authorize a rewrite.
-PREFERRED: Prefer Go for long-lived operational tooling when a single binary, cross-platform delivery, stable CLI contract, or reduced runtime state is a material benefit. This is a preference, not a mandatory replacement language; repository and ecosystem constraints still control the decision.
+PREFERRED: Read `references/language-selection.md` in `skills-routing` when actual parsing, state, recovery, concurrency, or distribution complexity makes the current implementation costly or unreliable. Compare total implementation, verification, deployment, and maintenance cost before an authorized rewrite.
+PREFERRED: Keep Shell when the script is simple, affects the invoking shell, or runs on a constrained native runtime (BusyBox ash or POSIX `sh`). Length, state, or embedded Python alone does not justify escalation.
+PREFERRED: For a one-shot remote action, reuse the controller's built-in module, local rendering, thin transported Shell, or a short Python fragment on an available runtime rather than creating a new product.
+PREFERRED: Preserve an existing working Shell implementation unless the request or approved design authorizes its migration. A long-lived tool may benefit from Go's compiled delivery, but that benefit must outweigh the new build, compatibility, and maintenance cost.
 PROHIBITED: Split one reusable business rule across Shell and another implementation language.
 
 ### File Naming
@@ -99,7 +97,7 @@ REQUIRED: Name shell script files using hyphen style (kebab-case): `my-script.sh
 - macOS login `zsh` runs `path_helper` (via `/etc/zprofile`), which can override PATH changes from `.zshenv`. For tasks explicitly testing `zsh -lc`, put the final Homebrew PATH setup in `.zprofile` after `path_helper`, using the host's `brew shellenv`.
 - Homebrew `curl` is commonly keg-only; prefer `export PATH="$(brew --prefix curl)/bin:$PATH"` when you need modern curl/TLS features.
 - Non-interactive bash sources `$BASH_ENV`; set it to a file that exports the PATH you expect (including Homebrew) if your automation runs `bash` non-interactively.
-- A resolved command's dialect can differ from the host OS when Homebrew `*/libexec/gnubin` directories shadow system commands; `tool-decision-tree` owns the ad hoc diagnostic handling for that. For persisted scripts that depend on a specific command dialect, run this skill's bundled `scripts/audit-homebrew-command-shadowing.py` when an option behaves unexpectedly.
+- A resolved command's dialect can differ from the host OS when Homebrew `*/libexec/gnubin` directories shadow system commands; `references/tool-selection.md` in `skills-routing` covers ad hoc diagnostic handling. For persisted scripts that depend on a specific command dialect, run this skill's bundled `scripts/audit-homebrew-command-shadowing.py` when an option behaves unexpectedly.
 - Debug quickly: `command -v bash; /usr/bin/env bash --version | head -n1; type -a bash; command -v curl; curl --version | head -n1`.
 
 ### Homebrew Command Shadow Audit

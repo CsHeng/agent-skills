@@ -13,7 +13,7 @@ Capabilities:
   root-shape            per-root file naming rules
   index-closure         each declared index references every file it owns
   link-resolution       offline relative link resolution with scope classes
-  migration-conservation relocation manifests keep path pairs and SHA-256 truth
+  migration-conservation relocation manifests resolve new paths and retire old paths
 
 Exit status is 1 when any finding is not covered by a declared exception.
 """
@@ -21,7 +21,6 @@ Exit status is 1 when any finding is not covered by a declared exception.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import re
 import subprocess
@@ -1171,18 +1170,6 @@ def check_migration_conservation(
                     Finding(check_id, "migration-destination-missing", destination, "declared new path does not exist")
                 )
                 continue
-            expected = str(move.get("sha256") or "")
-            if expected:
-                actual = hashlib.sha256(destination_path.read_bytes()).hexdigest()
-                if actual != expected:
-                    report.add(
-                        Finding(
-                            check_id,
-                            "migration-hash-mismatch",
-                            destination,
-                            f"declared sha256 {expected[:12]} does not match current {actual[:12]}",
-                        )
-                    )
             source_path = root / source
             if source_path.exists():
                 report.add(
@@ -1200,18 +1187,6 @@ def check_migration_conservation(
                     Finding(check_id, "migration-created-missing", str(created["path"]), "declared created path does not exist")
                 )
                 continue
-            expected = str(created.get("sha256") or "")
-            if expected:
-                actual = hashlib.sha256(created_path.read_bytes()).hexdigest()
-                if actual != expected:
-                    report.add(
-                        Finding(
-                            check_id,
-                            "migration-created-hash-mismatch",
-                            str(created["path"]),
-                            f"declared sha256 {expected[:12]} does not match current {actual[:12]}",
-                        )
-                    )
         for repair in data.get("pointerRepairs") or []:
             if not isinstance(repair, dict) or not repair.get("path"):
                 report.add(

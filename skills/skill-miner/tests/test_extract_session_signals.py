@@ -860,7 +860,7 @@ description: Test-driven development.
             codex_two = root / "codex-two"
             repo_root.mkdir()
             other_repo.mkdir()
-            skill_dir = repo_root / "src" / "skills" / "disciplines" / "tdd"
+            skill_dir = repo_root / "skills" / "tdd"
             skill_dir.mkdir(parents=True)
             (skill_dir / "SKILL.md").write_text(
                 """---
@@ -888,10 +888,7 @@ codex_allow_implicit_invocation = true
 claude_effective_visibility = "default-visible"
 
 [skills.tdd]
-source = "src/skills/disciplines/tdd"
-public_id = "tdd"
 category = "discipline"
-install = ["claude", "codex", "root-flat"]
 activation_mode = "native"
 default_role = "primary"
 """,
@@ -944,7 +941,7 @@ default_role = "primary"
                     "0",
                     "--skill-usage-only",
                     "--skill-usage-root",
-                    str(repo_root / "src" / "skills"),
+                    str(repo_root / "skills"),
                     "--skill-usage-prefix",
                     "coding",
                     "--skill-usage-contract",

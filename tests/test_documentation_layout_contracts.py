@@ -11,7 +11,6 @@ the checker into its own tasks or tests.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import shutil
 import subprocess
@@ -21,7 +20,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-CHECKER = REPO_ROOT / "src" / "skills" / "disciplines" / "organize-docs" / "scripts" / "check-documentation-layout.py"
+CHECKER = REPO_ROOT / "skills" / "organize-docs" / "scripts" / "check-documentation-layout.py"
 
 BASE_MANIFEST: dict[str, object] = {
     "schema": "organize-docs/documentation-layout@1",
@@ -306,30 +305,9 @@ class GateFixture(unittest.TestCase):
         root = self.build({"docs/designs/not-a-design.md": "# Misplaced\n"})
         self.assertRule(root, "root-file-pattern")
 
-    def test_g2_rejects_migration_hash_mismatch(self) -> None:
-        bundle = "docs/plans/coordination/changes/2026-01-01-sample"
-        root = self.build(
-            {
-                f"{bundle}/records/migration-manifest.json": json.dumps(
-                    {
-                        "moved": [
-                            {
-                                "from": "docs/plans/changes/2026-01-01-sample-plan.md",
-                                "to": f"{bundle}/plan.md",
-                                "sha256": "0" * 64,
-                            }
-                        ]
-                    }
-                )
-                + "\n"
-            }
-        )
-        self.assertRule(root, "migration-hash-mismatch")
-
     def test_g2_rejects_surviving_migration_source(self) -> None:
         bundle = "docs/plans/coordination/changes/2026-01-01-sample"
         plan_body = CLEAN_TREE[f"{bundle}/plan.md"]
-        digest = hashlib.sha256(plan_body.encode("utf-8")).hexdigest()
         root = self.build(
             {
                 "docs/plans/changes/2026-01-01-sample-plan.md": plan_body,
@@ -339,7 +317,6 @@ class GateFixture(unittest.TestCase):
                             {
                                 "from": "docs/plans/changes/2026-01-01-sample-plan.md",
                                 "to": f"{bundle}/plan.md",
-                                "sha256": digest,
                             }
                         ]
                     }
@@ -351,8 +328,6 @@ class GateFixture(unittest.TestCase):
 
     def test_g2_accepts_a_complete_migration_manifest(self) -> None:
         bundle = "docs/plans/coordination/changes/2026-01-01-sample"
-        plan_body = CLEAN_TREE[f"{bundle}/plan.md"]
-        digest = hashlib.sha256(plan_body.encode("utf-8")).hexdigest()
         root = self.build(
             {
                 f"{bundle}/records/migration-manifest.json": json.dumps(
@@ -361,7 +336,6 @@ class GateFixture(unittest.TestCase):
                             {
                                 "from": "docs/plans/changes/2026-01-01-sample-plan.md",
                                 "to": f"{bundle}/plan.md",
-                                "sha256": digest,
                             }
                         ]
                     }
@@ -381,8 +355,7 @@ class GateFixture(unittest.TestCase):
         root = self.build({
             record: "{}\n",
             f"{bundle}/records/migration-manifest.json": json.dumps({
-                "moved": [{"from": "old.json", "to": record,
-                           "sha256": hashlib.sha256(b"{}\n").hexdigest()}]
+                "moved": [{"from": "old.json", "to": record}]
             }) + "\n",
         })
         output = self.assertRule(root, "index-closure")

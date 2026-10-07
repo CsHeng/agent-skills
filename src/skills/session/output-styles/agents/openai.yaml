@@ -1,4 +1,0 @@
-interface:
-  display_name: "Output Styles"
-  short_description: "Write clear task-appropriate responses"
-  default_prompt: "Use $output-styles after selecting the primary skill; let the primary owner set the required content and order, then answer in plain language with useful detail and restrained formatting."

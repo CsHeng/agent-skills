@@ -2144,7 +2144,7 @@ def build_skill_usage_report(
 def candidate_recommendations(counts: Counter[str]) -> list[str]:
     recommendations: list[str] = []
     if counts["failure_rg_needs_pcre2"]:
-        recommendations.append("tool-decision-tree: require rg --pcre2 for lookaround/backreferences and treat rg exit 1 as no-match.")
+        recommendations.append("skills-routing references/tool-selection.md: require rg --pcre2 for lookaround/backreferences and treat rg exit 1 as no-match.")
     if counts["failure_pytest_missing"] or counts["failure_pytest_cov_addopts"]:
         recommendations.append("python-guidelines: preflight pytest dependencies, pytest-cov addopts, and subproject uv environments.")
     if counts["failure_zsh_reserved_variable"]:

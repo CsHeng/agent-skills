@@ -1,4 +1,0 @@
-interface:
-  display_name: "Logging and Audit Evidence"
-  short_description: "Design goal-driven application and audit logging"
-  default_prompt: "Use $logging-standards to design logging from its operational, security, or audit goal."

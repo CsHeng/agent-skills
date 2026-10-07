@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+import tomllib
 import unittest
 from pathlib import Path
-
-import tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 API_CONTRACT_ROOT = REPO_ROOT / "skills" / "api-contract-strategy"
@@ -23,9 +22,6 @@ class APIContractStrategyRegistrationTests(unittest.TestCase):
         self.assertFalse(manifest["may_spawn_agent"])
 
         self.assertTrue((API_CONTRACT_ROOT / "SKILL.md").is_file())
-        self.assertTrue(
-            (REPO_ROOT / manifest["source"] / "SKILL.md").is_file()
-        )
 
 
 if __name__ == "__main__":

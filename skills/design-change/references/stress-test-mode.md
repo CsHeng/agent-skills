@@ -1,36 +1,17 @@
 # Stress-Test Mode
 
-Use this reference only when the user explicitly asks to grill, stress-test, harden, challenge, or interrogate a design or plan. Do not make this the default for ordinary implementation tasks.
+Use this reference only when the user explicitly asks to grill, stress-test, harden, challenge, or interrogate a design or plan. Ordinary implementation and clarification do not enable it.
 
-## Rules
+## Challenge The Decision
 
-- Prefer questions that resolve scope, non-goals, state ownership, permission boundaries, data paths, recovery policy, or verification.
-- Exclude questions whose answers would not change the design, plan, execution gate, verification, or recovery boundary.
+Investigate the facts before asking questions. Focus on choices that change the outcome, operating or maintenance burden, ownership, data path, acceptance, recovery, or authority. Examine whether proposed safeguards and compatibility obligations are necessary as well as whether protections are missing; hardening does not mean accumulating more gates.
 
-## Frontier Contract
+Ask independent decision-changing questions together when that helps the user compare them. Defer a dependent question until its prerequisite is settled, and honor a request to proceed one question at a time. Give each question enough context, a recommendation, and the meaningful tradeoff. Use short labels if answers need to refer back; fixed identifiers and a separate frontier ledger are unnecessary.
 
-- `frontier`: Keep every unresolved decision-changing question whose prerequisites are already settled in the current frontier. A question that depends on another unresolved answer waits for a later round.
-- `round`: Ask the whole current frontier in one numbered round instead of serializing independent decisions across separate turns.
-- `question_id`: Give questions stable `Q*` identifiers that remain unchanged when later rounds add newly unblocked questions. These identifiers exist only for the current explicit stress-test; do not promote them into a permanent issue ledger.
-- `recommendation`: Include the recommended answer for every question.
-- `tradeoff`: State the material cost, risk, or discarded alternative attached to the recommendation.
-- `fact_owner`: Discoverable facts in code, docs, runtime, and required external evidence belong to agent investigation, not to the user questionnaire. The parent remains responsible for asking only decision-changing questions; approved help may complete that factual labor. This does not require the parent to perform every inspection personally, and this contract does not add delegation authority.
-- `sequential_override`: Respect an explicit user preference to work one question at a time without changing the decision tree or completion condition.
+After each reply, update the unresolved decisions. Do not revisit settled choices without new evidence or extend the interrogation into unused design branches. Facts that tools can establish and local choices already delegated to the executor remain agent work.
 
-Recompute the frontier after each user reply: record settled decisions, unlock questions whose prerequisites are now satisfied, and ask the next complete round.
+## Finish With A Usable Decision
 
-- `completion`: Stop when no unresolved decision-changing question remains. Do not act on the result until the user confirms shared understanding and the owning workflow's approval gate permits continuation.
+Fold the supported decisions and reasons into the design or plan, including any changed acceptance or authority boundary. Use a diagram where it can replace repetitive explanation of alternatives or dependencies.
 
-## Question Shape
-
-Render each question with its stable identifier, short title, decision body, recommendation, and tradeoff. Keep one round scannable so the user can answer by identifier without quoting the questions.
-
-## Output Shape
-
-After the stress-test, convert answers into:
-
-- confirmed assumptions
-- rejected alternatives
-- remaining open constraints
-- design or plan changes
-- verification and recovery implications
+Finish when no material decision-changing question remains. Continue within existing authority, or state the specific approval still needed before the affected action. Answering the questions does not create permission for unrelated implementation or delivery, and it does not require a second blanket confirmation when the necessary decisions are already explicit.

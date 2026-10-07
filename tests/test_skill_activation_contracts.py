@@ -3,12 +3,10 @@ from __future__ import annotations
 import copy
 import importlib.util
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 from types import ModuleType
-
-import tomllib
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -59,34 +57,6 @@ class SkillActivationContractTests(unittest.TestCase):
             },
         )
 
-    def test_invalid_distributed_flag_is_rejected(self) -> None:
-        contract = copy.deepcopy(load_contract())
-        contract["skills"]["analyze-project"]["distributed"] = "no"
-
-        errors = self.activation.validate_activation_contract(
-            contract, REPO_ROOT, check_sources=False
-        )
-
-        self.assertTrue(
-            any("analyze-project: distributed must be a boolean" in error for error in errors)
-        )
-
-    def test_undistributed_skill_skips_generated_source_checks(self) -> None:
-        contract = copy.deepcopy(load_contract())
-        contract["skills"] = {
-            "fixture": {
-                **contract["skills"]["analyze-project"],
-                "distributed": False,
-            }
-        }
-
-        with tempfile.TemporaryDirectory() as tmp:
-            errors = self.activation.validate_activation_contract(
-                contract, Path(tmp), check_sources=True
-            )
-
-        self.assertEqual([], errors)
-
     def test_missing_or_invalid_mode_and_role_are_rejected(self) -> None:
         contract = copy.deepcopy(load_contract())
         contract["skills"]["analyze-project"].pop("activation_mode")
@@ -129,7 +99,7 @@ class SkillActivationContractTests(unittest.TestCase):
 
         self.assertTrue(any("authored implicit_invocation" in error for error in errors))
 
-    def test_canonical_metadata_projection_and_frontmatter_are_checked(self) -> None:
+    def test_authored_metadata_policy_and_frontmatter_are_checked(self) -> None:
         contract = copy.deepcopy(load_contract())
         contract["skills"] = {"fixture": contract["skills"]["analyze-project"]}
         contract["skills"]["fixture"]["activation_mode"] = "composition"
@@ -160,34 +130,39 @@ policy:
                 contract, root, check_sources=True
             )
 
-        self.assertTrue(any("Codex invocation projection is stale" in error for error in errors))
+        self.assertTrue(any("Codex invocation policy must match activation_mode" in error for error in errors))
         self.assertTrue(any("unsupported shared frontmatter" in error for error in errors))
 
-    def test_openai_projection_is_deterministic_and_preserves_interface(self) -> None:
-        source = """interface:
-  display_name: Fixture
-  short_description: Keep this text
-"""
+    def test_missing_authored_codex_policy_is_rejected(self) -> None:
+        contract = copy.deepcopy(load_contract())
+        contract["skills"] = {"fixture": contract["skills"]["review-design"]}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            skill = root / "skills/fixture"
+            (skill / "agents").mkdir(parents=True)
+            (skill / "SKILL.md").write_text(
+                "---\nname: fixture\ndescription: Fixture.\n---\n", encoding="utf-8"
+            )
+            (skill / "agents/openai.yaml").write_text(
+                "interface:\n  display_name: Fixture\n", encoding="utf-8"
+            )
 
-        projected = self.activation.project_openai_metadata(source, False)
+            errors = self.activation.validate_activation_contract(
+                contract, root, check_sources=True
+            )
 
-        self.assertIn("display_name: Fixture", projected)
-        self.assertIn("short_description: Keep this text", projected)
-        self.assertTrue(projected.endswith("policy:\n  allow_implicit_invocation: false\n"))
-        self.assertEqual(projected, self.activation.project_openai_metadata(projected, False))
+        self.assertTrue(any("Codex invocation policy must match activation_mode" in error for error in errors))
 
-    def test_canonical_tree_matches_activation_projection(self) -> None:
+    def test_authored_metadata_matches_activation_contract(self) -> None:
         contract = load_contract()
         for skill_id, entry in contract["skills"].items():
-            if not self.activation.is_distributed(entry):
-                continue
             with self.subTest(skill=skill_id):
                 expected = self.activation.derived_implicit_invocation(contract, entry)
                 metadata = (
                     REPO_ROOT / "skills" / skill_id / "agents" / "openai.yaml"
                 ).read_text(encoding="utf-8")
-                self.assertIn(
-                    f"allow_implicit_invocation: {str(expected).lower()}", metadata
+                self.assertIs(
+                    expected, self.activation.codex_invocation_policy(metadata)
                 )
 
 

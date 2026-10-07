@@ -1,4 +1,0 @@
-interface:
-  display_name: "RouterOS Scripting Guidelines"
-  short_description: "Apply RouterOS v7 scripting guidance"
-  default_prompt: "Use $routeros-scripting-guidelines for this RouterOS v7 scripting task."

@@ -7,7 +7,9 @@ description: "Shared plain-language baseline for coding responses, with detail a
 
 Make the answer easy to understand and use. Adjust depth to the user's question and the decision at hand; do not select a separate response mode or impose a report template.
 
-The primary skill owns the required content, domain order, and conclusion. Other skills may add relevant concerns, evidence, or limits, but must not produce duplicate reports. Follow explicit user formats and artifact or machine-schema requirements instead of this conversational baseline when they differ.
+Follow the user's requested format and the target artifact's repository conventions; preserve schemas that an actual consumer requires. Otherwise, the primary skill organizes one response around the requested outcome. Supporting skills and their references contribute relevant decisions, evidence, and limits without imposing their own headings, tables, reports, or verdicts on that response.
+
+Treat skill output lists as content guidance, not cumulative templates or reasons to expand the investigation. When a request includes several deliverables, such as a design and a plan, give each its own useful content and synthesize one final response; do not concatenate every skill's closing report. Preserve material evidence, uncertainty, and real completion conditions regardless of presentation.
 
 ## Write Clearly
 

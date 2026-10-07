@@ -7,7 +7,6 @@ import tomllib
 import unittest
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
     "check_contracts_routing", REPO_ROOT / "scripts" / "check-contracts.py"
@@ -26,18 +25,22 @@ class RoutingContractTests(unittest.TestCase):
 
         self.temp_dir = tempfile.TemporaryDirectory()
         self.root = Path(self.temp_dir.name)
-        routing_entry = self.skills["use-coding-skills"]
+        self.routing_id, routing_entry = next(
+            (skill_id, entry)
+            for skill_id, entry in self.skills.items()
+            if entry.get("routing_contract")
+        )
         self.contract_path = (
             self.root
             / "skills"
-            / "use-coding-skills"
+            / self.routing_id
             / routing_entry["routing_contract"]
         )
         self.contract_path.parent.mkdir(parents=True)
         source_path = (
             REPO_ROOT
             / "skills"
-            / "use-coding-skills"
+            / self.routing_id
             / routing_entry["routing_contract"]
         )
         self.contract_path.write_text(
@@ -74,7 +77,7 @@ class RoutingContractTests(unittest.TestCase):
 
     def test_exactly_one_routing_contract_is_required(self) -> None:
         skills = copy.deepcopy(self.skills)
-        del skills["use-coding-skills"]["routing_contract"]
+        del skills[self.routing_id]["routing_contract"]
 
         errors = self.validate(skills)
 
@@ -168,34 +171,6 @@ class RoutingContractTests(unittest.TestCase):
         )
         self.assertTrue(any("unknown owner" in error for error in errors))
 
-    def test_undistributed_native_skill_does_not_need_a_trigger_case(self) -> None:
-        skills = copy.deepcopy(self.skills)
-        skills["web-fetch"]["distributed"] = False
-        routing = copy.deepcopy(self.routing_contract)
-        routing["trigger_cases"] = [
-            case
-            for case in routing["trigger_cases"]
-            if case["owner"] != "web-fetch"
-        ]
-
-        self.assertEqual([], self.validate_trigger_cases(routing, skills))
-
-    def test_undistributed_skill_cannot_own_a_trigger_case(self) -> None:
-        skills = copy.deepcopy(self.skills)
-        skills["web-fetch"]["distributed"] = False
-        routing = copy.deepcopy(self.routing_contract)
-        owned = copy.deepcopy(routing["trigger_cases"][0])
-        owned["id"] = "web-content-retrieval"
-        owned["owner"] = "web-fetch"
-        owned.pop("overlays", None)
-        routing["trigger_cases"].append(owned)
-
-        errors = self.validate_trigger_cases(routing, skills)
-
-        self.assertTrue(
-            any("owner is not distributed: web-fetch" in error for error in errors)
-        )
-
     def test_uncovered_native_skill_is_rejected(self) -> None:
         routing = copy.deepcopy(self.routing_contract)
         routing["trigger_cases"] = [
@@ -212,7 +187,7 @@ class RoutingContractTests(unittest.TestCase):
 
     def test_baseline_must_match_rendering_composition(self) -> None:
         routing = copy.deepcopy(self.routing_contract)
-        routing["composition"]["rendering_baseline"] = "use-coding-skills"
+        routing["composition"]["rendering_baseline"] = self.routing_id
 
         errors = self.validate_trigger_cases(routing)
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Use this reference to classify an existing mixed test suite, decide whether a large or duplicated check is justified, and produce remediation guidance without treating test count or file length as quality.
+Use this reference to classify an existing mixed test suite, decide whether a large or duplicated check is justified, and produce remediation guidance without treating test count or file length as quality. Keep the scope and deliverable selected by the calling task; using this method does not itself request a complete audit or a separate report.
 
 The core chain is:
 
@@ -27,7 +27,7 @@ The result is not a universal pyramid. Contract, compatibility, security, perfor
 
 ## Classification Coordinates
 
-Record these fields independently for every suite:
+Use these independent fields where needed to explain a suite's classification:
 
 | Field | Question | Typical values |
 | --- | --- | --- |
@@ -84,7 +84,7 @@ Strong sources include:
 - a property or model that is simpler than the implementation
 - a consumer-owned adapter fixture or provider-owned conformance response
 - a real consumer, compiler, parser, controller, or system tool
-- a reviewed golden artifact when the rendered artifact itself is the contract
+- a reviewed golden artifact when exact output is itself an external protocol, consumer contract, or explicit user requirement
 - an explicitly approved runtime objective
 
 Weak or tautological patterns include:
@@ -94,15 +94,16 @@ Weak or tautological patterns include:
 - asserting every manifest field by restating the manifest without a separately owned contract
 - rendering and validating through the same untrusted helper while checking only existence
 - snapshotting natural-language sentences, headings, keyword collections, or dependency versions copied from documentation
+- freezing source layout, diagram content, fixture hashes, or incidental library behavior without a consumer requirement
 - accepting any error, broad status range, or non-empty output when exact behavior matters
 
-Use `replace` when the protected invariant is valuable but the current oracle is not independent. Use `delete` only when no meaningful invariant remains or another owned oracle already proves it at equal or stronger fidelity.
+Use `replace` when the protected invariant is valuable but the current oracle is not independent. Use `delete` when no requirement supports the assertion or another owned oracle already proves the behavior at equal or stronger fidelity. A historical test or model-written plan does not turn an incidental implementation choice into required compatibility. Ordinary local evidence needs no separate source, fixture, or result hash to certify itself.
 
 ## Suite Cohesion And Size
 
 There is no universal maximum file length, test length, test count, assertion count, or fixture size.
 
-Large suites can be reasonable when they contain one cohesive rule matrix, parser or protocol corpus, one component boundary, or reviewed golden cases with localized failures. Long data is often clearer as a table or fixture than as many nearly identical functions.
+Large suites can be reasonable when they contain one cohesive rule matrix, parser or protocol corpus, one component boundary, or reviewed golden cases with localized failures. Long data is often clearer as a table or fixture than as many nearly identical functions. Assess whether each corpus distinction protects real behavior and whether setup or expected output is duplicated: several input encodings can share one expected output, and launcher tests can share a small helper when they exercise the same lifecycle. Avoid a new framework whose maintenance costs more than the duplication it removes.
 
 Consider `split` when one file or test mixes any of:
 
@@ -159,7 +160,7 @@ Use syntax checks, structured task parsing where syntax is the contract, isolate
 
 ### Documentation And Skills
 
-Validate structured frontmatter, stable identifiers, links, schemas, executable examples, generated parity, and observable consumer behavior. Review prose as prose. Do not turn headings, exact sentences, or keyword collections into unit-test interfaces.
+Code and observed runtime behavior establish implementation truth; documents and diagrams convey intent and explanation and should be synchronized after changes. Use applicable link, syntax, build, or generator checks for their tooling boundaries. Do not test document wording, headings, diagram nodes/edges, or preferred layout as production contracts, including when an LLM reads them. Test executable examples and real machine-consumed structured fields through the actual interface; do not invent such a field just to enforce an unnecessary documentation rule.
 
 ### Cross-Repository Contracts
 
@@ -167,16 +168,16 @@ Keep the canonical contract oracle with its owner and keep consumer assumptions 
 
 ## Audit Procedure
 
-1. Inventory project-owned test commands, test files, fixtures, generators, comparison bases, and runtime probes.
-2. Give every discovered suite or entry point an audit row. A homogeneous module may share one classification; expand to test-level rows when dispositions, boundaries, lanes, or owners differ.
-3. State the protected invariant before reading assertion mechanics.
+1. Establish whether the task needs a focused assessment or a complete audit of a named scope. Inspect the commands, tests, fixtures, generators, comparison bases, and runtime probes relevant to that scope and the decisions it needs.
+2. Group checks with the same protected behavior and assessment. Examine individual tests when their recommendations, boundaries, lanes, or owners differ; a row per discovered entry point is not required.
+3. Establish the user or consumer requirement behind the asserted invariant; do not assume the current test or a model-written plan makes it necessary.
 4. Trace how expected results are derived and whether the oracle is independent.
 5. Identify the real dependencies, authority, fixture lifecycle, lane, and diagnosis owner.
 6. Apply the smallest-sufficient-layer rule and choose one primary disposition.
 7. Record producer, consumer, shared-contract, write-set, and external dependencies separately from shared motivation.
-8. Verify the recommended replacement or split before deleting or weakening the old oracle.
+8. Where a required behavior remains, verify its replacement or retained coverage before removing its old oracle. An unsupported constraint can be deleted without inventing a replacement test for it.
 
-Sampling may identify risk, but it cannot support a claim that all tests were audited. For a complete audit, every discovered entry point must be classified or explicitly covered by a homogeneous suite-level row.
+Sampling may support a focused recommendation, but it cannot support a claim that all tests were audited. For a requested complete audit, account for every entry point in the declared scope, grouped where the same assessment applies. An incomplete investigation remains explicitly partial; incidental discovery outside that scope does not enlarge it.
 
 ## Dispositions
 
@@ -185,26 +186,14 @@ Sampling may identify risk, but it cannot support a claim that all tests were au
 | `keep` | The check protects a meaningful boundary with an independent oracle, fitting fixture, lane, and owner | Protected invariant and why the existing evidence is sufficient |
 | `refactor` | The boundary and oracle are sound, but setup, naming, duplication, isolation, or readability impairs diagnosis | Smallest structural change that preserves the oracle |
 | `replace` | The invariant matters, but the oracle is tautological, too weak, or at the wrong boundary | Replacement oracle and proof it covers the intended failure class |
-| `delete` | No meaningful invariant remains, the check freezes prose or implementation detail, or an equal/stronger owner already proves it | Redundancy or invalid-oracle evidence and retained protection |
+| `delete` | No requirement supports the assertion, the check freezes prose or implementation detail, or an equal/stronger owner already proves it | Unsupported constraint or redundancy, with any actual required behavior still protected |
 | `split` | One suite mixes boundaries, owners, fixtures, authority scopes, lanes, or independent failure domains | Proposed owning suites and the invariant transferred to each |
 | `move-lane` | The evidence is sound but runs with the wrong cost, comparison base, environment, authority, or promotion effect | Target lane and its entry, authority, and failure-owner contract |
 
-Choose one primary disposition per row. A split may create child rows with different final dispositions.
+Choose a primary recommendation for each assessed suite or coherent group. Explain distinct outcomes of a split when they affect the decision.
 
 ## Audit Output
 
-Use a table or equivalent structured output with:
+Follow the calling skill's deliverable and `output-styles`. For a standalone audit, lead with the supported recommendations, the suites or groups they concern, the behavior to preserve, and the evidence and limits behind the judgment. Include replacement coverage, placement, ownership, or coordination when the recommendation changes them. A table can help compare several suites; it is optional, and its columns follow the decision rather than a fixed field list.
 
-| Field | Content |
-| --- | --- |
-| Repository and path | Owning repository plus suite, module, or test identifier |
-| Protected boundary | Observable invariant and failure class |
-| Evidence classification | Primary class, dependency/authority scope, oracle type and source |
-| Placement | Current lane, owning suite, diagnosis owner, quality tags |
-| Assessment | Oracle independence, fixture/isolation concerns, cohesion evidence |
-| Disposition | `keep`, `refactor`, `replace`, `delete`, `split`, or `move-lane` |
-| Replacement or split | Smallest sufficient oracle and target owner/lane |
-| Coordination | Producer, consumers, shared contract, write-set dependency, external dependency, parallel eligibility |
-| Evidence status | Fact, inference, uncertainty, and verification needed |
-
-Base each disposition on the recorded evidence and report the real ownership and dependency boundaries it implies. Whether a separate plan, explicit approval, or a cross-repository coordination record is needed follows the user's request and the owning project's policy; this audit does not require them. Common motivation alone is not a dependency. Assess parallel work from the actual shared inputs, read/write boundaries and producer-consumer dependencies. Coordinate overlapping writes and contract changes, and state any required predecessor output; do not require a formal freeze or treat the existence of another plan as a dependency.
+When this analysis supports a design or plan, place the relevant conclusions there without an additional audit report. Distinguish facts, inferences, and unresolved evidence in whichever form is useful. A separate plan, approval, or coordination record follows the user's request and project policy, not this reference. State real producer-consumer and overlapping-write dependencies when they matter; common motivation or another plan's existence is not itself a dependency or a reason for a formal freeze.

@@ -16,8 +16,8 @@ In-scope:
 - Lua-based configuration ecosystems (for example: WezTerm, Hammerspoon, Rime, Neovim tooling)
 
 Out-of-scope:
-- Language selection (see `language-decision-tree` skill)
-- Tool selection and search/refactor workflow (see `tool-decision-tree` skill)
+- Language selection (read `references/language-selection.md` in `skills-routing`)
+- Tool selection and search/refactor workflow (read `references/tool-selection.md` in `skills-routing`)
 
 ## Tool Management
 

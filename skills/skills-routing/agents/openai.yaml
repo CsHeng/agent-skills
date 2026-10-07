@@ -1,0 +1,6 @@
+interface:
+  display_name: "Skills Routing"
+  short_description: "Resolve open coding choices with only the relevant method"
+  default_prompt: "Use $skills-routing to resolve the open choice in this task and read only the relevant method reference."
+policy:
+  allow_implicit_invocation: true

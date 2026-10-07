@@ -1,5 +1,13 @@
 # Design Decisions
 
+## 2026-10-07 — One Authored Tree And Explicit Installation
+
+`skills/<public-id>/` is the only authored and installable Skill tree. Instructions, references, scripts, assets, and provider metadata are edited directly there; the public inventory retains useful activation and semantic checks. The former nested source tree, flattening, generated index, source map, and mirror-parity checks are removed. Architecture diagrams remain generated views of the product contract.
+
+Installed Skills are independent copies. Source edits, Git updates, generation, and checks do not refresh global content; explicit installation or update does. Prefer the existing `npx skills` manager for platform handling. Links between host discovery and a managed installed copy remain valid; links back to the active development checkout do not. Local-path installs refresh through another explicit add, remotely tracked installs use the manager's update operation, and retired owned IDs need explicit removal. Preserve unrelated installed Skills.
+
+Optional plugins retain their own managed installation lifecycle and must satisfy the same separation. The repository's plugin-registration helpers do not provide a general copy/update command. This decision supersedes the 2026-08-20 live-checkout-link recommendation and the 2026-08-07 generated-tree design; it also replaces the generated-distribution and parity portions of the 2026-08-28 decision without changing its semantic-only product boundary.
+
 ## 2026-08-28 — Portable Semantic Skills Only
 
 ### Decision
@@ -17,8 +25,12 @@ The active coding agent owns request interpretation, Skill selection, sequencing
 
 ## 2026-08-20 — Live Child Links Are The Recommended Local Path
 
+Superseded by the 2026-10-07 explicit installation decision above.
+
 Use a local Git checkout plus one child symlink per public ID. Update the checkout with Git, regenerate its owned payload, and start a new agent session. Optional plugin or copied installations have separate update and removal lifecycles, and each tool should expose only one active path per public ID.
 
 ## 2026-08-07 — Generated Root-Flat Distribution
+
+Superseded by the 2026-10-07 single-tree decision above.
 
 `src/skills/` is authored truth. `skills/` is the generated root-flat payload for distributed public IDs, and each distributed Skill must be self-contained under its own standard Agent Skills directory. Undistributed public IDs stay contracted and authored but are omitted from that payload. Provider plugin manifests package that same payload without changing semantics.

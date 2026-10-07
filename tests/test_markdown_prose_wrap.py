@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import subprocess
 import sys
@@ -12,7 +11,7 @@ from types import ModuleType
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = REPO_ROOT / "skills/organize-docs/scripts/normalize-markdown-prose.py"
 BOUNDARY_CHECKER = (
-    REPO_ROOT / "src/skills/disciplines/organize-docs/scripts/check-doc-boundaries.sh"
+    REPO_ROOT / "skills/organize-docs/scripts/check-doc-boundaries.sh"
 )
 
 
@@ -322,91 +321,6 @@ Follow-up:
                 markdown_file.read_text(encoding="utf-8"),
                 "One wrapped paragraph.\n",
             )
-
-    def test_immutable_manifest_preserves_only_pinned_legacy_findings(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            subprocess.run(["git", "init", "-q", str(root)], check=True)
-            history = root / "docs/plans/history.md"
-            history.parent.mkdir(parents=True)
-            history.write_text("Legacy wrapped\nparagraph.\n", encoding="utf-8")
-            readme = root / "README.md"
-            readme.write_text("Mutable wrapped\nparagraph.\n", encoding="utf-8")
-            subprocess.run(
-                ["git", "-C", str(root), "add", "docs/plans/history.md", "README.md"],
-                check=True,
-            )
-            manifest = root / "immutable.toml"
-            manifest.write_text(
-                "version = 1\n\n[[exceptions]]\n"
-                'path = "docs/plans/history.md"\n'
-                f'sha256 = "{hashlib.sha256(history.read_bytes()).hexdigest()}"\n',
-                encoding="utf-8",
-            )
-
-            write_result = subprocess.run(
-                [
-                    sys.executable,
-                    str(SCRIPT_PATH),
-                    "--root",
-                    str(root),
-                    "--immutable-manifest",
-                    str(manifest),
-                    "--mode",
-                    "write",
-                ],
-                check=False,
-                capture_output=True,
-                text=True,
-            )
-
-            self.assertEqual(write_result.returncode, 0, write_result.stderr)
-            self.assertEqual(
-                history.read_text(encoding="utf-8"), "Legacy wrapped\nparagraph.\n"
-            )
-            self.assertEqual(
-                readme.read_text(encoding="utf-8"), "Mutable wrapped paragraph.\n"
-            )
-
-            check_result = subprocess.run(
-                [
-                    sys.executable,
-                    str(SCRIPT_PATH),
-                    "--root",
-                    str(root),
-                    "--immutable-manifest",
-                    str(manifest),
-                    "--mode",
-                    "check",
-                ],
-                check=False,
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(check_result.returncode, 0, check_result.stderr)
-            self.assertIn("join_count=0", check_result.stdout)
-
-    def test_immutable_manifest_rejects_unpinned_or_invalid_exceptions(self) -> None:
-        module = load_module()
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            subprocess.run(["git", "init", "-q", str(root)], check=True)
-            history = root / "docs/plans/history.md"
-            history.parent.mkdir(parents=True)
-            history.write_text("Legacy wrapped\nparagraph.\n", encoding="utf-8")
-            subprocess.run(
-                ["git", "-C", str(root), "add", "docs/plans/history.md"], check=True
-            )
-            manifest = root / "immutable.toml"
-            manifest.write_text(
-                "version = 1\n\n[[exceptions]]\n"
-                'path = "docs/plans/*.md"\n'
-                'sha256 = "not-a-digest"\n',
-                encoding="utf-8",
-            )
-
-            with self.assertRaises(module.MarkdownNormalizationError):
-                module.load_immutable_manifest(root, manifest)
 
     def test_excluded_history_does_not_disable_active_prose_checks(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

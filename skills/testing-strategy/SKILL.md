@@ -7,21 +7,23 @@ description: "Design or revise verification coverage, suite placement, fixtures,
 
 ## Purpose
 
-Turn a selected executable oracle into the smallest concrete verification set that protects the intended boundary.
+Turn a selected executable oracle into the smallest concrete verification set that protects the user's intended outcome and actual consumer requirements. Existing tests and implementation behavior are evidence to assess, not requirements by themselves.
 
-Use `executable-oracle-architecture-selector` when the oracle method or protected behavior still needs a decision, not merely because the task involves architecture, planning, or TDD. Consume an established strategy directly. Running known checks or adding a routine regression test under that strategy does not require reopening strategy selection. For multi-client API contract ownership and layer decomposition decisions, use `api-contract-strategy`.
+When supporting design, planning, simplification, implementation, or review, contribute only the testing decisions and evidence needed by that task. Its owner chooses the deliverable and presentation under `output-styles`; this skill and its references do not add a separate audit report or enlarge the requested scope.
+
+Read only `references/oracle-selection.md` in `skills-routing` when the oracle method or protected behavior still needs a decision, not merely because the task involves architecture, planning, or TDD. Consume an established strategy directly. Running known checks or adding a routine regression test under that strategy does not require reopening strategy selection. For multi-client API contract ownership and layer decomposition decisions, use `api-contract-strategy`.
 
 Do not measure maturity by test count or impose universal coverage percentages. Do not define effort by a fixed number of tests or hypotheses.
 
 ## Strategy Mapping
 
-When this Skill is actively selecting or auditing a strategy, record the relevant mapping below. Routine tests under an established strategy consume it directly; they do not need a new strategy artifact:
+When selecting or auditing a strategy, use the relationships below to identify the decisions that matter. Explain relevant choices in the owning deliverable without filling a separate form. Routine tests under an established strategy consume it directly:
 
 ```text
 boundary -> oracle -> fixture/environment -> owning suite -> CI/release lane -> diagnosis owner
 ```
 
-1. Name the behavior or system boundary and its owner.
+1. Name the user outcome or consumer behavior being protected and its owner.
 2. Carry forward the selected executable oracle and record the failure class it detects.
 3. Choose the smallest realistic fixture and environment.
 4. Place the check in the suite that owns diagnosis.
@@ -36,7 +38,7 @@ Start acceptance from the critical consumer outcome and plausible failure modes,
 
 When classifying or auditing existing checks, read [Test Layering And Suite Audit](references/test-layering-and-suite-audit.md).
 
-Record orthogonal fields rather than forcing one overloaded test label:
+Distinguish these dimensions when they affect the decision rather than forcing one overloaded test label or requiring every field in the output:
 
 - protected boundary and observable invariant
 - primary evidence class
@@ -50,7 +52,7 @@ Choose the primary evidence class from the highest real boundary exercised, not 
 
 Use the smallest realistic boundary that can prove the invariant. Add higher-boundary evidence only when it proves behavior unavailable below, such as real serialization, persistence, provider interaction, a multi-operation workflow, UI behavior, or deployed conditions.
 
-Test and file length are diagnostic signals, not verdicts. Split when one suite mixes protected boundaries, fixtures, authority levels, execution lanes, or diagnosis owners, or when failures cannot be localized. Keep cohesive table-driven matrices, parser cases, and reviewed golden contracts when their oracle remains independent and readable.
+Test and file length are diagnostic signals, not verdicts. Assess the maintenance cost of setup, duplicated helpers, fixture copies, and extra processes as well as runtime cost. Split when one suite mixes protected boundaries, fixtures, authority levels, execution lanes, or diagnosis owners, or when failures cannot be localized. Keep cohesive table-driven matrices, parser cases, and reviewed golden contracts when their oracle remains independent and readable; sharing an expected fixture does not reduce coverage when several inputs intentionally produce the same result.
 
 ## Verification Placement
 
@@ -80,7 +82,7 @@ Add a numeric gate only when:
 - failure diagnosis is actionable
 - raising the threshold will not incentivize low-semantic tests
 
-Critical paths may justify stronger gates than glue or generated code. Generated internals usually need pinned build inputs, deterministic generation, compilation, and boundary fixtures rather than handwritten coverage. Pin actual dependencies for reproducibility; do not gate on a literal dependency version repeated in documentation.
+Critical paths may justify stronger gates than glue or generated code. Verify generated output through its real consumer and any declared reproducibility requirement rather than covering generated internals by hand. Keep dependency pins with their owner; tests should not copy the current selected version or checksum into a second source of truth.
 
 ## Red-Green Verification
 
@@ -95,47 +97,47 @@ Critical paths may justify stronger gates than glue or generated code. Generated
 
 ## Documentation And Markdown Verification
 
-Match documentation checks to the property that can actually fail:
+Code and deployed observations establish implemented behavior; documents and diagrams describe human intent or explain that behavior. Update them when implementation changes, but do not make their prose or diagrams executable production truth. Explicit user requirements remain binding regardless of where they were recorded.
+
+Use existing documentation tooling for the limited property it actually checks:
 
 - Human-authored prose: use review plus Markdown/prose linting, link checking, and documentation builds where applicable.
-- Frontmatter, schemas, command identifiers, paths, and other machine-readable fields embedded in Markdown: parse and validate the structured field or stable identifier.
+- Frontmatter, schemas, command identifiers, paths, and other machine-readable fields embedded in Markdown: validate the structured field when an actual consumer or repository boundary depends on it; formatting preference alone does not make it a contract.
 - Executable examples: compile or run the example through the real interface.
-- Generated documentation: regenerate it and compare the owned source and generated surface.
+- Generated documentation and diagrams: regenerate with the owned tool and inspect the result. Existing generation/parity checks may verify the tool's operation; do not add snapshots of document or diagram content as a proxy for product behavior.
 - Prompt or instruction Markdown: test observable consumer behavior with an evaluation or integration scenario when that evidence is worth its cost; machine consumption alone does not make prose a unit-test interface. An offline fixture can prove loading or workflow mechanics, not that a live model follows the instruction.
 
 When efficacy measurement is requested or a bounded risk judgment justifies it, use [Agent Skill Evaluation](references/agent-skill-evaluation.md) with the necessary execution authority and budget. Ordinary Skill editing does not require a live experiment, and maintenance checks do not establish behavioral or economic gains.
 
 For offline review of goal, risk, and discretion behavior, read [Goal And Risk Cases](references/goal-and-risk-cases.md). Those cases are optional comparison material, not unit tests, CI gates, or required live experiments.
 
-PROHIBITED: Add unit or contract tests that assert exact natural-language sentences, keyword collections, prose headings, or their absence in Markdown solely to freeze intended meaning.
+Do not freeze natural-language sentences, keyword collections, headings, document layout, diagram nodes or edges, or their absence merely to encode intended meaning. Model visibility does not turn wording into a test interface. Moving an unnecessary prose assertion into a schema or another metadata file does not make it useful. When a real machine-consumed contract needs enforcement, validate its owned structured source or consuming behavior rather than duplicating documentation in test code.
 
-PROHIBITED: Duplicate a Markdown policy sentence or rule list in test code.
-
-REQUIRED: If a documentation rule must be machine-enforced, place the enforceable contract in a structured source of truth and generate the human-readable projection, or test the consuming behavior through its real interface.
-
-When auditing an existing suite, find tests and checkers that read Markdown and classify every assertion. Delete prose snapshots rather than weakening them to smaller keyword checks. Retain syntax, link, schema, embedded machine-identifier, executable-example, generated-surface, and consumer-behavior checks.
+When auditing an existing suite, classify relevant Markdown assertions by their consumer or protected boundary. Delete prose snapshots rather than weakening them to keyword checks. Retain applicable syntax, link, schema, executable-example, generated-surface, and consumer-behavior checks.
 
 ## State, Recovery, And Evidence Reuse
 
-Oracle selection for change-sensitive state — retained-state migration, backup/restore behavior, rebuild-versus-replace for authorized disposable state — belongs to `executable-oracle-architecture-selector`. Under an established strategy, reuse reliable evidence that still matches the final candidate: later edits that change covered behavior, fixtures, environments, or recovery and retained-state conditions invalidate the old result and need a fresh check of the affected path, while local greens never prove uncovered combinations or state transitions. Do not schedule a full backup/restore exercise for ordinary logic that leaves persistence and recovery paths untouched, and do not invent a scoring rubric or a standing drill catalog to force this scaling; unique or irreplaceable data keeps its protection regardless of project-stage labels, and applicable repository requirements still apply.
+When evidence for change-sensitive state is unresolved — retained-state migration, backup/restore behavior, rebuild-versus-replace for authorized disposable state — read `references/oracle-selection.md` in `skills-routing`. Under an established strategy, reuse reliable evidence that still matches the final candidate: later edits that change covered behavior, fixtures, environments, or recovery and retained-state conditions invalidate the old result and need a fresh check of the affected path, while local greens never prove uncovered combinations or state transitions. Do not schedule a full backup/restore exercise for ordinary logic that leaves persistence and recovery paths untouched, and do not invent a scoring rubric or a standing drill catalog to force this scaling; unique or irreplaceable data keeps its protection regardless of project-stage labels, and applicable repository requirements still apply.
 
 ## Proportionate Safeguards
 
-A new hash, restore proof, replay mechanism, deployment rehearsal, or test gate is additional functionality, not free safety. Tie it to the affected behavior and a concrete failure mode; prefer an existing Git/object identity or project primitive when it already provides the needed guarantee. Preserve real integrity and recovery requirements, but do not add an independent identity chain or full lifecycle drill solely because a slice, revision, or prose instruction changed.
+A new hash, restore proof, replay mechanism, deployment rehearsal, or test gate is additional functionality, not free safety. Tie it to the affected behavior and a concrete failure mode. Ordinary local verification does not need source, fixture, or result hashes to certify that the agent tested its own work, nor a replacement requirement to record Git identities everywhere. Use existing project evidence when sufficient. Preserve checksums, signatures, or exact bytes where a real artifact, protocol, cryptographic operation, or explicit user requirement depends on them; do not add an independent identity chain or full lifecycle drill solely because a slice, revision, or prose instruction changed.
 
 Review only the relevant suite and instructions for a bounded change. Do not expand a local fix into a repository-wide test cleanup or prove instruction meaning with hardcoded prose keywords. Offline scenario review may expose contradictions, but does not establish improved model behavior or economic outcomes.
 
 ## Oracle Integrity
 
-- Do not delete, weaken, or bulk-update a required oracle to make implementation pass. Authorized secondary tradeoffs are disclosed adapted results, not deleted assertions.
+- Protect the underlying requirement, not the existence of a test. Within authorized edits, remove or replace tests and agent-added guards that have no requirement or consumer basis, including incidental library behavior and arbitrary source or fixture bytes. An existing test, a passing review, or a model-written plan does not establish that basis. Exact wire bytes, cryptographic vectors, and explicitly required output remain valid oracles where they carry the contract.
+- Do not delete, weaken, or bulk-update an oracle that protects a real requirement to make implementation pass. Removing a self-imposed constraint while preserving required behavior is not such weakening; authorized secondary tradeoffs remain disclosed adapted results.
 - Record the oracle type for non-trivial changes: example, scenario, contract, property, model, current-behavior snapshot, meta-oracle, or runtime oracle.
-- Treat test deletion, assertion weakening, snapshot updates, contract changes, and security-oracle changes as elevated-risk diffs. Those labels inform risk judgment; they do not schedule a review round or a full matrix.
+- Judge test additions and removals by the protection gained or lost and their maintenance cost. Contract, snapshot, or security labels do not make every assertion necessary or schedule a review round or full matrix.
 - Do not add sleeps, retries, broad status ranges, or existence-only assertions to hide deterministic failures.
 - Preserve exact negative and boundary behavior where it carries domain meaning.
 
 ## Fixtures And Environments
 
 - Prefer deterministic fixtures and explicit setup/cleanup.
+- Reuse a fixture, expected output, or small helper when cases share the same meaning. Keep case-specific semantics separate and avoid a new test framework merely to deduplicate a few lines.
 - Exercise the real owned boundary; mock only dependencies outside that boundary.
 - Keep each test independent and avoid shared mutable state.
 - Use readiness checks instead of fixed sleeps.
@@ -150,7 +152,7 @@ Review only the relevant suite and instructions for a bounded change. Do not exp
 - Name tests by behavior, condition, and outcome.
 - Prefer table-driven examples for stable rule matrices.
 - Prefer properties or fuzzing when invariants matter more than examples.
-- Prefer characterization tests for unknown legacy behavior before refactoring.
+- Use characterization tests to investigate unknown consumer-relevant behavior before refactoring. Keep observations separate from required compatibility; do not permanently reproduce every parser quirk, library error, serialization detail, or historical bug just because the old program exhibited it.
 - Keep workflows focused on business sequences rather than endpoint catalogs.
 - Keep UI/E2E narrow and user-visible.
 - User-experience goals need corresponding scenarios, such as independent selection across business groups or a first-run initialization source. Parser, existence, or golden checks do not replace those behaviors.
@@ -163,17 +165,11 @@ Fast failures should precede expensive evidence. Keep commands project-owned and
 
 ## Output Contract
 
-When this skill owns the response, lead with the recommended suite placement and commands. Include only:
+When this skill owns the response, lead with the recommended testing decision and its basis. Include the protected behavior, oracle, placement, environment, commands, ownership, failure modes, and coordination only where they affect that decision or its execution. Choose prose, a list, table, or diagram for clarity; no fixed report shape is required.
 
-- protected boundary and oracle
-- fixture/environment and owning suite
-- CI/release lane and diagnosis owner
-- concrete verification order
-- material discard reasons and failure modes
+For an audit, state the scope actually examined and give supported recommendations to keep, refactor, replace, delete, split, or move checks to another lane. A requested complete audit accounts for every entry point in that scope; a focused assessment may report representative findings and their limits without classifying every discovered suite. Shared motivation is not an execution dependency.
 
-For an existing-suite audit, give every discovered suite an evidence-backed primary disposition: `keep`, `refactor`, `replace`, `delete`, `split`, or `move-lane`. Do not turn a shared motivation into an execution dependency; record cross-repository producer, consumer, ownership, and write-set dependencies separately.
-
-When another lifecycle skill owns the response, contribute these results as a semantic overlay.
+When another skill owns the response, integrate the relevant conclusions into its deliverable. Do not append this skill's output list as another report.
 
 ## References
 

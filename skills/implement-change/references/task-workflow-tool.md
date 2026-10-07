@@ -2,6 +2,8 @@
 
 Read this reference only when the host exposes a task-level workflow tool with completion-contract support and the approved implementation obligations must be represented in it. It defines how to project those obligations through a portable host boundary rather than any private implementation: the tool's record schema, identifiers, and lifecycle mechanics belong to the host, and this reference must not assume a particular provider, extension schema, or private field. A generic todo list or task display is not such a contract, and tool availability does not grant authority or select a different lifecycle.
 
+Host-managed identities and consistency checks remain inside the host. Do not recreate them as repository receipts, document hashes, test gates, or extra user obligations. Evidence applicability follows the changed behavior, inputs, and conditions; obey required host mechanics without making byte identity a general development goal.
+
 ## Project The Obligations
 
 - Project the approved goal, required delivery and verification, applicable review obligations, and real dependencies. Preserve stable IDs and independently deliverable plan task boundaries; do not collapse independent owners into one umbrella task or turn display grouping and stage order into dependencies. Split outcomes that can be accepted or blocked independently, without tracking every command as a task. Overall milestone acceptance remains distinct from the outputs actually needed by each consumer. The main agent owns their meaning and applicability; the host owns record identities, revisions, execution associations, and mechanical consistency. Do not require a named Skill, provider, or extension schema on either side.

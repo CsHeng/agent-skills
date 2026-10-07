@@ -16,7 +16,12 @@ class SkillConsolidationContractTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         with (REPO_ROOT / "contracts" / "skills.toml").open("rb") as handle:
             cls.contract = tomllib.load(handle)
-        with (SKILL_ROOT / "use-coding-skills" / "references" / "routing.toml").open("rb") as handle:
+        routing_id, routing_entry = next(
+            (skill_id, entry)
+            for skill_id, entry in cls.contract["skills"].items()
+            if entry.get("routing_contract")
+        )
+        with (SKILL_ROOT / routing_id / routing_entry["routing_contract"]).open("rb") as handle:
             cls.routing = tomllib.load(handle)
 
     def test_compatibility_skills_are_deleted_from_contract_tree_and_routing(self) -> None:

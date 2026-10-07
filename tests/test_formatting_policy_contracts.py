@@ -97,7 +97,7 @@ class FormattingPolicyContractTests(unittest.TestCase):
 
     def test_documented_fix_format_sequence_preserves_exit_boundaries(self) -> None:
         skill = (
-            REPO_ROOT / "src/skills/policies/python-guidelines/SKILL.md"
+            REPO_ROOT / "skills/python-guidelines/SKILL.md"
         ).read_text(encoding="utf-8")
         commands = skill.split("## Operational Commands (Examples)", 1)[1]
         script = commands.split("```bash\n", 1)[1].split("```", 1)[0]

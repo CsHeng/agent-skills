@@ -1,4 +1,0 @@
-interface:
-  display_name: "Resilience and Recovery"
-  short_description: "Classify failures and choose bounded recovery behavior"
-  default_prompt: "Use $error-patterns to design resilience and recovery for this known failure boundary."

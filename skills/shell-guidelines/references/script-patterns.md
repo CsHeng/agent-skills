@@ -8,11 +8,11 @@ Write safe, portable orchestration scripts that stay linear, visible, and subord
 
 - Shell choice for persisted scripts
 - Strict mode, quoting, error handling, portability, and basic logging
-- Capability signals that require a new persisted language decision
+- Actual complexity or delivery costs that may justify a persisted language decision
 
 Out-of-scope:
 
-- Selecting the replacement language for a persisted tool; use `language-decision-tree`
+- Selecting the replacement language for a persisted tool; read `references/language-selection.md` in `skills-routing`
 - Complex parsing, persistent state, or reusable business rules inside Shell
 
 ## Deterministic Rules
@@ -26,10 +26,10 @@ Out-of-scope:
    - sh: `set -eu`
 3. Quote variables by default: `"${var}"`.
 4. Keep orchestration linear and make each external mutation visible.
-5. Route back to `language-decision-tree` when the script accumulates structured multi-step parsing, persistent state, complex retry or recovery, concurrency, multi-host distribution, embedded languages, or runtime and dependency management.
-6. Prefer Go for a long-lived operational tool when static distribution, cross-platform delivery, or reduced runtime state materially improves the contract; do not treat this preference as a mandate.
-7. Keep Shell for constrained native targets (BusyBox ash or POSIX `sh`) and for scripts that must affect the invoking shell. Length or accumulated state alone is not an escalation signal.
-8. For a simple one-shot remote action, prefer the controller's built-in module, local rendering, or a thin transported Shell command over creating a new Go or Python product.
+5. Revisit language selection only when actual parsing, state, recovery, concurrency, or distribution costs warrant it. An embedded language, script length, or accumulated state alone is not an escalation signal.
+6. Use short embedded Python when it makes data handling clearer and its runtime is available. Keep quoting reviewable and pass data separately from source; extracting a named Python script for readability does not require a Go rewrite.
+7. Preserve constrained native runtimes and parent-shell effects. Read `references/language-selection.md` in `skills-routing` for an authorized migration that may reduce total implementation, verification, deployment, and maintenance cost.
+8. For one-shot remote actions, reuse the controller's built-in module, local rendering, thin transported Shell, or a short Python fragment on an existing runtime rather than creating a new product.
 9. Name Shell script files using hyphen style: `my-script.sh`, not `my_script.sh`.
 
 ## Diagnostics And Logging
@@ -47,5 +47,5 @@ A one-shot wrapper may need only an actionable failure message. A managed operat
 - Strict mode matches the selected Shell.
 - Variables are quoted unless splitting is intentional and documented.
 - Inputs and mutation targets are validated.
-- Complex persisted behavior has been routed back through `language-decision-tree`.
+- Language changes address actual complexity or cost within the authorized scope; embedded syntax alone has not become a rewrite requirement.
 - `shellcheck` is clean when available.

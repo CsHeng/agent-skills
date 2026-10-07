@@ -1,34 +1,45 @@
 ---
 name: development-standards
-description: "Use as a conditional cross-language implementation overlay for smallest durable changes, request-scoped edits, compatibility, dependencies, temporary mechanisms, maintainability, and repository-owned quality gates. It does not own lifecycle routing or an independent report."
+description: "Use during design, planning, implementation, and review as the shared baseline for necessary behavior, low maintenance cost, scoped changes, compatibility, dependencies, and proportionate verification. It does not own lifecycle routing or an independent report."
 ---
 
 # Development Standards
 
-Choose the smallest durable implementation that satisfies the current approved requirements, contracts, and declared decision horizon. Durable does not mean speculative; do not buy flexibility, abstraction, compatibility, or operational surface without a current owner and need.
+Deliver the user's outcome with the least total implementation, testing, deployment, and maintenance burden over the intended lifetime. Start by deciding what is necessary. YAGNI comes before DRY: remove an unnecessary responsibility before sharing its implementation. Durable does not mean speculative or maximally defensive.
 
-This is a conditional implementation overlay. Do not select it as the primary owner for project analysis, design, planning, execution, or review.
+Apply this baseline from the first design choice through planning, implementation, and review. Before specifying a mechanism, compatibility promise, or verification gate, establish the current need it serves and consider the simpler alternative. Preventing unnecessary work is preferable to building it and removing it later. This is an ongoing decision standard, not a separate audit, checklist artifact, or mandatory invocation of the simplification method in `skills-routing`.
+
+Keep the appropriate workflow as the primary owner; this overlay produces no independent report. Apply detailed implementation sections only when their boundary is relevant.
 
 ## Precedence And Composition
 
-1. Follow repository-local policy and the approved design or plan first.
-2. Apply this skill as the cross-language implementation baseline.
+1. Follow the user's current goals, explicit choices, and real repository and safety boundaries. Designs and plans record those decisions; model-invented methods do not become user requirements merely through inclusion or general plan approval.
+2. Apply this skill's necessity and maintenance baseline before choosing methods, breaking work into tasks, or defining verification.
 3. Compose the matching language, security, error-handling, architecture, testing, or domain skill only when its boundary is active.
 4. Let the lifecycle workflow own mutation, review, repair, continuation, and close decisions.
 
 ## Goals, Discretion, And Risk
 
 - Deliver the main goal, its necessary conditions, user-fixed technical choices, and applicable inviolable boundaries.
+- Judge supporting code, tests, documents, and tooling by how they serve that outcome. Task completion, language uniformity, line counts, and exhaustive equivalence are not substitute outcomes.
+- Prefer direct behavior and existing capabilities. Add an abstraction, compatibility layer, guard, or gate only for a current need; hypothetical future consumers, concurrency, or accidental edits are not sufficient reasons.
 - Authorized best-effort secondary outcomes may be substituted, degraded, or dropped during implementation. Record the discretion and its effect. The design does not need to enumerate every feature that might fail.
 - Discretion comes from the current request, approved design, or applicable project convention. Do not grant it after the fact to pass review, silently weaken a required outcome, or drop a named secondary capability that the main goal actually depends on.
 - Ordinary bugs, one failed attempt, or unknown feasibility do not by themselves make a requirement unsupported. Investigate enough to explain a tradeoff; do not exhaust every alternative.
 - Calibrate protective effort to actual exposure, expected loss, and control cost; `security-guardrails` owns security-control calibration and `infrastructure-triage` owns operational recovery calibration. Do not require a scoring system or a zero-risk proof.
 - Environment wording alone — remote hosts, multi-repository work, Ansible, deploy language — does not make the target production; use trusted project facts and the minimum check needed when the environment is unclear. Authorized rebuildable development state may be updated, rebuilt, or replaced with fix-forward recovery; protect unique data, credentials, shared hosts, and production commitments, and get narrow authorization before an action would exceed approved production goals, commitments, risk, or authority. In-scope adaptations and already-authorized deployments continue without renewed approval.
 
+## Evidence Without Extra Machinery
+
+- Ordinary local development does not need hashes, checksums, digest manifests, provenance chains, or immutable receipts to establish consistency. Do not introduce them into implementation, tests, fixtures, designs, plans, or handoffs unless explicitly requested or necessary for an actual functional or trust boundary.
+- Evidence needs relevant behavior, inputs, conditions, and an honest result. Read the current change and rerun affected checks when those facts change; do not require byte identity or replace hashes with mandatory revision bookkeeping.
+- Existing cryptographic protocols, artifact integrity across a real trust boundary, and other current functional requirements can need digests. Their presence elsewhere, a mutable file, or a desire for stronger-looking proof does not justify another mechanism.
+- When simplification is authorized, reassess inherited guards and their tests against current needs. A historical plan, test, or implementation is evidence of what exists, not proof it must continue to exist.
+
 ## Scoped Implementation
 
 - Implement only requested behavior and approved supporting work.
-- Require every changed line to trace to the task slice, its executable oracle, or an orphan created by the same change.
+- Keep changes tied to the requested outcome, necessary verification, and obsolete material created by this change; do not create a line-by-line traceability ledger.
 - Do not refactor adjacent code, reformat unrelated files, remove pre-existing dead code, or add features that were not requested.
 - Match established repository structure, naming, style, and ownership unless the approved change explicitly replaces them.
 - Avoid single-use abstractions, speculative configuration, hypothetical extension points, and defensive branches for impossible states.
@@ -36,6 +47,7 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 - Do not add silent fallback, guessed defaults, or undeclared degraded success for required behavior. Authorized best-effort secondary degradation does not need every fallback named in the design.
 - Do not swallow errors or keep a legacy path "just in case". Prefer a clean break over dual-running old and new behavior. Route classified fallback or degraded mode through `error-patterns` when that boundary is active.
 - Remove imports, variables, helpers, configuration, and documentation made obsolete by the current change.
+- Reuse genuinely shared behavior where it reduces maintenance. A little straightforward duplication can cost less than a new framework; do not generalize unnecessary guards or accidental compatibility merely to satisfy DRY.
 
 ## Durability And Temporary Mechanisms
 
@@ -47,6 +59,7 @@ This is a conditional implementation overlay. Do not select it as the primary ow
 ## Compatibility And Migration
 
 - Do not add or preserve compatibility behavior unless a current public or persisted contract, interoperability requirement, approved migration policy, or retained-state need requires it.
+- Preserve required consumer behavior rather than every incidental property of the previous implementation. A library's default help wrapping, numeric representation, object identity, or undocumented parsing quirk is not automatically a public promise. Establish actual consumers and requirements before reproducing it in another language.
 - Authorized disposable development state may rebuild or replace rather than preserve in-place compatibility.
 - Retained existing data still needs corresponding migration evidence even when the runtime may be rebuilt.
 - Distinguish internal implementation freedom from caller-visible APIs, stored data, wire formats, automation entry points, and generated compatibility surfaces.
@@ -74,7 +87,7 @@ This Skill owns the local implementation dependency decision, not the material o
 - Write persisted prose for the current repository state. A reader at current HEAD must be able to resolve its internal references and verify its claims without an authoring session, review thread, temporary branch, or uncommitted draft.
 - Preserve complete propositions when editing comments, docstrings, prompts, diagnostics, help text, examples, configuration comments, and other durable prose: retain the actor, action, conditions, order, modality, negative guarantees, exceptions, ownership transfers, side effects, failure modes, and consequences that affect behavior.
 - Remove review choreography, dead phase labels, reviewer arguments, and temporary change narration once they no longer explain the current state. Preserve exact durable issues, decisions, still-valid rejected alternatives, standards, and measured evidence at their repository-owned truth location.
-- Treat model-visible and user-visible strings as behavior when wording affects routing, interpretation, diagnosis, safety, or compatibility. Protect such changes with the narrowest owned snapshot, contract, or runtime oracle; do not normalize prose repository-wide without an approved scope.
+- Code and observed execution establish implemented behavior; documents and diagrams express intent and explain it. Synchronize affected explanations after implementation. Review their meaning directly; do not turn prose, headings, diagram contents, or historical versions into tested interfaces. Actual protocol strings remain code contracts when consumers depend on them.
 - Update authored sources before generated projections and regenerate through the repository-owned workflow.
 - Validate external input at the owned boundary and handle failures that can occur under the declared runtime contract.
 - Measure before optimizing and keep performance work tied to an observed bottleneck or explicit objective.
@@ -89,7 +102,7 @@ This Skill owns the local implementation dependency decision, not the material o
 
 ## Repository-Owned Quality Gates
 
-- Follow quality gates already owned by the target repository, approved plan, CI contract, or release policy before introducing a new metric.
+- Run applicable repository checks. In an authorized gate or suite simplification, assess whether each check protects required behavior rather than treating its existence as a permanent requirement.
 - Select a new lint, complexity, duplication, coverage, or debt gate only when it protects a named boundary, has a baseline, an accountable owner, a failure response, and an adoption or migration path.
 - Do not impose universal numeric thresholds across repositories or languages. A metric is evidence for a goal, not the goal itself.
 - Let `testing-strategy` own executable test evidence, suite boundaries, fixtures, and CI lanes. Let the matching language guideline own concrete linter, formatter, type-checker, and test-runner configuration.
@@ -116,7 +129,7 @@ This Skill owns the local implementation dependency decision, not the material o
 - Define success criteria before implementation and select the smallest realistic oracle that proves the changed user-visible boundary and hard constraints.
 - Parser, existence, or golden checks do not replace user-goal scenarios that the change claims to satisfy.
 - Reproduce bugs or establish equivalent before-state evidence when practical, then verify the narrow change and declared broader scope. A missing perfect reproducer does not freeze unrelated authorized work.
-- Do not weaken tests, schemas, compatibility checks, security checks, or other required oracles merely to make implementation pass. Authorized secondary tradeoffs are disclosed adapted results, not deleted assertions.
+- Do not weaken a required outcome to make implementation pass. Correct or remove tests that only preserve an unnecessary mechanism or incidental detail when that simplification is in scope; keep evidence for the actual required behavior. Authorized secondary tradeoffs are disclosed adapted results, not hidden failures.
 - Review the approved diff, direct dependencies, and executable evidence. Pre-existing or unrelated debt does not expand the current task.
 
 ## Progressive Disclosure

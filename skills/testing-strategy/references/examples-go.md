@@ -296,6 +296,7 @@ func boolToInt(value bool) string {
 func startWorker(t *testing.T, dataDir string, ignoreInterrupt bool) *exec.Cmd {
 	t.Helper()
 	cmd := exec.Command(os.Args[0], "-test.run=TestHelperProcess")
+	cmd.Stderr = os.Stderr
 	// Subprocess environment allowlist: only the worker handshake variables.
 	cmd.Env = []string{
 		"GO_WANT_HELPER_PROCESS=1",

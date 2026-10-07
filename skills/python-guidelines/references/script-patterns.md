@@ -36,5 +36,5 @@ For an operational tool that needs logs, use the project's logging mechanism and
 
 - Follow the canonical type-hint requirements in [Python Guidelines](../SKILL.md), including parameters and return values
 - `if __name__ == "__main__":` guard for executable scripts
-- No inline python in shell (`python -c`) for anything non-trivial
+- Short embedded Python is readable, uses an available runtime, and receives data separately from source; extract a named Python script when quoting or reuse warrants it, without treating embedding as a language-migration signal
 - Clear exit codes (0 success, non-zero failure)

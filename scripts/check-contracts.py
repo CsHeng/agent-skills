@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the canonical skill package and derived metadata."""
+"""Validate the authored Skill inventory, discovery, and semantic contracts."""
 
 from __future__ import annotations
 
@@ -10,13 +10,10 @@ from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-from skill_activation import (  # noqa: E402 - script-local imports follow path bootstrap
-    has_authored_codex_invocation_policy,
-    is_distributed,
+from scripts.skill_activation import (  # noqa: E402 - imports follow path bootstrap
     validate_activation_contract,
 )
 
@@ -43,9 +40,12 @@ def validate_semantic_contracts(
     public_entries = {
         name: entry for name, entry in skills.items() if isinstance(entry, dict)
     }
+    routing_owners = {
+        name for name, entry in public_entries.items() if entry.get("routing_contract")
+    }
     adjacency: dict[str, set[str]] = {name: set() for name in public_entries}
 
-    for skill_name, entry in sorted(skills.items()):
+    for skill_name, entry in sorted(public_entries.items()):
         requirements = entry.get("semantic_requires", [])
         if not isinstance(requirements, list) or not all(
             isinstance(target, str) and target for target in requirements
@@ -65,10 +65,6 @@ def validate_semantic_contracts(
                 errors.append(
                     f"{skill_name}: semantic_requires references unknown skill: {target}"
                 )
-            elif not is_distributed(public_entries[target]):
-                errors.append(
-                    f"{skill_name}: semantic_requires references undistributed skill: {target}"
-                )
             else:
                 adjacency[skill_name].add(target)
         if entry.get("category") == "review-component" and requirements:
@@ -84,18 +80,18 @@ def validate_semantic_contracts(
                 errors.append(
                     f"{skill_name}: review-component evaluators are read-only; may_mutate_repo must be false"
                 )
-        if "use-coding-skills" in requirements:
+        if routing_owners.intersection(requirements):
             errors.append(
                 f"{skill_name}: public skills cannot depend on the optional session router"
             )
 
-    cycle = _runtime_contract_cycle(adjacency)
+    cycle = _semantic_dependency_cycle(adjacency)
     if cycle:
         errors.append(
             "semantic dependency graph contains a cycle: " + " -> ".join(cycle)
         )
 
-    for skill_name, entry in sorted(skills.items()):
+    for skill_name, entry in sorted(public_entries.items()):
         routing_contract = entry.get("routing_contract")
         if not routing_contract:
             continue
@@ -141,28 +137,11 @@ def validate_semantic_contracts(
     return errors
 
 
-def load_manifest() -> dict[str, Any]:
-    with CONTRACT_PATH.open("rb") as handle:
-        data = tomllib.load(handle)
-    skills = data.get("skills")
-    if not isinstance(skills, dict):
-        raise TypeError("contracts/skills.toml must contain [skills.*] entries")
-    return skills
-
-
 def canonical_skill_dirs() -> set[str]:
     result: set[str] = set()
     for skill_file in (REPO_ROOT / "skills").glob("*/SKILL.md"):
         result.add(skill_file.parent.name)
     return result
-
-
-def authored_skill_sources() -> set[str]:
-    """Return every nested authored skill directory relative to the repository."""
-    return {
-        skill_file.parent.relative_to(REPO_ROOT).as_posix()
-        for skill_file in (REPO_ROOT / "src" / "skills").rglob("SKILL.md")
-    }
 
 
 def validate_semantic_only_surface(repo_root: Path = REPO_ROOT) -> list[str]:
@@ -179,12 +158,15 @@ def validate_semantic_only_surface(repo_root: Path = REPO_ROOT) -> list[str]:
         if (repo_root / relative).exists():
             errors.append(f"retired executable workflow surface remains: {relative}")
 
-    executable_roots = (
-        repo_root / "src/skills/workflows",
-        repo_root / "src/skills/review-components",
-    )
-    for root in executable_roots:
-        for path in root.glob("*/scripts/*"):
+    with (repo_root / "contracts" / "skills.toml").open("rb") as handle:
+        skills = tomllib.load(handle)["skills"]
+    for skill_id, entry in skills.items():
+        if not isinstance(entry, dict) or entry.get("category") not in {
+            "workflow",
+            "review-component",
+        }:
+            continue
+        for path in (repo_root / "skills" / skill_id / "scripts").rglob("*"):
             if path.is_file():
                 errors.append(
                     "semantic workflow surface contains executable support: "
@@ -197,7 +179,7 @@ def validate_semantic_only_surface(repo_root: Path = REPO_ROOT) -> list[str]:
     return errors
 
 
-def _runtime_contract_cycle(adjacency: dict[str, set[str]]) -> list[str] | None:
+def _semantic_dependency_cycle(adjacency: dict[str, set[str]]) -> list[str] | None:
     visiting: set[str] = set()
     visited: set[str] = set()
     stack: list[str] = []
@@ -272,10 +254,6 @@ def validate_trigger_cases(
                 errors.append(f"trigger case {label}: unknown owner: {owner}")
             else:
                 owned_cases[owner].add(label)
-                if not is_distributed(owner_entry):
-                    errors.append(
-                        f"trigger case {label}: owner is not distributed: {owner}"
-                    )
                 if owner_entry.get("default_role") == "evaluator":
                     errors.append(
                         f"trigger case {label}: composition-only evaluator cannot own a trigger case: {owner}"
@@ -319,10 +297,6 @@ def validate_trigger_cases(
                 errors.append(f"trigger case {label}: unknown overlay: {overlay}")
                 continue
             overlay_cases[overlay].add(label)
-            if not is_distributed(overlay_entry):
-                errors.append(
-                    f"trigger case {label}: overlay is not distributed: {overlay}"
-                )
             if overlay == owner:
                 errors.append(f"trigger case {label}: owner cannot also be an overlay")
 
@@ -362,12 +336,6 @@ def validate_trigger_cases(
             )
 
     for public_id, entry in sorted(public_entries.items()):
-        if not is_distributed(entry):
-            if owned_cases[public_id] or overlay_cases[public_id]:
-                errors.append(
-                    f"{public_id}: undistributed skill cannot own or overlay a trigger case"
-                )
-            continue
         mode = entry.get("activation_mode")
         if mode == "native" and not owned_cases[public_id]:
             errors.append(
@@ -404,7 +372,7 @@ def validate_routing_contracts(
     }
     routing_entries = [
         (skill_name, entry)
-        for skill_name, entry in sorted(skills.items())
+        for skill_name, entry in sorted(public_entries.items())
         if entry.get("routing_contract") is not None
     ]
 
@@ -510,10 +478,6 @@ def validate_routing_contracts(
                 errors.append(
                     f"{skill_name}: support route {intent} targets unknown skill: {target}"
                 )
-            elif not is_distributed(target_entry):
-                errors.append(
-                    f"{skill_name}: support route {intent} targets undistributed skill: {target}"
-                )
             elif target_entry.get("default_role") == "evaluator":
                 errors.append(
                     f"{skill_name}: support route {intent} cannot target an evaluator: {target}"
@@ -540,36 +504,28 @@ def validate() -> list[str]:
         "install",
         "superseded_by",
         "lifecycle_owner",
+        "source",
+        "distributed",
+        "runtime_bundle",
+        "runtime_contract",
     }
     for field in ("semantic_install", "profiles"):
         if field in contract:
             errors.append(f"contract retains removed top-level schema: {field}")
 
     for skill_name, entry in sorted(skills.items()):
+        if not isinstance(entry, dict):
+            errors.append(f"{skill_name}: skill entry must be a table")
+            continue
+        if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", skill_name):
+            errors.append(f"{skill_name}: skill ID must be a kebab-case directory name")
+            continue
         category = entry.get("category")
-        source_value = entry.get("source")
-        source_path = (
-            REPO_ROOT / source_value if isinstance(source_value, str) else None
-        )
-        if source_path is None:
-            errors.append(f"{skill_name}: source must be a repository-relative path")
-            continue
-        try:
-            source_path.resolve().relative_to((REPO_ROOT / "src" / "skills").resolve())
-        except ValueError:
-            errors.append(f"{skill_name}: source must stay under src/skills")
-            continue
+        source_path = REPO_ROOT / "skills" / skill_name
         if not source_path.is_dir():
             errors.append(f"{skill_name}: authored skill directory does not exist")
         elif not (source_path / "SKILL.md").is_file():
             errors.append(f"{skill_name}: authored skill directory lacks SKILL.md")
-        metadata_path = source_path / "agents" / "openai.yaml"
-        if metadata_path.is_file() and has_authored_codex_invocation_policy(
-            metadata_path.read_text(encoding="utf-8")
-        ):
-            errors.append(
-                f"{skill_name}: authored source contains derived Codex invocation policy"
-            )
         forbidden = sorted(forbidden_contract_fields & set(entry))
         if forbidden:
             errors.append(
@@ -597,57 +553,37 @@ def validate() -> list[str]:
                     f"{skill_name}: direct mutation requires an explicit user request guard"
                 )
 
-    generated_ids = canonical_skill_dirs()
-    distributed_ids = {
-        name
-        for name, entry in skills.items()
-        if isinstance(entry, dict) and is_distributed(entry)
-    }
-    extra_generated = sorted(generated_ids - distributed_ids)
-    missing_generated = sorted(distributed_ids - generated_ids)
-    unknown_generated = sorted(set(extra_generated) - canonical_ids)
-    leaked_generated = sorted(set(extra_generated) & canonical_ids)
-    if unknown_generated:
+    authored_ids = canonical_skill_dirs()
+    unknown_ids = sorted(authored_ids - canonical_ids)
+    missing_ids = sorted(canonical_ids - authored_ids)
+    if unknown_ids:
         errors.append(
-            "canonical skills missing contract entries: " + ", ".join(unknown_generated)
+            "authored skills missing contract entries: " + ", ".join(unknown_ids)
         )
-    if leaked_generated:
+    if missing_ids:
         errors.append(
-            "generated surface contains undistributed skills: "
-            + ", ".join(leaked_generated)
-        )
-    if missing_generated:
-        errors.append(
-            "distributed skills missing canonical directories: "
-            + ", ".join(missing_generated)
+            "contracted skills missing authored directories: " + ", ".join(missing_ids)
         )
 
-    declared_sources = [
-        entry.get("source")
-        for entry in skills.values()
-        if isinstance(entry, dict) and isinstance(entry.get("source"), str)
-    ]
-    if len(declared_sources) != len(set(declared_sources)):
-        errors.append("multiple public skill IDs map to the same authored source")
-    authored_sources = authored_skill_sources()
-    declared_source_set = set(declared_sources)
-    if authored_sources != declared_source_set:
+    skill_root = REPO_ROOT / "skills"
+    non_flat_entries = sorted(
+        path.relative_to(REPO_ROOT).as_posix()
+        for path in skill_root.rglob("SKILL.md")
+        if path.is_file() and path.parent.parent != skill_root
+    )
+    if non_flat_entries:
         errors.append(
-            "authored skill inventory differs; "
-            f"uncontracted={sorted(authored_sources - declared_source_set)} "
-            f"missing={sorted(declared_source_set - authored_sources)}"
+            "Skill entrypoints must use skills/<id>/SKILL.md: "
+            + ", ".join(non_flat_entries)
         )
 
-    generated_runtime_dirs = sorted(
+    runtime_dirs = sorted(
         path.relative_to(REPO_ROOT).as_posix()
         for path in (REPO_ROOT / "skills").glob("*/scripts/harness")
         if path.is_dir()
     )
-    if generated_runtime_dirs:
-        errors.append(
-            "generated skill-local harness bundles remain: "
-            + ", ".join(generated_runtime_dirs)
-        )
+    if runtime_dirs:
+        errors.append("skill-local harness bundles remain: " + ", ".join(runtime_dirs))
 
     errors.extend(validate_activation_contract(contract, REPO_ROOT, check_sources=True))
     errors.extend(validate_semantic_only_surface())

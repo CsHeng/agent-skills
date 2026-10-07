@@ -18,8 +18,8 @@ In-scope:
 - Code review and syntax audit for PowerShell files
 
 Out-of-scope:
-- Language selection (see `language-decision-tree` skill)
-- Tool selection and progressive search workflow (see `tool-decision-tree` skill)
+- Language selection (read `references/language-selection.md` in `skills-routing`)
+- Tool selection and progressive search workflow (read `references/tool-selection.md` in `skills-routing`)
 - Windows-only legacy PowerShell 5.1 patterns
 
 ## Progressive Disclosure
@@ -44,8 +44,8 @@ Out-of-scope:
    - Use `$PSScriptRoot` for script-relative paths.
    - Narrow exception: a single `[System.IO.Path]::Combine()` call is allowed only to join three or more trusted literal segments in one expression, and never with a rooted later segment, which silently discards the earlier path.
 5. Validate inputs and handle errors
-   - Use `[CmdletBinding()]` and `[Parameter(Mandatory)]` for input validation.
-   - Use `try/catch/finally` for structured error handling.
+   - Use `[CmdletBinding()]` for advanced functions and `[Parameter(Mandatory)]` for required inputs; choose types and validation attributes for the actual input constraints.
+   - Add local error handling where recovery, additional context, or cleanup is needed; otherwise let failures propagate to the caller.
    - Prefer `$PSCmdlet.ThrowTerminatingError()` over `throw` in advanced functions.
 6. Use linting and syntax checks
    - Run the parser check in `references/operational-checks.md`; it exits non-zero when `Parser::ParseFile` reports diagnostics.
@@ -58,7 +58,7 @@ PROHIBITED: Use `Invoke-Expression` with untrusted input.
 PROHIBITED: Hardcode secrets, credentials, or API keys in scripts.
 PROHIBITED: Use plain-text passwords in parameters (use `[SecureString]` or credential objects).
 REQUIRED: Validate inputs before processing; reject unexpected values early.
-REQUIRED: Use `[ValidateSet()]`, `[ValidatePattern()]`, `[ValidateRange()]` for parameter validation.
+REQUIRED: Use parameter types and validation attributes that express the actual input constraints. Attributes such as `[ValidateSet()]`, `[ValidatePattern()]`, and `[ValidateRange()]` apply only where those constraints are needed.
 
 ### Strict Mode
 REQUIRED: Include `#Requires -Version 7.0` at script top.
@@ -82,7 +82,7 @@ PROHIBITED: Use cmdlet aliases in scripts (`ls`, `cat`, `%`, `?`); use full cmdl
 PROHIBITED: Use global variables (`$global:*`); pass data via parameters and return values.
 
 ### Error Handling
-REQUIRED: Use `try/catch/finally` for operations that may fail.
+REQUIRED: Propagate failures unless the owning boundary handles them. Use `try/catch` for needed recovery or context, and `finally` when cleanup must run on both success and failure.
 REQUIRED: Include context in error messages (variable values, operation attempted).
 PROHIBITED: Ignore errors from external commands; check `$LASTEXITCODE` after native commands.
 PREFERRED: Use `$PSCmdlet.ThrowTerminatingError()` in advanced functions for proper error record creation.
@@ -90,7 +90,7 @@ PREFERRED: Use `$PSCmdlet.ThrowTerminatingError()` in advanced functions for pro
 ## macOS + Cross-Platform Notes
 
 - PowerShell 7 on macOS: installed via Homebrew (`brew install powershell`), invoked as `pwsh`.
-- File system is case-sensitive on macOS (APFS default); Windows is case-insensitive. Test path handling accordingly.
+- macOS [APFS](https://developer.apple.com/documentation/technologyoverviews/files-and-directories) is case-insensitive by default and also supports case-sensitive volumes. Check the target volume's behavior instead of inferring case sensitivity from the OS; test path handling accordingly.
 - Line endings: macOS uses LF; Windows expects CRLF for some tools. Use `.gitattributes` with `*.ps1 text eol=crlf` when targeting Windows.
 - Environment variables: `$env:HOME` on macOS vs `$env:USERPROFILE` on Windows. Use `$HOME` (PowerShell automatic variable) for portability.
 - Native commands: `grep`, `sed`, `awk` are available on macOS but not Windows. Use PowerShell cmdlets (`Select-String`, `-replace`, `ForEach-Object`) for portable scripts.
@@ -112,7 +112,7 @@ Validate syntax, linting, and approved verbs with the host-specific commands in 
 - Cross-platform paths via `Join-Path` / `$PSScriptRoot`
 - No hardcoded secrets or plain-text passwords
 - PSScriptAnalyzer clean (Warning+ severity)
-- `try/catch` for fallible operations; `$LASTEXITCODE` checked after native commands
+- Failures propagate or receive needed recovery/context; cleanup runs on success and failure; `$LASTEXITCODE` checked after native commands
 
 ## Error Handling Examples
 

@@ -38,7 +38,7 @@ Calibrate recovery to state value, blast radius, recoverability, and control cos
 
 ## Output
 
-- Lead with the most likely boundary or state mismatch.
+- When this skill owns a troubleshooting response, lead with the most likely boundary or state mismatch. When supporting another workflow, contribute the relevant findings to its deliverable under `output-styles` without prescribing another opening or report.
 - Distinguish verified facts from inferred causes.
 - Name the exact observation point for each claim.
 - Include the selected recovery policy when a change affects access, routing, secrets, important retained state, shared hosts, or production. Name rollback only when the guarded criteria above apply.

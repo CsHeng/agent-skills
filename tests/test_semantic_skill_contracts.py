@@ -7,7 +7,6 @@ import unittest
 from pathlib import Path
 from types import ModuleType
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -37,16 +36,6 @@ class SemanticSkillContractTests(unittest.TestCase):
             [], self.checker.validate_semantic_contracts(load_contract(), REPO_ROOT)
         )
 
-    def test_undistributed_dependency_is_rejected(self) -> None:
-        contract = copy.deepcopy(load_contract())
-        contract["skills"]["design-change"]["semantic_requires"] = ["web-fetch"]
-
-        errors = self.checker.validate_semantic_contracts(contract, REPO_ROOT)
-
-        self.assertTrue(
-            any("undistributed skill: web-fetch" in error for error in errors)
-        )
-
     def test_unknown_dependency_is_rejected(self) -> None:
         contract = copy.deepcopy(load_contract())
         contract["skills"]["design-change"]["semantic_requires"] = ["missing"]
@@ -66,9 +55,12 @@ class SemanticSkillContractTests(unittest.TestCase):
 
     def test_router_requirements_must_match_installed_routing_contract(self) -> None:
         contract = copy.deepcopy(load_contract())
-        contract["skills"]["use-coding-skills"]["semantic_requires"].remove(
-            "output-styles"
+        routing_entry = next(
+            entry
+            for entry in contract["skills"].values()
+            if entry.get("routing_contract")
         )
+        routing_entry["semantic_requires"].remove("output-styles")
 
         errors = self.checker.validate_semantic_contracts(contract, REPO_ROOT)
 
@@ -76,7 +68,10 @@ class SemanticSkillContractTests(unittest.TestCase):
 
     def test_review_evaluators_are_not_mandatory_dependencies(self) -> None:
         contract = load_contract()
-        self.assertNotIn("semantic_requires", contract["skills"]["review-change"])
+        required = contract["skills"]["review-change"].get("semantic_requires", [])
+        self.assertTrue(
+            {"review-design", "review-plan", "review-implementation"}.isdisjoint(required)
+        )
 
     def test_review_component_evaluators_cannot_delegate(self) -> None:
         contract = copy.deepcopy(load_contract())
@@ -110,7 +105,7 @@ class SemanticSkillContractTests(unittest.TestCase):
     def test_delegation_profile_vocabulary_is_provider_neutral(self) -> None:
         path = (
             REPO_ROOT
-            / "src/skills/workflows/plan-change/references/delegation-profiles.toml"
+            / "skills/plan-change/references/delegation-profiles.toml"
         )
         with path.open("rb") as handle:
             vocabulary = tomllib.load(handle)

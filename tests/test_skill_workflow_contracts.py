@@ -11,9 +11,13 @@ class WorkflowContractTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         with (REPO_ROOT / "contracts/skills.toml").open("rb") as handle:
             cls.contract = tomllib.load(handle)
-        with (REPO_ROOT / "skills/use-coding-skills/references/routing.toml").open(
-            "rb"
-        ) as handle:
+        routing_id, routing_entry = next(
+            (skill_id, entry)
+            for skill_id, entry in cls.contract["skills"].items()
+            if entry.get("routing_contract")
+        )
+        routing_path = REPO_ROOT / "skills" / routing_id / routing_entry["routing_contract"]
+        with routing_path.open("rb") as handle:
             cls.routing = tomllib.load(handle)
 
     def test_obsolete_controller_contracts_are_absent(self) -> None:
@@ -24,12 +28,14 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_ordinary_workflows_have_no_universal_review_or_plan_gate(self) -> None:
         skills = self.contract["skills"]
-        for skill_id in ("design-change", "plan-change", "implement-change"):
+        for skill_id in ("design-change", "plan-change", "implement-change", "review-change"):
             with self.subTest(skill=skill_id):
-                self.assertNotIn("semantic_requires", skills[skill_id])
+                for dependency in skills[skill_id].get("semantic_requires", []):
+                    self.assertNotIn(
+                        skills[dependency]["category"], ("workflow", "review-component")
+                    )
         self.assertTrue(skills["implement-change"]["requires_explicit_user_request"])
         self.assertNotIn("requires_approved_plan", skills["implement-change"])
-        self.assertNotIn("semantic_requires", skills["review-change"])
 
     def test_truth_mutation_uses_explicit_authority_without_synthetic_plan(
         self,

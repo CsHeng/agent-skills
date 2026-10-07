@@ -5,7 +5,7 @@ description: "Use to reorganize, squash, or clean up unpushed commits by busines
 
 # Smart Squash
 
-Reorganize a branch's commits that are not reachable from any known remote-tracking ref by business logic. This skill only rewrites local history: it never pushes, and it never rewrites a commit it can see on a fetched remote-tracking ref or tag. A commit absent from every fetched remote ref is only unpushed on the refs that were checked, not proof that it was never published, so the rewrite still requires explicit approval.
+Reorganize a branch's commits that are not reachable from any known remote-tracking ref by business logic. This skill only rewrites local history: it never pushes, and it never rewrites a commit reachable from a known remote-tracking ref or local tag. A local tag protects history without proving publication. A commit absent from every fetched remote ref is only unpushed on the refs that were checked, not proof that it was never published, so the rewrite still requires explicit approval.
 
 ## Scope
 
@@ -34,12 +34,11 @@ Rules:
 Validate repository state before any operation:
 
 ```bash
-git -C "$TARGET_REPO" rev-parse --git-dir          # validate repository
+GIT_DIR="$(git -C "$TARGET_REPO" rev-parse --absolute-git-dir)"
 git -C "$TARGET_REPO" status --short               # must be clean
 
 # Refuse when a rebase or merge is already in progress
-GIT_DIR=$(git -C "$TARGET_REPO" rev-parse --git-dir)
-if [ -d "$GIT_DIR/rebase-merge" ] || [ -f "$GIT_DIR/MERGE_HEAD" ]; then
+if [ -d "$GIT_DIR/rebase-merge" ] || [ -d "$GIT_DIR/rebase-apply" ] || [ -f "$GIT_DIR/MERGE_HEAD" ]; then
   echo "ERROR: repository is in rebase or merge state"
   exit 1
 fi
@@ -86,7 +85,7 @@ else
 fi
 ```
 
-Classify every candidate commit by reachability, per commit, from fetched remote refs. This is a containment/intersection test, not the `HEAD ^<upstream>` set difference: a commit can be absent from the upstream branch yet still reachable from another shared ref, such as a second pushed branch or a tag:
+Classify every candidate commit by reachability, per commit, from known remote-tracking refs and local tags. This is a containment/intersection test, not the `HEAD ^<upstream>` set difference: a commit can be absent from the upstream branch yet still reachable from a second pushed branch or a protected local tag. Report full reference names to distinguish those cases; a local tag alone does not establish whether it was published:
 
 ```bash
 REMOTE_REF_COUNT=$(git -C "$TARGET_REPO" for-each-ref --format='%(refname)' refs/remotes/ | wc -l)
@@ -97,9 +96,9 @@ CANDIDATES=$(git -C "$TARGET_REPO" rev-list "${RANGE_ARGS[@]}" --reverse) || {
 }
 
 for commit in $CANDIDATES; do
-  shared_refs=$(git -C "$TARGET_REPO" for-each-ref --contains "$commit" --format='%(refname:short)' refs/remotes/ refs/tags/)
-  if [ -n "$shared_refs" ]; then
-    echo "PUBLISHED $commit shared-refs=$shared_refs"
+  protected_refs=$(git -C "$TARGET_REPO" for-each-ref --contains "$commit" --format='%(refname)' refs/remotes/ refs/tags/)
+  if [ -n "$protected_refs" ]; then
+    echo "PROTECTED-REF $commit refs=$protected_refs"
   elif [ "${FETCH_STATUS}" = "ok" ] && [ "${REMOTE_REF_COUNT}" -gt 0 ]; then
     echo "UNPUSHED-ON-KNOWN-REFS $commit"
   else
@@ -118,9 +117,9 @@ done | sort -u
 
 Report the actual preflight findings and their consequences: clean or dirty tree, rebase or merge in progress, the fetch status, the configured upstream (or that it is absent), the selected range and its commit count, each candidate's reachability class, and any other branch that contains a candidate. Interpretation rules:
 
-- `PUBLISHED` means the candidate is reachable from a fetched shared ref. Refuse to rewrite the range until those refs are resolved; never rewrite a commit that is already on a known remote ref.
-- `UNPUSHED-ON-KNOWN-REFS` means no fetched remote-tracking ref or tag contains the commit. Report it with that qualification; it is not proof that the commit was never published, because a remote ref may not have been fetched, may have been deleted, or may live on a fork.
-- `UNKNOWN` means the fetch failed, no remote is configured, or there are no remote-tracking refs to test against. Report an explicit unknown and never describe the candidates as unpushed.
+- `PROTECTED-REF` means the candidate is reachable from a known remote-tracking ref or local tag. Refuse to rewrite the range while those refs contain a candidate. A remote-tracking ref records known remote reachability; a local tag protects the candidate but does not prove publication. Report fetch failures alongside this protection because remote evidence may be stale.
+- `UNPUSHED-ON-KNOWN-REFS` means the fetch succeeded, remote-tracking refs were available to check, and no checked remote-tracking ref or local tag contains the commit. Report it with that qualification; it is not proof that the commit was never published, because a remote ref may not have been fetched, may have been deleted, or may live on a fork.
+- `UNKNOWN` means no protected ref was found and publication evidence is incomplete: the fetch failed, no remote is configured, or there are no remote-tracking refs to test against. Report an explicit unknown and never describe the candidates as unpushed.
 - No upstream configured is itself an explicit unknown for the branch baseline. Report `upstream: none configured`; do not treat the absence of an upstream as evidence that candidates are unpushed.
 
 State facts and risks directly; do not wrap them in a fixed severity panel or checkmark template. A clean reachability result is not rewrite authorization; the plan in Phase 3 still requires the user's separate, explicit approval.
@@ -140,6 +139,8 @@ done
 ORIGINAL_COUNT=$(git -C "$TARGET_REPO" log "${RANGE_ARGS[@]}" --oneline | wc -l)
 ```
 
+If the selected range is empty, report zero candidate commits and stop without proposing a rewrite. For a nonempty range, analyze the commits before deciding whether any groups can merge.
+
 Group commits that serve the same change, in priority order:
 1. Same scope: consecutive commits with the same conventional-commit scope.
 2. Same files: commits touching the same file set.
@@ -151,6 +152,8 @@ Grouping rules:
 - Non-consecutive related commits may merge, which can require reordering.
 - Preserve real dependencies (for example, schema before code).
 - Keep independent commits separate.
+
+If no mergeable groups are found and no other reorganization is needed, report that result for the analyzed range and stop without a rebase.
 
 ### Phase 3: Propose the Rebase Plan
 
@@ -177,27 +180,32 @@ Then execute the rebase:
 PLAN_FILE="$(mktemp)"
 # ... populate "$PLAN_FILE" from the approved groups ...
 
+REBASE_EXIT_CODE=0
 if [ "$RANGE_LABEL" = "--root" ]; then
   GIT_SEQUENCE_EDITOR="sh -c 'cp \"$PLAN_FILE\" \"\$1\"' --" \
-    git -C "$TARGET_REPO" rebase -i --root
+    git -C "$TARGET_REPO" rebase -i --root || REBASE_EXIT_CODE=$?
 else
   GIT_SEQUENCE_EDITOR="sh -c 'cp \"$PLAN_FILE\" \"\$1\"' --" \
-    git -C "$TARGET_REPO" rebase -i "$BASE_COMMIT"
+    git -C "$TARGET_REPO" rebase -i "$BASE_COMMIT" || REBASE_EXIT_CODE=$?
 fi
 
 # Handle conflicts
-if [ $? -ne 0 ]; then
+if [ "$REBASE_EXIT_CODE" -ne 0 ]; then
   echo "ERROR: rebase stopped. Resolve conflicts, then:"
   echo "  git -C \"$TARGET_REPO\" rebase --continue  # after resolving conflicts"
   echo "  git -C \"$TARGET_REPO\" rebase --abort     # abandon the whole operation"
-  exit 1
+  exit "$REBASE_EXIT_CODE"
 fi
 ```
 
 After completion, compare the resulting groups and full commit messages with the approved plan. Show the resulting history and the before/after commit counts:
 
 ```bash
-FINAL_COUNT=$(git -C "$TARGET_REPO" log "$BASE_COMMIT"..HEAD --oneline | wc -l)
+if [ "$RANGE_LABEL" = "--root" ]; then
+  FINAL_COUNT=$(git -C "$TARGET_REPO" rev-list --count HEAD)
+else
+  FINAL_COUNT=$(git -C "$TARGET_REPO" rev-list --count "$BASE_COMMIT"..HEAD)
+fi
 git -C "$TARGET_REPO" log --oneline --graph -n $((FINAL_COUNT + 5))
 
 echo "Original commits: $ORIGINAL_COUNT"
@@ -213,16 +221,17 @@ Report the recovery point and the outcome. Remove a task-created backup branch o
 - Explicit rewrite approval required — always present the plan and get the user's separate approval before executing; a clean preflight result never authorizes the rewrite
 - Recoverable rewrite — keep a recovery point (reflog, `ORIG_HEAD`, or a backup branch) and provide continue/abort recovery
 - Clean working tree required — no uncommitted changes; preserve them, do not discard them
-- Reachability, not difference — classify each candidate with `for-each-ref --contains` against fetched remote-tracking refs and tags; never infer that a commit is unpushed from `HEAD ^<upstream>` or `@{u}..HEAD`, which are set differences
-- Never rewrite a published candidate — refuse when any candidate is reachable from a fetched remote-tracking ref or tag
-- Unknown stays unknown — a failed fetch, missing upstream, or absent remote refs yields an explicit unknown; report it and ask instead of asserting the commits are unpushed
+- Reachability, not difference — classify each candidate with `for-each-ref --contains` against known remote-tracking refs and local tags; never infer that a commit is unpushed from `HEAD ^<upstream>` or `@{u}..HEAD`, which are set differences
+- Never rewrite a protected candidate — refuse when any candidate is reachable from a known remote-tracking ref or local tag; a local tag alone is not publication evidence
+- Unknown stays unknown — a failed fetch or absent remote refs leaves publication unknown for candidates without protected refs; a missing upstream leaves the branch baseline unknown. Report the gap and ask instead of asserting the commits are unpushed
 - No universal publication claim — absence from every fetched remote ref does not prove a commit was never published; state which refs were checked
 
 ## Edge Cases
 
 - No upstream branch: Treat the branch publication baseline as unknown, prompt the user for a commit range (recent N, from commit/tag, or all), and never assume the candidates are unpushed
-- Fetch fails or no remote: Report reachability as unknown, not as unpushed, and ask how to establish what is published
-- Candidate reachable from another shared ref: Treat as published and refuse, even when the upstream difference looks clean
-- No commits to squash: Inform user that all commits are independent
+- Fetch fails or no remote: Preserve any known ref protection, report publication as unknown for candidates without protected refs, and ask how to establish what is published
+- Candidate reachable from another remote-tracking ref or local tag: Report the protected reference and refuse, even when the upstream difference looks clean; do not call a local tag proof of publication
+- Empty candidate range: Report zero candidates; no grouping or rewrite is needed
+- Nonempty range with no mergeable groups: Report the grouping result for that range; skip the rebase when no other reorganization is needed
 - Rebase conflicts: Stop and provide clear recovery instructions
 - Other branches reference commits: Warn user about potential impact
