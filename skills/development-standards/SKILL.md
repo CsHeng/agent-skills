@@ -5,11 +5,11 @@ description: "Use during design, planning, implementation, and review as the sha
 
 # Development Standards
 
-Deliver the user's outcome with the least total implementation, testing, deployment, and maintenance burden over the intended lifetime. Start by deciding what is necessary. YAGNI comes before DRY: remove an unnecessary responsibility before sharing its implementation. Durable does not mean speculative or maximally defensive.
+Deliver the user's outcome with the least total implementation, testing, deployment, and maintenance burden over the intended lifetime. Start by deciding what is necessary. YAGNI comes before DRY: delete an unnecessary responsibility before extracting shared machinery, and reuse an existing adequate capability rather than generalizing a new framework. Durable does not mean speculative or maximally defensive.
 
 Across languages, prefer suitable mature libraries and platform capabilities over building general-purpose machinery. Spend custom code on the business rules and necessary integration. Apparent simplicity in today's inputs is not evidence that a homegrown utility is cheaper to own.
 
-Apply this baseline from the first design choice through planning, implementation, and review. Before specifying a mechanism, compatibility promise, or verification gate, establish the current need it serves and consider the simpler alternative. Preventing unnecessary work is preferable to building it and removing it later. This is an ongoing decision standard, not a separate audit, checklist artifact, or mandatory invocation of the simplification method in `skills-routing`.
+Apply this baseline from the first design choice through planning, implementation, and review. Before adding or retaining a mechanism, compatibility promise, or verification gate, consider removing it. Name the required result or actual boundary that would fail without it, and the evidence for that claim. If the goal remains adequately supported without the mechanism, omit it. If that cannot yet be decided, use the cheapest targeted investigation that resolves the material uncertainty. This is a counterfactual engineering judgment, not an obligatory ablation experiment, scorecard, or checklist, and not a mandatory invocation of the simplification method in `skills-routing`. Preventing unnecessary work is preferable to building it and removing it later.
 
 Keep the appropriate workflow as the primary owner; this overlay produces no independent report. Apply detailed implementation sections only when their boundary is relevant.
 
@@ -139,7 +139,7 @@ This Skill owns the local implementation dependency decision, not the material o
 - Define success criteria before implementation and select the smallest realistic oracle that proves the changed user-visible boundary and hard constraints.
 - Parser, existence, or golden checks do not replace user-goal scenarios that the change claims to satisfy.
 - Reproduce bugs or establish equivalent before-state evidence when practical, then verify the narrow change and declared broader scope. A missing perfect reproducer does not freeze unrelated authorized work.
-- Do not weaken a required outcome to make implementation pass. Correct or remove tests that only preserve an unnecessary mechanism or incidental detail when that simplification is in scope; keep evidence for the actual required behavior. Authorized secondary tradeoffs are disclosed adapted results, not hidden failures.
+- Do not weaken a required outcome to make implementation pass. When a mechanism is simplified or removed, recompute the verification the remaining outcome needs; an old failure matrix does not transfer automatically. Correct or remove tests that only preserve an unnecessary mechanism or incidental detail when that simplification is in scope; keep evidence for the actual required behavior, including retained-state or recovery evidence when that boundary is real. Authorized secondary tradeoffs are disclosed adapted results, not hidden failures.
 - Review the approved diff, direct dependencies, and executable evidence. Pre-existing or unrelated debt does not expand the current task.
 
 ## Progressive Disclosure
