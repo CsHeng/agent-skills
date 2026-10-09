@@ -11,7 +11,7 @@ This repository authors and distributes the `coding` collection of portable Agen
 - The installed routing reference owns native trigger cases, direct-match bypass, support routes, and one-primary-response composition; it defines no runtime mode or lifecycle.
 - `docs/architecture/` contains stable architecture truth.
 - Shared boundaries, all new designs/plans and retained evaluations belong to `$AGENT_ARCHITECTURE_DIR/docs/`; historical commands belong to its `archived/agent-skills/commands/` tree. Do not create product-local evolution records.
-- Resolve the three source roots and `AGENT_TMP_ROOT` from this repository's mise configuration; retained runtime and temporary artifacts belong under `$AGENT_TMP_ROOT/skills/`, and cross-repository maintenance must not guess checkout layout. Standalone product checks and runtime never require the architecture checkout.
+- Resolve the three source roots and `TMPDIR` from this repository's mise configuration; retained runtime and temporary artifacts belong under `$TMPDIR/skills/`, and cross-repository maintenance must not guess checkout layout. Standalone product checks and runtime never require the architecture checkout.
 - Global discovery uses an independent installed copy, directly or through host links to that copy. Source edits, Git updates, and checks must not update installed Skills; an explicitly authorized install/update owns that mutation.
 - Provider plugin manifests are optional packaging surfaces. Their installed content follows the same source/installation separation and grants no workflow authority.
 
