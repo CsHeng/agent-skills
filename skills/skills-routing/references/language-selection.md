@@ -1,89 +1,82 @@
 # Language Selection
 
-## Purpose
+## Decision Unit And Order
 
-Choose languages by execution scenario and the total cost of implementation, verification, environments, deployment, and maintenance.
+Choose an implementation for the complete user-facing capability: its behavior, entrypoint, dependencies, development loop, delivery, updates, verification, and resource use. Shorter local code, a preferred language, or an existing migration plan does not establish a simpler tool.
 
-## Respect Execution Constraints
+Use this decision order for new persisted code and authorized migrations. It is reasoning guidance, not a required workflow, scoring system, or approval gate.
 
-An explicitly constrained native runtime is a hard boundary: when the target contract fixes BusyBox ash, POSIX `sh`, or another embedded runtime, use it and do not introduce Python or Go there. The mere presence of a minimal shell or base image is not such a restriction.
+```mermaid
+flowchart TD
+    A[Required behavior and existing user workflow] --> B[Target hardware, OS, architecture and available runtimes]
+    B --> C[Exclude infeasible or unaffordable implementations]
+    C --> D[Reuse existing platform, framework and command capabilities]
+    D --> E{Execution role and delivery model}
+    E -->|Production service, scheduled job or image product| P[Prefer Go through the binary or image delivery pipeline]
+    E -->|Dotfiles or interactive script workflow| S[Prefer native Shell or provided standard-library Python]
+    E -->|Other roles| O[Compare viable implementations and useful combinations]
+    P --> F[Count incremental development, dependencies, delivery, updates and resource costs]
+    S --> F
+    O --> F
+    F --> G{Does a change provide a concrete net benefit?}
+    G -->|Yes| H[Use the selected ecosystem and verify business behavior and delivery]
+    G -->|No| I[Keep the simpler implementation or repair an over-migration]
+```
 
-On resource-limited devices, account for available flash/NAND and RAM before adding an interpreter, package environment, installer, cache, or binary. Do not install Python or uv merely to enable glue on a target that does not already provide the required runtime. A controller's disk budget or a clean checkout does not establish that the target can afford the delivered footprint.
+## Establish Target Capabilities First
 
-## Choose By Role
+Determine where the code actually runs, whether that target supports scripts or binaries, its OS/ABI and CPU architecture, available RAM and flash/storage, installed interpreters and native commands, and how code reaches it. Do not infer these capabilities from the controller or development machine. An architecture label alone does not establish an OS, runtime, or resource budget.
 
-Prefer accumulating reusable Go implementations and tooling over introducing Python runtime environments. Choose between Shell and Go by the actual scenario and complexity; Python has only the standard-library glue and required-ecosystem roles below. This is a strategic preference, not language neutrality or a requirement to benchmark every Go tool.
+An explicitly constrained runtime is a hard boundary: retain required BusyBox ash, POSIX `sh`, device scripting, or other native technology. Distinguish ash, Bash and Zsh and their available commands rather than treating every shell as interchangeable. An incidental base image or available shell does not itself prohibit another implementation.
 
-Prefer Go for:
+On constrained targets, count the delivered binary or interpreter, libraries, assets, installer and runtime storage against the actual budget. Do not install Python or an environment manager merely to enable glue. Selecting Go still requires a supported target and an affordable artifact; compiled delivery is not evidence of fit by itself.
 
-- developer, CI, controller, and operational tools with maintained logic beyond native command orchestration
-- reusable parsing, state, and business logic that should serve both source-local development and built delivery
-- daemons, APIs, exporters, collectors, concurrent agents, and image-contained services, where performance, memory, storage, and runtime dependency management are first-order concerns
+Existing repository architecture and runtime contracts apply within the user's current authorized objective. A reassessment may correct model-derived language assignments and deployment mechanisms; preserve actual hardware, behavior and safety requirements rather than treating the old plan as proof of their necessity.
 
-Do not select Python for a general-purpose API, daemon, or other persistent service. A service inseparably tied to a required Python ecosystem is the exception, not an alternative merely because Python can implement the same API. Go's development-to-production path can use the same implementation through `go run` during development and a built binary or image in production.
+## Choose By Business Role And Incremental Burden
 
-Use Shell when the work fundamentally belongs to the native command or scripting ecosystem:
+First reuse an existing platform capability, framework module or native command that already owns the work. A helper invoked by a framework is not automatically part of that framework's required language ecosystem.
 
-- GNU or other existing CLI composition, pipelines, bootstrap, environment discovery, and small hooks
-- orchestration whose meaningful work remains in tools such as curl, ssh, kubectl, or native file utilities
-- constrained native runtimes where only BusyBox ash or POSIX `sh` exists and no new runtime may be installed
-- code that must affect the invoking shell, such as a sourced environment or profile, directory change, or exported variable
+For dotfiles, interactive helpers, hooks and similar script-oriented tools, prefer Shell, an already-provided Python interpreter using only its standard library, or a simple combination of the two when they satisfy the behavior clearly and reliably. Choose between them by the actual logic and available commands. The normal edit, sync and invocation workflow is part of their value; Go must offer enough benefit to justify compilation and delivery. Do not turn this contextual preference into a language ranking for every service or target.
 
-This Shell boundary applies on development and managed hosts, subject to their runtime contracts. Length, some branching, JSON, or a small amount of state does not make native orchestration a Go product.
+Use Shell for native command composition, pipelines, bootstrap, environment discovery, parent-shell effects and script-oriented work that remains clear with available tools. Length, branching, JSON, HTTP or a small amount of state does not independently justify a Go implementation. Conversely, do not build a fragile parser in Shell merely to avoid a suitable higher-level implementation.
 
-Use Python only for:
+Use standard-library Python for bounded script logic when the compatible interpreter is already provided on the actual execution target. It may be a named script or embedded in Shell; neither shape makes an absent interpreter available. Do not create a package environment or add third-party dependencies for this role.
 
-- bounded standard-library glue using an interpreter already provided by the system or framework, typically alongside Shell in development, controller work, or one-shot framework-managed execution
-- a required Python ecosystem, such as Ansible modules/plugins or pandas/scientific libraries, where the required capability or integration cannot reasonably be supplied through Shell/Go
+Prefer Go for maintained production services, scheduled jobs and self-owned business logic shipped in an image or binary, subject to the target capabilities and required ecosystem integration. An existing build and artifact delivery pipeline usually makes compilation a normal product cost; do not apply the dotfiles edit-and-sync preference to that runtime. Count incremental dependencies and delivery work instead of treating all compilation as a new burden. Short-lived jobs can share this production preference; code length or lack of concurrency does not make them interactive scripts.
 
-For standard-library glue, confirm the required interpreter version is actually present and do not add third-party packages. The mere availability of Python on a production host does not make it a suitable general-purpose service runtime. For an ecosystem exception, identify the required capability or framework contract; ordinary HTTP, JSON, YAML, CLI packages, or the convenience of an available SDK do not qualify.
+For other maintained domain tools, Go's runtime, reuse and delivery advantages must fit the actual role. Reusable parsing and state logic can support that choice, but JSON, HTTP or state alone does not. Calling native tools from Go is appropriate when those tools own a required capability; ordinary orchestration or startup Shell can remain when useful. Production Go need not reimplement native system tools or every entrypoint in Go.
 
-Outside those two roles, select Shell or Go rather than a Python package environment. When a helper needs third-party Python libraries, carefully evaluate implementing it in Go instead; Shell plus `go run` is appropriate if Shell retains genuine native orchestration. The development-to-production environment and distribution costs are sufficient reasons for this preference without a speed benchmark.
+Select third-party Python only when a specific library or framework is the right match for the required business capability and that capability or integration is available only through Python. Identify the capability and why the viable Shell/Go choices cannot supply it. Library familiarity, an available SDK, or routine HTTP, JSON or YAML processing is not sufficient. Otherwise prefer Go over creating and maintaining a Python package environment, after considering whether existing native tools already suffice. This preference concerns the environment and delivery burden and does not require a speed benchmark.
 
-uv, venv, pyenv, and similar mechanisms manage a Python environment; they do not remove the installer, interpreter/version, dependency installation, storage, bootstrap, or target-runtime obligations. Moving caches outside a checkout avoids pollution, not those costs. Existing Python environment, cache, and verification guidance remains useful wherever Python is in use, but it is not an additional reason to select Python. Do not create Shell wrappers merely to install or activate such environments.
+Preserve required Python framework execution under its established contract. Ansible's generated modules and Python-only framework integration are framework capabilities, not this project's Python product to replace. Their interpreter or dependencies do not independently justify adding another Python application. uv, venv and pyenv manage environment costs; they do not remove interpreter compatibility, installation, updates, isolation, image size or storage obligations.
 
-Account for target-specific builds, artifact updates, edit-to-run friction, and remaining native commands. Go usually moves module dependency resolution into development/build rather than a target interpreter environment; still verify CGO, dynamic libraries, external tools, and assets instead of claiming every Go binary is dependency-free. Neither minimizing language count nor eliminating Python is an independent goal unless explicitly required.
+Use Lua for an existing Lua implementation or configuration ecosystem. Do not introduce it as general-purpose automation when another established project language owns that boundary. Other constrained targets follow their actual native technology rather than being forced into the Shell/Python/Go candidates.
 
-Use Lua when:
+## Keep Combined Implementations One Usable Tool
 
-- extending an existing Lua codebase or Lua-based configuration ecosystem such as WezTerm, Hammerspoon, Rime, or Neovim
-- PROHIBITED: introducing Lua as general-purpose automation when another established project language owns the boundary
+Shell plus standard-library Python and Shell plus a delivered binary are useful combinations when each part reduces the complete implementation's burden. Shell may own the stable user entrypoint, locate its co-delivered implementation, pass inputs, or retain native orchestration and parent-shell effects. Preserving that entrypoint can be useful even when Shell owns no business logic. Keep domain rules in one implementation rather than duplicating them across the boundary.
 
-Explicit repository architecture and runtime contracts take precedence. Production and verification have separate execution environments: a controller-side interpreter or test dependency is not automatically a production-target dependency.
+For a tool expected to work after its normal copy, sync or install operation, deliver and update the entrypoint and its implementation together. Do not leave the user to assemble a helper, locate another checkout, repair PATH or reconcile separately updated versions merely because the implementation language changed. Self-contained delivery means usable under its declared system prerequisites, not necessarily one file or zero dependencies. A binary can satisfy it when the existing delivery mechanism actually carries the correct artifact and required assets.
 
-## Define Hybrid Ownership
+Count development-to-deployment differences, compilation, platform builds, native commands, CGO/dynamic libraries, artifact size and updates. A binary may move dependencies to the build host but does not automatically remove all runtime dependencies. Do not add launchers, private build/cache lifecycles or a distribution framework to make an unnecessary language boundary cheaper. Reuse the existing entrypoint and delivery mechanism when they suffice.
 
-A language boundary needs useful work to own; it is not a reason to add a launcher. Prefer direct invocation when the primary implementation or an existing task entrypoint already handles the requirement. Shell plus `go run` is appropriate when Shell retains actual native orchestration and Go owns the structured logic; a wrapper whose only purpose is to build and launch that logic is not the same benefit. Count invocation, build, and distribution work rather than treating language count alone as the measure of simplicity.
+The controller or CI owns compilation for managed execution targets; deliver the target-compatible binary or image with its required runtime assets. A host explicitly owning development/build work is a different execution role. One-shot remote work should reuse framework modules, native Shell or standard-library Python under an established interpreter contract before introducing another maintained product.
 
-When multiple languages are justified:
+## Reassess Migrations Against The Original Outcome
 
-- Shell retains necessary parent-shell effects, native orchestration, or bootstrap, and validates only its own inputs and resolved paths.
-- The selected primary implementation owns domain parsing, state, and business rules; a launcher must not re-implement or duplicate those checks.
-- Do not split one business rule across multiple languages or move native Shell behavior into Go only to call Shell again to reproduce it.
-- Keep language boundaries callable and testable without relying on generated command strings.
-- When binary delivery is selected, the controller or CI host owns target-platform compilation and distribution; the managed target runs the delivered artifact.
+For an authorized reassessment, start from the business capabilities actually changed, including original Shell and embedded scripts. Compare the earlier implementation, the current complete tool and the simplest viable correction. A remaining-Python inventory misses unnecessary Go implementations and costs introduced by the migration itself.
 
-## Controller, CI, And Remote Placement
+Separate a language decision from the quality of its implementation. When production or image delivery justifies Go, compare completing the current Go design, reusing suitable Go packages and replacing the flawed implementation before concluding that the language should change. Re-select parsing, serialization and other libraries for the business contract in the target ecosystem; do not reproduce the source language's general library behavior to preserve a literal translation. A suitable compiled dependency has its own build, update and runtime costs, not automatically the same interpreter/environment burden as a Python package.
 
-Decide where the code runs before choosing its language:
+Audit supporting machinery as well as top-level commands: migration-created file utilities, path handling, syntax analysis, coercion, transport and compatibility helpers can carry most of the unnecessary cost. Trace each suspect responsibility to its consumers and domain tests, then compare existing project capabilities, the target standard library and suitable mature packages before retaining custom code. Language-prefixed names and generic utility files are discovery clues, not verdicts; genuine source-language analysis or required protocol encoding may need a narrow adapter. Reduce the responsibility or replace its implementation rather than merely renaming the wrapper. A mature library owns general mechanics; the product still owns its business decisions and data protections.
 
-- A configuration-management controller's temporary module mechanism, such as the Python module Ansible generates and executes on a managed host, belongs to the controller. Use it as provided; do not vendor, reimplement, or treat it as this project's Python product.
-- Controller helpers follow the Go default, native-Shell boundary, and standard-library Python glue exception above.
-- For one-shot remote glue, reuse framework-native modules, Shell, or Python under the established interpreter contract. If the owned helper requires third-party Python dependencies, carefully evaluate implementing it in Go rather than expanding the target's Python environment. Distinguish that helper from the framework's own native module/runtime implementation.
-- For a persistent or high-frequency tool selected for Go, build for the target OS and architecture on the controller or CI and distribute the binary or image. The managed execution target must not need Go source, a compiler, module downloads, or `go run`. A retained Python tool follows its explicit interpreter/dependency contract, and a constrained target keeps its native runtime. A remote development or CI host explicitly owning the build is a controller, not that managed execution target.
+Choose retention, a small repair, a replacement within the selected language, restoration of the simpler approach, or a useful combination by the user's outcome. Preserve later valid fixes and required data behavior when restoring an approach; do not blindly revert a historical batch. A migration-created wrapper, interface, compatibility layer or test is not automatically a permanent requirement. Explain the burden removed and introduced; preserving an already-written implementation is not itself a benefit.
 
-## Choose Invocation And Delivery Separately
+Production and verification have separate execution environments. Changing production language does not require rewriting useful tests or fixture generators, and a controller-side test dependency is not automatically a target runtime dependency. Reassess what those tests assert: derive scenarios and expected results from business rules, actual consumers and retained data, rather than requiring identical results from the old language or library. Keep exact serialization, errors or bytes only where an actual protocol or consumer requires them. Fix environment or scratch placement directly when that solves the actual problem.
 
-Selecting Go does not require a new Shell launcher or a distributed binary for a source-local tool. On a developer, CI, or controller host that already owns the Go toolchain and source, prefer direct `go run ./cmd/tool` or the existing task entrypoint when compile-and-execute meets the consumer contract. Go manages module/build caches; do not create a private build-and-delete lifecycle for each command merely to avoid an implicit output binary in the checkout.
+## Evidence And Acceptance
 
-Use an explicit build when a consumer needs a reusable executable path, a release artifact, lower repeated startup cost, or process/exit/signal behavior that the `go run` driver cannot satisfy. `go run` is not identical to executing the resulting binary: cache reuse does not eliminate driver/startup overhead or guarantee the program's exact exit status and process behavior. Verify the boundary that matters rather than mechanically replacing every `go build` with `go run`. Prebuilt delivery remains required for managed or production execution targets that do not own the build role.
+Explain material choices using target capabilities, business needs, the existing user workflow and total maintenance cost. Use proportionate evidence rather than a universal benchmark or mandatory report. When speed, memory, image size or storage decides the choice, compare representative complete executions and incremental dependencies, including relevant cold/warm behavior, build/runtime caches and artifacts. Code length alone is neither a benefit nor a defect.
 
-If setup or lifecycle ownership really needs a wrapper, reuse the existing entrypoint and keep only that necessary work there; do not introduce a shared launcher framework merely to make an unnecessary boundary cheaper. Fix environment and scratch placement directly when that satisfies the goal. Standard cache locations do not prevent a program's own writes.
-
-## Cost And Verification
-
-Explain the language choice through the execution environment, required capabilities, invocation and delivery, and total maintenance cost.
-
-When speed, memory, or disk savings decide the choice, use representative end-to-end evidence rather than language reputation or a binary-only comparison. Include cold and warm invocation where relevant, the compiler/driver and child processes actually launched, incremental toolchain/runtime and cache/artifact storage, and the commands that dominate elapsed time. Reuse credible existing evidence and keep probes proportional; no universal benchmark suite is required. Without evidence of the claimed benefit, do not justify extra mechanisms as an optimization.
-
-When the choice depends on an interpreter or controller runtime, record its runtime and output contract: interpreter and dependency source, invocation, stdout result, and exit behavior.
+Verify the actual entrypoint with the declared delivered files and prerequisites, from a representative working directory and environment. Check useful behavior, outputs and failure handling as well as how users obtain and update the tool. A backend unit test does not establish that the distributed entrypoint is usable. Local delivery simulation can establish this boundary without installing into the user's live environment.

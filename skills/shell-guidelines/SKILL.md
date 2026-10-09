@@ -79,13 +79,14 @@ PROHIBITED: Use zsh-only features in scripts intended for bash/sh environments.
 
 ### Data Handling
 REQUIRED: Quote variables to prevent word splitting and glob expansion.
-PREFERRED: Use an existing structured-data tool or a clear higher-level fragment when Shell parsing would be fragile. Short embedded Python is valid when the interpreter and dependencies are available; pass data through arguments, stdin, or files rather than interpolating it into source. Move a fragment to a named script when that improves readability or reuse, without automatically changing its language.
+PREFERRED: Use an existing structured-data tool or a clear higher-level fragment when Shell parsing would be fragile. Short embedded Python may use the standard library on a compatible interpreter already provided by the target; pass data through arguments, stdin, or files rather than interpolating it into source. Move a fragment to a named script when that improves readability or reuse, without automatically changing its language. Adding a third-party Python environment is a language-selection decision, not a routine way to simplify a fragment.
 
 ### Persisted Script Escalation
 PREFERRED: Read `references/language-selection.md` in `skills-routing` when actual parsing, state, recovery, concurrency, or distribution complexity makes the current implementation costly or unreliable. Compare total implementation, verification, deployment, and maintenance cost before an authorized rewrite.
 PREFERRED: Keep Shell when the script is simple, affects the invoking shell, or runs on a constrained native runtime (BusyBox ash or POSIX `sh`). Length, state, or embedded Python alone does not justify escalation.
 PREFERRED: For a one-shot remote action, reuse the controller's built-in module, local rendering, thin transported Shell, or a short Python fragment on an available runtime rather than creating a new product.
 PREFERRED: Preserve an existing working Shell implementation unless the request or approved design authorizes its migration. A long-lived tool may benefit from Go's compiled delivery, but that benefit must outweigh the new build, compatibility, and maintenance cost.
+PREFERRED: Preserve the complete entrypoint and its normal delivery/update workflow when combining Shell with Python or a binary. Locating a co-delivered implementation can be a sufficient responsibility for an existing Shell entrypoint; keep business rules in the implementation that owns them. Read the language-selection reference for the whole-tool cost comparison.
 PROHIBITED: Split one reusable business rule across Shell and another implementation language.
 
 ### File Naming

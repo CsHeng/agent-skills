@@ -7,6 +7,8 @@ description: "Use for Python code, scripts, and services: uv, ruff, ty or mypy, 
 
 Apply Python coding and tooling policy to Python files, scripts, CLIs, services and reviews. The primary workflow owns scope, mutation and delivery. For an unsettled language or ad hoc tool choice, read only `references/language-selection.md` or `references/tool-selection.md` in `skills-routing`, respectively.
 
+Environment tooling below supports Python that is already justified; it does not justify selecting Python or adding dependencies. When a standard-library script would acquire third-party runtime packages, apply language selection before expanding its environment: the exception requires a business-matched capability or framework integration available only through Python. Keep that production decision separate from existing verification tooling.
+
 ## Toolchain And Environment
 
 - For a Python project with managed dependencies, use `uv` for dependencies and tool execution, `pyproject.toml` for configuration, project-pinned Ruff for formatting and linting, and pytest for tests. Prefer `ty`; use mypy or pyright when the project requires it.
