@@ -18,7 +18,7 @@ AVOID nesting `bash -c` around `python -c`, embedding Python in a Shell heredoc,
 
 This is avoid-by-default guidance, not a blanket ban. An agent may use a nested interpreter when it remains the smallest bounded option and the exact command, inputs, and effects are still reviewable.
 
-Prefer an external scratch script when logic needs loops, exception handling, multiple data structures, non-trivial regular expressions, or more than one quoting layer. Place it under `$TMPDIR` or another repo-external scratch root, use the environment's file-editing capability rather than generating source through Shell interpolation, run the language syntax check, and remove it after the task when practical.
+Prefer an external scratch script when logic needs loops, exception handling, multiple data structures, non-trivial regular expressions, or more than one quoting layer. Place it in a unique task directory under the declared scratch root or `$TMPDIR`, falling back to `$HOME/tmp` for agent-owned ad hoc work when neither is set. Create the root before use, use the environment's file-editing capability rather than generating source through Shell interpolation, run the language syntax check, and remove owned scratch after the task. For large temporary data, verify that the effective root is disk-backed; do not assume `/tmp` is backed by disk.
 
 ## Hard Safety Boundaries
 

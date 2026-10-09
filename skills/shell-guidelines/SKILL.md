@@ -89,6 +89,10 @@ PREFERRED: Preserve an existing working Shell implementation unless the request 
 PREFERRED: Preserve the complete entrypoint and its normal delivery/update workflow when combining Shell with Python or a binary. Locating a co-delivered implementation can be a sufficient responsibility for an existing Shell entrypoint; keep business rules in the implementation that owns them. Read the language-selection reference for the whole-tool cost comparison.
 PROHIBITED: Split one reusable business rule across Shell and another implementation language.
 
+### Temporary Directories
+REQUIRED: For general-purpose temporary files, use a native temporary-file mechanism such as `mktemp` that respects `TMPDIR`; setting `TMPDIR` does not redirect a literal `mkdir /tmp/...` or an explicit `/tmp` template. Keep legitimate fixed target-system paths unchanged.
+PREFERRED: Let the development environment select and create a disk-backed project-group `TMPDIR`; portable scripts may retain their platform temporary-directory fallback when it is unset. Do not hardcode `$HOME/tmp` into shipped runtime behavior merely to match the developer's environment. Preserve tool-specific cache and output settings and clean only task-owned temporary paths.
+
 ### File Naming
 REQUIRED: Name shell script files using hyphen style (kebab-case): `my-script.sh`, not `my_script.sh`
 

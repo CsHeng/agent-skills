@@ -103,6 +103,13 @@ This Skill owns the local implementation dependency decision, not the material o
 - Judge meaning, not spelling: genuine domain phases and protocol terms are valid names even when they resemble plan labels. Preserve existing compatibility-bound names unless a scoped migration is authorized; identify the compatibility reason rather than silently renaming an interface.
 - Apply this rule to newly introduced or changed implementation names within the approved scope. It does not authorize repository-wide cleanup of historical names or a lexical ban on strings such as `g0` or `phase`.
 
+## Temporary Storage
+
+- Treat `TMPDIR` as the standard temporary-directory root consumed by `mktemp` and supporting tools, not as a new cache or artifact protocol. A development environment may set it per repository group to an absolute disk-backed path such as `$HOME/tmp/<group>` through mise; without a declared root, agent-owned ad hoc scratch falls back to `$HOME/tmp`. Create the root before use and use unique task directories beneath it.
+- Honor explicit repository output locations and language/tool-specific directory settings. Python environments, Go build and module caches, and other reusable caches retain their own semantics; setting `TMPDIR` does not relocate them all. Setting only a final build output path does not relocate intermediate files either.
+- Keep large clones, downloads, extraction, build intermediates, and test data on verified disk-backed storage rather than assuming a system temporary directory is safe: `/tmp` may be tmpfs and consume RAM. Portable project tools should respect `TMPDIR` through their native temporary-file API and may retain the platform default when it is unset; do not hardcode a developer's home path into runtime code or rewrite legitimate target-system `/tmp` paths.
+- Keep task scratch, reusable caches, and retained evidence distinguishable beneath their declared roots. Clean only owned inactive scratch; do not delete a shared root or another running task's files. Environment changes affect newly launched consumers, not existing processes, and controller settings do not automatically propagate through SSH, sudo, containers, or services.
+
 ## Repository-Owned Quality Gates
 
 - Run applicable repository checks. In an authorized gate or suite simplification, assess whether each check protects required behavior rather than treating its existence as a permanent requirement.
