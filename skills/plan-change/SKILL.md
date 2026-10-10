@@ -46,9 +46,9 @@ Read only `references/language-selection.md` in `skills-routing` when a new pers
 
 Reference settled architecture choices rather than rescoring them. Evidence that invalidates a material premise may require `needs_design_decision`; a simpler implementation of the same goal does not. Neither general plan approval nor a source snapshot makes every proposed precaution a fixed user choice.
 
-When delegated implementation is requested or planned, read `references/delegation-profiles.toml` if semantic profiles are useful. Record known inputs, repository owner, initial write regions, shared-resource constraints, verification, and the parent join. Do not invent unknown paths or inspect implementation details solely to fill dispatch fields. Host-required exact capabilities remain binding at execution; they are not new human approval obligations.
+When delegated implementation is requested or planned, read `references/delegation-profiles.toml` if semantic profiles are useful. Record known inputs, repository owners, initial write regions, shared-resource constraints, verification, and the parent join. Do not invent unknown paths or inspect implementation details solely to fill dispatch fields. Host-required exact capabilities remain binding at execution; they are not new human approval obligations.
 
-A writable delegated task belongs to one repository root. The parent owns cross-repository integration, authority judgments, acceptance, and continuation. Keep genuine dependencies but do not compile them into an automatic worker-reviewer-repair chain that bypasses those decisions. Concrete scheduling, workspaces, and route bindings belong to the host; absent optional profile mappings do not block authorized work.
+A delegated task may read and write multiple repositories when its access grants say so. The parent owns integration judgment, acceptance, and continuation; the child is not limited to a subset of those grants merely because it is a child. Keep genuine dependencies but do not compile them into an automatic worker-reviewer-repair chain that bypasses those decisions. Concrete scheduling, workspaces, and route bindings belong to the host; absent optional profile mappings do not block authorized work.
 
 ## Plan And Handoff
 

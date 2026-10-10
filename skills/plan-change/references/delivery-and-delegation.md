@@ -42,7 +42,7 @@ A cohesive worker slice may investigate, implement, test, diagnose, and repair i
 
 Independent slices need compatible interfaces and ownership of shared generators, lockfiles, registries, fixtures, ports, and external state. Different files alone do not prove independence. Retain tightly coupled work locally; a useful singleton is valid when the host permits it. Neither parent busyness, minimum batch size, nor dispatch count is a goal.
 
-Each writable worker belongs to one repository. Record the initial write region and shared-resource constraints needed for safe dispatch; use the host's isolation facilities when required. The parent owns cross-repository integration and semantic acceptance. Do not prescribe host-specific worktree paths, schedulers, model routes, or invented locks in a portable plan.
+A writable task may cover multiple repositories through one access grant list. Record shared-resource constraints needed for safe dispatch; use the host's isolation facilities when required. The parent owns semantic acceptance. Capability follows the grants, not the actor's role. Do not prescribe host-specific worktree paths, schedulers, model routes, or invented locks in a portable plan.
 
 ## Parent Judgment And Continuation
 
