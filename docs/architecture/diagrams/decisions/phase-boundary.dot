@@ -1,0 +1,43 @@
+digraph decision {
+graph [rankdir=TB, bgcolor="white", pad="0.3", nodesep="0.3", ranksep="0.45", splines=polyline, fontname="Arial", fontsize=18, labelloc=t, label=<<B>Context transfer at a completed phase</B><BR/><FONT POINT-SIZE="12">PB1-PB5: take the first applicable branch. Same-task repair does not enter this tree.</FONT>>];
+node [shape=box, style="rounded,filled", fillcolor="#F2F5F8", color="#9BAFC1", fontname="Arial", fontsize=12, margin="0.15,0.10", penwidth=1.2];
+edge [color="#64748B", fontname="Arial", fontsize=11, arrowsize=0.7];
+  s [label="A coherent phase actually\ncompleted?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  current [label="Continue the current task or supported\nsame-task executor; no new phase ritual.", fillcolor="#E7F3ED", color="#659F85"];
+  pb1 [label="Next phase needs the current\nconversation\nas a primary source, and context\nis viable?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  continue [label="PB1: Continue in the current context.", fillcolor="#E7F3ED", color="#659F85"];
+  pb2 [label="Current context is irrelevant\nnext,\nand durable results already exist?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  discard [label="PB2: Do not carry irrelevant context.\nKeep unresolved decisions and evidence.", fillcolor="#E7F3ED", color="#659F85"];
+  pb3 [label="Context must travel across\nharness, directory,\nrepository, colleague, or\nseparately resumed task?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  handoff [label="PB3: Portable handoff\nCarry the necessary current facts.", fillcolor="#E7F3ED", color="#659F85"];
+  pb4 [label="Policy permits a tightly scoped\ndelegation\nwithout redefining authority or\nacceptance?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  delegate [label="PB4: Use supported delegation.\nThis tree grants no capability.", fillcolor="#E7F3ED", color="#659F85"];
+  pb5 [label="Relevant context must remain,\nbut continuing here is no longer\nviable?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  compact [label="PB5: Compact the relevant context.\nA summary is a lossy secondary source.", fillcolor="#E7F3ED", color="#659F85"];
+  retain [label="Retain context and resolve the actual gap.\nDo not force discard or compaction.", fillcolor="#FFF1DC", color="#C89548"];
+  s [group="spine"];
+  pb1 [group="spine"];
+  pb2 [group="spine"];
+  pb3 [group="spine"];
+  pb4 [group="spine"];
+  pb5 [group="spine"];
+  retain [group="spine"];
+  { rank=same; s; current; }
+  { rank=same; pb1; continue; }
+  { rank=same; pb2; discard; }
+  { rank=same; pb3; handoff; }
+  { rank=same; pb4; delegate; }
+  { rank=same; pb5; compact; }
+  s -> current [label="No", constraint=false];
+  s -> pb1 [label="Yes", weight=100];
+  pb1 -> continue [label="Yes", constraint=false];
+  pb1 -> pb2 [label="No", weight=100];
+  pb2 -> discard [label="Yes", constraint=false];
+  pb2 -> pb3 [label="No", weight=100];
+  pb3 -> handoff [label="Yes", constraint=false];
+  pb3 -> pb4 [label="No", weight=100];
+  pb4 -> delegate [label="Yes", constraint=false];
+  pb4 -> pb5 [label="No", weight=100];
+  pb5 -> compact [label="Yes", constraint=false];
+  pb5 -> retain [label="No", weight=100];
+}

@@ -1,0 +1,24 @@
+digraph decision {
+graph [rankdir=LR, bgcolor="white", pad="0.3", nodesep="0.3", ranksep="0.45", splines=polyline, fontname="Arial", fontsize=18, labelloc=t, label=<<B>Skill entry and direct-match bypass</B><BR/><FONT POINT-SIZE="12">Select an owner, not a mandatory design / plan / implement pipeline.</FONT>>];
+node [shape=box, style="rounded,filled", fillcolor="#F2F5F8", color="#9BAFC1", fontname="Arial", fontsize=12, margin="0.15,0.10", penwidth=1.2];
+edge [color="#64748B", fontname="Arial", fontsize=11, arrowsize=0.7];
+  s [label="Current request and existing authority", shape="oval", fillcolor="#16324B", fontcolor="white", color="#16324B"];
+  named [label="An explicit or confident\nskill match exists?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  direct [label="Use that owner directly.\nRead only a genuinely needed reference.", fillcolor="#E7F3ED", color="#659F85"];
+  intent [label="What question is actually open?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  design [label="Material design choice or requested design\nUse design-change; resolve that decision\nonly.", fillcolor="#E7F3ED", color="#659F85"];
+  plan [label="Requested plan or real coordination\ndecision\nUse plan-change; no implied implementation.", fillcolor="#E7F3ED", color="#659F85"];
+  impl [label="Authorized, sufficiently bounded change\nUse implement-change; local choices stay\nlocal.", fillcolor="#E7F3ED", color="#659F85"];
+  review [label="Review of one supplied target\nUse review-change; no reconstructed phases.", fillcolor="#E7F3ED", color="#659F85"];
+  method [label="Skill ownership or method is unclear\nUse the relevant skills-routing reference.", fillcolor="#E7F3ED", color="#659F85"];
+  other [label="Explanation or another specific task\nUse its matching owner; do not force a\nchange workflow.", fillcolor="#E7F3ED", color="#659F85"];
+  s -> named;
+  named -> direct [label="Yes"];
+  named -> intent [label="No"];
+  intent -> design [label="Design"];
+  intent -> plan [label="Planning"];
+  intent -> impl [label="Implementation"];
+  intent -> review [label="Review"];
+  intent -> method [label="Method / routing"];
+  intent -> other [label="Other"];
+}

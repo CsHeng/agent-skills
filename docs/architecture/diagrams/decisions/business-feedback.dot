@@ -1,0 +1,30 @@
+digraph decision {
+graph [rankdir=TB, bgcolor="white", pad="0.3", nodesep="0.3", ranksep="0.45", splines=polyline, fontname="Arial", fontsize=18, labelloc=t, label=<<B>Choose the next useful piece of work</B><BR/><FONT POINT-SIZE="12">Required before delivery does not mean required before starting implementation.</FONT>>];
+node [shape=box, style="rounded,filled", fillcolor="#F2F5F8", color="#9BAFC1", fontname="Arial", fontsize=12, margin="0.15,0.10", penwidth=1.2];
+edge [color="#64748B", fontname="Arial", fontsize=11, arrowsize=0.7];
+  s [label="A proposed preparation or safeguard", shape="oval", fillcolor="#16324B", fontcolor="white", color="#16324B"];
+  need [label="Does a required outcome or\nconcrete hazard need it?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  omit [label="Omit the unnecessary mechanism.\nDo not turn it into a new task.", fillcolor="#E7F3ED", color="#659F85"];
+  unknown [label="Investigate only the uncertainty\nthat could change the next action.", fillcolor="#FFF1DC", color="#C89548"];
+  reuse [label="Does an existing capability\nprovide adequate support?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  use [label="Reuse it without rebuilding\na parallel assurance system.", fillcolor="#E7F3ED", color="#659F85"];
+  timing [label="Is it needed before the\nnext real business step?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  later [label="Place it at the actual dependency\nor delivery join; retain required checks.", fillcolor="#E7F3ED", color="#659F85"];
+  prepare [label="Provide the smallest necessary setup\nor protection before the risky action.", fillcolor="#FFF1DC", color="#C89548"];
+  slice [label="Implement a thin real path\nfrom relevant input to useful output.", fillcolor="#E7F3ED", color="#659F85"];
+  feedback [label="Observe behavior, repair in scope,\nthen complete remaining required work.", fillcolor="#E7F3ED", color="#659F85"];
+  s -> need;
+  need -> omit [label="No"];
+  need -> unknown [label="Unclear"];
+  unknown -> need;
+  need -> reuse [label="Yes"];
+  reuse -> use [label="Yes"];
+  reuse -> timing [label="No"];
+  timing -> later [label="No"];
+  timing -> prepare [label="Yes"];
+  omit -> slice;
+  use -> slice;
+  later -> slice;
+  prepare -> slice;
+  slice -> feedback;
+}

@@ -1,0 +1,36 @@
+digraph decision {
+graph [rankdir=TB, bgcolor="white", pad="0.3", nodesep="0.3", ranksep="0.45", splines=polyline, fontname="Arial", fontsize=18, labelloc=t, label=<<B>Operational triage and proportionate recovery</B><BR/><FONT POINT-SIZE="12">Remote, deploy, or non-commercial are not substitutes for actual state and authority.</FONT>>];
+node [shape=box, style="rounded,filled", fillcolor="#F2F5F8", color="#9BAFC1", fontname="Arial", fontsize=12, margin="0.15,0.10", penwidth=1.2];
+edge [color="#64748B", fontname="Arial", fontsize=11, arrowsize=0.7];
+  s [label="Operational mismatch, cross-\nboundary failure,\nor relevant infrastructure design\nis unresolved?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  direct [label="Keep a settled routine edit with its\ncurrent owner.\nNo infrastructure audit by keyword.", fillcolor="#E7F3ED", color="#659F85"];
+  investigate [label="Trace only boundaries that can explain the\nissue.\nUse existing observation points where\nadequate.", shape="oval", fillcolor="#16324B", fontcolor="white", color="#16324B"];
+  risk [label="Does the next action affect\naccess,\nprotected state, shared hosts, or\ncommitments?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  local [label="Perform the authorized fix and affected\ncheck.\nNo unrelated backup or restore exercise.", fillcolor="#E7F3ED", color="#659F85"];
+  authority [label="Are the target and side effects\nauthorized?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  ask [label="Pause that action for the narrow missing\ndecision.\nContinue independent authorized work.", fillcolor="#FFF1DC", color="#C89548"];
+  protect [label="Protect the actual retained state or access\nboundary.\nReuse still-valid recovery evidence; add\nonly the missing check.", fillcolor="#FFF1DC", color="#C89548"];
+  rollback [label="Observed hazard makes rollback\nsafer,\nand its trigger, target and\nverification are approved?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  undo [label="Use the guarded rollback path.", fillcolor="#FFF1DC", color="#C89548"];
+  forward [label="Fix forward, or stop and diagnose if\ncontinued\nmutation could compound the problem.", fillcolor="#E7F3ED", color="#659F85"];
+  s [group="spine"];
+  investigate [group="spine"];
+  risk [group="spine"];
+  authority [group="spine"];
+  protect [group="spine"];
+  rollback [group="spine"];
+  forward [group="spine"];
+  { rank=same; s; direct; }
+  { rank=same; risk; local; }
+  { rank=same; authority; ask; }
+  s -> direct [label="No", constraint=false];
+  s -> investigate [label="Yes", weight=100];
+  investigate -> risk [weight=100];
+  risk -> local [label="No", constraint=false];
+  risk -> authority [label="Yes", weight=100];
+  authority -> ask [label="No", constraint=false];
+  authority -> protect [label="Yes", weight=100];
+  protect -> rollback [weight=100];
+  rollback -> undo [label="Yes"];
+  rollback -> forward [label="No", weight=100];
+}

@@ -1,0 +1,30 @@
+digraph decision {
+graph [rankdir=TB, bgcolor="white", pad="0.3", nodesep="0.3", ranksep="0.45", splines=polyline, fontname="Arial", fontsize=18, labelloc=t, label=<<B>Choose an ad hoc tool</B><BR/><FONT POINT-SIZE="12">A tool-choice aid, not a preflight for every read or edit.</FONT>>];
+node [shape=box, style="rounded,filled", fillcolor="#F2F5F8", color="#9BAFC1", fontname="Arial", fontsize=12, margin="0.15,0.10", penwidth=1.2];
+edge [color="#64748B", fontname="Arial", fontsize=11, arrowsize=0.7];
+  s [label="Routine known command\nwith a clear bounded target?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  direct [label="Run it directly with bounded output.", fillcolor="#E7F3ED", color="#659F85"];
+  target [label="Does target or capability\nuncertainty\nchange correctness or mutation\nrisk?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  resolve [label="Resolve that uncertainty only.\nInspect PATH or dialect after a relevant\nfailure.", fillcolor="#FFF1DC", color="#C89548"];
+  kind [label="What does the operation need?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  search [label="Text / file discovery\nUse scoped rg / fd or an available\nfallback.", fillcolor="#E7F3ED", color="#659F85"];
+  struct [label="Syntax-aware change / structured data\nUse a suitable existing structural tool or\nparser.", fillcolor="#E7F3ED", color="#659F85"];
+  shell [label="Command composition\nPrefer a direct command or reviewable\nscratch script;\nkeep data out of executable source strings.", fillcolor="#E7F3ED", color="#659F85"];
+  broad [label="Broad mutation or output volume\nneeds additional scoping?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  preview [label="Preview relevant effects and exclusions.\nCount only if it informs scope or volume.", fillcolor="#FFF1DC", color="#C89548"];
+  execute [label="Execute within existing authority, inspect\nthe\nresult, and verify the affected behavior.", fillcolor="#E7F3ED", color="#659F85"];
+  s -> direct [label="Yes"];
+  s -> target [label="No"];
+  target -> resolve [label="Yes"];
+  target -> kind [label="No"];
+  resolve -> kind;
+  kind -> search [label="Search"];
+  kind -> struct [label="Structure"];
+  kind -> shell [label="Composition"];
+  search -> broad;
+  struct -> broad;
+  shell -> broad;
+  broad -> preview [label="Yes"];
+  broad -> execute [label="No"];
+  preview -> execute;
+}

@@ -1,0 +1,36 @@
+digraph decision {
+graph [rankdir=TB, bgcolor="white", pad="0.3", nodesep="0.3", ranksep="0.45", splines=polyline, fontname="Arial", fontsize=18, labelloc=t, label=<<B>Select only the missing evidence</B><BR/><FONT POINT-SIZE="12">Methods are alternatives, not a bundle triggered by a technology label.</FONT>>];
+node [shape=box, style="rounded,filled", fillcolor="#F2F5F8", color="#9BAFC1", fontname="Arial", fontsize=12, margin="0.15,0.10", penwidth=1.2];
+edge [color="#64748B", fontname="Arial", fontsize=11, arrowsize=0.7];
+  s [label="An established relevant oracle\nalready covers the question?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  existing [label="Consume it directly. Recheck only evidence\ninvalidated by relevant behavior or input\nchanges.", fillcolor="#E7F3ED", color="#659F85"];
+  claim [label="Name the required behavior and an\nindependent expected result.", shape="oval", fillcolor="#16324B", fontcolor="white", color="#16324B"];
+  simple [label="Can a focused example or real\nscenario\nexpose the important failure?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  local [label="Use the smallest relevant existing\ncheck, fixture, or direct scenario.", fillcolor="#E7F3ED", color="#659F85"];
+  gap [label="Which specific evidence gap\nremains?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  state [label="Uncovered state or input combinations\nConsider properties, a model, or fuzzing\nwhen the extra coverage earns its cost.", fillcolor="#E7F3ED", color="#659F85"];
+  boundary [label="Real protocol, storage, or integration\nsemantics\nExercise that boundary with focused checks.", fillcolor="#E7F3ED", color="#659F85"];
+  runtime [label="Claim depends on deployed conditions\nUse authorized runtime observation with\nactual blast-radius and state protections.", fillcolor="#FFF1DC", color="#C89548"];
+  place [label="Place evidence at the action or join it\ninforms.\nDo not block independent implementation\nwith a future delivery check.", fillcolor="#E7F3ED", color="#659F85"];
+  end [label="Retain required acceptance; disclose gaps.\nNo hash chain, full matrix, or new\nframework by default.", fillcolor="#E7F3ED", color="#659F85"];
+  s [group="spine"];
+  claim [group="spine"];
+  simple [group="spine"];
+  gap [group="spine"];
+  place [group="spine"];
+  end [group="spine"];
+  { rank=same; s; existing; }
+  s -> existing [label="Yes", constraint=false];
+  s -> claim [label="No", weight=100];
+  claim -> simple [weight=100];
+  simple -> local [label="Yes"];
+  simple -> gap [label="No", weight=100];
+  gap -> state [label="Combinations"];
+  gap -> boundary [label="Boundary"];
+  gap -> runtime [label="Runtime"];
+  local -> place;
+  state -> place;
+  boundary -> place;
+  runtime -> place;
+  place -> end [weight=100];
+}

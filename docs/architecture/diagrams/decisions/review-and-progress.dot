@@ -1,0 +1,29 @@
+digraph decision {
+graph [rankdir=TB, bgcolor="white", pad="0.3", nodesep="0.3", ranksep="0.45", splines=polyline, fontname="Arial", fontsize=18, labelloc=t, label=<<B>Review the route to the outcome</B><BR/><FONT POINT-SIZE="12">A useful review can remove an unnecessary gate; it does not manufacture new<BR/>authority.</FONT>>];
+node [shape=box, style="rounded,filled", fillcolor="#F2F5F8", color="#9BAFC1", fontname="Arial", fontsize=12, margin="0.15,0.10", penwidth=1.2];
+edge [color="#64748B", fontname="Arial", fontsize=11, arrowsize=0.7];
+  s [label="Review explicitly requested,\nrequired,\nor justified by concrete risk /\nuncertainty?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  skip [label="Continue authorized work with required\nchecks.\nNo extra review for reassurance alone.", fillcolor="#E7F3ED", color="#659F85"];
+  target [label="Review the bounded target against the\ncurrent goal,\nrequired behavior, authority and real\ndependencies.", shape="oval", fillcolor="#16324B", fontcolor="white", color="#16324B"];
+  first [label="Does the plan obtain real business\nfeedback\nwithout unnecessary preparation in\nfront?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  reorder [label="Return a causal finding: reuse, remove, or\nmove\nthe non-prerequisite work to its real join.", fillcolor="#FFF1DC", color="#C89548"];
+  other [label="Check required behavior and actual risk.\nDo not promote optional precautions into\nrequirements.", shape="oval", fillcolor="#16324B", fontcolor="white", color="#16324B"];
+  issue [label="A material, evidence-backed issue\nremains?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  parent [label="Return candidate findings. Parent\nadjudicates;\nrepair in scope and rereview only affected\nquestions.", fillcolor="#E7F3ED", color="#659F85"];
+  pass [label="Return pass for this target.\nReview success is not execution or\ndeployment approval.", fillcolor="#E7F3ED", color="#659F85"];
+  s [group="spine"];
+  target [group="spine"];
+  first [group="spine"];
+  other [group="spine"];
+  issue [group="spine"];
+  { rank=same; s; skip; }
+  s -> skip [label="No", constraint=false];
+  s -> target [label="Yes", weight=100];
+  target -> first [weight=100];
+  first -> reorder [label="No"];
+  first -> other [label="Yes / not a plan", weight=100];
+  reorder -> other;
+  other -> issue [weight=100];
+  issue -> parent [label="Yes"];
+  issue -> pass [label="No"];
+}

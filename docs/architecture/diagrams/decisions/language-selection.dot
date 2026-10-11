@@ -1,0 +1,41 @@
+digraph decision {
+graph [rankdir=TB, bgcolor="white", pad="0.3", nodesep="0.3", ranksep="0.45", splines=polyline, fontname="Arial", fontsize=18, labelloc=t, label=<<B>Choose an implementation language</B><BR/><FONT POINT-SIZE="12">Preserve target capabilities and the complete user workflow; no universal ranking.</FONT>>];
+node [shape=box, style="rounded,filled", fillcolor="#F2F5F8", color="#9BAFC1", fontname="Arial", fontsize=12, margin="0.15,0.10", penwidth=1.2];
+edge [color="#64748B", fontname="Arial", fontsize=11, arrowsize=0.7];
+  s [label="New persisted capability or\nauthorized language reassessment?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  keep [label="Keep the settled language.\nRoutine edits do not reopen selection.", fillcolor="#E7F3ED", color="#659F85"];
+  fixed [label="An explicit runtime, language,\nor framework constraint applies?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  honor [label="Preserve the required technology\nand its actual target prerequisites.", fillcolor="#E7F3ED", color="#659F85"];
+  native [label="Can an existing platform or native\ncapability satisfy the outcome?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  reuse [label="Reuse it with only the necessary glue.", fillcolor="#E7F3ED", color="#659F85"];
+  role [label="What execution and delivery role\ndoes the complete capability have?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  scripts [label="Dotfiles / interactive helpers / hooks\nPrefer suitable native Shell or already-\nprovided\nstandard-library Python; combinations are\nvalid.", fillcolor="#E7F3ED", color="#659F85"];
+  prod [label="Maintained production service / job / image\nPrefer Go when target and delivery fit;\nreuse required native tools and framework\nintegration.", fillcolor="#E7F3ED", color="#659F85"];
+  others [label="Other domain or constrained roles\nCompare viable runtimes and required\necosystems.\nThird-party Python needs the specific\ncapability case.", fillcolor="#E7F3ED", color="#659F85"];
+  net [label="Does the change provide concrete\nnet benefit\nafter development, delivery,\nupdates and resource costs?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  adopt [label="Use the supported choice; verify the\nreal entrypoint with its delivered\nprerequisites.", fillcolor="#E7F3ED", color="#659F85"];
+  retain [label="Retain, repair, or restore the simpler\napproach\nwithout losing later valid fixes or\nrequired data.", fillcolor="#E7F3ED", color="#659F85"];
+  s [group="spine"];
+  fixed [group="spine"];
+  native [group="spine"];
+  role [group="spine"];
+  net [group="spine"];
+  adopt [group="spine"];
+  { rank=same; s; keep; }
+  { rank=same; fixed; honor; }
+  { rank=same; native; reuse; }
+  s -> keep [label="No", constraint=false];
+  s -> fixed [label="Yes", weight=100];
+  fixed -> honor [label="Yes", constraint=false];
+  fixed -> native [label="No", weight=100];
+  native -> reuse [label="Yes", constraint=false];
+  native -> role [label="No", weight=100];
+  role -> scripts [label="Script workflow"];
+  role -> prod [label="Production pipeline"];
+  role -> others [label="Other"];
+  scripts -> net;
+  prod -> net;
+  others -> net;
+  net -> adopt [label="Yes", weight=100];
+  net -> retain [label="No"];
+}

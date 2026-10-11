@@ -1,0 +1,24 @@
+digraph decision {
+graph [rankdir=TB, bgcolor="white", pad="0.3", nodesep="0.3", ranksep="0.45", splines=polyline, fontname="Arial", fontsize=18, labelloc=t, label=<<B>Simplify a responsibility, not just its implementation</B><BR/><FONT POINT-SIZE="12">An audit remains read-only; ordinary in-scope subtraction stays implementation work.</FONT>>];
+node [shape=box, style="rounded,filled", fillcolor="#F2F5F8", color="#9BAFC1", fontname="Arial", fontsize=12, margin="0.15,0.10", penwidth=1.2];
+edge [color="#64748B", fontname="Arial", fontsize=11, arrowsize=0.7];
+  s [label="Requested surface, real outcome,\nand current burden", shape="oval", fillcolor="#16324B", fontcolor="white", color="#16324B"];
+  need [label="Is the responsibility necessary\nfor an actual requirement?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  unknown [label="Use targeted consumer evidence or a small\nreversible experiment only if it can\ndecide.", fillcolor="#FFF1DC", color="#C89548"];
+  remove [label="Recommend removing the responsibility\nand its now-unneeded supporting material.", fillcolor="#E7F3ED", color="#659F85"];
+  smaller [label="Find a smaller implementation or\nreuse an adequate existing capability.", fillcolor="#E7F3ED", color="#659F85"];
+  cost [label="Compare total code, tests, fixtures,\ndependencies,\ndelivery and maintenance; preserve real\ncontracts.", shape="oval", fillcolor="#16324B", fontcolor="white", color="#16324B"];
+  authority [label="Is bounded application authorized\nand the material choice settled?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  apply [label="Continue via implement-change;\nverify the remaining required behavior.", fillcolor="#E7F3ED", color="#659F85"];
+  report [label="Return supported recommendations or the\nspecific owner decision. Do not mutate\nduring audit.", fillcolor="#FFF1DC", color="#C89548"];
+  s -> need;
+  need -> unknown [label="Unclear"];
+  unknown -> need;
+  need -> remove [label="No"];
+  need -> smaller [label="Yes"];
+  remove -> cost;
+  smaller -> cost;
+  cost -> authority;
+  authority -> apply [label="Yes"];
+  authority -> report [label="No"];
+}

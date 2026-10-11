@@ -1,0 +1,35 @@
+digraph decision {
+graph [rankdir=TB, bgcolor="white", pad="0.3", nodesep="0.3", ranksep="0.45", splines=polyline, fontname="Arial", fontsize=18, labelloc=t, label=<<B>Select the smallest sufficient architecture</B><BR/><FONT POINT-SIZE="12">Patterns must reduce total responsibility or meet a real constraint.</FONT>>];
+node [shape=box, style="rounded,filled", fillcolor="#F2F5F8", color="#9BAFC1", fontname="Arial", fontsize=12, margin="0.15,0.10", penwidth=1.2];
+edge [color="#64748B", fontname="Arial", fontsize=11, arrowsize=0.7];
+  s [label="Material persisted architecture\nchoice\nis actually open or reassessment\nis requested?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  settled [label="Apply the settled boundary.\nDo not reopen architecture for local glue.", fillcolor="#E7F3ED", color="#659F85"];
+  frame [label="Identify required behavior, target\nconstraints,\nstate ownership and decision horizon.", shape="oval", fillcolor="#16324B", fontcolor="white", color="#16324B"];
+  reuse [label="Existing capability or local\nextension\nmeets the actual commitments?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  small [label="Prefer reuse or the direct implementation.\nKeep simple use cases simple.", fillcolor="#E7F3ED", color="#659F85"];
+  gap [label="Name the actual missing responsibility.\nCompare suitable mature alternatives and\nstructural investment.", shape="oval", fillcolor="#16324B", fontcolor="white", color="#16324B"];
+  invest [label="Does added structure earn its\nimplementation,\nfeedback delay, integration and\nmaintenance cost?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  yes [label="Choose it; define only relevant boundaries\nand the evidence that tests the real\nbehavior.", fillcolor="#E7F3ED", color="#659F85"];
+  no [label="Reduce or defer the added mechanism.\nAn unmet hard requirement still needs\nresolution.", fillcolor="#FFF1DC", color="#C89548"];
+  path [label="Prefer early real business feedback.\nA possible later replacement is not a\nframework requirement.", fillcolor="#E7F3ED", color="#659F85"];
+  s [group="spine"];
+  frame [group="spine"];
+  reuse [group="spine"];
+  gap [group="spine"];
+  invest [group="spine"];
+  yes [group="spine"];
+  path [group="spine"];
+  { rank=same; s; settled; }
+  { rank=same; reuse; small; }
+  s -> settled [label="No", constraint=false];
+  s -> frame [label="Yes", weight=100];
+  frame -> reuse [weight=100];
+  reuse -> small [label="Yes", constraint=false];
+  reuse -> gap [label="No", weight=100];
+  gap -> invest [weight=100];
+  invest -> yes [label="Yes", weight=100];
+  invest -> no [label="No"];
+  small -> path;
+  yes -> path [weight=100];
+  no -> path [label="When a viable route is supported"];
+}
