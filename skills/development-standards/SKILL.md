@@ -5,13 +5,19 @@ description: "Use during design, planning, implementation, and review as the sha
 
 # Development Standards
 
-Deliver the user's outcome with the least total implementation, testing, deployment, and maintenance burden over the intended lifetime. Start by deciding what is necessary. YAGNI comes before DRY: delete an unnecessary responsibility before extracting shared machinery, and reuse an existing adequate capability rather than generalizing a new framework. Durable does not mean speculative or maximally defensive.
+Deliver the user's outcome with the least total implementation, testing, deployment, and maintenance burden over the intended lifetime, including the cost of delaying useful feedback and delivery. Start by deciding what is necessary. YAGNI comes before DRY: delete an unnecessary responsibility before extracting shared machinery, and reuse an existing adequate capability rather than generalizing a new framework. Durable does not mean speculative or maximally defensive.
 
 Across languages, prefer suitable mature libraries and platform capabilities over building general-purpose machinery. Spend custom code on the business rules and necessary integration. Apparent simplicity in today's inputs is not evidence that a homegrown utility is cheaper to own.
 
 Apply this baseline from the first design choice through planning, implementation, and review. Before adding or retaining a mechanism, compatibility promise, or verification gate, consider removing it. Name the required result or actual boundary that would fail without it, and the evidence for that claim. If the goal remains adequately supported without the mechanism, omit it. If that cannot yet be decided, use the cheapest targeted investigation that resolves the material uncertainty. This is a counterfactual engineering judgment, not an obligatory ablation experiment, scorecard, or checklist, and not a mandatory invocation of the simplification method in `skills-routing`. Preventing unnecessary work is preferable to building it and removing it later.
 
 Keep the appropriate workflow as the primary owner; this overlay produces no independent report. Apply detailed implementation sections only when their boundary is relevant.
+
+## Business Feedback Before Supporting Machinery
+
+Prefer a thin real path from a relevant input to the required user-visible result. Build only the setup and safeguards that this next step actually depends on; checks required before delivery are not automatically prerequisites for starting implementation. A tracer slice is useful behavior with feedback, not a separate probe framework or empty scaffold. Complete remaining required behavior and verification before claiming delivery, and put protection before the operation that actually threatens protected state.
+
+Invest judgment in the business rules that distinguish the product. Keep simple use cases, generic support work, and local glue direct when richer modeling would not clarify a real invariant. Spend supporting effort only where it enables the result or protects an actual boundary. When preparation grows without producing useful behavior or resolving a material uncertainty, simplify, defer, or remove the unnecessary branch and return to the business path. Do not replace it with a mandatory time quota, scoring exercise, progress ledger, or another review stage.
 
 ## Precedence And Composition
 
@@ -53,10 +59,10 @@ Keep the appropriate workflow as the primary owner; this overlay produces no ind
 
 ## Durability And Temporary Mechanisms
 
-- Prefer the smallest solution that can be maintained for the declared decision horizon without a known rewrite.
-- A prototype or temporary mechanism is valid only when experimentation or staged migration is an approved goal.
-- Give every temporary mechanism an owner, observable outcome, exit condition, and removal trigger.
-- Do not call a known throwaway stopgap a durable implementation. Route a changed architecture boundary back to `design-change`.
+- Prefer a solution that meets current commitments and can be maintained over the declared decision horizon. Possible future replacement does not itself justify a framework now; knowingly failing that horizon is not an acceptable shortcut.
+- A bounded, disposable reproducer or local experiment inside already-authorized work is a normal implementation method. It needs no separate experimental phase or approval merely because it is temporary; real access, side-effect, and data boundaries still apply.
+- A temporary mechanism that ships, affects users, or creates a continuing maintenance obligation needs an owner and a concrete retirement or replacement condition. Do not require lifecycle paperwork for every scratch script.
+- Distinguish learning evidence from delivered behavior. Discard unsafe experimental shortcuts before delivery, and do not claim a prototype satisfies requirements it did not exercise. Resolve an actual change to user-fixed architecture or scope with its owner, rather than reopening design for ordinary local experimentation.
 
 ## Compatibility And Migration
 
@@ -154,5 +160,5 @@ This Skill owns the local implementation dependency decision, not the material o
 - The implementation is the smallest durable option for the declared horizon.
 - Changed lines are request-traceable and unrelated work is untouched.
 - Compatibility and dependencies have current owners and evidence where applicable.
-- Temporary mechanisms have explicit exit conditions.
+- Shipped transitional mechanisms have explicit exit conditions; disposable investigation is not reported as delivered functionality.
 - Declared verification passes without weakening a required oracle.

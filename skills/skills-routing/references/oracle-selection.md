@@ -18,7 +18,7 @@ Do not rely on an agent's implicit understanding of the codebase as the maintena
 
 ## Selection Questions
 
-Answer these before choosing a method:
+Use the questions that can change the current choice; do not fill a questionnaire when an existing check already supplies adequate evidence:
 
 - What user outcome or actual consumer requirement makes this boundary worth protecting?
 - Who owns the oracle?
@@ -43,6 +43,8 @@ Common boundaries:
 
 ## Method Selector
 
+Start with the cheapest relevant example, existing check, or real scenario that can expose the required failure. The methods below are alternatives or targeted additions, not bundles implied by a domain label. Add a model, property generator, fault-injection system, or new framework only when simpler evidence misses an important behavior and the extra setup and maintenance are worthwhile.
+
 | Controlled behavior | Preferred method | Oracle type | Avoid when |
 |---|---|---|---|
 | Single function or module correctness | TDD | Example oracle | Interface is still volatile or code is trivial glue |
@@ -51,13 +53,13 @@ Common boundaries:
 | Service-to-service compatibility | Contract testing | Contract oracle | Private unstable internal calls |
 | Public API or schema compatibility | Contract / schema conformance | Contract oracle | Prototype schema is intentionally unstable |
 | Large input space | Property-based testing / fuzzing | Property oracle | Invariant or generator is weak |
-| Stateful workflow or protocol | Model-based tests + TDD | Model oracle | Model costs more than the system warrants |
-| Dependency-aware parallel execution | Model/state-transition tests + contract tests | DAG, conflict, binding, and convergence oracle | Only happy-path completion is observable |
+| Stateful workflow or protocol | Focused transition scenarios; model-based tests when combinations warrant them | Scenario or model oracle | A separate model adds no useful coverage over direct examples |
+| Dependency-aware parallel execution | Targeted ordering, cancellation, conflict, or convergence scenarios; add a model only for uncovered combinations | Scenario, contract, or model oracle | A green happy path would be presented as proof of untested failure semantics |
 | Legacy refactor safety | Characterization of consumer-relevant behavior | Current-behavior evidence | It would freeze known bugs or incidental implementation/library behavior as requirements |
 | Test-suite strength | Mutation testing | Meta-oracle | Suite is slow, flaky, or low risk |
-| Distributed resilience | Fault injection / chaos / synthetic probes | Runtime oracle | Recovery and blast-radius controls are weak |
+| Distributed resilience | Targeted dependency-failure checks; live fault injection or probes only for runtime-only claims | Scenario or runtime oracle | The claim can be tested more cheaply below, or live blast-radius controls are inadequate |
 | Production-only regression | Canary / monitoring / SLO alerts | Runtime oracle | Used as a substitute for pre-merge correctness |
-| Security boundary | TDD + properties + fuzz/static analysis | Mixed oracle | Required assertions can be silently weakened |
+| Security boundary | Focused allowed/denied cases; add properties, fuzzing, or static analysis for the specific exposure | Example, property, or mixed oracle | Tooling adds no relevant protection or required assertions can be silently weakened |
 
 ## API Contract Decomposition
 
@@ -65,35 +67,13 @@ Select an executable oracle method here only when the evidence strategy is genui
 
 When selection does happen here, this method supplies the oracle choice. `api-contract-strategy` does not rescore the method or own lifecycle execution.
 
-## Phase Defaults
+## Feedback And Placement
 
-Choose from these methods when they protect the current boundary at proportionate cost. A phase or infrastructure label does not require every method below.
+For uncertain business behavior, prefer a thin real path and a relevant example over a complete assurance framework. An exploratory slice proves only what it exercises; complete required acceptance before delivery. For established behavior, consume current tests and add the focused missing scenario. For legacy changes, characterize consumer-relevant behavior without freezing incidental internals or historical bugs.
 
-Exploration or prototype:
+Choose an environment for the claim, not for a project label: a local deterministic scenario may prove a scheduler's cancellation rule; real deployment evidence is needed for behavior that depends on deployed conditions. Define what a live observation would establish before running it, and respect its actual authority and blast radius. Neither the word infrastructure nor the availability of fault injection schedules a production exercise.
 
-- use smoke tests, typecheck/lint, minimal happy-path acceptance tests, small golden samples, and minimal public interface contracts
-- avoid broad brittle tests over unstable internals
-
-Stabilizing core semantics:
-
-- require a failing test, executable oracle, or narrow reproducer before implementation for non-trivial behavior changes when a correct seam exists
-- focus on state transitions, permission decisions, error semantics, idempotency, compatibility, and persisted formats
-
-Mature or agent-assisted maintenance:
-
-- use TDD/component tests for local changes, BDD/ATDD for critical business workflows, contract/schema checks for boundaries, mutation testing on critical diffs, and canaries/SLO validation for production-only behavior
-- do not delete or weaken required oracles to make implementation pass; bulk snapshot updates need readable justification
-
-Legacy or unknown behavior:
-
-- characterize unknown behavior relevant to actual consumers; distinguish observed behavior from required compatibility
-- refactor in small steps
-- replace low-semantic snapshots with behavior tests or delete assertions without a requirement basis; preserve exact bytes only where bytes themselves carry the contract
-
-Infrastructure or platform systems:
-
-- prefer contract/conformance tests, model/state-machine tests, fault injection, narrow local TDD, and runtime synthetic probes
-- define the oracle before running live probes; a probe observes behavior, an oracle says whether it is acceptable
+Put a check before the operation whose risk or uncertainty it resolves. A required delivery check need not block starting independent local implementation. Repair only setup that the next useful check needs; reuse the project's existing tools instead of first building a generic fixture, probe, or result-recording platform. Protect actual retained-state transitions and required negative behavior throughout.
 
 ## Evidence Sufficiency And Delegation
 

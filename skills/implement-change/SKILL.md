@@ -25,6 +25,12 @@ Do not use it when a necessary scope, design, execution-order, prerequisite, or 
 
 Implement the settled goals and selected technology; do not automatically reopen design/plan or conduct an architecture replacement audit. Local investigation, glue, ordinary tests, same-task repair, and newly discovered in-goal files are implementation work. An initial write inventory is not a permanent approval whitelist. Coordinate actual ownership changes through the supported host path without renewed user approval when existing authority covers them. Only evidence of a real incompatible goal, hard constraint, or missing authority pauses the affected action for an owner decision; independent authorized work continues.
 
+## Early Business Feedback
+
+Use the current project environment to implement a thin real path from relevant input to useful output, with its local feedback loop. Resolve only the uncertainty or setup that actually blocks the next authorized step. Do not first build a complete fixture platform, probe framework, recovery rehearsal, or evidence pipeline when existing tools or a bounded local check suffice. Required pre-deployment checks can happen at the delivery join; safeguards against actual data loss or unauthorized effects must precede the affected operation.
+
+When supporting work keeps growing while no business behavior has advanced, reconsider that branch rather than assigning more workers to harden it. Within existing authority, remove unnecessary mechanisms, defer non-prerequisite preparation, or use a direct existing capability, then continue the outcome. A working first slice is feedback, not permission to omit required remaining behavior or verification. Do not create a new timer, progress gate, or full redesign to make this correction.
+
 ## Goals, Discretion, And Continuation
 
 Main goals, necessary conditions, user-fixed technical choices, and inviolable boundaries remain binding. Model-inferred task granularity, dependency edges, ordering, guards, compatibility assumptions, and verification methods remain revisable within that intent, including after general plan approval. Correct them without new approval when required outcomes and real boundaries stay intact. During long tasks and handoffs, retain the user's purpose and remaining outcomes rather than letting the growing task list replace them.
@@ -71,7 +77,7 @@ Use the host's own bookkeeping only where its interface requires it; do not repr
    - Choose a shared fix only when the affected callers share the invariant. Keep caller-specific product rules at their owning boundary and preserve intentionally different validation or error behavior; fewer guards or lines do not justify hoisting policy into a common helper.
    - If an unresolved caller contract prevents a safe bounded fix, state the evidence gap and use the `blocked`, `replan`, `redesign` or `needs-authority` outcome that fits. Do not broaden the repair into a simplification audit.
 2. Prefer a narrow reproducer or red-green oracle for non-trivial behavior. For shared-behavior fixes, select focused regression evidence for affected sibling paths and protected caller behavior as needed, without requiring one test per caller or prescribing a framework.
-3. Make the smallest durable change within the approved scope and preserve unrelated user changes.
+3. Make the smallest cohesive change that advances required behavior within the approved scope, and preserve unrelated user changes. Smallest means the least total responsibility and maintenance burden, not the fewest edited lines or another patch around an unnecessary mechanism.
 4. Complete all approved in-scope tasks whose dependencies can be satisfied; a task boundary is progress, not an automatic stopping point.
    - Dispatch substantive independent slices per Delegation And Profiles using the plan and already collected context. Spend no additional search, probe, model-call, or time-estimation budget deciding whether to delegate. If the available context is insufficient, implement the next useful step locally and leave naturally discovered independent work for later delegation.
    - Preserve repository ownership, shared resources, isolation, convergence ownership, and applicable profiles.

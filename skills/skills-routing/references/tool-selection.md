@@ -59,22 +59,11 @@ Plain `python3` fallback commands may assume only the Python standard library. D
 
 ## Progressive Search Workflow
 
-For any search that may return many results or any refactor that may touch multiple files:
-
-### Step 1: COUNT (Assess Scope)
-
-Count matches before printing large outputs.
-
-```bash
-rg -n "pattern" . | wc -l
-fd -t f -e py . | wc -l
-```
+Use bounded searches directly when the target is clear. A separate count is useful only when result volume or a proposed broad edit needs sizing; it is not a prerequisite for every read or multi-file change. Scope the directory and output rather than enumerating the whole repository to prove it is searchable.
 
 For `rg`, exit code `1` means no matches when the command otherwise ran successfully. Treat it as a no-match search result, not a tool failure.
 
-### Step 2: PREVIEW (Validate Target)
-
-Preview representative matches before executing edits.
+Before a broad replacement, preview representative matches and relevant exclusions to confirm the intended transformation and authorized scope. Reuse the current diff or already-read files when they provide that evidence; do not repeat a ritual count/preview pass.
 
 ```bash
 rg -n "pattern" . | head -n 50
@@ -83,9 +72,7 @@ rg -n --context 2 "pattern" path/to/dir | head -n 80
 
 Use `rg --pcre2` before patterns with lookaround or backreferences. If PCRE2 is unavailable, switch to a small reviewable parser in a repo-external scratch file instead of repeatedly retrying invalid `rg` syntax or compressing procedural logic into nested quoting.
 
-### Step 3: EXECUTE (Make the Change)
-
-Execute changes only after COUNT and PREVIEW confirm correctness and scope. Prefer structured refactors (`ast-grep`) over regex when available.
+Use a structured refactor when syntax matters and the tool is suitable. An ordinary bounded edit does not require a new refactoring tool, scratch script, or separate plan. A count alone proves neither scope nor correctness; inspect the resulting change and run the checks that protect its behavior.
 
 ## Output Control
 
@@ -94,10 +81,10 @@ PREFERRED: Use `head`, `sed -n`, targeted globs, and directory scoping.
 
 ## Structured History Search
 
-For large JSONL histories such as Codex or Claude sessions, prefer a structured parser over raw text search. Count files first, parse JSON records, and filter injected system/skill text before treating matches as user intent.
+For large JSONL histories such as Codex or Claude sessions, prefer a bounded structured parser over raw text search. Identify the relevant files, parse JSON records, and filter injected system/skill text before treating matches as user intent; count separately only when volume affects the approach.
 
 ## Safety
 
-PROHIBITED: Run destructive operations (mass edits, deletes, resets) without an explicit plan and a scoped preview of impact.
+PROHIBITED: Run destructive operations (mass edits, deletes, resets) without matching authority and an understood, scoped impact. A sufficient current request or approved plan can supply that scope; do not manufacture another planning artifact. Preview uncertain broad effects before mutation.
 PROHIBITED: Interpolate untrusted values into executable Shell, Python, or other source strings.
 PREFERRED: Avoid nested interpreters and generated code strings when a direct tool, single-layer command, or reviewable scratch script can express the operation.

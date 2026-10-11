@@ -163,11 +163,16 @@ lexical_hints = ["resilience", "retry", "recovery policy"]
 [[trigger_cases]]
 id = "infrastructure-data-path"
 owner = "infrastructure-triage"
+positive = [
+  "Diagnose an observed operational mismatch or cross-boundary runtime failure.",
+  "Resolve infrastructure design affecting access, shared resources, or retained state.",
+]
 negative = [
   "Perform broad repository orientation without a runtime incident or infrastructure design question.",
   "Design in-process application error handling only.",
+  "Apply a routine Ansible, container, or deployment configuration edit whose approach and authority are already settled.",
 ]
-lexical_hints = ["infrastructure", "network path", "GitOps"]
+lexical_hints = ["operational mismatch", "runtime incident", "network path failure", "infrastructure design"]
 
 [[trigger_cases]]
 id = "verification-strategy"
@@ -254,7 +259,7 @@ negative = [
   "Use a routine known search command without a tool-choice decision.",
   "Choose the persisted implementation language for a repository artifact.",
 ]
-lexical_hints = ["which CLI", "rg or grep", "COUNT PREVIEW EXECUTE"]
+lexical_hints = ["which CLI", "rg or grep", "structured refactor", "quoting boundary"]
 
 [[trigger_cases]]
 id = "cross-language-implementation-policy"

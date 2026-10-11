@@ -141,9 +141,9 @@ Review only the relevant suite and instructions for a bounded change. Do not exp
 - Exercise the real owned boundary; mock only dependencies outside that boundary.
 - Keep each test independent and avoid shared mutable state.
 - Use readiness checks instead of fixed sleeps.
-- Isolate databases, ports, caches, temporary files, and environment variables.
-- Build subprocess environments from an explicit allowlist starting with an empty mapping; add only required variables and use temporary homes or caches where needed.
-- Inherit the ambient environment only when ambient-environment behavior is the named subject of the test; document the exception, exclude sensitive variables, and redact failure output.
+- For ordinary trusted repository checks, reuse the project's working toolchain and test environment. Isolate or override databases, ports, caches, temporary files, and environment variables where concurrency, contamination, determinism, or protected-state exposure actually requires it; do not rebuild an environment merely because the check runs a subprocess.
+- Use a clean environment and explicit allowlist when untrusted execution, credential exposure, an environment-sensitive contract, or an applicable hermetic-test policy requires that boundary. Use temporary homes or caches when they protect that boundary, not as universal setup.
+- Keep unauthorized credentials and protected services out of test reach, and redact sensitive failure output. Reusing a working environment does not grant external access or destructive operations; a trusted-command label alone does not establish safe side effects.
 - Do not require live credentials, production state, or hardware unless the current change's explicit authorization — the user request or an approved plan — covers that evidence; a plan artifact is not the only authorization carrier, and ordinary local fixtures remain the default.
 
 ## Test Design

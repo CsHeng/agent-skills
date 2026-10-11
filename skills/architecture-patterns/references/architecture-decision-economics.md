@@ -47,7 +47,7 @@ Watch for incentive failures:
 - plan templates that reward field completion instead of decision quality
 - executable oracles that can be weakened or gamed to make a change appear complete
 
-Align authority, cost, and accountability. Give every durable boundary and temporary mechanism an owner, an observable outcome, and an exit or cleanup condition.
+Align authority, cost, and accountability for continuing responsibilities. A shipped transitional mechanism needs an owner, an observable outcome, and a retirement or replacement condition. Bounded disposable investigation inside authorized work needs ordinary scope and cleanup, not a separate lifecycle record or experimental approval.
 
 ## Comparative Advantage
 

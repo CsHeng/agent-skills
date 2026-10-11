@@ -9,6 +9,7 @@ Read the supplied approved design or scope, the bounded plan target, and only ex
 
 ## Check
 
+- Business feedback: identify the first real result that can test the requested behavior or a material business assumption. Flag preparation placed ahead of it without a genuine dependency or concrete safety reason. Recommend reuse, removal, or a later join rather than a new gate. Required delivery checks and protection before risky operations remain binding; no fixed first-result deadline or additional report field is required.
 - Milestone and tasks: the milestone is coherent. Require stable task IDs, a touched-surface inventory, or a recovery path only where independent work or an actual risky transition needs them; a trivial plan does not need those for every item. Factual dependencies and completion evidence apply to outcomes the plan claims can be accepted independently. A real retained-state or recovery change still needs its corresponding evidence.
 - Authority: external, destructive, and side-effecting actions retain explicit authority; covered required authority and generatable products are not treated as missing authority.
 - Delegation: a proposed parallel or delegated slice is independent, isolated, conflict-free, and convergent. Demand exact delegation facts only for slices claimed ready; allow local investigation, glue around specified technology, and authorized best-effort secondary adaptation to stay for dispatch-time refinement inside an approved surface.

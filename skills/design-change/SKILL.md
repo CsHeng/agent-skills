@@ -24,6 +24,8 @@ Separate those requirements from the model's proposed means. A guard, compatibil
 
 For a migration or replacement, compare the burden removed with the code, tests, dependencies, deployment steps, and maintenance introduced. Include retaining the current implementation or making a smaller change among viable options. Source-tree cleanliness, language consistency, and a completed inventory do not establish runtime or maintenance benefit. Keep performance claims tied to representative measurements; ordinary tests and documentation need not adopt the product's implementation language or runtime.
 
+Prefer an approach that can expose a thin real business path early, using existing capabilities. Count delayed learning and delayed delivery alongside future maintenance costs. Do not design a complete assurance, recovery, or observability platform before that path unless the required behavior or a concrete hazard actually depends on it. Distinguish learning needed to choose the design from verification needed before delivery; a design-only request can describe that route without authorizing its execution.
+
 Read `references/goal-alignment.md` when an actual goal-means mismatch, material tradeoff, acceptance ambiguity, or authority gap needs resolution. Investigate accessible facts and leave local implementation choices with the executor. Ask the owner only for the decision that changes the outcome or a real boundary, then resume authorized work.
 
 ## Design

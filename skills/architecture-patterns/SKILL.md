@@ -13,12 +13,13 @@ Choose the smallest sufficient architecture justified by current demand, a const
 2. State the protected behavior, current demand evidence, constrained resource, hard requirements, and decision horizon.
 3. For a new or materially changed persisted architecture boundary, read `references/architecture-decision-economics.md` and compare the status quo, the smallest sufficient option, and a structural investment.
 4. Read `references/architecture-pattern-catalog.md` only for pattern families relevant to the proven constraint.
-5. Define dependency direction, state and data ownership, caller contracts, failure containment, operability, rollout, recovery policy, and executable evidence for the selected option.
+5. Define the selected option's relevant dependency direction, state and data ownership, caller contracts, and evidence. Add failure containment, rollout, or recovery detail where an actual boundary needs it; do not fill every dimension for a local design.
 6. Record the chosen option, material rejected alternatives, lifecycle-cost owner, and observable upgrade trigger.
 
 ## Selection Rules
 
-- Choose the smallest durable option for the declared decision horizon. Reject a knowingly throwaway stopgap unless an experiment or staged migration is the approved goal; every temporary mechanism needs an owner, observable outcome, exit condition, and removal trigger.
+- Choose a maintainable option for the declared decision horizon, including the cost of delaying business feedback. A later possible replacement does not justify speculative architecture now. Bounded disposable investigation within authorized work needs no separate lifecycle; only shipped transitional mechanisms need ongoing ownership and retirement conditions.
+- Prefer a thin real business path that tests the important integration or domain assumption before expanding support machinery. Simple use cases may stay direct; introduce richer domain models, layers, or coordination only for actual rules and coupling, not to complete a pattern catalog.
 - Prefer an existing boundary or a reversible local extension when it satisfies the approved goal.
 - Require demand or constraint evidence before adding distribution, asynchronous coordination, new infrastructure, speculative seams, or independent operational surfaces.
 - Compare the next unit of benefit with its implementation, migration, coordination, cognitive, runtime, verification, and recovery costs.

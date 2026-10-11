@@ -1,6 +1,6 @@
 ---
 name: infrastructure-triage
-description: "Use for infrastructure, network, proxy, tunnel, container, GitOps, IaC, Secrets, Auth, and automation troubleshooting or design; analyze data path, control boundary, state owner, permissions, drift, explicit recovery policy, and observability."
+description: "Diagnose operational state mismatches or cross-boundary failures, or resolve infrastructure design affecting access, shared resources, or retained state. Not for routine config or deployment edits with a settled approach."
 ---
 
 # Infrastructure Triage
@@ -9,14 +9,16 @@ Diagnose and design operational systems by separating desired state, actual stat
 
 ## Workflow
 
-1. Identify the target surface: host, repo, runtime, cluster, container, router, service, cloud control plane, or automation runner.
-2. Separate desired state from actual state.
-3. Trace the data path and control path.
-4. Identify state owner, permission principal, trust boundary, and recovery surface.
-5. Collect evidence at boundaries before changing configuration.
-6. Return the fix, verification point, observability point, and fallback.
+Use only the investigation needed to explain the observed failure or decide the actual operational boundary. Routine Ansible, container, or deployment edits do not require this workflow merely because of their file type or vocabulary.
+
+1. Identify the relevant target and the mismatch between desired and observed behavior, using already available facts.
+2. Follow the data path, control path, identity, or state boundary that could explain that mismatch. Do not inspect every analysis axis by default.
+3. Resolve uncertainty that could change the repair or make the next operation unsafe. Once the cause and authorized fix are sufficiently clear, implement or hand off that fix rather than expanding preflight.
+4. Verify the affected behavior with existing observation points where sufficient. Add instrumentation only for an actual diagnosis gap; include recovery only when the operation exposes the corresponding risk.
 
 ## Analysis Axes
+
+The following are investigation options, not a checklist or a requirement to construct new observability and recovery surfaces.
 
 - Network: DNS, TLS, NAT, route, proxy, tunnel, firewall, listener, client-side proxy state.
 - Containers: image digest, bind mounts, env injection, network namespace, published ports, health checks, in-container state.
