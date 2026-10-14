@@ -5,7 +5,7 @@ description: "Shared plain-language baseline for coding responses, with detail a
 
 # Output Styles
 
-Make the answer easy to understand and use. Adjust depth to the user's question and the decision at hand; do not select a separate response mode or impose a report template.
+Make the answer easy to understand and use. Follow the user's presentation preferences and use the detail the decision needs. Persistent preferences belong in always-loaded user or host instructions; this task-loaded Skill supplies writing methods, not their only retention mechanism.
 
 Follow the user's requested format and the target artifact's repository conventions; preserve schemas that an actual consumer requires. Otherwise, the primary skill organizes one response around the requested outcome. Supporting skills and their references contribute relevant decisions, evidence, and limits without imposing their own headings, tables, reports, or verdicts on that response.
 
@@ -23,14 +23,14 @@ Treat skill output lists as content guidance, not cumulative templates or reason
 ## Choose Useful Presentation
 
 - Prefer plain paragraphs or compact lists. Use headings for real sections, not bold pseudo-headings, decorative separators, or repeated labels.
-- Use emphasis sparingly for a distinction the reader might otherwise miss. Use stable item IDs for content the user needs to answer or track separately, not section numbers as a substitute; ordinary prose and supporting detail do not need universal labeling.
+- Use emphasis sparingly for a distinction the reader might otherwise miss. Ordinary prose and supporting detail do not need numbering.
 - Use a table, diagram, or other explanatory artifact when it makes the subject easier to understand than prose. Do not generate richer media merely because the capability exists.
 - Borrow plain-language principles across languages, including Simplified Technical English where useful. Do not impose its English vocabulary on other languages, reproduce an entire writing standard, or claim standards compliance without the requested validation.
 
 ## Make Items Easy To Refer To
 
-- Give questions, options, findings, or actions that need individual replies or tracking short, ordered ASCII IDs such as `1`, `2`, or `A1`, `A2`, `B1`. Keep each distinct item's ID unique throughout the session; continue the sequence for new items rather than restarting it in another section or reply. Keep the prose in the user's language.
-- Print the complete ID on the item itself, including any group or parent prefix: write `D4.1`, not a bare `1` under heading `D4`. Headings group topics; they must not supply an implicit part of an item's identity. Prefer unnumbered headings when section numbers would compete with item IDs. The user should not need heading text, Chinese numerals, decorative symbols, or Markdown markers to identify an item.
-- Reuse established references, including the user's references and existing task or finding IDs. Updates, reordering, filtering, resolution, and reopening do not change an item's ID; never recycle one for another item. A summary or restatement cites the same IDs, not a newly numbered checklist of the same decisions. If earlier labels were ambiguous, resolve their mapping once using the user's references rather than silently renumbering them.
-- For a split or merge, give newly distinct items fresh IDs and state their relationship to the prior items. Preserve the IDs, meanings, statuses, and sequence context needed in summaries or handoffs without repeating a full ledger in every reply. Identity preserves traceability, not a frozen plan or additional authority.
-- Before sending, check that the user can quote one ID printed beside an item and still identify the same single item across rounds, without reconstructing its address from the layout. Ordinary prose and supporting bullets need no IDs, and authored documents retain their appropriate Markdown structure; do not turn a simple answer into a numbered report.
+Use plain bullets for ordinary parallel points. When the user needs to reply to or track items individually, print a short complete ASCII ID beside each item. Preserve the user's established references when updating or summarizing those items; explain a changed mapping if needed. This does not require a session-wide numbering ledger.
+
+For example, under an existing item `5`, write `- 5.1 Update project configuration` and `- 5.2 Check the affected entrypoint`, rather than restarting an ordered list at `1.` and `2.`. The full reference is text on the item, independent of headings, indentation, color, or automatic Markdown numbering.
+
+Before sending, check that a quoted ID identifies the intended item without reconstructing its address from the layout. Keep ordinary explanations and authored document structure as simple as their purpose permits.

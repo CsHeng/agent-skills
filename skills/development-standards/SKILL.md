@@ -131,7 +131,7 @@ Language, tool, and workflow guidance adds only concrete mappings and exceptions
 
 ## Repository-Owned Quality Gates
 
-- Run applicable repository checks. In an authorized gate or suite simplification, assess whether each check protects required behavior rather than treating its existence as a permanent requirement.
+- Select repository checks that cover the affected behavior and honor actual delivery requirements. Available entrypoints are not a requirement to run every suite after each edit. In an authorized gate or suite simplification, retain checks for required behavior and remove unnecessary obligations.
 - Select a new lint, complexity, duplication, coverage, or debt gate only when it protects a named boundary, has a baseline, an accountable owner, a failure response, and an adoption or migration path.
 - Do not impose universal numeric thresholds across repositories or languages. A metric is evidence for a goal, not the goal itself.
 - Let `testing-strategy` own executable test evidence, suite boundaries, fixtures, and CI lanes. Let the matching language guideline own concrete linter, formatter, type-checker, and test-runner configuration.
@@ -155,9 +155,9 @@ Language, tool, and workflow guidance adds only concrete mappings and exceptions
 
 ## Verification And Review
 
-- Define success criteria before implementation and select the smallest realistic oracle that proves the changed user-visible boundary and hard constraints.
-- Parser, existence, or golden checks do not replace user-goal scenarios that the change claims to satisfy.
-- Reproduce bugs or establish equivalent before-state evidence when practical, then verify the narrow change and declared broader scope. A missing perfect reproducer does not freeze unrelated authorized work.
+- Select evidence from the changed behavior, affected consumers, and real uncertainty. Non-executable changes may need only inspection, syntax, links, or structural checks; a code edit alone does not require a new test. Parser or existence checks cannot establish a claimed user journey.
+- Use narrow tests, compilation, or reproductions when they guide implementation. Finish related edits before repeating checks that cannot inform intermediate work. The main agent coordinates broader verification and reuses applicable results; a repair invalidates affected evidence, not every prior check.
+- Reproduce bugs or establish equivalent before-state evidence when practical. Classify failed checks before repairing: change-induced defects and demonstrated delivery blockers stay in scope; unrelated existing failures are reported separately. A missing perfect reproducer does not freeze independent authorized work.
 - Do not weaken a required outcome to make implementation pass. When a mechanism is simplified or removed, recompute the verification the remaining outcome needs; an old failure matrix does not transfer automatically. Correct or remove tests that only preserve an unnecessary mechanism or incidental detail when that simplification is in scope; keep evidence for the actual required behavior, including retained-state or recovery evidence when that boundary is real. Authorized secondary tradeoffs are disclosed adapted results, not hidden failures.
 - Review the approved diff, direct dependencies, and executable evidence. Pre-existing or unrelated debt does not expand the current task.
 
@@ -174,4 +174,4 @@ Language, tool, and workflow guidance adds only concrete mappings and exceptions
 - Changed lines are request-traceable and unrelated work is untouched.
 - Compatibility and dependencies have current owners and evidence where applicable.
 - Shipped transitional mechanisms have explicit exit conditions; disposable investigation is not reported as delivered functionality.
-- Declared verification passes without weakening a required oracle.
+- Applicable evidence supports the delivered outcome without weakening a required oracle; material unverified behavior and unrelated check failures are disclosed.

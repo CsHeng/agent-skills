@@ -32,7 +32,7 @@ One invocation returns one evaluation of its supplied target; this is not a limi
 
 ## Reviewer Continuity
 
-For a justified follow-up on the same change, prefer the original reviewer when the host can safely continue its context, role, permissions, and current target. Supply the previous result reference, exact new candidate and delta, relevant evidence, parent dispositions, and remaining review question. Confirm the actual repair and affected regressions; neither a worker's claim nor the caller's wish to finish proves success.
+For a justified follow-up on the same change, prefer the original reviewer when the host can safely continue its context, role, permissions, and current target. Reuse that reviewer's handle and native JSONL when the host still has them. A new process ID after reload does not open a new review, and skill files are not the parent conversation. Supply the previous result reference, exact new candidate and delta, relevant evidence, parent dispositions, and remaining review question. Confirm the actual repair and affected regressions; neither a worker's claim nor the caller's wish to finish proves success.
 
 The reviewer remains separate from the worker even across rounds. Do not rename a worker session to manufacture independence. A fresh view is useful for a changed material boundary, deficient prior coverage or judgment, or an explicit independent-review request, not as a fixed extra round. Respect route authority, and do not silently switch a selected model or reuse a session across repositories or roles. When valid continuation is unavailable, describe reconstruction or a new review honestly rather than claiming preserved native context.
 

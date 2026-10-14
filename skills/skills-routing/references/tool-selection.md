@@ -83,6 +83,12 @@ PREFERRED: Use `head`, `sed -n`, targeted globs, and directory scoping.
 
 For large JSONL histories such as Codex or Claude sessions, prefer a bounded structured parser over raw text search. Identify the relevant files, parse JSON records, and filter injected system/skill text before treating matches as user intent; count separately only when volume affects the approach.
 
+## Long Execution
+
+When the active tool can retain a long execution, use that path for the same execution. Observation, waiting for an event, extending a deadline, and cancellation are different operations. Reading output or releasing a wait does not cancel or relaunch the execution. A deadline change applies to that same execution. Cancellation is an explicit stop, not the end of a wait.
+
+If the active tool cannot retain the execution or wake the agent when it finishes, say so. Do not detach it with `&`, `nohup`, a bare background process, or another unmanaged workaround. A command that must finish before a dependent step stays on the supported foreground or bounded-wait path.
+
 ## Safety
 
 PROHIBITED: Run destructive operations (mass edits, deletes, resets) without matching authority and an understood, scoped impact. A sufficient current request or approved plan can supply that scope; do not manufacture another planning artifact. Preview uncertain broad effects before mutation.

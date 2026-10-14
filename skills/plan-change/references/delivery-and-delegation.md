@@ -48,9 +48,9 @@ A writable task may cover multiple repositories through one access grant list. R
 
 The parent retains objective interpretation, authority, cross-task synthesis, finding adjudication, acceptance, and continuation decisions. Verification and repair commands may be delegated; their execution alone is not an intervening parent decision.
 
-Represent a predecessor only when its output is a genuine input. Preserve an explicit parent join where synthesis, coordination, or acceptance is needed instead of automating a worker-reviewer-repair chain. Ordinary same-task repair does not grow the task graph.
+Represent a predecessor only when its output is a genuine input. Preserve an explicit parent join where synthesis, coordination, or acceptance is needed instead of automating a worker-reviewer-repair chain. Ordinary same-task repair does not grow the task graph. A shared batch, role order, or tool wait is not a business dependency. Record a join only for a real input, shared resource, or parent integration point, and leave independently deliverable slices unordered relative to one another. A completed subset can be integrated or followed by new nonconflicting work while other slices are still running.
 
-Prefer same-task worker or reviewer continuation when the host supports it and context remains valid. Do not prefill handles, candidate IDs, or session identifiers. If continuation is unavailable, retain or redispatch the task through the supported path without adding a durable actor binding or public continuation protocol.
+Prefer same-task worker or reviewer continuation when the host supports it and context remains valid. Reuse the existing handle and native JSONL; do not prefill those identifiers, and do not open a new task because the process ID changed after reload. Skill directories and reference bodies are not parent chat history. If continuation is unavailable, retain or redispatch the task through the supported path without adding a durable actor binding or public continuation protocol.
 
 Profiles are optional semantic hints. Use provider-neutral capability descriptions only when they help dispatch; a missing profile mapping does not block implementation. A user's concrete model choice may be passed through compatible invocation parameters but does not authorize changing durable route configuration.
 

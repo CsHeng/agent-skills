@@ -42,11 +42,11 @@ This repository authors and distributes the `coding` collection of portable Agen
 
 ## Validation
 
-After changing Skills, contracts, tests, or architecture docs, run:
+Choose checks for the changed surface after a cohesive group of edits:
 
-```bash
-bash scripts/render-diagrams.sh
-bash scripts/check.sh
-```
+- Skill instructions, references, or inventory: `mise exec -- python3 scripts/check-contracts.py` and `mise exec -- python3 scripts/check-install-surface.py` cover discovery, contracts, and resource closure. Use applicable prose/link checks for changed documentation.
+- Executable scripts or validators: run their focused tests and relevant syntax, lint, or type checks. Keep unchanged evidence after a repair unless its inputs or behavior were affected.
+- Diagram sources or rendering: regenerate affected projections with their owned renderer and check those outputs; ordinary prose changes do not require diagram generation.
+- `mise run check` is the full product check for relevant broad impact or explicit delivery acceptance. The main agent coordinates it and any standalone check at integration or delivery; workers normally return their relevant local results.
 
 For optional Codex plugin metadata changes, also run the repository-independent plugin validator. No install, version bump, commit, push, publication, or consumer-state mutation is implied by validation.

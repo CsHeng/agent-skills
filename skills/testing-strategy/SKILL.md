@@ -90,10 +90,18 @@ Critical paths may justify stronger gates than glue or generated code. Verify ge
 - Confirm the oracle fails for the expected reason, not a typo or environment error.
 - A missing perfect agent-runnable reproducer does not freeze other authorized work; use the tightest available equivalent evidence and keep unblocked work moving.
 - Implement the smallest change that makes the reproducer pass.
-- Rerun the narrow oracle and declared verification scope before claiming success.
+- Rerun the affected oracle after the repair and retain results that still cover unchanged behavior, inputs, and conditions.
 - For config-only changes, prefer parser, schema, or real-consumer validation.
 - For docs-only, generated, or exploratory changes, record the fitting lint, build, generation check, or manual evidence.
 - When the user asks for TDD, test-first work, red-green-refactor, or vertical slices, read [TDD Vertical Slices](references/tdd-vertical-slices.md).
+
+## Timing And Coordination
+
+The main agent owns one verification strategy for the whole change. Workers use relevant unit tests, compilation, and reproductions for local feedback; the parent selects and schedules integration, E2E, and full-suite evidence, and may delegate a specific run. Reuse applicable worker results after integration and cover changed or previously untested combinations.
+
+Run a check while editing when its result can guide the next step. Otherwise, finish the related edits and check the cohesive result. Use broader evidence at a useful integration or delivery point when affected interfaces, user journeys, an explicit requirement, or material uncertainty need it. A full suite is justified by broad impact or a gap narrower evidence cannot resolve, not by the number of tasks or repair rounds.
+
+Classify failures before admitting repair work. Change-induced defects and issues that demonstrably block the authorized outcome remain in scope; report unrelated existing failures without expanding the assignment. Revise an earlier model-declared test plan when the required outcome stays protected. Stop when sufficient applicable evidence supports delivery, and state any real unmet requirement honestly.
 
 ## Documentation And Markdown Verification
 
