@@ -12,6 +12,7 @@ This repository authors and distributes the `coding` collection of portable Agen
 - `docs/architecture/` contains stable architecture truth.
 - Shared boundaries, all new designs/plans and retained evaluations belong to `$AGENT_ARCHITECTURE_DIR/docs/`; historical commands belong to its `archived/agent-skills/commands/` tree. Do not create product-local evolution records.
 - Resolve the three source roots and `TMPDIR` from this repository's mise configuration; retained runtime and temporary artifacts belong under `$TMPDIR/skills/`, and cross-repository maintenance must not guess checkout layout. Standalone product checks and runtime never require the architecture checkout.
+- Use the project environment and supported entrypoints described in `README.md#project-environment`; `mise.toml` owns ordinary development context, while the standalone check remains usable without mise or personal global configuration. Re-establish target context when crossing projects and preserve caller-owned run isolation; do not duplicate environment values in this file.
 - Global discovery uses an independent installed copy, directly or through host links to that copy. Source edits, Git updates, and checks must not update installed Skills; an explicitly authorized install/update owns that mutation.
 - Provider plugin manifests are optional packaging surfaces. Their installed content follows the same source/installation separation and grants no workflow authority.
 

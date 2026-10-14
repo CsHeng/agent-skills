@@ -11,7 +11,7 @@ Use this as a local development baseline when a target repository does not defin
 
 ## Environment
 
-- Use `mise` for tool version management unless the target repository defines another owner.
+- Use `mise` for tool version management unless the target repository defines another owner. A user-global mise configuration may own reusable caches, tool versions, and developer preferences; a project must not require a personal global for correctness, and project-owned or repository-local tool settings take precedence.
 - Use `uv` for Python package and environment workflows when the repository has no conflicting standard.
 - Assume plain `python3` has only the standard library for ad hoc fallback commands.
 - Use `uvx --with <package> python3 ...` for one-off Python commands that require third-party packages without entering a project environment.

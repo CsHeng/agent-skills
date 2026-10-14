@@ -109,6 +109,19 @@ This Skill owns the local implementation dependency decision, not the material o
 - Judge meaning, not spelling: genuine domain phases and protocol terms are valid names even when they resemble plan labels. Preserve existing compatibility-bound names unless a scoped migration is authorized; identify the compatibility reason rather than silently renaming an interface.
 - Apply this rule to newly introduced or changed implementation names within the approved scope. It does not authorize repository-wide cleanup of historical names or a lexical ban on strings such as `g0` or `phase`.
 
+## Environment Scope
+
+- Classify a tool or project environment input by ownership, shareability, and lifetime before choosing its location; a language, tool, or variable prefix does not decide its scope. The mutable state belongs to the project, subproject, or checkout that owns it, even when a shared cache also participates.
+- Distinguish a shareable cache from mutable project state. Downloaded packages, compiled module caches, and bytecode caches may be shared or user-global; dependency environments, test state, generated artifacts, and coverage data stay with the owning project, subproject, or checkout.
+- Enter the owning project context before running project commands. Resolve the nearest owning project or subproject and run from its root or through an explicit project selector; an interpreter or tool found on `PATH` does not make the current directory or a global environment the owner.
+- A user-global tool configuration, such as a personal tool-version or cache configuration, may provide reusable caches and developer preferences. A project must not require a personal global for correctness or reproducibility; project-owned configuration overrides or encapsulates those defaults.
+- Apply run or task overrides after project defaults so they change only the current run's disposable state. An override that redirects retained project state is a deliberate, task-owned choice rather than a routine setup step.
+- Changing directory, invoking a launcher or version manager, or starting a subshell does not by itself clear arbitrary inherited environment variables. Reset or replace only the variables the new context actually owns; do not assume a launcher produced a clean environment.
+- Keep reproducible project defaults in project-owned committed configuration, with local overrides under the project's declared ownership rules. Instruction files such as `AGENTS.md` navigate to the owning settings and are not a second copy of environment configuration.
+- Keep credentials, secrets, and per-user preferences with the user or host; do not commit them into project configuration or place them in shared caches.
+
+Language, tool, and workflow guidance adds only concrete mappings and exceptions to these principles; `Temporary Storage` below owns where disposable scratch lives.
+
 ## Temporary Storage
 
 - Treat `TMPDIR` as the standard temporary-directory root consumed by `mktemp` and supporting tools, not as a new cache or artifact protocol. A development environment may set it per repository group to an absolute disk-backed path such as `$HOME/tmp/<group>` through mise; without a declared root, agent-owned ad hoc scratch falls back to `$HOME/tmp`. Create the root before use and use unique task directories beneath it.

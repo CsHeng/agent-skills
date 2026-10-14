@@ -11,12 +11,14 @@ Environment tooling below supports Python that is already justified; it does not
 
 ## Toolchain And Environment
 
+Common environment-scope principles stay in `development-standards`; the mappings below are the Python-specific application. Scope follows ownership and lifetime, not the `uv`/`python` prefix.
+
 - For a Python project with managed dependencies, use `uv` for dependencies and tool execution, `pyproject.toml` for configuration, project-pinned Ruff for formatting and linting, and pytest for tests. Prefer `ty`; use mypy or pyright when the project requires it.
 - A standard-library-only script or short embedded fragment may use an available interpreter directly. Do not create a project environment, package, or service merely to run it; keep inputs separate from source and honor the host's runtime contract.
 - For code owned by a Python project, resolve the nearest owner, including in multi-project repositories. Run project commands through that environment with `uv run --project <project-root> ...` or from the owning project root.
-- Set `UV_PROJECT_ENVIRONMENT` to an explicit, project-specific path outside the source tree, following the project or host's existing storage contract. Do not let project operations fall back to an in-tree `.venv`, or inherit another project's environment.
-- Environment creation is separate from use. Create only a needed, task-owned environment; an explicit `uv venv "$UV_PROJECT_ENVIRONMENT"` target avoids working-directory ambiguity. Creation can replace an existing environment, so it is not a routine preflight before each check. Do not move, recreate or delete an existing environment merely to apply this guidance.
-- Keep tool caches and bytecode outside the source tree. `UV_CACHE_DIR` controls uv's package/build cache, not the project environment. Use `PYTHONDONTWRITEBYTECODE=1` and a defensive `PYTHONPYCACHEPREFIX`; configure Ruff and pytest caches explicitly when the environment is unknown.
+- Set `UV_PROJECT_ENVIRONMENT` to the owning project's or subproject's mutable environment path outside the source tree, following the project or host's storage contract. It is project-scoped and reused across runs, not a shared cache and not recreated per task; do not let project operations fall back to an in-tree `.venv` or inherit another project's environment.
+- Environment creation is separate from use. Create a missing project environment when needed and reuse a compatible existing one; a deliberately one-shot environment stays task-owned. Creation can replace an existing environment, so it is not a routine preflight before each check. An explicit `uv venv "$UV_PROJECT_ENVIRONMENT"` target avoids working-directory ambiguity, and an existing project environment must not be moved, recreated or deleted merely to apply this guidance.
+- Keep reusable caches and bytecode outside the source tree, and keep them distinct from the project environment. `UV_CACHE_DIR` is uv's shareable package/build cache, not the project environment; `RUFF_CACHE_DIR` and `PYTHONPYCACHEPREFIX` are reusable caches. Use `PYTHONDONTWRITEBYTECODE=1` defensively. pytest's `cache_dir` is per-project mutable test state, including `--lf`/`lastfailed`, so give each owning project its own directory rather than sharing one across projects.
 - Caches and environments outside the tree do not by themselves protect the checkout: coverage data, test writes, and ad-hoc scratch can still appear as untracked or ignored files. After verification, inspect `git status --ignored` for task-owned contamination and remove owned scratch and per-run state.
 
 For cache configuration, one-off dependencies and pytest preflight, read [Tooling And Environments](references/tooling-and-environments.md). That reference supplies setup details, not a second environment policy.
@@ -59,14 +61,16 @@ A configuration-management controller's temporary module execution, such as the 
 
 ## Operational Commands (Examples)
 
-Prefer the owning project's versioned command entrypoint. This Bash example assumes an existing uv lockfile and runs from the owning project root; replace the namespace, storage paths and authorized file list with the project's values. The environment exports select an environment for use; they do not recreate it. Exit 1 from the initial fix pass does not make the final result acceptable, and other tool errors stop execution.
+Prefer the owning project's versioned command entrypoint. This Bash example assumes an existing uv lockfile and runs from the owning project root; replace the `<project>` and root placeholders with the owning project's declared environment and cache location, and the file list with the authorized files. The environment exports select an environment for use; they do not recreate it. Exit 1 from the initial fix pass does not make the final result acceptable, and other tool errors stop execution.
 
 ```bash
 set -euo pipefail
-export UV_PROJECT_ENVIRONMENT="$HOME/.cache/uv-projects/<namespace>"
-export RUFF_CACHE_DIR="$HOME/.cache/ruff/<namespace>"
+# One project or subproject per environment; caches may be shared, per-project test state may not.
+export UV_PROJECT_ENVIRONMENT="<project-env-root>/<project>"
+export UV_CACHE_DIR="<cache-root>/uv"
+export RUFF_CACHE_DIR="<cache-root>/ruff"
 export PYTHONDONTWRITEBYTECODE=1
-export PYTHONPYCACHEPREFIX="$HOME/.cache/python/<namespace>"
+export PYTHONPYCACHEPREFIX="<cache-root>/python"
 files=(path/to/changed.py)
 
 uv run --locked ruff check --fix --no-unsafe-fixes -- "${files[@]}" || {
@@ -77,7 +81,7 @@ uv run --locked ruff format -- "${files[@]}"
 uv run --locked ruff check -- "${files[@]}"
 uv run --locked ruff format --check -- "${files[@]}"
 uv run --locked ty check .
-uv run --locked pytest -q -o "cache_dir=$HOME/.cache/pytest/<namespace>"
+uv run --locked pytest -q -o "cache_dir=<project-test-state-root>/<project>"
 ```
 
 ## Task-Specific References

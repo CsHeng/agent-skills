@@ -4,34 +4,34 @@ Use this reference when configuring project tooling, running dependency-bearing 
 
 ## Project Environments And Caches
 
-Resolve the owning project and its existing storage convention. Select a project-specific external `UV_PROJECT_ENVIRONMENT` before using project commands; do not silently reuse an unrelated environment. In wrappers, choose an explicit namespace from the project/module identity rather than deriving it from the wrapper's path, so moving the wrapper does not change cache identity.
+Resolve the owning project and its existing storage convention. Keep the project's mutable environment and per-project test state distinct from shareable caches, and choose paths from the project or host storage contract rather than one fixed global directory. `UV_PROJECT_ENVIRONMENT` names one project's or subproject's environment and is reused across runs, not recreated per task; the cache settings below may be shared. In wrappers, choose an explicit project identity rather than deriving it from the wrapper's path, so moving the wrapper does not change identity.
 
-These are examples of external locations, not overrides of a project or host's declared root:
+These are examples of the owning project or host's declared roots, not overrides of it:
 
-| Variable or setting | Example value | Responsibility |
+| Variable or setting | Example value | Ownership and sharing |
 | --- | --- | --- |
-| `UV_PROJECT_ENVIRONMENT` | `$HOME/.cache/uv-projects/<namespace>` | The owning project's virtual environment, separate from its source tree. |
-| `UV_CACHE_DIR` | `$HOME/.cache/uv` | uv's package/build cache; the default shared cache is suitable unless the environment requires another root. |
-| `PYTHONDONTWRITEBYTECODE` | `1` | Primary suppression of `.pyc` generation. |
-| `PYTHONPYCACHEPREFIX` | `$HOME/.cache/python/<namespace>` | Defensive redirect when a child process or command writes bytecode. |
-| `RUFF_CACHE_DIR` | `$HOME/.cache/ruff/<namespace>` | Ruff's cache rather than `.ruff_cache` in the project. |
-| pytest `cache_dir` | `$HOME/.cache/pytest/<namespace>` | Project-specific test state rather than `.pytest_cache` in the project. |
+| `UV_PROJECT_ENVIRONMENT` | `<project-env-root>/<project>` | Mutable environment for one owning project or subproject; project-scoped, reused across runs, never shared between projects or replaced per task. |
+| `UV_CACHE_DIR` | `<cache-root>/uv` | uv's package/build cache; shareable across projects and not the project environment. |
+| `PYTHONDONTWRITEBYTECODE` | `1` | Suppresses `.pyc` generation; a flag, not a storage location. |
+| `PYTHONPYCACHEPREFIX` | `<cache-root>/python` | Reusable bytecode cache redirect kept out of the source tree. |
+| `RUFF_CACHE_DIR` | `<cache-root>/ruff` | Reusable lint cache; a shared external location is suitable unless the project requires isolation. |
+| pytest `cache_dir` | `<project-test-state-root>/<project>` | Per-project mutable test state (`lastfailed`, `--lf`); give each project its own directory and do not treat it as a shared cache. |
 
-`uv venv` can honor `UV_PROJECT_ENVIRONMENT` at the project root; an explicit target is preferable when creating an environment from another directory. Check the installed uv's behavior when it matters. Existing virtual environments can be replaced by creation commands, so inspect ownership and compatibility before creating one; normal `uv run` or `uv sync` use is not a reason to recreate it. Keep one-shot environments task-owned and clean them up after verification.
+`uv venv` can honor `UV_PROJECT_ENVIRONMENT` at the project root; an explicit target is preferable when creating an environment from another directory. Check the installed uv's behavior when it matters. Existing virtual environments can be replaced by creation commands, so inspect ownership and compatibility before creating one; normal `uv run` or `uv sync` use is not a reason to recreate a project environment. Only a genuinely one-shot throwaway environment is task-owned, and it is removed after verification.
 
 For project-owned tooling, use the pinned tool from the owning environment. For a deliberately independent Ruff diagnostic with no project-pinned tool available, an explicit cache setup can accompany `uv tool run ruff`; do not present that fallback as the project's authoritative gate.
 
 ## pytest Setup
 
-Use a namespaced external cache through the owning project's `pyproject.toml` or a command override:
+Use a per-project external test-state directory through the owning project's `pyproject.toml` or a command override. pytest's `cache_dir` holds mutable per-project state rather than a shared cache:
 
 ```toml
 [tool.pytest.ini_options]
-cache_dir = "~/.cache/pytest/<namespace>"
+cache_dir = "<project-test-state-root>/<project>"
 ```
 
 ```bash
-uv run pytest -o "cache_dir=$HOME/.cache/pytest/<namespace>"
+uv run pytest -o "cache_dir=<project-test-state-root>/<project>"
 ```
 
 If using `PYTEST_ADDOPTS`, remember that it can override project options; do not share one pytest cache across projects, since state such as `--lf` can cross-contaminate results.

@@ -4,13 +4,11 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-cache_root="${HOME:?HOME must be set}/.cache"
-export UV_CACHE_DIR="$cache_root/uv/agent-skills"
-export UV_PROJECT_ENVIRONMENT="$cache_root/uv-projects/agent-skills"
-export RUFF_CACHE_DIR="$cache_root/ruff/agent-skills"
-export PYTHONPYCACHEPREFIX="$cache_root/python/agent-skills"
-export PYTEST_CACHE_DIR="$cache_root/pytest/agent-skills"
-export PYTHONDONTWRITEBYTECODE=1
+# Checkout-specific mutable state stays outside the source tree and matches the mise
+# context; shared uv/ruff caches keep their native defaults. The helper is the single
+# source of truth for both this standalone entrypoint and mise `_.source`.
+# shellcheck source=scripts/checkout-env.sh
+source "$repo_root/scripts/checkout-env.sh"
 
 check_python="${CHECK_PYTHON:-python3}"
 check_uv="${CHECK_UV:-uv}"

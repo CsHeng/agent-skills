@@ -93,6 +93,11 @@ PROHIBITED: Split one reusable business rule across Shell and another implementa
 REQUIRED: For general-purpose temporary files, use a native temporary-file mechanism such as `mktemp` that respects `TMPDIR`; setting `TMPDIR` does not redirect a literal `mkdir /tmp/...` or an explicit `/tmp` template. Keep legitimate fixed target-system paths unchanged.
 PREFERRED: Let the development environment select and create a disk-backed project-group `TMPDIR`; portable scripts may retain their platform temporary-directory fallback when it is unset. Do not hardcode `$HOME/tmp` into shipped runtime behavior merely to match the developer's environment. Preserve tool-specific cache and output settings and clean only task-owned temporary paths.
 
+### Environment Scope
+PREFERRED: Let common environment scope follow `development-standards`; this section adds only the Shell-specific mapping.
+REQUIRED: Resolve script-owned resources from the script location or an explicit owning root, using the declared interpreter's facilities. Distinguish those paths from a CLI's intentionally caller-selected working directory; do not accidentally interpret a caller's project as the script's own repository.
+PREFERRED: Treat `cd`, invoking a version manager such as `mise`, or starting a subshell as changing context, not as clearing inherited variables. Reset or replace only the variables the script owns, and reserve a fully clean environment for the untrusted or hermetic boundary that requires one.
+
 ### File Naming
 REQUIRED: Name shell script files using hyphen style (kebab-case): `my-script.sh`, not `my_script.sh`
 

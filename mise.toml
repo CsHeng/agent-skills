@@ -1,8 +1,9 @@
 [env]
 AGENT_ARCHITECTURE_DIR = "{{ config_root | dirname }}/agent-architecture"
-AGENT_SKILLS_DIR = "{{ config_root | dirname }}/agent-skills"
+AGENT_SKILLS_DIR = "{{ config_root }}"
 PI_EXTENSIONS_DIR = "{{ config_root | dirname }}/pi-extensions"
-TMPDIR = "{{ env.HOME }}/tmp/agent-arch"
+TMPDIR = "{{ get_env(name='TMPDIR', default='') | default(value=env.TMPDIR | default(value=env.HOME ~ '/tmp/agent-arch', boolean=true), boolean=true) }}"
+_.source = "scripts/checkout-env.sh"
 
 [tools]
 "github:plantuml/plantuml" = "1.2026.8"

@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
+import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -21,9 +24,9 @@ class CheckOrchestrationTests(unittest.TestCase):
             "#!/usr/bin/env bash\n"
             "set -euo pipefail\n"
             f'printf \'{name}:%s\\n\' "$*" >> "$ORCHESTRATION_LOG"\n'
-            'printf \'cache:%s|%s|%s|%s|%s\\n\' "$UV_CACHE_DIR" '
-            '"$UV_PROJECT_ENVIRONMENT" "$RUFF_CACHE_DIR" "$PYTHONPYCACHEPREFIX" '
-            '"$PYTEST_CACHE_DIR" >> "$ORCHESTRATION_LOG"\n'
+            'printf \'cache:%s|%s|%s|%s|%s|%s\\n\' "${UV_CACHE_DIR:-}" '
+            '"${UV_PROJECT_ENVIRONMENT:-}" "${RUFF_CACHE_DIR:-}" "${PYTHONPYCACHEPREFIX:-}" '
+            '"${PYTEST_CACHE_DIR:-}" "${PYTHONDONTWRITEBYTECODE:-}" >> "$ORCHESTRATION_LOG"\n'
             'if [[ "${FAKE_FAIL_MATCH:-}" == "$*" ]]; then\n'
             "  exit 23\n"
             "fi\n",
@@ -52,12 +55,13 @@ class CheckOrchestrationTests(unittest.TestCase):
         return command
 
     def run_check(
-        self, temporary: Path, *, fail_match: str = ""
+        self, temporary: Path, *, fail_match: str = "", extra_env: dict[str, str] | None = None
     ) -> subprocess.CompletedProcess[str]:
         fake_bin = temporary / "bin"
         fake_bin.mkdir()
         self.write_fake_command(fake_bin, "python3")
         self.write_fake_command(fake_bin, "uv")
+        self.write_fake_command(fake_bin, "mise")
         self.write_fake_plantuml(fake_bin)
         env = {
             "HOME": str(temporary / "home"),
@@ -70,6 +74,8 @@ class CheckOrchestrationTests(unittest.TestCase):
             "RENDER_DIAGRAMS_PLANTUML": str(fake_bin / "plantuml"),
             "STANDALONE_CHECK_ACTIVE": "0",
         }
+        if extra_env:
+            env.update(extra_env)
         (temporary / "home").mkdir()
         return subprocess.run(
             ["bash", str(CHECK_SCRIPT)],
@@ -84,6 +90,10 @@ class CheckOrchestrationTests(unittest.TestCase):
         root = Path(os.environ.get("TMPDIR", tempfile.gettempdir()))
         root.mkdir(parents=True, exist_ok=True)
         return tempfile.TemporaryDirectory(dir=root)
+
+    def checkout_token(self) -> str:
+        """Compute the checkout identity independently of the shell helper."""
+        return hashlib.sha256(str(REPO_ROOT).encode()).hexdigest()
 
     def test_check_invokes_each_owned_gate_once_in_serial_order(self) -> None:
         with self.subTest("strict shell"):
@@ -105,7 +115,8 @@ class CheckOrchestrationTests(unittest.TestCase):
                         "uv:run ty check scripts/skill_portability.py "
                         "scripts/check-install-surface.py",
                         "uv:run pytest -o cache_dir="
-                        f"{temporary / 'home/.cache/pytest/agent-skills'}",
+                        f"{temporary / 'home/.cache/pytest'}/agent-skills-"
+                        f"{self.checkout_token()}",
                         "python3:skills/organize-docs/scripts/"
                         "normalize-markdown-prose.py "
                         f"--root {REPO_ROOT} --mode check --exclude archived",
@@ -113,17 +124,65 @@ class CheckOrchestrationTests(unittest.TestCase):
                     non_plantuml,
                 )
                 self.assertEqual(1, sum(1 for line in commands if line.startswith("plantuml:")))
+                token = self.checkout_token()
                 expected_cache = (
-                    f"cache:{temporary / 'home/.cache/uv/agent-skills'}|"
-                    f"{temporary / 'home/.cache/uv-projects/agent-skills'}|"
-                    f"{temporary / 'home/.cache/ruff/agent-skills'}|"
-                    f"{temporary / 'home/.cache/python/agent-skills'}|"
-                    f"{temporary / 'home/.cache/pytest/agent-skills'}"
+                    f"cache:|{temporary / 'home/.cache/uv-projects'}/agent-skills-{token}"
+                    f"|{temporary / 'home/.cache/ruff'}||"
+                    f"{temporary / 'home/.cache/pytest'}/agent-skills-{token}|1"
                 )
                 self.assertEqual(
                     [expected_cache] * 6,
                     [line for line in log if line.startswith("cache:")],
                 )
+
+    def test_helper_scopes_direct_pytest_and_ruff_without_global_config(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="check-environment-") as directory:
+            root = Path(directory)
+            checkout = root / "checkout"
+            scripts = checkout / "scripts"
+            scripts.mkdir(parents=True)
+            helper = scripts / "checkout-env.sh"
+            shutil.copy2(REPO_ROOT / "scripts/checkout-env.sh", helper)
+            test_file = checkout / "test_cache.py"
+            test_file.write_text(
+                "import os\nfrom pathlib import Path\n\n\n"
+                "def test_cache(pytestconfig):\n"
+                "    assert pytestconfig.cache._cachedir == Path(os.environ['PYTEST_CACHE_DIR'])\n"
+            )
+            config = checkout / "pytest.ini"
+            config.write_text("[pytest]\n")
+            cache = root / "cache's state"
+            completed = subprocess.run(
+                [
+                    "bash",
+                    "-c",
+                    'source "$1"; "$2" -m ruff check "$3"; '
+                    'exec "$2" -m pytest -c "$4" --confcutdir "$5" "$3"',
+                    "_",
+                    str(helper),
+                    sys.executable,
+                    str(test_file),
+                    str(config),
+                    str(checkout),
+                ],
+                cwd=checkout,
+                env={
+                    "PATH": os.defpath,
+                    "HOME": str(root / "home"),
+                    "XDG_CACHE_HOME": str(cache),
+                    "PYTEST_ADDOPTS": "-q -o cache_dir=stale",
+                    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+                },
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+            )
+            self.assertEqual(0, completed.returncode, completed.stdout + completed.stderr)
+            self.assertTrue((cache / "ruff").is_dir())
+            self.assertTrue((cache / "pytest").is_dir())
+            for name in (".ruff_cache", ".pytest_cache", "__pycache__", "stale"):
+                self.assertFalse((checkout / name).exists(), name)
 
     def test_first_failed_gate_preserves_exit_status_without_later_work(self) -> None:
         with self.temporary_directory() as directory:
@@ -138,6 +197,21 @@ class CheckOrchestrationTests(unittest.TestCase):
             self.assertIn("python3:scripts/check-install-surface.py", commands)
             self.assertNotIn("plantuml:", commands)
             self.assertNotIn("uv:run", commands)
+
+    def test_standalone_check_replaces_a_stale_uv_environment_without_mise(self) -> None:
+        with self.temporary_directory() as directory:
+            temporary = Path(directory)
+            stale = str(temporary / "sibling-checkout" / "uv-projects" / "agent-architecture")
+            result = self.run_check(temporary, extra_env={"UV_PROJECT_ENVIRONMENT": stale})
+            self.assertEqual(0, result.returncode, result.stderr)
+            commands = (temporary / "commands.log").read_text(encoding="utf-8").splitlines()
+            self.assertEqual([], [line for line in commands if line.startswith("mise:")])
+            cache_lines = [line for line in commands if line.startswith("cache:")]
+            self.assertTrue(cache_lines)
+            for line in cache_lines:
+                uv_environment = line.split("|")[1]
+                self.assertNotEqual(stale, uv_environment)
+                self.assertIn("uv-projects/agent-skills-", uv_environment)
 
     def test_pre_commit_is_a_non_mutating_check_entrypoint(self) -> None:
         text = PRE_COMMIT.read_text(encoding="utf-8")
