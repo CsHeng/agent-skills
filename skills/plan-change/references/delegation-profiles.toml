@@ -1,7 +1,8 @@
 semantic_vocabulary_version = 1
 runtime_contract = false
 execution_profiles = ["fast", "balanced", "deep"]
-reasoning_profiles = ["light", "standard", "deep"]
+# Optional provider-neutral thinking effort. Not a provider thinking level, model, role, or host configuration.
+thinking_profiles = ["light", "standard", "deep"]
 delegation_ready_facts = [
   "repository_owner",
   "write_set",

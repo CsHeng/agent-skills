@@ -34,9 +34,9 @@ Local facts, generated artifacts, ordinary verification, dispatch refinement, an
 
 ## Cohesive Work And Dispatch
 
-Planning records acceptable behavior, meaningful reasons, ownership, dependencies, known write regions, protected boundaries, and how results join. It leaves filenames not yet discovered, local structure, glue, and ordinary investigation to the executor. A plan need not be a ready-to-submit dispatch request.
+Planning records acceptable behavior, meaningful reasons, ownership, dependencies, known write regions, protected boundaries, and how results join. It leaves filenames not yet discovered, local structure, glue, and ordinary investigation to the executor. A plan need not be a ready-to-submit dispatch request. Preserve explicitly fixed user choices and real dependencies without turning model-proposed worker counts, profile fields or dispatch topology into requirements.
 
-Before dispatch, the parent uses the scope, inputs, resources, and host contract already known. Do not add a separate search, probe, model call, or estimation phase solely to decide whether delegation pays. When context is insufficient, take the next useful implementation step and delegate substantive independent work as it becomes apparent. Preserve an explicitly required delegation method within host capabilities.
+From facts already known, make the first useful local action or the first parallel assignments reasonably decidable. Name cohesive independently useful results, real coupling, shared-resource conflicts, and parent joins when those facts are known. Do not treat the whole plan or repository as the automatic worker unit, and do not invent an explorer-first or sizing stage to manufacture slices. Later implementation adapts splits to actual state; adaptation alone does not reopen planning, while a newly incompatible goal or real boundary still needs the corresponding decision. Slice selection at execution belongs to `implement-change` and its delegated-execution method, including preservation of an explicitly required delegation method.
 
 A cohesive worker slice may investigate, implement, test, diagnose, and repair its own bounded result. Do not divide code and its tests between workers by default or reserve all useful investigation for the parent. Explorer work is useful for a separately valuable question, not as a mandatory predecessor.
 
@@ -52,7 +52,7 @@ Represent a predecessor only when its output is a genuine input. Preserve an exp
 
 Prefer same-task worker or reviewer continuation when the host supports it and context remains valid. Reuse the existing handle and native JSONL; do not prefill those identifiers, and do not open a new task because the process ID changed after reload. Skill directories and reference bodies are not parent chat history. If continuation is unavailable, retain or redispatch the task through the supported path without adding a durable actor binding or public continuation protocol.
 
-Profiles are optional semantic hints. Use provider-neutral capability descriptions only when they help dispatch; a missing profile mapping does not block implementation. A user's concrete model choice may be passed through compatible invocation parameters but does not authorize changing durable route configuration.
+Optional execution and thinking profiles are provider-neutral semantic hints, not models, roles, provider thinking levels, or host configuration. Use them only when they help describe the work; a missing mapping does not block implementation. A user's concrete model or thinking choice may be passed through compatible ephemeral parameters but does not authorize changing durable route configuration.
 
 ## Fresh-Main Handoff
 

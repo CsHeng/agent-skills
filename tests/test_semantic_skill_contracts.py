@@ -116,8 +116,9 @@ class SemanticSkillContractTests(unittest.TestCase):
             ["fast", "balanced", "deep"], vocabulary["execution_profiles"]
         )
         self.assertEqual(
-            ["light", "standard", "deep"], vocabulary["reasoning_profiles"]
+            ["light", "standard", "deep"], vocabulary["thinking_profiles"]
         )
+        self.assertNotIn("reasoning_profiles", vocabulary)
         self.assertEqual(
             {
                 "repository_owner",

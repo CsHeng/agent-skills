@@ -4,9 +4,11 @@ Use this method for a bounded worker assignment, its follow-up, or an invocation
 
 ## Choose A Cohesive Slice
 
-Prefer substantive work with its own acceptable result and local feedback loop, not one worker per file or separate code and test workers by default. Judge dispatch using the plan and context already collected. Do not search, probe, invoke another model, or estimate duration solely to decide whether to open a worker. When evidence is insufficient, the main performs the next useful implementation action; worker discovery stays with the worker. A separate explorer is useful for a substantive independent question, not a mandatory dispatch-assessment predecessor.
+Actively consider useful ready independent work for parallel execution through the host capabilities actually available. Do not assume a named subagent tool. Choose cohesive slices with independently useful results and local feedback, keeping real coupling together and preserving necessary parent joins. Do not use the whole plan or repository as the automatic worker unit, and do not split code from its tests by default.
 
-Prefer parallel ready slices with stable shared contracts, nonconflicting writes and resources, and clear convergence ownership. Shared generators, registries, lockfiles, fixtures, ports, and external state need owners; disjoint filenames alone do not establish independence. A useful singleton is valid where the host and call policy permit it. Retain trivial or tightly coupled work locally; call count and parent token share are not delivery goals.
+Judge that choice from the plan and context already collected. Do not search, probe, invoke another model, estimate duration, or open an explorer solely to decide whether delegation pays or how many workers to use. When known facts are insufficient, the main performs the next useful implementation action and delegates independent work as it becomes ready. A separate explorer is useful for a substantive independent question, not a mandatory predecessor.
+
+Prefer parallel ready slices with stable shared contracts, nonconflicting writes and resources, and clear convergence ownership. Shared generators, registries, lockfiles, fixtures, ports, and external state need owners; disjoint filenames alone do not establish independence. A useful singleton is valid where the host and call policy permit it. Retain trivial or tightly coupled work locally. Neither a minimum worker count nor parent token share is a delivery goal.
 
 ## Async And Explicit Joins
 
