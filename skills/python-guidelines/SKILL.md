@@ -1,6 +1,6 @@
 ---
 name: python-guidelines
-description: "Use for Python code, scripts, and services: uv, ruff, ty or mypy, pytest, packaging, CLI/service patterns, controller or remote runtime contracts, and review."
+description: "Apply Python policy as a conditional overlay when writing or reviewing Python code, scripts, and services: uv, ruff, ty or mypy, pytest, packaging, CLI/service patterns, and controller or remote runtime contracts. Choosing Python for a new persisted component is language selection in skills-routing."
 ---
 
 # Python Guidelines

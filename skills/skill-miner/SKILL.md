@@ -1,6 +1,6 @@
 ---
 name: skill-miner
-description: "Mine Codex/Claude/Grok/Pi sessions, memory files, and project context docs for repeated failures, workflow patterns, concrete skill improvement candidates, and memory cleanup after durable repo truth extraction."
+description: "Explicitly selected mining of Codex/Claude/Grok/Pi sessions, memory files, and project context docs for repeated failures, workflow patterns, concrete skill improvement candidates, and memory cleanup candidates after durable repo truth extraction. Use only when the user names it or asks to mine history or memory; current-repository analysis belongs to analyze-project."
 ---
 
 # Skill Miner
@@ -12,6 +12,8 @@ Agent memory files are staging evidence, not long-term truth. Prefer extracting 
 Mining returns candidates with their source evidence. The user or calling agent adjudicates promotion and memory maintenance and authorizes any separate edit.
 
 ## Scope
+
+Run only when the user names this skill or explicitly asks to mine sessions or memory files. A request to analyze current repository files, including its Skills or instructions, stays with `analyze-project` and does not read agent history.
 
 Default scope is the current Git repository. If no Git root exists, use the current working directory. Use all-history scope only when the user explicitly asks to search all local agent homes. When the user names additional agent homes, include those homes explicitly instead of assuming only the current host home.
 

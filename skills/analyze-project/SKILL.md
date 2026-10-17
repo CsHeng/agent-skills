@@ -13,7 +13,7 @@ Answer the actual project question from sufficient current evidence, without tur
 - If ownership is unclear, stable sources conflict, or evidence is insufficient, expand only along that gap: inspect the relevant repository maps, README/AGENTS, ignore rules, or implementation. State uncertainty rather than guessing. Poor documentation may justify code reconstruction, but does not itself authorize a full-project report.
 - For explicitly requested broad orientation or a full truth audit, map the relevant stable truth and search boundaries before drawing conclusions. Use [Full Project Truth Audit](references/full-audit-output.md) for the comprehensive branch, not for routine local questions.
 
-A request to implement, reorganize docs, or review a change belongs to its matching Skill. For runtime/infrastructure/security or another domain diagnosis, contribute bounded project-truth evidence to that primary owner rather than emitting a second report.
+A request to implement, reorganize docs, or review a change belongs to its matching Skill. For runtime/infrastructure/security or another domain diagnosis, contribute bounded project-truth evidence to that primary owner rather than emitting a second report. A requested assessment of whether existing code, tests, documents, or mechanisms are necessary uses the simplification method in `skills-routing`; a reproducible code, test, or performance failure whose cause needs a repeatable evidence loop uses `references/debugging-tight-loop.md` in `error-patterns`.
 
 ## Investigate And Answer
 

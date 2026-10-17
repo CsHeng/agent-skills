@@ -21,7 +21,7 @@ Read the current `$herdr` Skill and satisfy its environment requirements before 
 
 Use Herdr's existing capabilities to launch, communicate with and observe the main sessions. This workflow's current-checkout and automatic-approval defaults govern the invocation; generic managed-worker defaults do not require a custom bridge, worktree, initialization turn or another permission question.
 
-Default to the current checkout and alternate implementation with review. While B writes and checks, A leaves those files alone. Before A reviews, B settles its writing and write-producing subagents. Choose a worktree only for an actual isolation need or explicit request, using the existing worktree method. A dirty checkout alone does not require isolation or a preliminary commit.
+Default to the current checkout and alternate implementation with review. While B writes and checks, A leaves those files alone. Before A reviews, B settles its writing and write-producing subagents. Choose a worktree only for an actual isolation need or explicit request, using `references/worktree-isolation.md` in `implement-change`. A dirty checkout alone does not require isolation or a preliminary commit.
 
 Use a suitable explicitly named pane or create one adjacent pane through `$herdr`, retaining the caller's focus. Start B in the intended working directory with the selected settings and retain its actual identity for subsequent handoffs. Record which pane and agent this invocation created. Never replace unrelated work merely to obtain an available pane.
 

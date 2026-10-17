@@ -1,6 +1,6 @@
 ---
 name: review-change
-description: "Review one bounded design, plan, or implementation target; return evidence-backed candidate findings and one verdict without mutating the target or synthesizing missing lifecycle work."
+description: "Review one bounded design, plan, or implementation target; return evidence-backed candidate findings and one verdict without mutating the target or synthesizing missing lifecycle work. An explicitly requested interactive grill or stress test of a design or plan belongs to design-change."
 ---
 
 # Review Change
@@ -12,7 +12,7 @@ Review exactly one supplied target and keep final repair judgment with the calli
 - `design-change`, `plan-change`, or `implement-change` requests a bounded review of a current artifact or a targeted rereview of a repair
 - the user directly asks to review a specific design, plan, diff, or implementation slice
 
-A standalone review needs only a bounded target and review question. Do not require or create an upstream design, plan, implementation state, approval record, or lifecycle sequence merely because review was requested.
+A standalone review needs only a bounded target and review question. Do not require or create an upstream design, plan, implementation state, approval record, or lifecycle sequence merely because review was requested. An explicit request to grill, stress-test, or challenge a design or plan interactively uses `references/stress-test-mode.md` in `design-change` rather than a one-shot review.
 
 ## Review Path
 

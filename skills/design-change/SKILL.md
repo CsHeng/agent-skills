@@ -14,7 +14,7 @@ Resolve the decision needed to achieve the user's outcome with a maintainable so
 
 An authorized bounded change or approved plan can enter implementation directly. Code investigation, local technical choices, and in-scope simplification do not require a design phase or a `no-design` credential. Resolve one newly exposed boundary conflict and return to the original task; do not restart every phase or investigate every possible secondary feature.
 
-A request to document settled design decisions does not authorize subsequent implementation. Read-only project explanation and standalone review use their own workflows.
+A request to document settled design decisions does not authorize subsequent implementation. Read-only project explanation (`analyze-project`) and standalone review (`review-change`) use their own workflows. When the intended outcome is settled and only the evidence that would prove it is open, use the oracle-selection method in `skills-routing` instead of a design.
 
 ## Outcomes And Constraints
 

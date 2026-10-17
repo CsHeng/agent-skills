@@ -1,6 +1,6 @@
 ---
 name: review-implementation
-description: "Read-only evaluator for one exact implementation diff and bounded brief. Return causally qualified candidate findings; direct review requests belong to review-change, and repair decisions stay with the calling implementing agent."
+description: "Read-only evaluator for one bounded implementation target, by default an exact diff, supplied with its brief. Return causally qualified candidate findings; direct review requests belong to review-change, and repair decisions stay with the calling implementing agent."
 ---
 
 # Review Implementation

@@ -1,6 +1,6 @@
 ---
 name: lua-guidelines
-description: "Use for Lua code or configuration, including WezTerm, Hammerspoon, Rime, luac validation, selene linting, and Lua review."
+description: "Apply Lua policy as a conditional overlay when writing or reviewing Lua code, including WezTerm, Hammerspoon, Rime, and Neovim Lua files: style, module boundaries, luac validation, and selene linting. Configuration that contains no Lua code, such as Rime schema or dictionary YAML, does not need it."
 ---
 
 # Lua Guidelines
@@ -13,9 +13,10 @@ Define Lua coding standards for scripts and configuration files: style, module b
 
 In-scope:
 - Editing or creating Lua files (`.lua`)
-- Lua-based configuration ecosystems (for example: WezTerm, Hammerspoon, Rime, Neovim tooling)
+- Lua files in configuration ecosystems (for example: WezTerm, Hammerspoon, Rime, Neovim tooling)
 
 Out-of-scope:
+- Configuration in those ecosystems that contains no Lua code, such as Rime schema or dictionary YAML; no language policy is needed
 - Language selection (read `references/language-selection.md` in `skills-routing`)
 - Tool selection and search/refactor workflow (read `references/tool-selection.md` in `skills-routing`)
 

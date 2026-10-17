@@ -8,7 +8,7 @@ The decision-tree methods are currently references under `skills-routing`, not n
 
 | Map | Owning method | Main boundary |
 | --- | --- | --- |
-| [Skill entry and direct-match bypass](#skill-entry) | [skills/skills-routing/SKILL.md](../../skills/skills-routing/SKILL.md), [skills/design-change/SKILL.md](../../skills/design-change/SKILL.md), [skills/plan-change/SKILL.md](../../skills/plan-change/SKILL.md), [skills/implement-change/SKILL.md](../../skills/implement-change/SKILL.md) | An explicit or confident match bypasses the router. Choosing a method reference does not reopen design or planning. |
+| [Skill entry and direct-match bypass](#skill-entry) | [skills/skills-routing/SKILL.md](../../skills/skills-routing/SKILL.md), [skills/design-change/SKILL.md](../../skills/design-change/SKILL.md), [skills/plan-change/SKILL.md](../../skills/plan-change/SKILL.md), [skills/implement-change/SKILL.md](../../skills/implement-change/SKILL.md) | An explicit or confident match bypasses the router. Choosing a method reference does not reopen design or planning, and a request that needs no Skill proceeds without one. |
 | [Choose the next useful piece of work](#business-feedback) | [skills/development-standards/SKILL.md](../../skills/development-standards/SKILL.md), [skills/plan-change/SKILL.md](../../skills/plan-change/SKILL.md), [skills/implement-change/SKILL.md](../../skills/implement-change/SKILL.md) | Omit unsupported machinery, reuse adequate capabilities, and distinguish a current prerequisite from a later required check. The first useful slice is not the entire acceptance result. |
 | [Choose an implementation language](#language-selection) | [skills/skills-routing/references/language-selection.md](../../skills/skills-routing/references/language-selection.md) | Summarizes the existing language method without changing its policy. Explicit frameworks and actual target constraints come first; the role-specific Shell/Python/Go preferences are not universal rankings. |
 | [Choose an ad hoc tool](#tool-selection) | [skills/skills-routing/references/tool-selection.md](../../skills/skills-routing/references/tool-selection.md) | Routine bounded commands run directly. Counting, previewing, and tool discovery are conditional aids, not a mandatory three-step ceremony. |
@@ -23,7 +23,7 @@ The decision-tree methods are currently references under `skills-routing`, not n
 
 Skill entry and direct-match bypass
 
-An explicit or confident match bypasses the router. Choosing a method reference does not reopen design or planning.
+An explicit or confident match bypasses the router. Choosing a method reference does not reopen design or planning, and a request that needs no Skill proceeds without one.
 
 ![Skill entry and direct-match bypass](generated/decisions/skill-entry.svg)
 

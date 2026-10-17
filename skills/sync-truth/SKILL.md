@@ -1,6 +1,6 @@
 ---
 name: sync-truth
-description: "Use after verified behavior changes to update stable project truth, documentation boundaries, and durable operational facts."
+description: "Update stable project docs and durable operational facts to match already verified behavior when the user asks or an approved change includes it. Not for restructuring documentation ownership, layout, or search boundaries, which belongs to organize-docs, or for read-only explanation, which belongs to analyze-project."
 ---
 
 # Sync Truth
@@ -12,7 +12,7 @@ Update long-lived project truth from verified change evidence.
 - a verified change has real truth impact
 - stable documentation or durable operational facts no longer match the implementation
 
-Do not use it for read-only project explanation, a change with no truth impact, implementation review, or closure without truth updates.
+Do not use it for read-only project explanation (`analyze-project`), a change with no truth impact, implementation review (`review-change`), closure without truth updates (`close-change`), or a requested restructuring of documentation ownership, layout, or search boundaries (`organize-docs`).
 
 ## Workflow
 

@@ -38,7 +38,9 @@ class RuntimeDistributionContractTests(unittest.TestCase):
             root = Path(temporary)
             for directory in ("scripts", "contracts", "skills"):
                 shutil.copytree(REPO_ROOT / directory, root / directory)
-            shutil.copy2(REPO_ROOT / "pyproject.toml", root / "pyproject.toml")
+            for relative in (Path("pyproject.toml"), Path("tests/fixtures/selection-probes.toml")):
+                (root / relative).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(REPO_ROOT / relative, root / relative)
 
             def check() -> subprocess.CompletedProcess[str]:
                 return subprocess.run(

@@ -8,7 +8,8 @@ This repository authors and distributes the `coding` collection of portable Agen
 
 - `skills/<public-id>/` is the single authored and installable Skill tree. Edit its instructions, resources, scripts, and provider metadata directly.
 - `contracts/skills.toml` owns public IDs, activation, roles, permissions, and optional semantic dependencies; each ID resolves to its directory under `skills/`.
-- The installed routing reference owns native trigger cases, direct-match bypass, support routes, and one-primary-response composition; it defines no runtime mode or lifecycle.
+- The installed routing references own the scope contract between neighboring Skills (clusters and handoffs in `routing.toml`) and the session selection rules in `routing.md`, including direct-match bypass and one-primary-response composition; they define no runtime mode or lifecycle.
+- `tests/fixtures/selection-probes.toml` holds uninstalled paired selection probes for discovery audits; checks validate its identifiers, not model behavior.
 - `docs/architecture/` contains stable architecture truth.
 - Shared boundaries, all new designs/plans and retained evaluations belong to `$AGENT_ARCHITECTURE_DIR/docs/`; historical commands belong to its `archived/agent-skills/commands/` tree. Do not create product-local evolution records.
 - Resolve the three source roots and `TMPDIR` from this repository's mise configuration; retained runtime and temporary artifacts belong under `$TMPDIR/skills/`, and cross-repository maintenance must not guess checkout layout. Standalone product checks and runtime never require the architecture checkout.
@@ -34,9 +35,9 @@ This repository authors and distributes the `coding` collection of portable Agen
 ## Working Rules
 
 - Keep Skills provider-neutral and self-contained under the standard Agent Skills directory shape.
-- Keep frontmatter descriptions precise enough for native discovery.
+- Keep frontmatter descriptions precise enough for native discovery. For a change to a description, admission boundary, or neighboring handoff, apply `skills/skill-authoring/` and update the scope contract before the summaries that restate it.
 - Store only real semantic dependencies in `semantic_requires`; do not add executable workflow contracts, artifact validators, task graph compilers, mutable ledgers, replay logic, provider adapters, or prompt-space lifecycle gates.
-- Keep the public inventory in `contracts/skills.toml`; change IDs only as part of an authorized rename, consolidation, or retirement, updating discovery and references together. Maintain portable resource closure within each Skill directory.
+- Keep the public inventory in `contracts/skills.toml`; change IDs only as part of an authorized rename, consolidation, or retirement, updating discovery, the scope contract, probes, and references together, and report installed copies or host global entries that still name the old ID. Maintain portable resource closure within each Skill directory.
 - Use an existing installation manager, preferably `npx skills`, for cross-platform installation and explicit refresh. Preserve unrelated installed Skills, verify ownership before replacing existing paths, and remove retired owned IDs explicitly; never mirror-delete the shared discovery root.
 - Use `apply_patch` for source edits and preserve unrelated working-tree changes.
 

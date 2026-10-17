@@ -1,5 +1,13 @@
 # Design Decisions
 
+## 2026-10-17 — Scope Contracts, Selection Probes, And Inventory Consolidation
+
+`skills-routing/references/routing.toml` becomes a version 2 scope contract: clusters of neighboring Skills, each with a distinguishing question, and handoffs that name the receiving Skill, method reference, or no Skill (`none`) instead of the confusable candidates. Trigger cases, positive phrasings, lexical hints, support routes, and the routing and composition tables are removed. Native admission belongs to descriptions and bodies, explicit admission to the activation mode and description, and session selection rules to `routing.md`; body exclusions name the same receivers as the scope contract. Paired selection probes move to the uninstalled `tests/fixtures/selection-probes.toml` maintenance corpus, whose checks cover identifiers and targets only.
+
+Activation modes are defined independently of hosts. Codex projects them through `allow_implicit_invocation`, and other hosts rely on description markers and body guards. The Claude visibility constant and the empty `manual-tool` category are removed. `sync-truth` and `close-change` become native, the router no longer depends on every Skill through `semantic_requires`, and a composition Skill that is not an evaluator needs a composer other than the router.
+
+`git-worktrees` becomes the optional worktree-isolation reference of `implement-change`, `smart-squash` is retired, and `codex-session-recovery` moves to the personal `agent-skills-local` repository. The new native `skill-authoring` Skill owns discovery-surface and admission-boundary authoring and absorbs the former skill-authoring reference of `development-standards`. Retired installed IDs need explicit removal.
+
 ## 2026-10-07 — One Authored Tree And Explicit Installation
 
 `skills/<public-id>/` is the only authored and installable Skill tree. Instructions, references, scripts, assets, and provider metadata are edited directly there; the public inventory retains useful activation and semantic checks. The former nested source tree, flattening, generated index, source map, and mirror-parity checks are removed. Architecture diagrams remain generated views of the product contract.

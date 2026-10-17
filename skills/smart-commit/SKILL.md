@@ -9,7 +9,7 @@ Group the current working-tree changes by business purpose and create focused lo
 
 ## Scope
 
-This skill covers change analysis through commit execution. It creates new local commits; an explicit request to reorganize or squash existing commits belongs to `smart-squash`.
+This skill covers change analysis through commit execution. It creates new local commits; reorganizing or squashing existing commits is a history rewrite outside this skill and needs the user's explicit rewrite authority.
 
 Select this skill only when the user explicitly asks to group working-tree changes by business domain or purpose and create the resulting focused local commits. A generic request to commit, inspect diffs, summarize status, or clean up history does not match this skill. Once the request matches, default to committing eligible changes without a confirmation gate. Stop for confirmation only when Git is already tracking or staging content that appears unsafe to version.
 
@@ -17,7 +17,7 @@ Committing does not grant push authority. Decide whether push is in scope only f
 
 ## Target Repository Binding
 
-Bind the target repository before any Git inspection or write. The target repository is the Git root for the user's invocation working directory or an explicit user-supplied repository path, not the repository that stores this skill.
+Bind the target repository before any Git inspection or write. The target repository is the Git root for the user's invocation working directory, an explicit user-supplied repository path, or a checkout the current task already resolved and verified as its target, such as its own worktree; it is not the repository that stores this skill. For an explicit or task-resolved path, resolve `TARGET_REPO` from that path instead of the invocation directory.
 
 ```bash
 INVOCATION_CWD="$(pwd -P)"
@@ -55,7 +55,7 @@ git -C "$TARGET_REPO" add -- <files>
 git -C "$TARGET_REPO" commit --amend --no-edit -- <files>
 ```
 
-If the user asked to squash or reorganize history, invoke `smart-squash` instead of continuing here. When many unpushed commits exist, note that `smart-squash` can reorganize them later; do not block the current commit.
+If the user asked to squash or reorganize existing history, that rewrite is outside this skill and needs explicit rewrite authority; do not fold it into this commit workflow. Many unpushed commits are context and do not block the current commit.
 
 ### Phase 1: Collect and Exclude
 
@@ -166,13 +166,13 @@ After all commits complete, run `git -C "$TARGET_REPO" log --oneline -<N>` to sh
 - Automatic execution after matching the domain-grouping commit request — present the plan, then commit eligible groups without a separate confirmation prompt
 - Human confirmation required only for tracked or staged content that appears unsafe or inappropriate to commit
 - Preserve working state — only commit files included in the plan; leave other changes untouched
-- Group-scoped commits — always pass the group's paths as a trailing pathspec (`git commit -m "<message>" -- <paths>`); never run a bare `git commit` that records the whole index and absorbs another group's staged changes
+- Group-scoped commits — always pass the group's paths as a trailing pathspec (`git commit -m "<message>" -- <paths>`); outside the hunk-split exception and a pending merge, never run a bare `git commit` that records the whole index and absorbs another group's staged changes
 - Generated output is judged by ownership and intent — intentionally tracked generated deliverables are committed with the owning group, while foreign or unowned generated output is excluded
 - Shared-file limitation is disclosed — a path-scoped commit commits the whole current content of each named path, so two groups touching one file cannot be separated by this recipe
 - Partial user scope stays partial — rejected groups remain unstaged or restored to their previous staged state
 - Respect .gitignore — never attempt to add files matched by .gitignore
 - Recent-commit context is optional and never blocks a new focused commit
-- Large unpushed history suggests `smart-squash` for later cleanup, but does not block default execution
+- Large unpushed history does not block default execution
 
 ## Edge Cases
 
@@ -180,5 +180,6 @@ After all commits complete, run `git -C "$TARGET_REPO" log --oneline -<N>` to sh
 - All files excluded: Present exclusion list, explain why nothing remains to commit
 - Single logical group: Create one commit — no need to force multiple groups
 - Merge conflicts present: Stop and inform the user to resolve conflicts first
+- Pending merge without conflicts (`MERGE_HEAD` exists, for example after an authorized `merge --no-commit`): Git rejects a pathspec commit during a merge, so the grouping recipe cannot split it. Confirm that the index holds only the complete, verified merge result, then record it with one whole-index `git commit` to keep the authorized merge topology. Never abort the merge, convert it into a squash, or absorb unrelated staged work; if the user also asked for grouped commits, report that a pending merge commits as one unit.
 - Partial staging: If some files are already staged, incorporate them into the plan, note the pre-existing staging, and let each path-scoped commit carry only its own group; staged changes in other paths stay staged. Never replace the scoped commit with a whole-index `git commit` to include them.
 - Two groups touch one file: The recipe cannot split a single file across commits at hunk level. Pick one owning group, or use deliberate `git add -p` staging with an explicit tree check; state the limitation to the user instead of claiming a clean split.

@@ -17,12 +17,14 @@ CHECK_CONTRACTS = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(CHECK_CONTRACTS)
 
 
+def load_skills() -> dict[str, dict[str, object]]:
+    with (REPO_ROOT / "contracts/skills.toml").open("rb") as handle:
+        return tomllib.load(handle)["skills"]
+
+
 class RoutingContractTests(unittest.TestCase):
     def setUp(self) -> None:
-        with (REPO_ROOT / "contracts/skills.toml").open("rb") as handle:
-            self.skill_contract = tomllib.load(handle)
-            self.skills = self.skill_contract["skills"]
-
+        self.skills = load_skills()
         self.temp_dir = tempfile.TemporaryDirectory()
         self.root = Path(self.temp_dir.name)
         self.routing_id, routing_entry = next(
@@ -30,19 +32,10 @@ class RoutingContractTests(unittest.TestCase):
             for skill_id, entry in self.skills.items()
             if entry.get("routing_contract")
         )
-        self.contract_path = (
-            self.root
-            / "skills"
-            / self.routing_id
-            / routing_entry["routing_contract"]
-        )
+        relative = Path("skills") / self.routing_id / str(routing_entry["routing_contract"])
+        source_path = REPO_ROOT / relative
+        self.contract_path = self.root / relative
         self.contract_path.parent.mkdir(parents=True)
-        source_path = (
-            REPO_ROOT
-            / "skills"
-            / self.routing_id
-            / routing_entry["routing_contract"]
-        )
         self.contract_path.write_text(
             source_path.read_text(encoding="utf-8"), encoding="utf-8"
         )
@@ -58,22 +51,20 @@ class RoutingContractTests(unittest.TestCase):
             self.root,
         )
 
-    def rewrite(self, old: str, new: str) -> None:
-        current = self.contract_path.read_text(encoding="utf-8")
-        self.contract_path.write_text(current.replace(old, new), encoding="utf-8")
-
-    def validate_trigger_cases(
-        self,
-        routing_contract: dict[str, object] | None = None,
-        skills: dict[str, object] | None = None,
-    ) -> list[str]:
-        return CHECK_CONTRACTS.validate_trigger_cases(
-            skills or self.skills,
-            routing_contract or self.routing_contract,
+    def validate_scope(self, routing_contract: dict[str, object]) -> list[str]:
+        return CHECK_CONTRACTS.validate_scope_contract(
+            self.skills, routing_contract, REPO_ROOT
         )
 
-    def test_valid_repo_routing_contract(self) -> None:
-        self.assertEqual([], self.validate())
+    def first_handoff(self, routing: dict[str, object]) -> dict[str, object]:
+        return next(
+            cluster["handoffs"][0]
+            for cluster in routing["clusters"]
+            if cluster.get("handoffs")
+        )
+
+    def test_current_scope_contract_is_complete(self) -> None:
+        self.assertEqual([], self.validate_scope(self.routing_contract))
 
     def test_exactly_one_routing_contract_is_required(self) -> None:
         skills = copy.deepcopy(self.skills)
@@ -85,114 +76,148 @@ class RoutingContractTests(unittest.TestCase):
             any("exactly one routing_contract" in error for error in errors)
         )
 
-    def test_native_direct_match_bypass_is_required(self) -> None:
-        self.rewrite(
-            "direct_match_bypasses_router = true",
-            "direct_match_bypasses_router = false",
+    def test_schema_version_and_retired_tables_are_rejected(self) -> None:
+        current = self.contract_path.read_text(encoding="utf-8")
+        self.contract_path.write_text(
+            current.replace("version = 2", "version = 1", 1)
+            + '\n[support_routes]\nresponse-shape = "output-styles"\n',
+            encoding="utf-8",
         )
 
         errors = self.validate()
 
-        self.assertTrue(any("native discovery" in error for error in errors))
+        self.assertTrue(any("version = 2" in error for error in errors))
+        self.assertTrue(any("retired table: support_routes" in error for error in errors))
 
-    def test_retired_control_tables_and_lifecycle_ownership_are_rejected(self) -> None:
-        self.rewrite(
-            "[support_routes]",
-            "[gate_policy]\nimplicit_review_when_missing = true\n\n[support_routes]",
-        )
-        self.rewrite(
-            "primary_owner_count = 1",
-            'primary_owner_count = 1\nlifecycle_owner_category = "workflow"',
-        )
-
-        errors = self.validate()
-
-        self.assertTrue(any("retired control table: gate_policy" in error for error in errors))
-        self.assertTrue(any("must not declare lifecycle ownership" in error for error in errors))
-
-    def test_support_routes_require_known_non_evaluator_targets(self) -> None:
-        self.rewrite(
-            'response-shape = "output-styles"',
-            'response-shape = "review-design"\nmissing = "not-a-skill"',
-        )
-
-        errors = self.validate()
-
-        self.assertTrue(any("cannot target an evaluator" in error for error in errors))
-        self.assertTrue(any("targets unknown skill" in error for error in errors))
-
-    def test_current_trigger_case_registry_is_complete(self) -> None:
-        self.assertEqual([], self.validate_trigger_cases())
-
-    def test_trigger_case_ids_and_owner_are_singular(self) -> None:
+    def test_cluster_ids_questions_and_members_are_structural(self) -> None:
         routing = copy.deepcopy(self.routing_contract)
-        duplicate = copy.deepcopy(routing["trigger_cases"][0])
-        duplicate["owner"] = [duplicate["owner"], "analyze-project"]
-        routing["trigger_cases"].append(duplicate)
+        duplicate = copy.deepcopy(routing["clusters"][0])
+        duplicate["question"] = " "
+        duplicate["members"] = ["missing", "none", "review-design"]
+        routing["clusters"].append(duplicate)
 
-        errors = self.validate_trigger_cases(routing)
+        errors = self.validate_scope(routing)
 
-        self.assertTrue(any("duplicate trigger case id" in error for error in errors))
+        self.assertTrue(any("duplicate cluster id" in error for error in errors))
+        self.assertTrue(any("non-empty question" in error for error in errors))
+        self.assertTrue(any("unknown skill: missing" in error for error in errors))
+        self.assertTrue(any("member cannot be none" in error for error in errors))
+        self.assertTrue(
+            any("composition-only evaluator" in error for error in errors)
+        )
+
+    def test_handoff_requires_one_resolvable_receiver(self) -> None:
+        routing = copy.deepcopy(self.routing_contract)
+        handoffs = next(
+            cluster["handoffs"]
+            for cluster in routing["clusters"]
+            if len(cluster.get("handoffs", [])) >= 3
+        )
+        handoffs[0]["owner"] = ["plan-change", "design-change"]
+        handoffs[1]["owner"] = f"{self.routing_id}:missing-method"
+        handoffs[2]["instead_of"] = [handoffs[2]["owner"]]
+
+        errors = self.validate_scope(routing)
+
         self.assertTrue(any("exactly one owner" in error for error in errors))
-
-    def test_trigger_cases_require_semantic_boundaries(self) -> None:
-        routing = copy.deepcopy(self.routing_contract)
-        routing["trigger_cases"][0]["positive"] = []
-        routing["trigger_cases"][0].pop("negative")
-        routing["trigger_cases"][0]["lexical_hints"] = ["architecture"]
-
-        errors = self.validate_trigger_cases(routing)
-
-        self.assertTrue(any("non-empty positive" in error for error in errors))
-        self.assertTrue(any("non-empty negative" in error for error in errors))
-        self.assertTrue(any("cannot be keyword-only" in error for error in errors))
-
-    def test_unknown_targets_and_owner_overlay_conflicts_are_rejected(self) -> None:
-        routing = copy.deepcopy(self.routing_contract)
-        routing["trigger_cases"][0]["owner"] = "missing"
-        routing["trigger_cases"][1]["overlays"] = [
-            routing["trigger_cases"][1]["owner"]
-        ]
-
-        errors = self.validate_trigger_cases(routing)
-
-        self.assertTrue(any("unknown owner" in error for error in errors))
-        self.assertTrue(any("owner cannot also be an overlay" in error for error in errors))
-
-    def test_composition_evaluators_and_retired_skills_cannot_own_cases(self) -> None:
-        routing = copy.deepcopy(self.routing_contract)
-        routing["trigger_cases"][0]["owner"] = "review-implementation"
-        routing["trigger_cases"][1]["owner"] = "clean-architecture"
-
-        errors = self.validate_trigger_cases(routing)
-
+        self.assertTrue(any("unknown method" in error for error in errors))
         self.assertTrue(
-            any("composition-only evaluator cannot own" in error for error in errors)
-        )
-        self.assertTrue(any("unknown owner" in error for error in errors))
-
-    def test_uncovered_native_skill_is_rejected(self) -> None:
-        routing = copy.deepcopy(self.routing_contract)
-        routing["trigger_cases"] = [
-            case
-            for case in routing["trigger_cases"]
-            if case["owner"] != "analyze-project"
-        ]
-
-        errors = self.validate_trigger_cases(routing)
-
-        self.assertTrue(
-            any("analyze-project: native skill must own" in error for error in errors)
+            any("owner cannot also be a replaced candidate" in error for error in errors)
         )
 
-    def test_baseline_must_match_rendering_composition(self) -> None:
+    def test_handoff_requires_a_situation_and_replaced_candidates(self) -> None:
         routing = copy.deepcopy(self.routing_contract)
-        routing["composition"]["rendering_baseline"] = self.routing_id
+        handoff = self.first_handoff(routing)
+        handoff["when"] = ""
+        handoff["instead_of"] = []
 
-        errors = self.validate_trigger_cases(routing)
+        errors = self.validate_scope(routing)
+
+        self.assertTrue(any("non-empty when" in error for error in errors))
+        self.assertTrue(any("at least one candidate" in error for error in errors))
+
+    def test_none_is_a_valid_receiver(self) -> None:
+        routing = copy.deepcopy(self.routing_contract)
+        self.first_handoff(routing)["owner"] = "none"
+
+        self.assertEqual([], self.validate_scope(routing))
+
+    def test_replaced_candidates_may_include_none_and_evaluators(self) -> None:
+        routing = copy.deepcopy(self.routing_contract)
+        handoff = self.first_handoff(routing)
+        handoff["instead_of"] = [*handoff["instead_of"], "none", "review-implementation"]
+
+        self.assertEqual([], self.validate_scope(routing))
+
+    def test_uncovered_selectable_skill_is_rejected(self) -> None:
+        routing = copy.deepcopy(self.routing_contract)
+        for cluster in routing["clusters"]:
+            cluster["members"] = [
+                member for member in cluster["members"] if member != "analyze-project"
+            ]
+
+        errors = self.validate_scope(routing)
 
         self.assertTrue(
-            any("baseline must match composition.rendering_baseline" in error for error in errors)
+            any(
+                "analyze-project: selectable skill must be a member" in error
+                for error in errors
+            )
+        )
+
+
+class SelectionProbeContractTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.skills = load_skills()
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp_dir.name)
+
+    def tearDown(self) -> None:
+        self.temp_dir.cleanup()
+
+    def validate_corpus(self, text: str) -> list[str]:
+        path = self.root / CHECK_CONTRACTS.PROBE_PATH
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        return CHECK_CONTRACTS.validate_selection_probes(self.skills, self.root)
+
+    def test_current_probe_corpus_is_valid(self) -> None:
+        self.assertEqual(
+            [], CHECK_CONTRACTS.validate_selection_probes(self.skills, REPO_ROOT)
+        )
+
+    def test_probe_ids_and_selection_targets_must_resolve(self) -> None:
+        probe = """
+[[probes]]
+id = "same-id"
+request = "Request."
+primary = "missing"
+overlays = ["review-plan"]
+counterexample = "Counterexample."
+counterexample_primary = "none"
+"""
+        errors = self.validate_corpus(probe + probe)
+
+        self.assertTrue(any("duplicate probe id: same-id" in error for error in errors))
+        self.assertTrue(any("unknown skill: missing" in error for error in errors))
+        self.assertTrue(any("composition-only evaluator" in error for error in errors))
+
+    def test_counterexample_must_expect_a_different_selection(self) -> None:
+        errors = self.validate_corpus(
+            """
+[[probes]]
+id = "no-contrast"
+request = "Fix the deploy script."
+primary = "implement-change"
+overlays = ["shell-guidelines"]
+counterexample = "Fix the other deploy script."
+counterexample_primary = "implement-change"
+counterexample_overlays = ["shell-guidelines"]
+"""
+        )
+
+        self.assertTrue(
+            any("counterexample must expect a different selection" in error for error in errors)
         )
 
 

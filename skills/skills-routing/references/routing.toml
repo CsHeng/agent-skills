@@ -1,377 +1,286 @@
-version = 1
+version = 2
 
-[routing]
-id = "skills-routing"
-default_discovery = "native-description-match"
-direct_match_bypasses_router = true
-ambiguous_router = "skills-routing"
-mode_selector = "optional-semantic-guidance"
+[[clusters]]
+id = "lifecycle"
+members = ["design-change", "plan-change", "implement-change", "review-change", "close-change"]
+question = "Is a material design decision, an execution structure, or the execution itself still missing, or is the request to judge one given target or whether a verified change can close?"
 
-[environment_instructions]
-allowed = [
-  "user preferences",
-  "environment constraints",
-  "thin intent-to-public-skill hints",
-]
-forbidden = [
-  "redefining public skill meaning",
-  "granting mutation authority",
-]
-
-[composition]
-primary_owner_count = 1
-overlay_categories = ["session", "discipline", "policy", "tool", "review-component"]
-rendering_baseline = "output-styles"
-
-[support_routes]
-response-shape = "output-styles"
-search-and-tooling = "skills-routing"
-implementation-policy = "development-standards"
-persisted-language-selection = "skills-routing"
-infrastructure = "infrastructure-triage"
-documentation = "organize-docs"
-memory-and-session-mining = "skill-miner"
-truth-maintenance = "sync-truth"
-completion-judgment = "close-change"
-
-[[trigger_cases]]
-id = "project-truth-audit"
-owner = "analyze-project"
-negative = [
-  "Diagnose a live infrastructure incident whose runtime data path is the primary question.",
-  "Implement a requested repository change.",
-]
-lexical_hints = ["analyze project", "repo truth", "architecture drift"]
-
-[[trigger_cases]]
-id = "change-scope-design"
-owner = "design-change"
-negative = [
-  "Turn an already approved design into an execution-grade task plan.",
-  "Implement an authorized bounded change or approved plan whose material decisions are already settled, even when it touches architecture or stable truth.",
-  "Investigate code or make local technical choices without a material design decision or requested design artifact.",
-]
-lexical_hints = ["design change", "design-lite", "design-full"]
-
-[[trigger_cases]]
-id = "execution-plan"
+[[clusters.handoffs]]
+when = "Turn an already approved design into an execution-grade task plan."
 owner = "plan-change"
-negative = [
-  "Decide unresolved architecture boundaries that still require design.",
-  "Execute an explicit bounded change or tasks from an already approved plan.",
-  "Perform local implementation with sufficient scope, dependencies, and verification and no requested separate plan artifact.",
-]
-lexical_hints = ["implementation plan", "task DAG", "plan change"]
+instead_of = ["design-change"]
 
-[[trigger_cases]]
-id = "simplification-assessment"
-owner = "skills-routing"
-negative = [
-  "Reevaluate architecture automatically during each approved implementation task.",
-  "Perform ordinary cleanup while implementing an approved task.",
-  "Tune performance without a repository simplification audit.",
-  "Review only the current diff instead of auditing current repository structure.",
-]
-lexical_hints = ["simplify codebase", "simplify tests", "simplify documentation", "remove overengineering", "ablation experiment", "remove accidental complexity", "replace bespoke framework", "structural alternatives", "refactor or rewrite"]
-
-[[trigger_cases]]
-id = "bounded-change-execution"
+[[clusters.handoffs]]
+when = "Implement an authorized bounded change or approved plan whose material decisions are settled, even when it touches architecture or stable truth."
 owner = "implement-change"
-negative = [
-  "Plan a change whose scope or execution order is not yet resolved.",
-  "Perform a read-only project explanation with no requested mutation.",
-]
-lexical_hints = ["implement change", "execute plan", "fix forward"]
+instead_of = ["design-change", "plan-change"]
 
-[[trigger_cases]]
-id = "herdr-main-implementation-handoff"
-owner = "herdr-implement"
-positive = [
-  "Explicitly request implementation through Herdr using a selected external coding CLI as another main session.",
-  "Use herdr-implement to send an established plan to another main session and review its returned changes.",
-]
-negative = [
-  "Implement a change without requesting Herdr.",
-  "Use Herdr only to inspect or control panes, tabs, workspaces, or commands.",
-  "Delegate a managed subagent task without a main-to-main Herdr handoff.",
-]
-lexical_hints = ["herdr-implement", "implement through Herdr", "Herdr main-to-main handoff"]
+[[clusters.handoffs]]
+when = "Plan a change whose scope or execution order is not yet resolved."
+owner = "plan-change"
+instead_of = ["implement-change"]
 
-[[trigger_cases]]
-id = "bounded-change-review"
-owner = "review-change"
-negative = [
-  "Implement accepted findings or mutate the reviewed code.",
-  "Give informal feedback without a bounded review target or decision question.",
-]
-lexical_hints = ["review change", "review target", "adjudicate findings"]
+[[clusters.handoffs]]
+when = "Explain current project or branch state read-only with no requested mutation or closure judgment."
+owner = "analyze-project"
+instead_of = ["implement-change", "close-change"]
 
-[[trigger_cases]]
-id = "coding-skill-routing"
-owner = "skills-routing"
-negative = [
-  "A request directly and confidently matches another public skill.",
-  "A domain owner can answer without session-level routing guidance.",
-]
-lexical_hints = ["which skill", "route this request", "coding skills"]
+[[clusters.handoffs]]
+when = "Grill, stress-test, or challenge an existing design or plan at the user's explicit request."
+owner = "design-change:stress-test-mode"
+instead_of = ["review-change"]
 
-[[trigger_cases]]
-id = "session-boundary-handoff"
-owner = "skills-routing"
-negative = [
-  "Recover persisted Codex JSONL history after explicitly invoking the recovery tool.",
-  "Mine historical sessions for reusable skill improvements.",
-]
-lexical_hints = ["session handoff", "compaction", "memory boundary"]
+[[clusters.handoffs]]
+when = "Implement accepted findings or mutate the reviewed target."
+owner = "implement-change"
+instead_of = ["review-change"]
 
-[[trigger_cases]]
-id = "documentation-organization"
+[[clusters.handoffs]]
+when = "Report the outcome of the current implementation run."
+owner = "implement-change"
+instead_of = ["close-change"]
+
+[[clusters]]
+id = "truth-and-docs"
+members = ["analyze-project", "organize-docs", "sync-truth"]
+question = "Answer current facts read-only, write already verified behavior into stable docs, or change documentation ownership, layout, or search boundaries?"
+
+[[clusters.handoffs]]
+when = "Update stable docs to match verified behavior without changing documentation ownership or structure."
+owner = "sync-truth"
+instead_of = ["organize-docs"]
+
+[[clusters.handoffs]]
+when = "Restructure documentation ownership, layout, or search boundaries rather than record verified behavior."
 owner = "organize-docs"
-negative = [
-  "Explain existing project truth without reorganizing documentation.",
-  "Synchronize stable truth from verified change evidence without reorganizing documentation boundaries.",
-]
-lexical_hints = ["organize docs", "README AGENTS split", "docs boundary"]
+instead_of = ["sync-truth"]
 
-[[trigger_cases]]
-id = "api-contract-governance"
-owner = "api-contract-strategy"
-negative = [
-  "Make an ordinary implementation edit where the existing API contract is fixed.",
-  "Choose general service boundaries unrelated to an API contract lifecycle.",
-]
-lexical_hints = ["API contract", "OpenAPI", "consumer compatibility"]
+[[clusters.handoffs]]
+when = "Explain or audit current documentation, including README and AGENTS ownership, without a requested edit."
+owner = "analyze-project"
+instead_of = ["organize-docs", "sync-truth"]
 
-[[trigger_cases]]
-id = "architecture-and-boundaries"
-owner = "architecture-patterns"
-negative = [
-  "Select the implementation language for a new persisted boundary.",
-  "Apply already decided boundaries while implementing an approved task.",
-]
-lexical_hints = ["architecture", "service boundary", "dependency direction"]
-
-[[trigger_cases]]
-id = "resilience-and-recovery"
-owner = "error-patterns"
-negative = [
-  "Design application log fields or audit-event retention.",
-  "Diagnose a specific infrastructure incident whose state owner is still unknown.",
-]
-lexical_hints = ["resilience", "retry", "recovery policy"]
-
-[[trigger_cases]]
-id = "infrastructure-data-path"
+[[clusters.handoffs]]
+when = "Diagnose a live infrastructure incident whose runtime data path is the primary question."
 owner = "infrastructure-triage"
-positive = [
-  "Diagnose an observed operational mismatch or cross-boundary runtime failure.",
-  "Resolve infrastructure design affecting access, shared resources, or retained state.",
-]
-negative = [
-  "Perform broad repository orientation without a runtime incident or infrastructure design question.",
-  "Design in-process application error handling only.",
-  "Apply a routine Ansible, container, or deployment configuration edit whose approach and authority are already settled.",
-]
-lexical_hints = ["operational mismatch", "runtime incident", "network path failure", "infrastructure design"]
+instead_of = ["analyze-project"]
 
-[[trigger_cases]]
-id = "verification-strategy"
-owner = "testing-strategy"
-negative = [
-  "Choose among oracle methods when what evidence would prove correctness is still unresolved.",
-  "Run known checks or add routine regression tests under an established oracle and verification strategy.",
-  "Apply one language's lint and test tooling conventions only.",
-]
-lexical_hints = ["testing strategy", "test layers", "verification scope"]
+[[clusters]]
+id = "runtime-and-safety"
+members = ["infrastructure-triage", "error-patterns", "logging-standards", "security-guardrails", "sops-age-guardrails", "docker-multiarch-build"]
+question = "Is the owner of an operational state still unknown, or is the decision a recovery policy for a known failure boundary, log events, preventive security controls, SOPS rules, or multi-architecture images?"
 
-[[trigger_cases]]
-id = "docker-multiarch"
-owner = "docker-multiarch-build"
-negative = [
-  "Troubleshoot a general container runtime incident unrelated to image architecture.",
-  "Harden a container image for security without a multi-architecture concern.",
-]
-lexical_hints = ["multiarch", "buildx", "amd64 arm64"]
+[[clusters.handoffs]]
+when = "Diagnose an operational incident whose state owner is unknown, including a container runtime failure unrelated to image architecture."
+owner = "infrastructure-triage"
+instead_of = ["error-patterns", "docker-multiarch-build"]
 
-[[trigger_cases]]
-id = "application-logging"
+[[clusters.handoffs]]
+when = "Design in-process error handling or retry behavior for a known failure boundary."
+owner = "error-patterns"
+instead_of = ["infrastructure-triage", "logging-standards"]
+
+[[clusters.handoffs]]
+when = "Build a repeatable feedback loop for a reproducible code, test, or performance failure."
+owner = "error-patterns:debugging-tight-loop"
+instead_of = ["infrastructure-triage", "analyze-project"]
+
+[[clusters.handoffs]]
+when = "Apply a routine Ansible, container, or deployment configuration edit whose approach and authority are settled."
+owner = "implement-change"
+instead_of = ["infrastructure-triage"]
+
+[[clusters.handoffs]]
+when = "Choose log fields, audit events, redaction, retention, or tamper evidence."
 owner = "logging-standards"
-negative = [
-  "Implement input validation, injection prevention, CORS, TLS, or upload controls.",
-  "Design retry and failure-recovery behavior without a logging question.",
-]
-lexical_hints = ["logging", "audit trail", "correlation ID"]
+instead_of = ["error-patterns", "security-guardrails"]
 
-[[trigger_cases]]
-id = "application-security-controls"
+[[clusters.handoffs]]
+when = "Implement input validation, injection prevention, CORS, TLS, upload controls, or container hardening without a multi-architecture concern."
 owner = "security-guardrails"
-negative = [
-  "Choose security audit events, redaction, retention, or tamper evidence for logs.",
-  "Edit a SOPS age encryption policy or recipient boundary.",
-]
-lexical_hints = ["security guardrails", "input validation", "container hardening"]
+instead_of = ["logging-standards", "docker-multiarch-build"]
 
-[[trigger_cases]]
-id = "sops-age-secrets"
+[[clusters.handoffs]]
+when = "Edit SOPS creation rules, encryption regexes, or age recipient boundaries."
 owner = "sops-age-guardrails"
-negative = [
-  "Apply general application secret-handling policy without SOPS or age.",
-  "Manage credentials through an unrelated infrastructure runtime.",
-]
-lexical_hints = ["SOPS", "age recipient", "encrypted_regex"]
+instead_of = ["security-guardrails"]
 
-[[trigger_cases]]
-id = "focused-smart-commit"
-owner = "smart-commit"
-positive = [
-  "Explicitly ask to group current working-tree diffs by business purpose and create focused local commits.",
-  "Split staged and unstaged work into semantic commits without rewriting history.",
-]
-negative = [
-  "Ask for a generic single commit with no grouping requirement.",
-  "Ask to squash or rewrite unpushed commits.",
-]
-lexical_hints = ["smart commit", "group diffs", "focused commits"]
+[[clusters.handoffs]]
+when = "Apply general application secret handling without SOPS or age."
+owner = "security-guardrails"
+instead_of = ["sops-age-guardrails"]
 
-[[trigger_cases]]
-id = "executable-oracle-selection"
-owner = "skills-routing"
-negative = [
-  "Implement concrete tests after the oracle boundary is already approved.",
-  "Run a known verification command for an existing task.",
-  "Use TDD or execute locally without any unresolved oracle-method decision or actual delegation.",
-]
-lexical_hints = ["oracle strategy", "TDD or contract tests", "choose acceptance evidence"]
+[[clusters]]
+id = "verification-and-contracts"
+members = ["testing-strategy", "api-contract-strategy", "skills-routing:oracle-selection"]
+question = "Is what evidence would prove correctness still open, is coverage or lane placement for an established oracle in question, or is an API contract's ownership and compatibility the decision?"
 
-[[trigger_cases]]
-id = "persisted-language-selection"
-owner = "skills-routing"
-negative = [
-  "Choose an ad hoc command for the agent's current investigation.",
-  "Edit an existing module whose language is already fixed.",
-]
-lexical_hints = ["choose language", "new service language", "persisted tool"]
+[[clusters.handoffs]]
+when = "Choose among oracle methods while what evidence would prove correctness is unresolved, even when the intended outcome is settled."
+owner = "skills-routing:oracle-selection"
+instead_of = ["testing-strategy", "design-change"]
 
-[[trigger_cases]]
-id = "ad-hoc-tool-selection"
-owner = "skills-routing"
-negative = [
-  "Use a routine known search command without a tool-choice decision.",
-  "Choose the persisted implementation language for a repository artifact.",
-]
-lexical_hints = ["which CLI", "rg or grep", "structured refactor", "quoting boundary"]
+[[clusters.handoffs]]
+when = "Add routine tests under an established oracle and verification strategy."
+owner = "implement-change"
+instead_of = ["testing-strategy", "skills-routing:oracle-selection"]
 
-[[trigger_cases]]
-id = "cross-language-implementation-policy"
-owner = "development-standards"
-negative = [
-  "Select exact Python, Go, Lua, PowerShell, or Shell tooling conventions.",
-  "Define executable test layers or arbitrary universal metric thresholds.",
-]
-lexical_hints = ["development standards", "maintainability policy", "smallest durable change"]
+[[clusters.handoffs]]
+when = "Run existing checks or a known test suite without changing coverage or strategy."
+owner = "none"
+instead_of = ["testing-strategy"]
 
-[[trigger_cases]]
-id = "go-language-policy"
-owner = "go-guidelines"
-negative = [
-  "Decide whether a new service should use Go or another language.",
-  "Apply generic cross-language maintainability policy only.",
-]
-lexical_hints = ["Go module", "go test", "Go service"]
+[[clusters.handoffs]]
+when = "Make an ordinary implementation edit under a fixed API contract."
+owner = "implement-change"
+instead_of = ["api-contract-strategy"]
 
-[[trigger_cases]]
-id = "lua-language-policy"
-owner = "lua-guidelines"
-negative = [
-  "Choose Lua as the persisted language for a new tool.",
-  "Edit unrelated configuration that is not Lua.",
-]
-lexical_hints = ["Lua", "luac", "selene"]
+[[clusters.handoffs]]
+when = "Choose general service boundaries unrelated to an API contract lifecycle."
+owner = "architecture-patterns"
+instead_of = ["api-contract-strategy"]
 
-[[trigger_cases]]
-id = "powershell-language-policy"
-owner = "powershell-guidelines"
-negative = [
-  "Choose PowerShell versus another persisted implementation language.",
-  "Compose an ad hoc Shell command that is not PowerShell code.",
-]
-lexical_hints = ["PowerShell", "PSScriptAnalyzer", "approved verbs"]
+[[clusters]]
+id = "architecture-and-methods"
+members = ["architecture-patterns", "skills-routing:simplification", "skills-routing:language-selection", "skills-routing:tool-selection"]
+question = "Is the decision a durable architecture boundary, a requested simplification assessment, the language of a persisted artifact, or the tools for the current ad hoc investigation?"
 
-[[trigger_cases]]
-id = "python-language-policy"
-owner = "python-guidelines"
-negative = [
-  "Choose Python as the language for a new persisted boundary.",
-  "Select general verification architecture across languages.",
-]
-lexical_hints = ["Python", "uv", "ruff pytest"]
+[[clusters.handoffs]]
+when = "Choose the implementation language for a new persisted component."
+owner = "skills-routing:language-selection"
+instead_of = ["architecture-patterns", "skills-routing:tool-selection"]
 
-[[trigger_cases]]
-id = "routeros-scripting-language-policy"
-owner = "routeros-scripting-guidelines"
-negative = [
-  "Design RouterOS firewall, routing, VLAN, NAT, DHCP, or other network policy without scripting-language work.",
-  "Run live RouterOS operations or diagnose a device when no script source or event body is involved.",
-]
-lexical_hints = ["RouterOS script", ".rsc", "scheduler Netwatch PPP DHCP event body"]
+[[clusters.handoffs]]
+when = "Apply already decided boundaries or perform ordinary cleanup while implementing an approved task."
+owner = "implement-change"
+instead_of = ["architecture-patterns", "skills-routing:simplification"]
 
-[[trigger_cases]]
-id = "shell-language-policy"
+[[clusters.handoffs]]
+when = "Assess whether existing code, tests, documents, or mechanisms are necessary, or which could be removed, without applying the result."
+owner = "skills-routing:simplification"
+instead_of = ["analyze-project"]
+
+[[clusters.handoffs]]
+when = "Review only the current diff rather than audit the current repository structure."
+owner = "review-change"
+instead_of = ["skills-routing:simplification"]
+
+[[clusters.handoffs]]
+when = "Choose commands or tools for the agent's current investigation."
+owner = "skills-routing:tool-selection"
+instead_of = ["skills-routing:language-selection"]
+
+[[clusters.handoffs]]
+when = "Run a routine known command with no open tool choice."
+owner = "none"
+instead_of = ["skills-routing:tool-selection"]
+
+[[clusters]]
+id = "implementation-policy"
+members = ["development-standards", "go-guidelines", "python-guidelines", "shell-guidelines", "lua-guidelines", "powershell-guidelines", "routeros-scripting-guidelines"]
+question = "Does the cross-language baseline suffice, or which existing or already selected language and file type adds its own conventions?"
+
+[[clusters.handoffs]]
+when = "Decide which language a new persisted component should use."
+owner = "skills-routing:language-selection"
+instead_of = ["go-guidelines", "python-guidelines", "shell-guidelines", "lua-guidelines", "powershell-guidelines"]
+
+[[clusters.handoffs]]
+when = "Define executable test layers or suite placement across languages."
+owner = "testing-strategy"
+instead_of = ["development-standards", "python-guidelines"]
+
+[[clusters.handoffs]]
+when = "Write or review POSIX or Bash Shell code rather than PowerShell."
 owner = "shell-guidelines"
-negative = [
-  "Select Shell versus another language for a new persisted implementation.",
-  "Choose among general search or structured-data tools without Shell-policy risk.",
-]
-lexical_hints = ["Shell", "set -euo pipefail", "ShellCheck"]
+instead_of = ["powershell-guidelines"]
 
-[[trigger_cases]]
-id = "explicit-skill-history-mining"
+[[clusters.handoffs]]
+when = "Choose search or structured-data tools without Shell-policy risk."
+owner = "skills-routing:tool-selection"
+instead_of = ["shell-guidelines"]
+
+[[clusters.handoffs]]
+when = "Edit Rime schema or dictionary YAML that contains no Lua code."
+owner = "implement-change"
+instead_of = ["lua-guidelines"]
+
+[[clusters.handoffs]]
+when = "Design RouterOS network policy or diagnose a live device without script source or event-body work."
+owner = "infrastructure-triage"
+instead_of = ["routeros-scripting-guidelines"]
+
+[[clusters]]
+id = "git-and-handoff"
+members = ["smart-commit", "herdr-implement", "implement-change:worktree-isolation"]
+question = "Group current diffs into focused commits, hand a plan to another main session through Herdr, isolate the current change in its own worktree or remove, prune, or repair an existing one, or perform an ordinary Git or delegation action?"
+
+[[clusters.handoffs]]
+when = "Create one ordinary commit without business-domain grouping."
+owner = "none"
+instead_of = ["smart-commit"]
+
+[[clusters.handoffs]]
+when = "Squash, reorder, or otherwise rewrite existing commits."
+owner = "none"
+instead_of = ["smart-commit"]
+
+[[clusters.handoffs]]
+when = "Implement a change or delegate a managed subagent task without a main-to-main Herdr handoff."
+owner = "implement-change"
+instead_of = ["herdr-implement"]
+
+[[clusters.handoffs]]
+when = "Inspect or control Herdr panes, tabs, workspaces, or commands without an implementation handoff."
+owner = "none"
+instead_of = ["herdr-implement"]
+
+[[clusters.handoffs]]
+when = "Implement serially in the current checkout without a worktree request, repository rule, branch requirement, or concrete conflict."
+owner = "implement-change"
+instead_of = ["implement-change:worktree-isolation"]
+
+[[clusters.handoffs]]
+when = "Remove, prune, or repair an existing Git worktree, which can discard uncommitted work or unique commits."
+owner = "implement-change:worktree-isolation"
+instead_of = ["none", "close-change"]
+
+[[clusters]]
+id = "session-and-history"
+members = ["skills-routing:memory-boundary", "skill-miner"]
+question = "Is the request about the current task's handoff, compaction, or recovery boundary, or an explicitly selected mining pass over past sessions and memory files?"
+
+[[clusters.handoffs]]
+when = "Mine past sessions or memory files for reusable Skill improvements or cleanup candidates."
 owner = "skill-miner"
-positive = [
-  "Explicitly invoke $coding:skill-miner to audit configured agent histories for skill usage or improvement evidence.",
-  "Explicitly invoke $coding:skill-miner to classify durable truth extraction and memory cleanup candidates.",
-]
-negative = [
-  "Ask for ordinary current-repository analysis without explicitly selecting skill-miner.",
-  "Ask which skill should route an ambiguous live request.",
-]
-lexical_hints = ["$coding:skill-miner", "mine sessions", "skill usage"]
+instead_of = ["skills-routing:memory-boundary"]
 
-[[trigger_cases]]
-id = "explicit-codex-session-recovery"
-owner = "codex-session-recovery"
-positive = [
-  "Explicitly invoke $coding:codex-session-recovery to audit or merge Codex JSONL histories across CODEX_HOME directories.",
-  "Explicitly request the bounded session recovery workflow without touching SQLite, auth, memories, or logs.",
-]
-negative = [
-  "Mine sessions for reusable workflow patterns rather than recover persisted history.",
-  "Repair general Codex configuration or authentication state.",
-]
-lexical_hints = ["$coding:codex-session-recovery", "session JSONL", "CODEX_HOME"]
+[[clusters.handoffs]]
+when = "Analyze current repository files without explicitly selecting skill-miner."
+owner = "analyze-project"
+instead_of = ["skill-miner"]
 
-[[trigger_cases]]
-id = "explicit-git-worktree-operation"
-owner = "git-worktrees"
-positive = [
-  "Explicitly invoke $coding:git-worktrees to create, compare, integrate, repair, or clean up Git worktrees.",
-  "Explicitly request worktree isolation for a bounded branch workflow.",
-]
-negative = [
-  "Use the current checkout for ordinary serial implementation.",
-  "Ask for generic Git status or commit operations without a worktree task.",
-]
-lexical_hints = ["$coding:git-worktrees", "git worktree", "isolated worktree"]
+[[clusters.handoffs]]
+when = "Recover or merge persisted Codex session files across homes."
+owner = "none"
+instead_of = ["skill-miner", "skills-routing:memory-boundary"]
 
-[[trigger_cases]]
-id = "explicit-unpushed-history-squash"
-owner = "smart-squash"
-positive = [
-  "Explicitly invoke $coding:smart-squash to reorganize or squash unpushed commits after preflight and approval.",
-  "Explicitly request semantic cleanup of local unpublished history.",
-]
-negative = [
-  "Group current working-tree diffs into new focused commits.",
-  "Rewrite pushed history or perform an unapproved destructive reset.",
-]
-lexical_hints = ["$coding:smart-squash", "squash unpushed commits", "rewrite local history"]
+[[clusters]]
+id = "skill-authoring"
+members = ["skill-authoring", "skills-routing"]
+question = "Is the request to write or revise a Skill's discovery surface and boundaries, or to choose which Skill should own the current task?"
+
+[[clusters.handoffs]]
+when = "Choose which Skill owns an ambiguous coding request."
+owner = "skills-routing"
+instead_of = ["skill-authoring"]
+
+[[clusters.handoffs]]
+when = "Change only a Skill's domain method without touching its description, boundaries, or activation."
+owner = "implement-change"
+instead_of = ["skill-authoring"]
+
+[[clusters.handoffs]]
+when = "Measure Skill selection or behavior with probes or controlled comparisons."
+owner = "testing-strategy:agent-skill-evaluation"
+instead_of = ["skill-authoring"]

@@ -13,7 +13,7 @@ Read the reference that answers the current question, not every branch. A workfl
 
 | Open question | Read when needed |
 | --- | --- |
-| Which skill owns an ambiguous request, or how should skills compose? | [Skill Selection](references/routing.md) and [Discovery Cases](references/routing.toml). |
+| Which skill owns an ambiguous request, or how should skills compose? | [Skill Selection](references/routing.md) and [Scope Contracts](references/routing.toml). |
 | What unnecessary responsibility can disappear from code, tests, documents, or supporting mechanisms? | [Simplification](references/simplification.md). |
 | Which language fits new persisted code or an authorized migration? | [Language Selection](references/language-selection.md). |
 | Which ad hoc CLI or command composition fits a non-trivial task? | [Tool Selection](references/tool-selection.md). |

@@ -1,6 +1,6 @@
 ---
 name: close-change
-description: "Use after a verified change to judge closure readiness for handoff, merge, release, cleanup, or an explicitly guarded recovery action."
+description: "Judge whether a verified change is ready for handoff, merge, release, or cleanup, or whether an explicitly guarded recovery action may proceed. Not for reporting an implementation run's own outcome, which implement-change owns, or for read-only branch facts, which analyze-project answers."
 ---
 
 # Close Change
@@ -12,7 +12,7 @@ Decide whether a bounded change is complete for the requested close purpose.
 - implementation and required verification are complete
 - the user wants an explicit handoff, merge, release, cleanup, or closure judgment
 
-Do not use it while design, planning, or implementation is still being produced, or when the user only wants a local status query or cleanup suggestion; neither needs a closure judgment. Entering to judge closure is valid once implementation and required verification are complete, even when a required review, truth sync, or authority later turns out to be missing: that produces the corresponding `needs-review`, `needs-truth-sync`, or `needs-authority` outcome below. Judging readiness and reporting a real gap is this Skill's job; it is not a claim that closure already happened, and an entry exclusion is not a way to hide an unresolved gap.
+Do not use it while design, planning, or implementation is still being produced, since the owning workflow reports its own outcome, or when the user only wants a local status query (`analyze-project`) or cleanup suggestion; neither needs a closure judgment. A standalone request to remove, prune, or repair an existing Git worktree, outside a change's closure, uses `references/worktree-isolation.md` in `implement-change`. Entering to judge closure is valid once implementation and required verification are complete, even when a required review, truth sync, or authority later turns out to be missing: that produces the corresponding `needs-review`, `needs-truth-sync`, or `needs-authority` outcome below. Judging readiness and reporting a real gap is this Skill's job; it is not a claim that closure already happened, and an entry exclusion is not a way to hide an unresolved gap.
 
 ## Closure Judgment
 
@@ -38,7 +38,7 @@ Judge delivery by current evidence for the specified version at the requested en
 
 Before closure, account for active delegated work, unintegrated results, pending review or repair, and task workspaces that are still needed. Child process exit alone does not end a logical assignment. Mark owned execution resources as reclaimed, explicitly retained for a stated need, or unresolved. Do not leave retention implicit indefinitely.
 
-Closure stays a semantic judgment. The authorized implementation owner or managed executor performs supported cleanup of resources it owns; this Skill does not gain repository mutation authority. Consume already covered task-resource cleanup authority without reasking for each temporary directory, but do not infer permission to delete arbitrary user branches or other workspaces from business acceptance.
+Closure stays a semantic judgment. The authorized implementation owner or managed executor performs supported cleanup of resources it owns, using `references/worktree-isolation.md` in `implement-change` for a task-created Git worktree; this Skill does not gain repository mutation authority. Consume already covered task-resource cleanup authority without reasking for each temporary directory, but do not infer permission to delete arbitrary user branches or other workspaces from business acceptance.
 
 ## Outcomes
 

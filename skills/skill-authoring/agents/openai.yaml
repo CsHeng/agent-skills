@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Authoring"
+policy:
+  allow_implicit_invocation: true

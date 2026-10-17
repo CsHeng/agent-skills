@@ -1,23 +1,13 @@
 [activation_modes.native]
 codex_allow_implicit_invocation = true
-claude_effective_visibility = "default-visible"
-
 [activation_modes.conditional]
 codex_allow_implicit_invocation = true
-claude_effective_visibility = "default-visible"
-
 [activation_modes.composition]
 codex_allow_implicit_invocation = false
-claude_effective_visibility = "default-visible"
-
 [activation_modes.explicit]
 codex_allow_implicit_invocation = false
-claude_effective_visibility = "default-visible"
-
 [activation_modes.baseline]
 codex_allow_implicit_invocation = true
-claude_effective_visibility = "default-visible"
-
 [skills.analyze-project]
 category = "workflow"
 activation_mode = "native"
@@ -60,7 +50,7 @@ semantic_requires = ["development-standards"]
 
 [skills.sync-truth]
 category = "workflow"
-activation_mode = "composition"
+activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = true
 may_spawn_agent = false
@@ -68,7 +58,7 @@ requires_explicit_user_request = true
 
 [skills.close-change]
 category = "workflow"
-activation_mode = "composition"
+activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = false
 may_spawn_agent = false
@@ -80,7 +70,6 @@ default_role = "primary"
 may_mutate_repo = false
 may_spawn_agent = false
 routing_contract = "references/routing.toml"
-semantic_requires = ["analyze-project", "api-contract-strategy", "architecture-patterns", "close-change", "codex-session-recovery", "design-change", "development-standards", "docker-multiarch-build", "error-patterns", "git-worktrees", "go-guidelines", "herdr-implement", "implement-change", "infrastructure-triage", "logging-standards", "lua-guidelines", "organize-docs", "output-styles", "plan-change", "powershell-guidelines", "python-guidelines", "review-change", "routeros-scripting-guidelines", "security-guardrails", "shell-guidelines", "skill-miner", "smart-commit", "smart-squash", "sops-age-guardrails", "sync-truth", "testing-strategy"]
 
 [skills.output-styles]
 category = "session"
@@ -139,11 +128,11 @@ default_role = "primary"
 may_mutate_repo = false
 may_spawn_agent = false
 
-[skills.codex-session-recovery]
-category = "tool"
-activation_mode = "explicit"
+[skills.skill-authoring]
+category = "discipline"
+activation_mode = "native"
 default_role = "primary"
-may_mutate_repo = false
+may_mutate_repo = true
 may_spawn_agent = false
 requires_explicit_user_request = true
 
@@ -233,25 +222,9 @@ default_role = "primary"
 may_mutate_repo = false
 may_spawn_agent = false
 
-[skills.git-worktrees]
-category = "manual-tool"
-activation_mode = "explicit"
-default_role = "primary"
-may_mutate_repo = true
-may_spawn_agent = false
-requires_explicit_user_request = true
-
 [skills.smart-commit]
 category = "tool"
 activation_mode = "native"
-default_role = "primary"
-may_mutate_repo = true
-may_spawn_agent = false
-requires_explicit_user_request = true
-
-[skills.smart-squash]
-category = "manual-tool"
-activation_mode = "explicit"
 default_role = "primary"
 may_mutate_repo = true
 may_spawn_agent = false

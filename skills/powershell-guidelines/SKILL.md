@@ -1,6 +1,6 @@
 ---
 name: powershell-guidelines
-description: "Use for PowerShell scripts and modules: pwsh, PSScriptAnalyzer, strict mode, approved verbs, cross-platform scripting, and review."
+description: "Apply PowerShell 7 policy as a conditional overlay when writing or reviewing PowerShell scripts, modules, and manifests: pwsh, PSScriptAnalyzer, strict mode, approved verbs, and cross-platform scripting. Code that must stay compatible with Windows PowerShell 5.1 gets no overlay from this policy, which also does not authorize upgrading it."
 ---
 
 # PowerShell Guidelines

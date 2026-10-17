@@ -18,15 +18,29 @@ from scripts.skill_activation import (  # noqa: E402 - imports follow path boots
 )
 
 CONTRACT_PATH = REPO_ROOT / "contracts" / "skills.toml"
+PROBE_PATH = Path("tests") / "fixtures" / "selection-probes.toml"
 VALID_CATEGORIES = {
     "workflow",
     "session",
     "discipline",
     "policy",
     "tool",
-    "manual-tool",
     "review-component",
 }
+NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+NO_SKILL = "none"
+ROUTING_VERSION = 2
+SELECTABLE_MODES = {"native", "conditional", "explicit"}
+RETIRED_ROUTING_TABLES = (
+    "gate_policy",
+    "phase_routes",
+    "review_evaluators",
+    "routing",
+    "environment_instructions",
+    "composition",
+    "support_routes",
+    "trigger_cases",
+)
 
 
 def validate_semantic_contracts(
@@ -91,47 +105,20 @@ def validate_semantic_contracts(
             "semantic dependency graph contains a cycle: " + " -> ".join(cycle)
         )
 
+    composers = {
+        target
+        for skill_name, targets in adjacency.items()
+        if skill_name not in routing_owners
+        for target in targets
+    }
     for skill_name, entry in sorted(public_entries.items()):
-        routing_contract = entry.get("routing_contract")
-        if not routing_contract:
-            continue
-        routing_path = repo_root / "skills" / skill_name / routing_contract
-        try:
-            with routing_path.open("rb") as handle:
-                routing = tomllib.load(handle)
-        except (OSError, tomllib.TOMLDecodeError):
-            continue
-        expected_targets: set[str] = set()
-        for table_name in ("support_routes",):
-            table = routing.get(table_name)
-            if isinstance(table, dict):
-                expected_targets.update(
-                    target for target in table.values() if isinstance(target, str)
-                )
-        composition = routing.get("composition")
-        if isinstance(composition, dict):
-            rendering_baseline = composition.get("rendering_baseline")
-            if isinstance(rendering_baseline, str):
-                expected_targets.add(rendering_baseline)
-        trigger_cases = routing.get("trigger_cases")
-        if isinstance(trigger_cases, list):
-            for trigger_case in trigger_cases:
-                if not isinstance(trigger_case, dict):
-                    continue
-                owner = trigger_case.get("owner")
-                if isinstance(owner, str):
-                    expected_targets.add(owner)
-                overlays = trigger_case.get("overlays", [])
-                if isinstance(overlays, list):
-                    expected_targets.update(
-                        target for target in overlays if isinstance(target, str)
-                    )
-        expected_targets.discard(skill_name)
-        declared_targets = adjacency.get(skill_name, set())
-        if declared_targets != expected_targets:
+        if (
+            entry.get("activation_mode") == "composition"
+            and entry.get("default_role") != "evaluator"
+            and skill_name not in composers
+        ):
             errors.append(
-                f"{skill_name}: semantic_requires must match routing targets; "
-                f"expected={sorted(expected_targets)} actual={sorted(declared_targets)}"
+                f"{skill_name}: composition-only skill needs a semantic composer other than the router"
             )
 
     return errors
@@ -209,156 +196,201 @@ def _semantic_dependency_cycle(adjacency: dict[str, set[str]]) -> list[str] | No
     return None
 
 
-def validate_trigger_cases(
-    skills: dict[str, Any], routing_contract: dict[str, Any]
+def target_error(
+    target: object,
+    public_entries: dict[str, dict[str, Any]],
+    repo_root: Path,
+    *,
+    allow_none: bool,
+    allow_evaluator: bool = False,
+) -> str | None:
+    """Explain why a selection target does not resolve; None means it resolves.
+
+    A target is a public Skill ID, `<id>:<reference>` for a method reference
+    inside that Skill, or `none` where no Skill of this collection is needed.
+    """
+    if not isinstance(target, str) or not target:
+        return "must be a non-empty string"
+    if target == NO_SKILL:
+        return None if allow_none else f"cannot be {NO_SKILL}"
+    skill_id, separator, reference = target.partition(":")
+    entry = public_entries.get(skill_id)
+    if entry is None:
+        return f"references unknown skill: {skill_id}"
+    if entry.get("default_role") == "evaluator" and not allow_evaluator:
+        return f"cannot select a composition-only evaluator: {skill_id}"
+    if separator and not (
+        NAME_PATTERN.fullmatch(reference)
+        and (repo_root / "skills" / skill_id / "references" / f"{reference}.md").is_file()
+    ):
+        return f"references unknown method: {target}"
+    return None
+
+
+def _string_duplicates(values: list[Any]) -> bool:
+    strings = [value for value in values if isinstance(value, str)]
+    return len(strings) != len(set(strings))
+
+
+def _handoff_errors(
+    label: str,
+    handoff: object,
+    public_entries: dict[str, dict[str, Any]],
+    repo_root: Path,
 ) -> list[str]:
+    if not isinstance(handoff, dict):
+        return [f"{label}: must be a table"]
     errors: list[str] = []
+    when = handoff.get("when")
+    if not isinstance(when, str) or not when.strip():
+        errors.append(f"{label}: requires a non-empty when")
+    owner = handoff.get("owner")
+    if not isinstance(owner, str):
+        errors.append(f"{label}: exactly one owner is required")
+    else:
+        problem = target_error(owner, public_entries, repo_root, allow_none=True)
+        if problem:
+            errors.append(f"{label}: owner {problem}")
+    candidates = handoff.get("instead_of")
+    if not isinstance(candidates, list) or not candidates:
+        errors.append(f"{label}: instead_of requires at least one candidate")
+        return errors
+    if _string_duplicates(candidates):
+        errors.append(f"{label}: instead_of contains duplicates")
+    for candidate in candidates:
+        problem = target_error(
+            candidate, public_entries, repo_root, allow_none=True, allow_evaluator=True
+        )
+        if problem:
+            errors.append(f"{label}: instead_of {problem}")
+        elif candidate == owner:
+            errors.append(f"{label}: owner cannot also be a replaced candidate")
+    return errors
+
+
+def validate_scope_contract(
+    skills: dict[str, Any],
+    routing_contract: dict[str, Any],
+    repo_root: Path = REPO_ROOT,
+) -> list[str]:
     public_entries = {
         name: entry for name, entry in skills.items() if isinstance(entry, dict)
     }
-    raw_cases = routing_contract.get("trigger_cases")
-    if not isinstance(raw_cases, list) or not raw_cases:
-        return ["routing contract requires non-empty [[trigger_cases]] entries"]
+    clusters = routing_contract.get("clusters")
+    if not isinstance(clusters, list) or not clusters:
+        return ["routing contract requires non-empty [[clusters]] entries"]
 
+    errors: list[str] = []
     seen_ids: set[str] = set()
-    owned_cases: dict[str, set[str]] = {
-        public_id: set() for public_id in public_entries
-    }
-    overlay_cases: dict[str, set[str]] = {
-        public_id: set() for public_id in public_entries
-    }
-    case_id_pattern = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
-
-    for index, raw_case in enumerate(raw_cases, start=1):
-        if not isinstance(raw_case, dict):
-            errors.append(f"trigger case #{index} must be a table")
+    clustered: set[str] = set()
+    for index, cluster in enumerate(clusters, start=1):
+        if not isinstance(cluster, dict):
+            errors.append(f"cluster #{index} must be a table")
             continue
-        case_id = raw_case.get("id")
-        label = str(case_id or f"#{index}")
-        if not isinstance(case_id, str) or not case_id_pattern.fullmatch(case_id):
-            errors.append(
-                f"trigger case {label}: id must be a stable kebab-case string"
-            )
-        elif case_id in seen_ids:
-            errors.append(f"duplicate trigger case id: {case_id}")
+        cluster_id = cluster.get("id")
+        label = f"cluster {cluster_id or f'#{index}'}"
+        if not isinstance(cluster_id, str) or not NAME_PATTERN.fullmatch(cluster_id):
+            errors.append(f"{label}: id must be a stable kebab-case string")
+        elif cluster_id in seen_ids:
+            errors.append(f"duplicate cluster id: {cluster_id}")
         else:
-            seen_ids.add(case_id)
+            seen_ids.add(cluster_id)
 
-        owner = raw_case.get("owner")
-        if not isinstance(owner, str) or not owner:
-            errors.append(f"trigger case {label}: exactly one owner is required")
-            owner_entry = None
-        else:
-            owner_entry = public_entries.get(owner)
-            if owner_entry is None:
-                errors.append(f"trigger case {label}: unknown owner: {owner}")
+        question = cluster.get("question")
+        if not isinstance(question, str) or not question.strip():
+            errors.append(f"{label}: requires a non-empty question")
+
+        members = cluster.get("members")
+        if not isinstance(members, list) or not members:
+            errors.append(f"{label}: requires non-empty members")
+            members = []
+        elif _string_duplicates(members):
+            errors.append(f"{label}: members contain duplicates")
+        for member in members:
+            problem = target_error(member, public_entries, repo_root, allow_none=False)
+            if problem:
+                errors.append(f"{label}: member {problem}")
             else:
-                owned_cases[owner].add(label)
-                if owner_entry.get("default_role") == "evaluator":
-                    errors.append(
-                        f"trigger case {label}: composition-only evaluator cannot own a trigger case: {owner}"
-                    )
+                clustered.add(member)
 
-        # The owner skill's frontmatter description owns the positive boundary by
-        # default; an explicit positive override is reserved for explicit-invocation
-        # cases and, when present, must stay non-empty.
-        positives = raw_case.get("positive")
-        negatives = raw_case.get("negative")
-        positive_valid = positives is None or (
-            isinstance(positives, list)
-            and bool(positives)
-            and all(isinstance(value, str) and value.strip() for value in positives)
-        )
-        negative_valid = (
-            isinstance(negatives, list)
-            and bool(negatives)
-            and all(isinstance(value, str) and value.strip() for value in negatives)
-        )
-        if not positive_valid:
-            errors.append(f"trigger case {label}: requires non-empty positive examples")
-        if not negative_valid:
-            errors.append(f"trigger case {label}: requires non-empty negative examples")
-        if raw_case.get("lexical_hints") and (not positive_valid or not negative_valid):
-            errors.append(
-                f"trigger case {label}: cannot be keyword-only; lexical hints are non-authoritative"
-            )
-
-        overlays = raw_case.get("overlays", [])
-        if not isinstance(overlays, list) or not all(
-            isinstance(value, str) and value for value in overlays
-        ):
-            errors.append(f"trigger case {label}: overlays must be a string array")
-            overlays = []
-        if len(overlays) != len(set(overlays)):
-            errors.append(f"trigger case {label}: overlays contain duplicates")
-        for overlay in overlays:
-            overlay_entry = public_entries.get(overlay)
-            if overlay_entry is None:
-                errors.append(f"trigger case {label}: unknown overlay: {overlay}")
-                continue
-            overlay_cases[overlay].add(label)
-            if overlay == owner:
-                errors.append(f"trigger case {label}: owner cannot also be an overlay")
-
-        lexical_hints = raw_case.get("lexical_hints", [])
-        if not isinstance(lexical_hints, list) or not all(
-            isinstance(value, str) and value for value in lexical_hints
-        ):
-            errors.append(f"trigger case {label}: lexical_hints must be a string array")
-
-    composition = routing_contract.get("composition")
-    baseline_target = (
-        composition.get("rendering_baseline") if isinstance(composition, dict) else None
-    )
-    baseline_skills = [
-        public_id
-        for public_id, entry in public_entries.items()
-        if entry.get("activation_mode") == "baseline"
-    ]
-    if baseline_skills != [baseline_target]:
-        errors.append(
-            "baseline must match composition.rendering_baseline; "
-            f"baseline={baseline_skills} rendering_baseline={baseline_target!r}"
-        )
-
-    composition_targets = {
-        target
-        for table in (routing_contract.get("support_routes"),)
-        if isinstance(table, dict)
-        for target in table.values()
-        if isinstance(target, str)
-    }
-    for entry in public_entries.values():
-        requirements = entry.get("semantic_requires", [])
-        if isinstance(requirements, list):
-            composition_targets.update(
-                target for target in requirements if isinstance(target, str)
+        handoffs = cluster.get("handoffs", [])
+        if not isinstance(handoffs, list):
+            errors.append(f"{label}: handoffs must be an array of tables")
+            continue
+        for number, handoff in enumerate(handoffs, start=1):
+            errors.extend(
+                _handoff_errors(
+                    f"{label} handoff #{number}", handoff, public_entries, repo_root
+                )
             )
 
     for public_id, entry in sorted(public_entries.items()):
-        mode = entry.get("activation_mode")
-        if mode == "native" and not owned_cases[public_id]:
-            errors.append(
-                f"{public_id}: native skill must own at least one trigger case"
-            )
-        elif mode == "conditional" and not (
-            owned_cases[public_id] or overlay_cases[public_id]
+        if (
+            entry.get("activation_mode") in SELECTABLE_MODES
+            and public_id not in clustered
         ):
             errors.append(
-                f"{public_id}: conditional skill must own or overlay a trigger case"
+                f"{public_id}: selectable skill must be a member of at least one cluster"
             )
-        elif (
-            mode == "composition"
-            and entry.get("default_role") != "evaluator"
-            and public_id not in composition_targets
-        ):
-            errors.append(
-                f"{public_id}: composition-only skill is not reachable from semantic composition"
-            )
-        elif mode == "explicit" and not owned_cases[public_id]:
-            errors.append(
-                f"{public_id}: explicit skill requires an explicit-entry case"
-            )
+    return errors
+
+
+def validate_selection_probes(
+    skills: dict[str, Any], repo_root: Path = REPO_ROOT
+) -> list[str]:
+    try:
+        with (repo_root / PROBE_PATH).open("rb") as handle:
+            corpus = tomllib.load(handle)
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        return [f"invalid selection probe corpus {PROBE_PATH.as_posix()}: {exc}"]
+    probes = corpus.get("probes")
+    if not isinstance(probes, list) or not probes:
+        return ["selection probe corpus requires non-empty [[probes]] entries"]
+
+    public_entries = {
+        name: entry for name, entry in skills.items() if isinstance(entry, dict)
+    }
+    errors: list[str] = []
+    seen_ids: set[str] = set()
+    for index, probe in enumerate(probes, start=1):
+        if not isinstance(probe, dict):
+            errors.append(f"probe #{index} must be a table")
+            continue
+        probe_id = probe.get("id")
+        label = f"probe {probe_id or f'#{index}'}"
+        if not isinstance(probe_id, str) or not NAME_PATTERN.fullmatch(probe_id):
+            errors.append(f"{label}: id must be a stable kebab-case string")
+        elif probe_id in seen_ids:
+            errors.append(f"duplicate probe id: {probe_id}")
+        else:
+            seen_ids.add(probe_id)
+
+        selections = []
+        for request_key, prefix in (("request", ""), ("counterexample", "counterexample_")):
+            request = probe.get(request_key)
+            if not isinstance(request, str) or not request.strip():
+                errors.append(f"{label}: requires a non-empty {request_key}")
+            primary = probe.get(f"{prefix}primary")
+            problem = target_error(primary, public_entries, repo_root, allow_none=True)
+            if problem:
+                errors.append(f"{label}: {prefix}primary {problem}")
+            overlays = probe.get(f"{prefix}overlays", [])
+            if not isinstance(overlays, list):
+                errors.append(f"{label}: {prefix}overlays must be an array")
+                overlays = []
+            elif _string_duplicates(overlays):
+                errors.append(f"{label}: {prefix}overlays contain duplicates")
+            for overlay in overlays:
+                problem = target_error(
+                    overlay, public_entries, repo_root, allow_none=False
+                )
+                if problem:
+                    errors.append(f"{label}: {prefix}overlay {problem}")
+                elif overlay == primary:
+                    errors.append(f"{label}: {prefix}primary cannot also be an overlay")
+            selections.append((primary, frozenset(map(str, overlays))))
+        if selections[0] == selections[1]:
+            errors.append(f"{label}: counterexample must expect a different selection")
     return errors
 
 
@@ -385,7 +417,6 @@ def validate_routing_contracts(
 
     skill_name, entry = routing_entries[0]
     routing_contract = entry.get("routing_contract")
-    public_id = skill_name
 
     if entry.get("category") != "session":
         errors.append(f"{skill_name}: routing contract owner must be a session skill")
@@ -412,78 +443,17 @@ def validate_routing_contracts(
     except (OSError, tomllib.TOMLDecodeError) as exc:
         return [f"{skill_name}: invalid routing contract: {exc}"]
 
-    routing = contract.get("routing")
-    environment_instructions = contract.get("environment_instructions")
-    composition = contract.get("composition")
-    support_routes = contract.get("support_routes")
-
-    if not isinstance(routing, dict) or routing.get("id") != public_id:
-        errors.append(f"{skill_name}: routing.id must match public_id")
-    elif (
-        routing.get("default_discovery") != "native-description-match"
-        or routing.get("direct_match_bypasses_router") is not True
-        or routing.get("ambiguous_router") != public_id
-    ):
+    if contract.get("version") != ROUTING_VERSION:
         errors.append(
-            f"{skill_name}: routing must keep native discovery, direct-match bypass, and self-owned ambiguity routing"
+            f"{skill_name}: routing contract must declare version = {ROUTING_VERSION}"
         )
-
-    if not isinstance(environment_instructions, dict):
-        errors.append(
-            f"{skill_name}: routing contract requires [environment_instructions]"
-        )
-    else:
-        for field in ("allowed", "forbidden"):
-            values = environment_instructions.get(field)
-            if (
-                not isinstance(values, list)
-                or not values
-                or not all(isinstance(value, str) for value in values)
-            ):
-                errors.append(
-                    f"{skill_name}: environment_instructions.{field} must be a non-empty string array"
-                )
-
-    if not isinstance(composition, dict):
-        errors.append(f"{skill_name}: routing contract requires [composition]")
-    else:
-        if composition.get("primary_owner_count") != 1:
-            errors.append(
-                f"{skill_name}: composition must declare exactly one primary owner"
-            )
-        rendering_baseline = composition.get("rendering_baseline")
-        if rendering_baseline not in public_entries:
-            errors.append(
-                f"{skill_name}: unknown rendering baseline: {rendering_baseline}"
-            )
-        if "lifecycle_owner_category" in composition:
-            errors.append(
-                f"{skill_name}: composition must not declare lifecycle ownership"
-            )
-
-    for retired_table in ("gate_policy", "phase_routes", "review_evaluators"):
+    for retired_table in RETIRED_ROUTING_TABLES:
         if retired_table in contract:
             errors.append(
-                f"{skill_name}: routing contract retains retired control table: {retired_table}"
+                f"{skill_name}: routing contract retains retired table: {retired_table}"
             )
 
-    if not isinstance(support_routes, dict) or not support_routes:
-        errors.append(
-            f"{skill_name}: routing contract requires non-empty [support_routes]"
-        )
-    else:
-        for intent, target in support_routes.items():
-            target_entry = public_entries.get(target)
-            if target_entry is None:
-                errors.append(
-                    f"{skill_name}: support route {intent} targets unknown skill: {target}"
-                )
-            elif target_entry.get("default_role") == "evaluator":
-                errors.append(
-                    f"{skill_name}: support route {intent} cannot target an evaluator: {target}"
-                )
-
-    errors.extend(validate_trigger_cases(skills, contract))
+    errors.extend(validate_scope_contract(skills, contract, repo_root))
     return errors
 
 
@@ -517,7 +487,7 @@ def validate() -> list[str]:
         if not isinstance(entry, dict):
             errors.append(f"{skill_name}: skill entry must be a table")
             continue
-        if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", skill_name):
+        if not NAME_PATTERN.fullmatch(skill_name):
             errors.append(f"{skill_name}: skill ID must be a kebab-case directory name")
             continue
         category = entry.get("category")
@@ -534,9 +504,6 @@ def validate() -> list[str]:
 
         if category not in VALID_CATEGORIES:
             errors.append(f"{skill_name}: invalid category: {category}")
-
-        if category == "manual-tool" and entry.get("activation_mode") != "explicit":
-            errors.append(f"{skill_name}: manual-tool must use explicit activation")
 
         if entry.get("may_mutate_repo", False):
             has_guard = entry.get("requires_explicit_user_request", False) or entry.get(
@@ -589,6 +556,7 @@ def validate() -> list[str]:
     errors.extend(validate_semantic_only_surface())
     errors.extend(validate_routing_contracts(skills))
     errors.extend(validate_semantic_contracts(contract))
+    errors.extend(validate_selection_probes(skills))
     if any((REPO_ROOT / "commands").glob("*.md")):
         errors.append("retired command wrappers must not be active entrypoints")
     return errors

@@ -37,16 +37,14 @@ class SessionSurfaceContractTests(unittest.TestCase):
             with self.subTest(path=path.relative_to(REPO_ROOT)):
                 self.assertTrue(path.is_file())
 
-    def test_session_boundary_trigger_belongs_to_the_router(self) -> None:
+    def test_session_boundary_method_belongs_to_the_router(self) -> None:
         with self.routing_path.open("rb") as handle:
             routing = tomllib.load(handle)
 
-        session_case = next(
-            case
-            for case in routing["trigger_cases"]
-            if case["id"] == "session-boundary-handoff"
-        )
-        self.assertEqual(self.routing_id, session_case["owner"])
+        members = {
+            member for cluster in routing["clusters"] for member in cluster["members"]
+        }
+        self.assertIn(f"{self.routing_id}:memory-boundary", members)
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@ edge [color="#64748B", fontname="Arial", fontsize=11, arrowsize=0.7];
   review [label="Review of one supplied target\nUse review-change; no reconstructed phases.", fillcolor="#E7F3ED", color="#659F85"];
   method [label="Skill ownership or method is unclear\nUse the relevant skills-routing reference.", fillcolor="#E7F3ED", color="#659F85"];
   other [label="Explanation or another specific task\nUse its matching owner; do not force a\nchange workflow.", fillcolor="#E7F3ED", color="#659F85"];
+  none [label="Routine command or ordinary task\nNo Skill needed; follow general and\nrepository instructions.", fillcolor="#E7F3ED", color="#659F85"];
   s -> named;
   named -> direct [label="Yes"];
   named -> intent [label="No"];
@@ -21,4 +22,5 @@ edge [color="#64748B", fontname="Arial", fontsize=11, arrowsize=0.7];
   intent -> review [label="Review"];
   intent -> method [label="Method / routing"];
   intent -> other [label="Other"];
+  intent -> none [label="No Skill needed"];
 }

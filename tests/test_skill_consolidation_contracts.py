@@ -25,7 +25,13 @@ class SkillConsolidationContractTests(unittest.TestCase):
             cls.routing = tomllib.load(handle)
 
     def test_compatibility_skills_are_deleted_from_contract_tree_and_routing(self) -> None:
-        case_owners = {case["owner"] for case in self.routing["trigger_cases"]}
+        routed = set()
+        for cluster in self.routing["clusters"]:
+            routed.update(cluster["members"])
+            for handoff in cluster.get("handoffs", []):
+                routed.add(handoff["owner"])
+                routed.update(handoff["instead_of"])
+        routed_ids = {target.partition(":")[0] for target in routed}
         self.assertFalse(RETIRED & set(self.contract["skills"]))
         self.assertFalse(RETIRED & {path.name for path in SKILL_ROOT.glob("*/")})
-        self.assertFalse(RETIRED & case_owners)
+        self.assertFalse(RETIRED & routed_ids)

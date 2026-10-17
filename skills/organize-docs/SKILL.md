@@ -1,6 +1,6 @@
 ---
 name: organize-docs
-description: "Use for docs organization: README/AGENTS ownership, one-way legacy CLAUDE.md cleanup into AGENTS.md, stable truth roots, docs layout, docs/.ignore, stage artifacts, canonical terminology, search boundaries, and clear Markdown written in its intended form."
+description: "Use for docs organization: README/AGENTS ownership, one-way legacy CLAUDE.md cleanup into AGENTS.md, stable truth roots, docs layout, docs/.ignore, stage artifacts, canonical terminology, search boundaries, and clear Markdown written in its intended form. Recording already verified behavior without restructuring belongs to sync-truth."
 ---
 
 # Organize Docs
@@ -9,7 +9,7 @@ Maintain a concise account of project intent, decisions, and current behavior wi
 
 ## Use This Skill When
 
-- the user wants to reorganize or update `README.md`, `AGENTS.md`, existing legacy `CLAUDE.md`, or stable docs
+- the user wants to reorganize `README.md`, `AGENTS.md`, existing legacy `CLAUDE.md`, or stable docs, or change what each document owns
 - the repository needs explicit stable truth roots and stage artifact roots
 - default docs search needs a local search-boundary policy such as `docs/.ignore`
 - scattered plan, draft, or execution-note roots should be consolidated into one stage-artifact tree
@@ -18,9 +18,9 @@ Maintain a concise account of project intent, decisions, and current behavior wi
 
 ## Do Not Use This Skill When
 
-- the user primarily wants a read-only project-state explanation
-- `analyze-project` should be the default query path
-- the task is just local git, worktree, or execution status
+- the user primarily wants a read-only project-state explanation, which `analyze-project` answers
+- stable docs only need to record already verified behavior without changing ownership or structure; use `sync-truth`
+- the task is just local git, worktree, or execution status, which `analyze-project` or a direct command answers
 
 ## Core Rules
 

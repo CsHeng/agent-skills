@@ -1,0 +1,242 @@
+[[probes]]
+id = "verified-behavior-docs-sync"
+request = "The verified change renamed a CLI flag; update the README and architecture doc to match."
+primary = "sync-truth"
+counterexample = "Reorganize which documents own the architecture summary and move stage notes out of the README."
+counterexample_primary = "organize-docs"
+
+[[probes]]
+id = "doc-ownership-explanation"
+request = "Explain which rules belong in README versus AGENTS in this repository."
+primary = "analyze-project"
+counterexample = "Split the AI-only rules out of README into AGENTS."
+counterexample_primary = "organize-docs"
+
+[[probes]]
+id = "merge-readiness"
+request = "Is this verified branch ready to merge?"
+primary = "close-change"
+counterexample = "Which commits are on this branch but not on main?"
+counterexample_primary = "analyze-project"
+
+[[probes]]
+id = "read-only-explanation"
+request = "Explain how the plugin loader decides load order."
+primary = "analyze-project"
+counterexample = "Change the plugin loader to load plugins in dependency order."
+counterexample_primary = "implement-change"
+
+[[probes]]
+id = "open-design-decision"
+request = "We have not decided whether caching belongs in the client or the gateway; settle it."
+primary = "design-change"
+counterexample = "The design is approved; break it into ordered tasks with verification."
+counterexample_primary = "plan-change"
+
+[[probes]]
+id = "design-stress-test"
+request = "Grill my design doc and challenge every assumption before we commit to it."
+primary = "design-change:stress-test-mode"
+counterexample = "Review this plan once and give me findings and a verdict."
+counterexample_primary = "review-change"
+
+[[probes]]
+id = "review-versus-repair"
+request = "Review this diff for regressions."
+primary = "review-change"
+counterexample = "Apply the accepted review findings to the diff."
+counterexample_primary = "implement-change"
+
+[[probes]]
+id = "grouped-commits"
+request = "Group my current changes by purpose and commit each group."
+primary = "smart-commit"
+counterexample = "Commit these changes."
+counterexample_primary = "none"
+
+[[probes]]
+id = "history-rewrite"
+request = "Squash my last five unpushed commits."
+primary = "none"
+counterexample = "Split my working tree into focused commits by feature."
+counterexample_primary = "smart-commit"
+
+[[probes]]
+id = "hotfix-worktree"
+request = "Create a worktree for a hotfix branch and implement the fix there."
+primary = "implement-change:worktree-isolation"
+counterexample = "Fix this bug in the current checkout."
+counterexample_primary = "implement-change"
+
+[[probes]]
+id = "worktree-removal"
+request = "Remove the old hotfix worktree at ../repo-hotfix."
+primary = "implement-change:worktree-isolation"
+counterexample = "List the worktrees of this repository."
+counterexample_primary = "none"
+
+[[probes]]
+id = "herdr-main-handoff"
+request = "Use Herdr to hand this plan to Pi in another pane and bring the result back for review."
+primary = "herdr-implement"
+counterexample = "List the Herdr panes in this workspace."
+counterexample_primary = "none"
+
+[[probes]]
+id = "codex-session-merge"
+request = "Merge sessions from an old CODEX_HOME backup into my current Codex home."
+primary = "none"
+counterexample = "Mine my past agent sessions for repeated workflow failures to improve Skills."
+counterexample_primary = "skill-miner"
+
+[[probes]]
+id = "compaction-handoff"
+request = "We are about to compact; what must the handoff keep?"
+primary = "skills-routing:memory-boundary"
+counterexample = "Explicitly run skill-miner over my Codex sessions and memory files."
+counterexample_primary = "skill-miner"
+
+[[probes]]
+id = "agents-content-to-skills"
+request = "Find workflow content in this repository's AGENTS.md that should move into Skills."
+primary = "analyze-project"
+counterexample = "Use skill-miner to find workflows I repeat across past sessions."
+counterexample_primary = "skill-miner"
+
+[[probes]]
+id = "skill-description-tuning"
+request = "Make this SKILL.md description more precise about when it should trigger."
+primary = "skill-authoring"
+counterexample = "Fix the broken example command in this Skill's reference file."
+counterexample_primary = "implement-change"
+
+[[probes]]
+id = "skill-selection-question"
+request = "Which Skill should handle setting up a new Go service?"
+primary = "skills-routing"
+counterexample = "Write a new Skill for reviewing Terraform plans."
+counterexample_primary = "skill-authoring"
+
+[[probes]]
+id = "skill-corpus-audit"
+request = "Audit our Skill descriptions for overlaps and selection blind spots."
+primary = "skill-authoring"
+counterexample = "Run each probe against the description catalog on two hosts and compare the selections."
+counterexample_primary = "testing-strategy:agent-skill-evaluation"
+
+[[probes]]
+id = "flaky-test-diagnosis"
+request = "This test is flaky; find out why without changing code."
+primary = "error-patterns:debugging-tight-loop"
+counterexample = "The flaky test shares a temporary directory with another test; fix it."
+counterexample_primary = "implement-change"
+
+[[probes]]
+id = "release-latency-regression"
+request = "API p95 latency doubled after the release and we do not know which layer changed."
+primary = "infrastructure-triage"
+counterexample = "A local benchmark reproduces the latency regression; narrow down the cause."
+counterexample_primary = "error-patterns:debugging-tight-loop"
+
+[[probes]]
+id = "unknown-state-owner"
+request = "Containers on the NAS cannot reach the database since yesterday, and nothing changed in our repository."
+primary = "infrastructure-triage"
+counterexample = "Add retries with exponential backoff to the database client."
+counterexample_primary = "error-patterns"
+
+[[probes]]
+id = "simplification-audit"
+request = "Is this project over-engineered, and which modules could be removed?"
+primary = "skills-routing:simplification"
+counterexample = "Remove the unused plugin loader we agreed to delete."
+counterexample_primary = "implement-change"
+
+[[probes]]
+id = "open-oracle"
+request = "We cannot agree on what evidence would prove the migration is correct; choose the acceptance evidence."
+primary = "skills-routing:oracle-selection"
+counterexample = "Add a regression test for the bug I just fixed."
+counterexample_primary = "implement-change"
+
+[[probes]]
+id = "suite-lane-placement"
+request = "Our end-to-end suite is slow; decide which checks should move to unit or integration lanes."
+primary = "testing-strategy"
+counterexample = "Run the existing test suite."
+counterexample_primary = "none"
+
+[[probes]]
+id = "api-contract-ownership"
+request = "Mobile and web clients keep drifting from our OpenAPI spec; decide who owns the contract and how compatibility is gated."
+primary = "api-contract-strategy"
+counterexample = "Add a field to the existing endpoint exactly as the agreed contract specifies."
+counterexample_primary = "implement-change"
+
+[[probes]]
+id = "service-boundary"
+request = "Should billing be a separate service or a module inside the monolith?"
+primary = "architecture-patterns"
+counterexample = "Which language should the new billing service use?"
+counterexample_primary = "skills-routing:language-selection"
+
+[[probes]]
+id = "persisted-language-choice"
+request = "Should the new sync daemon be written in Go or Python?"
+primary = "skills-routing:language-selection"
+counterexample = "Fix a nil-pointer bug in the existing Go daemon."
+counterexample_primary = "implement-change"
+counterexample_overlays = ["go-guidelines"]
+
+[[probes]]
+id = "ad-hoc-tool-choice"
+request = "What is the safest way to rename this symbol across the repository?"
+primary = "skills-routing:tool-selection"
+counterexample = "Search the repository for TODO comments."
+counterexample_primary = "none"
+
+[[probes]]
+id = "shell-versus-powershell"
+request = "Fix the quoting bug in our deploy.sh script."
+primary = "implement-change"
+overlays = ["shell-guidelines"]
+counterexample = "Fix the parameter validation in Deploy.ps1."
+counterexample_primary = "implement-change"
+counterexample_overlays = ["powershell-guidelines"]
+
+[[probes]]
+id = "rime-yaml-versus-lua"
+request = "Change the candidate count in Rime's default.custom.yaml."
+primary = "implement-change"
+counterexample = "Fix the Rime Lua filter that reorders candidates."
+counterexample_primary = "implement-change"
+counterexample_overlays = ["lua-guidelines"]
+
+[[probes]]
+id = "routeros-script-versus-network-design"
+request = "Write a RouterOS scheduler script that rotates logs."
+primary = "implement-change"
+overlays = ["routeros-scripting-guidelines"]
+counterexample = "Design the VLAN layout for the home network."
+counterexample_primary = "infrastructure-triage"
+
+[[probes]]
+id = "audit-log-events"
+request = "Which audit events should we record for admin actions, and how long do we keep them?"
+primary = "logging-standards"
+counterexample = "Add CSRF protection and input validation to the admin form."
+counterexample_primary = "security-guardrails"
+
+[[probes]]
+id = "sops-recipient"
+request = "Add a new age recipient to the .sops.yaml creation rules."
+primary = "sops-age-guardrails"
+counterexample = "Move the hard-coded API key out of the source code."
+counterexample_primary = "security-guardrails"
+
+[[probes]]
+id = "multiarch-image"
+request = "Build the image for both amd64 and arm64 with buildx."
+primary = "docker-multiarch-build"
+counterexample = "Harden the Dockerfile with a non-root user and a minimal base image."
+counterexample_primary = "security-guardrails"

@@ -1,20 +1,6 @@
-# Skill Authoring
+# Instruction Content
 
-Use this reference when maintaining local skill inventories, descriptions, routers, or agent-agnostic workflow surfaces.
-
-## Invocation Surface
-
-- Model-invoked skills spend prompt context through their name and description every session. Use them only when the agent should route to the skill without the user naming it.
-- User-invoked skills reduce prompt competition but require the user or a router skill to remember them.
-- Keep overlapping third-party workflow libraries out of the default discovery surface unless their descriptions are curated and duplicate public IDs or ambiguous ownership are ruled out.
-- Prefer a small router or wrapper for session defaults instead of exposing many broad workflow descriptions.
-
-## Description Quality
-
-- Put trigger conditions in the description, not only in the body.
-- Keep descriptions specific enough to route but narrow enough not to steal unrelated tasks.
-- Avoid duplicate synonyms that describe the same trigger branch.
-- Mark retired, experimental, or user-only workflows so they do not compete with active model-routed skills.
+Use this reference when writing or revising a Skill's body, references, scripts, or assets.
 
 ## Progressive Disclosure
 

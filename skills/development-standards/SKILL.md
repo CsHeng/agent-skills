@@ -164,7 +164,8 @@ Language, tool, and workflow guidance adds only concrete mappings and exceptions
 ## Progressive Disclosure
 
 - Local toolchain baseline: `references/toolchain-baseline.md`
-- Skill descriptions, routers, and agent-agnostic workflow surfaces: `references/skill-authoring.md`
+- Skill descriptions, admission boundaries, routers, and activation metadata: the `skill-authoring` Skill
+- Instruction content and reference layout of a Skill or other agent-agnostic workflow surface, including a method-only edit: `references/instruction-content.md` in `skill-authoring`
 
 ## Completion Check
 

@@ -6,9 +6,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-# Externally observable Git semantics that the smart-commit and smart-squash
-# guidance depends on. These tests exercise the mechanisms in disposable
-# repositories rather than asserting on Markdown prose.
+# Externally observable Git semantics that the smart-commit guidance depends
+# on. These tests exercise the mechanisms in disposable repositories rather
+# than asserting on Markdown prose.
 
 GIT_ENV = {
     "GIT_CONFIG_GLOBAL": os.devnull,
@@ -20,17 +20,6 @@ GIT_ENV = {
     "GIT_COMMITTER_NAME": "fixture",
     "GIT_COMMITTER_EMAIL": "fixture@example.invalid",
 }
-SMART_SQUASH = Path(__file__).resolve().parents[1] / "skills/smart-squash/SKILL.md"
-
-
-def squash_recipe(marker: str) -> str:
-    """Read the executable Bash example containing the requested code marker."""
-    blocks = SMART_SQUASH.read_text(encoding="utf-8").split("```bash\n")[1:]
-    return next(
-        block.split("```", 1)[0]
-        for block in blocks
-        if marker in block.split("```", 1)[0]
-    )
 
 
 def run(cwd: Path, *args: str) -> str:
@@ -160,100 +149,6 @@ class GitGroupedCommitRecipeTest(unittest.TestCase):
             self.assertEqual(git(repo, "status", "--porcelain"), "?? build/\n")
 
 
-class GitReachabilityPreflightTest(unittest.TestCase):
-    def test_reachability_separates_shared_refs_from_upstream_difference(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            base = Path(temp_dir)
-            bare = base / "remote.git"
-            run(
-                base,
-                "git",
-                "-c",
-                "init.defaultBranch=main",
-                "init",
-                "-q",
-                "--bare",
-                str(bare),
-            )
-            repo = base / "work"
-            run(base, "git", "clone", "-q", str(bare), str(repo))
-
-            write(repo, "base.txt", "base\n")
-            git(repo, "add", "--", "base.txt")
-            git(repo, "commit", "-qm", "base")
-            git(repo, "push", "-q", "-u", "origin", "main")
-            git(repo, "fetch", "--all", "--tags")
-
-            # C1 is reachable from a second pushed branch and a pushed tag, but not
-            # from the configured upstream. C2 is reachable from no remote ref.
-            write(repo, "c1.txt", "c1\n")
-            git(repo, "add", "--", "c1.txt")
-            git(repo, "commit", "-qm", "C1 reached by topic and tag")
-            c1 = git(repo, "rev-parse", "HEAD").strip()
-            git(repo, "push", "-q", "origin", "HEAD:refs/heads/topic")
-            git(repo, "tag", "shared-tag", c1)
-            git(repo, "push", "-q", "origin", "refs/tags/shared-tag")
-            git(repo, "tag", "-d", "shared-tag")
-            git(repo, "fetch", "--all", "--tags")
-
-            write(repo, "c2.txt", "c2\n")
-            git(repo, "add", "--", "c2.txt")
-            git(repo, "commit", "-qm", "C2 local only")
-            c2 = git(repo, "rev-parse", "HEAD").strip()
-
-            # The old upstream difference lists both commits as "unpublished".
-            difference = git(repo, "rev-list", "@{u}..HEAD").split()
-            self.assertIn(c1, difference)
-            self.assertIn(c2, difference)
-
-            # Reachability, not difference: C1 is published via a known shared ref.
-            remote_contains = git(
-                repo,
-                "for-each-ref",
-                "--contains",
-                c1,
-                "--format=%(refname:short)",
-                "refs/remotes/",
-            ).split()
-            tag_contains = git(
-                repo,
-                "for-each-ref",
-                "--contains",
-                c1,
-                "--format=%(refname:short)",
-                "refs/tags/",
-            ).split()
-            self.assertIn("origin/topic", remote_contains)
-            self.assertIn("shared-tag", tag_contains)
-
-            # C2 is absent from every fetched remote-tracking ref and tag.
-            for refspace in ("refs/remotes/", "refs/tags/"):
-                contains = git(
-                    repo,
-                    "for-each-ref",
-                    "--contains",
-                    c2,
-                    "--format=%(refname:short)",
-                    refspace,
-                ).strip()
-                self.assertEqual(contains, "")
-
-    def test_no_remote_leaves_remote_tracking_refs_empty(self) -> None:
-        # A repository with no remote yields no remote-tracking refs to test
-        # against, which the preflight must report as an unknown rather than as
-        # evidence that the commits are unpushed.
-        with tempfile.TemporaryDirectory() as temp_dir:
-            repo = init_repo(Path(temp_dir) / "repo")
-            write(repo, "x.txt", "x\n")
-            git(repo, "add", "--", "x.txt")
-            git(repo, "commit", "-qm", "local commit")
-
-            self.assertEqual(git(repo, "remote"), "")
-            self.assertEqual(
-                git(repo, "for-each-ref", "--format=%(refname)", "refs/remotes/"), ""
-            )
-
-
 class GitHunkSplitRecipeTest(unittest.TestCase):
     def test_index_commit_separates_hunks_of_a_shared_file(self) -> None:
         # The documented hunk path: stage exactly one group's hunks (the
@@ -302,364 +197,36 @@ class GitHunkSplitRecipeTest(unittest.TestCase):
             self.assertEqual(git(repo, "show", "HEAD:shared.txt"), "A1\nl2\nl3\nB4\n")
 
 
-class GitRootRangeRecipeTest(unittest.TestCase):
-    SKILL = SMART_SQUASH
-
-    @classmethod
-    def published_option3_line(cls) -> str:
-        text = cls.SKILL.read_text(encoding="utf-8")
-        return next(
-            line for line in text.splitlines() if line.startswith("    3) RANGE_LABEL=")
-        )
-
-    @staticmethod
-    def eval_option3(repo: Path, line: str) -> dict[str, object]:
-        # Evaluates the option-3 selection assignments (source text by
-        # default, a doctored line for the sensitivity check) and returns the
-        # selected RANGE_LABEL and RANGE_ARGS.
-        assignments = line.split(") ", 1)[1].rsplit(" ;;", 1)[0].strip()
-        script = (
-            "set -e\n"
-            f"TARGET_REPO={str(repo)!r}\n"
-            f"{assignments}\n"
-            'printf \'%s\\n---\\n%s\\n\' "$RANGE_LABEL" "${RANGE_ARGS[*]}"\n'
-        )
-        output = run(repo, "bash", "-c", script)
-        label, remainder = output.split("\n---\n", 1)
-        args = remainder.split()
-        return {"label": label, "args": args}
-
-    @classmethod
-    def published_rebase_dispatch(cls, repo: Path, label: str) -> str:
-        # Executes the published rebase-command dispatch with the
-        # source-selected RANGE_LABEL. The condition and both rebase commands
-        # are extracted verbatim from the Skill; only the shared
-        # GIT_SEQUENCE_EDITOR line-continuation prefix (identical in both
-        # branches) is mechanically stripped so the sequence editor can be
-        # injected through the environment.
-        lines = cls.SKILL.read_text(encoding="utf-8").splitlines()
-        start = next(
-            i
-            for i, line in enumerate(lines)
-            if line.startswith('if [ "$RANGE_LABEL" = "--root" ]; then')
-        )
-        commands = [
-            line.strip()
-            for line in lines[start:]
-            if 'git -C "$TARGET_REPO" rebase -i' in line
-        ]
-        assert len(commands) == 2, "published rebase dispatch not found"
-        return (
-            "set -e\n"
-            f"TARGET_REPO={str(repo)!r}\n"
-            f"RANGE_LABEL={label!r}\n"
-            'BASE_COMMIT="$(git -C "$TARGET_REPO" rev-list --max-parents=0 HEAD)"\n'
-            'if [ "$RANGE_LABEL" = "--root" ]; then\n'
-            f"  {commands[0]}\n"
-            "else\n"
-            f"  {commands[1]}\n"
-            "fi\n"
-        )
-
-    def run_dispatch_capture_todo(self, repo: Path, base: Path, label: str) -> str:
-        todo = base / f"todo-{label.replace(' ', '_')}.txt"
-        env = {
-            **os.environ,
-            **GIT_ENV,
-            "GIT_SEQUENCE_EDITOR": f"cat > {todo}",
-            "GIT_EDITOR": "true",
-        }
-        subprocess.run(
-            ["bash", "-c", self.published_rebase_dispatch(repo, label)],
-            cwd=repo,
-            env=env,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        return todo.read_text(encoding="utf-8")
-
-    def make_two_commit_repo(self, temp_dir: str) -> tuple[Path, Path, str]:
-        base = Path(temp_dir)
-        bare = base / "remote.git"
-        run(
-            base,
-            "git",
-            "-c",
-            "init.defaultBranch=main",
-            "init",
-            "-q",
-            "--bare",
-            str(bare),
-        )
-        repo = base / "work"
-        run(base, "git", "clone", "-q", str(bare), str(repo))
-        write(repo, "one.txt", "one\n")
-        git(repo, "add", "--", "one.txt")
-        git(repo, "commit", "-qm", "one")
-        root = git(repo, "rev-parse", "HEAD").strip()
-        write(repo, "two.txt", "two\n")
-        git(repo, "add", "--", "two.txt")
-        git(repo, "commit", "-qm", "two")
-        return base, repo, root
-
-    @staticmethod
-    def pick_lines(todo: str) -> list[str]:
-        return [line for line in todo.splitlines() if line.startswith("pick ")]
-
-    def test_root_range_rebase_selection_includes_the_root_commit(self) -> None:
-        # The source-selected label must drive the published dispatch so the
-        # all-history range rewrites from the root; a label the dispatch does
-        # not recognize would silently exclude the root commit.
-        with tempfile.TemporaryDirectory() as temp_dir:
-            base, repo, root = self.make_two_commit_repo(temp_dir)
-            selected = self.eval_option3(repo, self.published_option3_line())
-            self.assertEqual(selected["label"], "--root")
-
-            todo = self.run_dispatch_capture_todo(repo, base, str(selected["label"]))
-            root_short = git(repo, "rev-parse", "--short", root).strip()
-            self.assertTrue(
-                any(line.split()[1] == root_short for line in self.pick_lines(todo)),
-                "the published --root rebase selection must include the root "
-                "commit in the rebase plan",
-            )
-            self.assertEqual(
-                len(git(repo, "rev-list", "HEAD").split()),
-                2,
-                "no-op rebase must preserve the commit count",
-            )
-
-    def test_root_range_regression_detects_a_broken_label(self) -> None:
-        # Sensitivity check: the previously broken label must change the
-        # observable dispatch outcome, otherwise the regression above guards
-        # nothing.
-        with tempfile.TemporaryDirectory() as temp_dir:
-            base, repo, root = self.make_two_commit_repo(temp_dir)
-            broken = self.published_option3_line().replace(
-                'RANGE_LABEL="--root"', 'RANGE_LABEL="--root HEAD"'
-            )
-            selected = self.eval_option3(repo, broken)
-
-            todo = self.run_dispatch_capture_todo(repo, base, str(selected["label"]))
-            root_short = git(repo, "rev-parse", "--short", root).strip()
-            self.assertFalse(
-                any(line.split()[1] == root_short for line in self.pick_lines(todo)),
-                "a label the published dispatch does not recognize must "
-                "exclude the root commit from the rebase plan, so the "
-                "regression above fails",
-            )
-
-    def test_root_range_recipe_classifies_pushed_commits(self) -> None:
-        # Executes the published no-upstream "all commits" recipe from range
-        # selection through guarded enumeration to classification; the range
-        # must name an explicit revision, and enumeration failure must not be
-        # silently swallowed by the loop.
-        with tempfile.TemporaryDirectory() as temp_dir:
-            base, repo, root = self.make_two_commit_repo(temp_dir)
-            # Only the first commit is published; the second stays local so the
-            # two reachability classes are both observable.
-            git(repo, "push", "-q", "origin", f"{root}:refs/heads/main")
-            git(repo, "fetch", "--all", "--tags")
-
-            # The old root form without an explicit revision is a usage error
-            # that a bare `for ... in $(...)` loop would silently swallow.
-            with self.assertRaises(subprocess.CalledProcessError):
-                git(repo, "rev-list", "--root", "--reverse")
-
-            # Selection assignments exactly as published, then guarded
-            # enumeration with the selected arguments.
-            selected = self.eval_option3(repo, self.published_option3_line())
-            self.assertIn("HEAD", selected["args"])
-            candidates = git(repo, "rev-list", *selected["args"], "--reverse").split()
-            self.assertEqual(len(candidates), 2)
-
-            output = run(
-                repo,
-                "bash",
-                "-c",
-                "set -euo pipefail\nTARGET_REPO=$1\nFETCH_STATUS=ok\n"
-                "RANGE_LABEL=--root\nRANGE_ARGS=(--root HEAD)\n"
-                + squash_recipe("REMOTE_REF_COUNT="),
-                "recipe",
-                str(repo),
-            )
-            self.assertIn(f"PROTECTED-REF {root} refs=refs/remotes/origin/main", output)
-            tip = git(repo, "rev-parse", "HEAD").strip()
-            self.assertIn(f"UNPUSHED-ON-KNOWN-REFS {tip}", output)
-
-    def test_root_squash_final_count_includes_unchanged_root(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            base, repo, root = self.make_two_commit_repo(temp_dir)
-            second = git(repo, "rev-parse", "HEAD").strip()
-            write(repo, "three.txt", "three\n")
-            git(repo, "add", "--", "three.txt")
-            git(repo, "commit", "-qm", "three")
-            third = git(repo, "rev-parse", "HEAD").strip()
-            plan = base / "plan"
-            plan.write_text(
-                f"pick {root}\npick {second}\nfixup {third}\n", encoding="utf-8"
-            )
-            run(
-                repo,
-                "bash",
-                "-c",
-                "set -euo pipefail\nTARGET_REPO=$1\nPLAN_FILE=$2\n"
-                "RANGE_LABEL=--root\nBASE_COMMIT=$3\n"
-                + "REBASE_EXIT_CODE="
-                + squash_recipe("REBASE_EXIT_CODE=").split("REBASE_EXIT_CODE=", 1)[1],
-                "recipe",
-                str(repo),
-                str(plan),
-                root,
-            )
-            self.assertEqual(
-                git(repo, "rev-list", "--max-parents=0", "HEAD").strip(), root
-            )
-            self.assertEqual(git(repo, "rev-list", "--count", "HEAD").strip(), "2")
-            for label, expected in (("--root", 2), ("bounded", 1)):
-                with self.subTest(label=label):
-                    output = run(
-                        repo,
-                        "bash",
-                        "-c",
-                        "set -euo pipefail\nTARGET_REPO=$1\nBASE_COMMIT=$2\n"
-                        "RANGE_LABEL=$3\nORIGINAL_COUNT=3\n"
-                        + squash_recipe("FINAL_COUNT="),
-                        "recipe",
-                        str(repo),
-                        root,
-                        label,
-                    )
-                    self.assertIn(f"Reorganized commits: {expected}\n", output)
-
-
-class GitSquashSafetyRecipeTest(unittest.TestCase):
-    def test_operation_guard_uses_target_git_dir_from_any_cwd(self) -> None:
-        for operation, args in (
-            ("rebase-merge", ("rebase", "--merge", "side")),
-            ("rebase-apply", ("rebase", "--apply", "side")),
-            ("MERGE_HEAD", ("merge", "side")),
-        ):
-            with (
-                self.subTest(operation=operation),
-                tempfile.TemporaryDirectory() as temp_dir,
-            ):
-                base = Path(temp_dir)
-                repo = init_repo(base / "repo")
-                write(repo, "shared.txt", "base\n")
-                git(repo, "add", "shared.txt")
-                git(repo, "commit", "-qm", "base")
-                git(repo, "checkout", "-qb", "side")
-                write(repo, "shared.txt", "side\n")
-                git(repo, "commit", "-qam", "side")
-                git(repo, "checkout", "-q", "main")
-                write(repo, "shared.txt", "main\n")
-                git(repo, "commit", "-qam", "main")
-                run(
-                    base,
-                    "bash",
-                    "-c",
-                    "set -euo pipefail\nTARGET_REPO=$1\n" + squash_recipe("GIT_DIR="),
-                    "recipe",
-                    str(repo),
-                )
-                with self.assertRaises(subprocess.CalledProcessError):
-                    git(repo, *args)
-                # Resolving to HEAD leaves a clean tree while the operation
-                # remains paused, so a clean-status check cannot replace it.
-                git(repo, "checkout", "--ours", "--", "shared.txt")
-                git(repo, "add", "shared.txt")
-                self.assertEqual(git(repo, "status", "--porcelain"), "")
-                git_dir = Path(git(repo, "rev-parse", "--absolute-git-dir").strip())
-                self.assertTrue((git_dir / operation).exists())
-                nested = repo / "nested"
-                nested.mkdir()
-                for cwd in (repo, nested, base):
-                    with self.subTest(cwd=cwd.name):
-                        result = subprocess.run(
-                            [
-                                "bash",
-                                "-c",
-                                "set -euo pipefail\nTARGET_REPO=$1\n"
-                                + squash_recipe("GIT_DIR="),
-                                "recipe",
-                                str(repo),
-                            ],
-                            cwd=cwd,
-                            env={**os.environ, **GIT_ENV},
-                            capture_output=True,
-                            text=True,
-                        )
-                        self.assertEqual(
-                            result.returncode, 1, result.stdout + result.stderr
-                        )
-
-    def test_local_tag_is_protected_without_publication_evidence(self) -> None:
+class GitPendingMergeRecipeTest(unittest.TestCase):
+    def test_pending_merge_rejects_pathspec_commit_and_commits_whole(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             repo = init_repo(Path(temp_dir) / "repo")
-            write(repo, "one.txt", "one\n")
-            git(repo, "add", "one.txt")
-            git(repo, "commit", "-qm", "one")
-            root = git(repo, "rev-parse", "HEAD").strip()
-            git(repo, "tag", "local-only")
-            write(repo, "two.txt", "two\n")
-            git(repo, "add", "two.txt")
-            git(repo, "commit", "-qm", "two")
-            tip = git(repo, "rev-parse", "HEAD").strip()
-            self.assertEqual(git(repo, "remote"), "")
-            output = run(
-                repo,
-                "bash",
-                "-c",
-                "set -euo pipefail\nTARGET_REPO=$1\nFETCH_STATUS=no-remote\n"
-                "RANGE_LABEL=--root\nRANGE_ARGS=(--root HEAD)\n"
-                + squash_recipe("REMOTE_REF_COUNT="),
-                "recipe",
-                str(repo),
-            )
-            self.assertEqual(
-                output.splitlines(),
-                [f"PROTECTED-REF {root} refs=refs/tags/local-only", f"UNKNOWN {tip}"],
-            )
+            write(repo, "base.txt", "base\n")
+            git(repo, "add", "--", "base.txt")
+            git(repo, "commit", "-qm", "base")
 
-    def test_rebase_handler_survives_errexit_for_both_ranges(self) -> None:
-        recipe = (
-            "REBASE_EXIT_CODE="
-            + squash_recipe("REBASE_EXIT_CODE=").split("REBASE_EXIT_CODE=", 1)[1]
-        )
-        for strict in (False, True):
-            for label in ("--root", "bounded"):
-                for rebase_exit_code in (0, 7):
-                    with self.subTest(
-                        strict=strict, label=label, exit_code=rebase_exit_code
-                    ):
-                        result = subprocess.run(
-                            [
-                                "bash",
-                                "-c",
-                                ("set -euo pipefail\n" if strict else "")
-                                + "TARGET_REPO=/fixture\nPLAN_FILE=/unused\nBASE_COMMIT=base\n"
-                                "RANGE_LABEL=$1\nREBASE_RESULT=$2\n"
-                                'git() { return "$REBASE_RESULT"; }\n'
-                                + recipe
-                                + '\nprintf "completed\\n"\n',
-                                "recipe",
-                                label,
-                                str(rebase_exit_code),
-                            ],
-                            env={**os.environ, **GIT_ENV},
-                            capture_output=True,
-                            text=True,
-                        )
-                        self.assertEqual(
-                            result.returncode, rebase_exit_code, result.stderr
-                        )
-                        if rebase_exit_code:
-                            self.assertIn("rebase --continue", result.stdout)
-                            self.assertIn("rebase --abort", result.stdout)
-                            self.assertNotIn("completed", result.stdout)
-                        else:
-                            self.assertEqual(result.stdout, "completed\n")
+            git(repo, "switch", "-qc", "topic")
+            write(repo, "topic.txt", "topic\n")
+            git(repo, "add", "--", "topic.txt")
+            git(repo, "commit", "-qm", "topic")
+            git(repo, "switch", "-q", "main")
+            write(repo, "main.txt", "main\n")
+            git(repo, "add", "--", "main.txt")
+            git(repo, "commit", "-qm", "main")
+
+            git(repo, "merge", "--no-commit", "--no-ff", "-q", "topic")
+            git(repo, "rev-parse", "-q", "--verify", "MERGE_HEAD")
+
+            # The grouped pathspec recipe cannot record part of a pending merge.
+            with self.assertRaises(subprocess.CalledProcessError) as raised:
+                git(repo, "commit", "-qm", "group: topic only", "--", "topic.txt")
+            self.assertIn("partial commit during a merge", raised.exception.stderr)
+
+            # Committing the whole index preserves the merge topology.
+            git(repo, "commit", "-qm", "merge topic")
+            parents = git(repo, "rev-list", "--parents", "-n", "1", "HEAD").split()
+            self.assertEqual(len(parents), 3)
+            self.assertEqual(git(repo, "status", "--porcelain"), "")
 
 
 if __name__ == "__main__":

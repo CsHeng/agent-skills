@@ -1,13 +1,14 @@
 # Agent Skills: coding
 
-This repository authors portable semantic coding Skills in one installable tree. The collection guides agents through analysis, design, planning, implementation, review, documentation, policy, testing, tools, and Git work. Generic workflows do not depend on a particular agent product; named tool Skills declare the tools they require.
+This repository authors portable semantic coding Skills in one installable tree. The collection guides agents through analysis, design, planning, implementation, review, documentation, policy, testing, tools, Git work, and Skill authoring. Generic workflows do not depend on a particular agent product; named tool Skills declare the tools they require.
 
 ## Layout
 
 - `skills/<public-id>/`: authored instructions, references, scripts, assets, and provider metadata; also the portable installation unit
 - `contracts/skills.toml`: public ID, activation, role, permission, and semantic-composition inventory
 - `contracts/install-targets.toml`: installation and optional plugin boundaries
-- `skills/skills-routing/references/routing.toml`: installed trigger and composition guidance
+- `skills/skills-routing/references/routing.toml`: installed scope contract of Skill clusters and handoffs between neighboring Skills
+- `tests/fixtures/selection-probes.toml`: uninstalled paired selection probes for discovery audits
 - `docs/architecture/`: stable maintenance truth
 - Evolution material is maintained under `$AGENT_ARCHITECTURE_DIR/docs/plans/skills/` and `docs/evaluations/skills/`; inert originals live in that repository's `archived/agent-skills/`. Product checks and installation do not need that checkout.
 

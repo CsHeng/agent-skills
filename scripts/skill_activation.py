@@ -22,7 +22,6 @@ EXPECTED_CODEX_POLICY = {
     "explicit": False,
     "baseline": True,
 }
-CLAUDE_DEFAULT_VISIBILITY = "default-visible"
 
 
 def activation_modes(contract: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -115,11 +114,6 @@ def validate_activation_contract(
             errors.append(
                 f"activation_modes.{mode}.codex_allow_implicit_invocation "
                 f"must be {expected!r}"
-            )
-        if modes[mode].get("claude_effective_visibility") != CLAUDE_DEFAULT_VISIBILITY:
-            errors.append(
-                f"activation_modes.{mode}.claude_effective_visibility must be "
-                f"{CLAUDE_DEFAULT_VISIBILITY!r}"
             )
 
     skills = contract.get("skills")

@@ -53,18 +53,25 @@ class SemanticSkillContractTests(unittest.TestCase):
 
         self.assertTrue(any("contains a cycle" in error for error in errors))
 
-    def test_router_requirements_must_match_installed_routing_contract(self) -> None:
+    def test_composition_skill_needs_a_composer_other_than_the_router(self) -> None:
         contract = copy.deepcopy(load_contract())
+        skills = contract["skills"]
+        skills["close-change"]["activation_mode"] = "composition"
         routing_entry = next(
-            entry
-            for entry in contract["skills"].values()
-            if entry.get("routing_contract")
+            entry for entry in skills.values() if entry.get("routing_contract")
         )
-        routing_entry["semantic_requires"].remove("output-styles")
+        routing_entry["semantic_requires"] = ["close-change"]
 
         errors = self.checker.validate_semantic_contracts(contract, REPO_ROOT)
 
-        self.assertTrue(any("must match routing targets" in error for error in errors))
+        self.assertTrue(
+            any("close-change: composition-only skill needs" in error for error in errors)
+        )
+
+        skills["implement-change"]["semantic_requires"].append("close-change")
+        self.assertEqual(
+            [], self.checker.validate_semantic_contracts(contract, REPO_ROOT)
+        )
 
     def test_review_evaluators_are_not_mandatory_dependencies(self) -> None:
         contract = load_contract()
