@@ -35,7 +35,7 @@ Use known initial write regions inside the approved scope; do not pre-solve impl
 
 The worker implements its slice with necessary local feedback: relevant unit tests, compilation, or a narrow reproduction, followed by in-scope repair. Batch related edits before checks that cannot usefully guide intermediate work. A red test or compiler error does not require returning every iteration; use [Focused Implementation Repair](repair-loop.md) for the bounded repair.
 
-The parent coordinates integration, E2E, and full-suite checks for the combined change. Workers execute those only when specifically assigned; a worker's return is a candidate with local feedback, not a separate delivery lifecycle. The parent can reuse that evidence instead of running every command again.
+The parent coordinates integration, cutover, and broader verification for the combined change; workers execute those only when assigned. A source-only worker returns usable capability and explicit gaps, not its own deployment-qualification regime. Lack of live authority or evidence does not justify unconditional activation blocks or extra evidence gates in the product; retain guards only for actual input, authority, or safety boundaries. The parent judges whether each gap blocks cutover or can be checked afterward, reusing applicable local evidence.
 
 Return the candidate, checks actually performed and their outcomes, known problems, unverified parts, and authorized secondary tradeoffs. A host snapshot or diff identity is sufficient; do not commit merely to name a candidate. Local success and source integration do not themselves establish final acceptance.
 

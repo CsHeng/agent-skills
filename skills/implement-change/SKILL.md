@@ -27,9 +27,9 @@ Implement the settled goals and selected technology; do not automatically reopen
 
 ## Early Business Feedback
 
-Use the current project environment to implement a thin real path from relevant input to useful output, with its local feedback loop. Resolve only the uncertainty or setup that actually blocks the next authorized step. Do not first build a complete fixture platform, probe framework, recovery rehearsal, or evidence pipeline when existing tools or a bounded local check suffice. Required pre-deployment checks can happen at the delivery join; safeguards against actual data loss or unauthorized effects must precede the affected operation.
+Use the current environment and existing tools to implement a thin real path with useful local feedback. For an authorized replacement with bounded, repairable impact, proceed through necessary prechecks to cutover, real-path verification, and fix-forward repair; a separate proving environment is not the default. Preserve explicit pre-cutover requirements and protections for credentials, retained state, unrelated services, continuity commitments, and repair access before the affected operation. Remaining acceptance work is not automatically a deployment blocker, and switching is not proof of success.
 
-When supporting work keeps growing while no business behavior has advanced, reconsider that branch rather than assigning more workers to harden it. Within existing authority, remove unnecessary mechanisms, defer non-prerequisite preparation, or use a direct existing capability, then continue the outcome. A working first slice is feedback, not permission to omit required remaining behavior or verification. Do not create a new timer, progress gate, or full redesign to make this correction.
+When supporting work grows without advancing useful behavior, reconsider whether it is needed before assigning more workers or repairing every defect it creates. Remove unnecessary mechanisms or move non-prerequisite verification after cutover within existing authority. Do not manufacture qualification receipts, permanent activation blocks, or complete recovery and observability systems merely because rollout is unverified. A known defect still needs disposition against the actual outcome and risk; defer timing, not required final acceptance.
 
 ## Goals, Discretion, And Continuation
 

@@ -13,10 +13,10 @@ For a whole-design target, defects anywhere in the supplied artifact are in scop
 
 - Scope and ownership: confirm the design covers one bounded change surface with a named architecture owner, a sane dependency direction, and durable truth boundaries that do not silently move. Flag material rollout or recovery risk that the design does not own.
 - Decisions versus means: distinguish the desired outcome and approved constraints from replaceable means. Judge whether a proposed mechanism or acceptance condition is necessary before improving its internal completeness, and recommend removal through the existing finding categories when the outcome remains supported without it. Flag a material unresolved decision, or an omitted main goal, necessary condition, specified technical choice, or inviolable boundary. Leave local choices an executor can investigate to that executor. A real retained-state or recovery boundary still needs its corresponding evidence; deployment wording alone does not require a restoration platform.
-- Acceptance: check that acceptance conditions make downstream planning and verification possible, without inventing implementation-depth gates.
+- Acceptance and cutover: check that success can be verified without turning every acceptance condition into a prerequisite for switching. For bounded, repairable replacements, direct cutover and real-path verification are valid; coexistence, qualification environments, rollback systems, and observation windows need a concrete protected interest. Preserve explicit prerequisites, retained-state and credential protections, continuity commitments, and repair access.
 - Delivery intent: keep delivery intent, existing authority, and actual capability separate. Investigable facts and generatable products are not user decisions.
 - Secondary space: when authorized best-effort secondary work exists, require it recorded without an exhaustive feature-failure catalog; absence of that catalog is not a defect. Flag overstrong commitments that would force item-by-item reapproval of secondary adaptations.
-- Architecture tradeoff: when the design contains one, require causal demand and constraint evidence, a chosen owner, a practical oracle, a recovery boundary, and an observable reconsideration trigger; do not demand numeric scoring.
+- Architecture tradeoff: assess the actual demand, constraints, ownership, and practical evidence. Require recovery or reconsideration detail only where a concrete risk or unsettled premise needs it, not as a universal architecture checklist.
 
 ## Return
 

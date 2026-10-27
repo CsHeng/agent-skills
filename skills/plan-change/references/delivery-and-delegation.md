@@ -16,7 +16,7 @@ For parallel edits, identify the convergence owner who preserves both changes, r
 
 An action can belong to the task, have matching authority, and still lack the capability to run now. Keep these judgments separate. Credentials and available tools do not grant authority, and standing deploy permission does not expand a design-only or source-only request.
 
-Describe the useful delivery endpoint for the kind of work: a service may need deployment and observation; a library, tool, or Skill may need release, installation, or source handoff. State which endpoint is proposed and which is already authorized. Do not ask for permission merely because an endpoint is mentioned or a required artifact has not yet been generated.
+Describe the useful delivery endpoint and its authority: a service may need deployment and observation; a library, tool, or Skill may need release, installation, or source handoff. Cutover and acceptance can occur at different points. State only the real prerequisites for switching and the verification that follows, rather than making every final requirement a pre-deployment dependency. Do not ask for permission merely because an endpoint is mentioned or an artifact has not yet been generated.
 
 Consume trusted approval for the same actions, targets, and side effects. List only genuinely uncovered decisions and real prerequisites. An implementation product, technical check, or discoverable fact remains agent work; a missing external account or access capability blocks only the step that uses it. Do not present local completion as end-to-end delivery while a required external result remains absent.
 
