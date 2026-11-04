@@ -28,7 +28,7 @@ The current manual's [Script permissions](https://manual.mikrotik.com/docs/devel
 - An explicit `/system script run <name>` without that option can inherit scheduler or caller permissions.
 - A script cannot use higher permissions than the invoking user or scheduler is allowed to supply; verify both policy sets and the invocation form when diagnosing `not enough permissions`.
 
-Do not respond to a permission failure by reflexively setting `dont-require-permissions=yes` or broadening policy. First identify the caller, invocation form, script owner, script policy, scheduler or event policy, and exact failing command. Grant only the capability required by the approved owner boundary.
+Diagnose a permission failure first: identify the caller, invocation form, script owner, script policy, scheduler or event policy, and exact failing command. Then grant only the capability required by the approved owner boundary; `dont-require-permissions=yes` and broader policy follow that diagnosis.
 
 ## Timing And Reentrancy
 

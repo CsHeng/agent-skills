@@ -5,78 +5,46 @@ description: "Review one bounded design, plan, or implementation target; return 
 
 # Review Change
 
-Review exactly one supplied target and keep final repair judgment with the calling agent. Apply `development-standards` from the start: assess whether proposed mechanisms and verification are necessary for the user's outcome, alongside whether required behavior is missing.
+Review exactly one supplied target and leave repair judgment with the calling agent. `development-standards` applies from the start: a review judges whether proposed mechanisms and verification are necessary for the user's outcome as well as whether required behavior is missing.
 
 ## Use This Skill When
 
 - `design-change`, `plan-change`, or `implement-change` requests a bounded review of a current artifact or a targeted rereview of a repair
 - the user directly asks to review a specific design, plan, diff, or implementation slice
 
-A standalone review needs only a bounded target and review question. Do not require or create an upstream design, plan, implementation state, approval record, or lifecycle sequence merely because review was requested. An explicit request to grill, stress-test, or challenge a design or plan interactively uses `references/stress-test-mode.md` in `design-change` rather than a one-shot review.
+A standalone review needs only a bounded target and a review question. An explicit request to grill, stress-test, or challenge a design interactively uses `references/stress-test-mode.md` in `design-change`.
 
-## Review Path
+## When Review Runs
 
-Review directly when the target is small or delegation is unavailable. For a non-trivial stable target, one independent reviewer may be useful when the active agent environment supports it.
+Callers invoke review when it is explicitly requested, an applicable repository rule requires it, or concrete boundary or behavioral uncertainty justifies it: security, retained state, concurrency, protocol compatibility, or cross-owner contract changes. A low-risk, contract-conforming edit verified by deterministic owner checks completes on the caller's self-check. Review directly when the target is small or delegation is unavailable; one independent reviewer suits a non-trivial target with material uncertainty.
 
-If a relevant review Skill is currently discoverable, use it as the evaluator:
+Use the target-specific evaluator when it is discoverable (`review-design`, `review-plan`, `review-implementation`); otherwise perform the same bounded review directly. An evaluator receives only the bounded brief, stays read-only, returns candidate findings, and neither delegates, invokes another lifecycle phase, repairs files, nor widens scope. A worker's self-check is not independent review.
 
-- design target: `review-design`
-- plan target: `review-plan`
-- implementation target: `review-implementation`
-
-Otherwise perform the same bounded evidence-based review directly. Availability of those evaluator Skills is optional; do not assume a particular repository, provider, command name, or discovery mechanism.
-
-An evaluator receives only the bounded brief, remains read-only, returns candidate findings, and must not delegate recursively, invoke another lifecycle phase, repair files, or widen scope. Read-only review does not grant command execution: any private verification must be supported and permitted by the host, preserve the reviewed source and protected state, and stay within the brief. Worker self-checking is not independent review.
-
-One invocation returns one evaluation of its supplied target; this is not a limit on review calls for the whole change. The calling agent decides whether current evidence or an applicable rule needs another review. For rereview, focus on repairs, affected boundaries, and unresolved findings. Respect prior adjudications while their evidence remains valid; a new reviewer alone does not reopen a settled finding, and an old pass does not cover a new regression.
-
-## Reviewer Continuity
-
-For a justified follow-up on the same change, prefer the original reviewer when the host can safely continue its context, role, permissions, and current target. Reuse that reviewer's handle and native JSONL when the host still has them. A new process ID after reload does not open a new review, and skill files are not the parent conversation. Supply the previous result reference, exact new candidate and delta, relevant evidence, parent dispositions, and remaining review question. Confirm the actual repair and affected regressions; neither a worker's claim nor the caller's wish to finish proves success.
-
-The reviewer remains separate from the worker even across rounds. Do not rename a worker session to manufacture independence. A fresh view is useful for a changed material boundary, deficient prior coverage or judgment, or an explicit independent-review request, not as a fixed extra round. Respect route authority, and do not silently switch a selected model or reuse a session across repositories or roles. When valid continuation is unavailable, describe reconstruction or a new review honestly rather than claiming preserved native context.
+One invocation evaluates its supplied target once; the caller decides whether evidence or a rule needs another. A narrow deterministic repair whose direct check passes closes on the caller's verification; a justified rereview focuses on the repair, affected boundaries, and unresolved findings, prefers the original reviewer when the host can continue its context and target (supplying the previous result, the exact delta, parent dispositions, and the remaining question), and takes a fresh reviewer for a changed material boundary, deficient prior coverage, or an explicit independent-review request. Prior adjudications stand while their evidence applies; an old pass does not cover a new regression. The reviewer stays separate from the worker across rounds.
 
 ## Bounded Brief
 
-Include only what is needed to review the target:
-
 - target class and objective
-- goals, non-goals, acceptance criteria, and any authorized best-effort discretion supplied by the caller
+- goals, non-goals, acceptance criteria, and any authorized best-effort discretion
 - exact artifact, diff, or changed files and current candidate identity
-- declared verification and evidence applicable to that candidate, including gaps or invalidated results
+- declared verification and evidence for that candidate, including gaps or invalidated results
 - allowed supporting files, each with a reason and a genuinely accessible source or bounded excerpt
 
-Preserve the parent goal, protected behavior, authorized discretion, and important rationale without copying the entire conversation. A path outside the evaluator's readable snapshot is not supplied context. A commit identifier is not an accessible diff: provide the exact diff and necessary historical blobs, or confirm a supported bounded history-reading capability for that evaluator. Reading the working tree, reading Git history, and executing checks are different capabilities; a read-only role need not possess all three. Supply review rules inline or through explicitly accessible source files, not assumed access to the caller's home-directory Skills. On follow-up, explicitly deliver the changed artifact/delta or refresh the supported input; continuation alone does not update a captured snapshot. Preserve still-valid adjudications rather than rewriting the acceptance baseline. If a capability is unavailable, the parent may supply the missing material or review directly under existing authority, clearly naming the actual reviewer and input; do not silently switch to a writable role or another model. Execution success is not a review pass. Do not invent extra gates the supplied goals and acceptance do not require.
-
-Stop with `manual-decision-required` when the target itself is missing or cannot be bounded. Do not reverse-engineer missing lifecycle artifacts.
+A path outside the evaluator's readable snapshot and a bare commit identifier are not supplied context: provide the exact diff and necessary blobs or confirm a bounded history-reading capability, supply review rules through accessible files, and deliver the changed delta explicitly on follow-up. When a capability is unavailable, the parent supplies the material or reviews directly, naming the actual reviewer and input. Return `needs-decision` when the target is missing or cannot be bounded.
 
 ## Candidate Findings
 
-Each material candidate should include:
+Ask first whether each proposed mechanism or acceptance condition is necessary for the outcome: a new test harness, simulation script, compatibility adapter, duplicate cross-layer assertion, hash, receipt, or gate that duplicates an existing owner check, freezes incidental literals, or rehearses a cutover already covered by authorized real-path verification gets a finding to remove or collapse it, not findings that polish its internals. Then check for omitted main goals, required oracles, and real boundaries: explicit user requirements, real consumer or protocol contracts, cryptographic behavior, artifact integrity across a trust boundary, security and retained-state protections, and authorized real-path verification bind. A secondary target raised into a gate, or an exhaustive secondary-feature catalog where discretion exists, is a defect; so is dropping a required result under best-effort language or deleting its oracle.
 
-- concrete evidence and location
-- causal connection to the reviewed target
-- violated requirement or correctness risk
-- consequence and confidence
-- smallest in-scope repair, when one exists
+Each material candidate states its evidence and location, its causal connection to the target, the violated requirement or correctness risk, its consequence and confidence, and the smallest in-scope repair when one exists. For a diff target, a blocking finding is caused or newly activated by that diff; for a whole-artifact target, defects anywhere in the artifact are in scope. Unrelated, future-phase, speculative, and low-confidence observations stay out of blocking findings; a critical out-of-scope security or data-loss risk is reported for a decision without expanding repair authority. Execution success is not a review pass.
 
-Scope the causal filter to the requested target. When the target is a diff or bounded change, a blocking finding must be caused or newly activated by that change, and defects outside it stay excluded from blocking findings. When the requested target is a whole artifact or surface, defects anywhere in that supplied target are in scope; a pre-existing-versus-new distinction never suppresses an in-target defect. Exclude unrelated, future-phase, speculative, and low-confidence observations from blocking findings either way. A critical out-of-scope security or data-loss risk may require a manual decision but never silently expands repair authority.
+## Verdict
 
-Judge whether a proposed mechanism or acceptance condition is necessary for the outcome before improving its internal completeness. Check both omitted main goals or required results and overstrong invented gates, and recommend removal through the existing finding categories when the outcome remains supported without the mechanism. For new tests, guards, compatibility promises, and evidence machinery, identify the user outcome, actual consumer, or concrete failure they protect and assess their maintenance cost. A rule is not justified merely because a prior test, review, or model-written plan contains it. Source hashes, fixture fingerprints, self-verifying receipts, incidental library behavior, and document wording or layout need no preservation unless a real contract depends on them; actual artifact integrity, protocol bytes, cryptographic behavior, and explicitly fixed user requirements still bind. Recommend removing unsupported mechanisms or tests when that is the smallest in-scope repair, rather than automatically adding another layer to satisfy them. Sharing meaningful fixtures or helpers may reduce duplication; a generic framework is not required.
+Return findings first, ordered by severity, then one verdict and the verification gaps:
 
-Treat code and observed runtime behavior as evidence of the implementation, and documents or diagrams as intent and explanation that may need synchronization. Check their accuracy by review rather than asking for tests that freeze their wording, layout, nodes, or edges. Link, structured-input, and generation-tool checks have a separate tooling purpose; model consumption does not make prose a literal contract. Explicit user requirements recorded in documents still bind.
-
-A secondary target wrongly raised into a gate, or an exhaustive secondary-feature catalog demanded where best-effort discretion already exists, is a defect. Using best-effort language to drop a required result, or deleting its oracle to manufacture a pass, is also a defect. Removing an agent-invented constraint while preserving the required result is not oracle weakening. An authorized secondary adaptation recorded with evidence is not automatically a finding. Security or oracle labels affect actual risk judgment; they do not create a fixed review count, per-file review loop, or evaluator repair right.
-
-The calling agent adjudicates candidates as accepted, rejected, deferred, or escalated to a plan or design decision; detailed reason categories refine those broad dispositions without moving the decision. Four levels stay distinct: the evaluator's return category (`pass`, `candidate-findings`, `manual-decision-required`) reports one bounded evaluation, the caller's per-finding dispositions decide what each candidate means for authorized work, the verdict below is the reviewer's judgment for this invocation, and deliverable readiness is the owning workflow's separate judgment. `candidate-findings` alone implies neither `needs-fixes`, accepted findings, repair authority, nor a next lifecycle phase, and a `pass` verdict does not by itself make a design, plan, implementation, or closure ready. The reviewer never performs the repair and never decides lifecycle continuation.
-
-## Verdicts
-
-- `pass`: no material causally bound finding remains, including when authorized secondary tradeoffs are disclosed and the main goals still hold
+- `pass`: no material causally bound finding remains, including when authorized secondary tradeoffs are disclosed and the main goals hold
 - `needs-fixes`: one or more supported findings have an in-scope repair
-- `manual-decision-required`: evidence or authority outside the review boundary is required
+- `needs-decision`: evidence or authority outside the review boundary is required, architecture intent must change, or scope or acceptance conditions are insufficient; say which
 - `split-scope`: the supplied target cannot remain one bounded review surface
-- `needs-design-decision`: architecture intent must change
-- `needs-plan-change`: implementation scope or acceptance conditions are insufficient
 
-Return findings first, ordered by severity, followed by one verdict and relevant verification gaps. Tie each finding to precise file, line, or artifact references where available; do not invent precision. If no material findings remain, say so and identify any residual risks or unverified areas. Review and verification remain distinct evidence; neither invents the other.
+The caller adjudicates each candidate as accepted, rejected, deferred, or escalated with a reason, and the owning workflow judges deliverable readiness; a `pass` does not itself make a deliverable ready.

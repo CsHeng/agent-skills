@@ -1,10 +1,10 @@
 # Infrastructure Security Examples
 
-These fragments are optional patterns for when the matching boundary already exists. They do not require a rotation service, TLS-only policy, Alpine base image, scanner, or CI workflow.
+Read this when the service exposes TLS, CORS, or response headers, handles credential files, or builds images. These fragments are optional patterns for a boundary the project already has; copy only what that boundary needs.
 
 ## Restricting Credential Files
 
-When secrets are files, limit who can read them. This is not a 90-day rotation engine.
+When secrets are files, limit who can read them.
 
 ```bash
 install -d -m 700 /etc/secrets
@@ -13,7 +13,7 @@ install -m 600 "$TMP_SECRET" /etc/secrets/db_password
 
 ## TLS When The Path Needs It
 
-Use TLS for exposed HTTP when confidentiality or integrity matters. Do not require TLS 1.3-only, OCSP stapling, or HSTS preload.
+Use TLS for exposed HTTP when confidentiality or integrity matters. Choose protocol versions and ciphers the clients and threat model support.
 
 ```nginx
 server {
@@ -24,9 +24,17 @@ server {
 }
 ```
 
+## Security Headers
+
+Set the headers the application and its browser threat model need, such as frame isolation, content-type sniffing protection, referrer policy, or CSP.
+
+## CORS
+
+When the browser origin policy matters, allow the specific origins, methods, and headers the product requires.
+
 ## Container Runtime Slice
 
-Drop build tools from the runtime image and avoid root when the process allows it. Keep the image family the project already owns; no specific base image or scanner is required.
+Drop build tools from the runtime image, run as non-root when the process allows it, and limit filesystem permissions to what the process needs. Keep the image family and CI the project already owns.
 
 ```dockerfile
 # Runtime stage only: copy the built artifact, drop the toolchain, and run

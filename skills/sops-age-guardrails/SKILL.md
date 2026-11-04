@@ -5,25 +5,17 @@ description: "Use for SOPS/age secret editing and review: .sops.yaml creation_ru
 
 # SOPS Age Guardrails
 
-## Purpose
+Edit SOPS-managed files with age recipients so that only secret keys are encrypted and no private identity reaches tracked files.
 
-Prevent accidental whole-file encryption and local identity leakage when editing SOPS-managed files with age recipients.
+## Workflow
 
-## Decision Rules
-
-PROHIBITED: Do not encrypt whole structured config files when only secrets are sensitive; inspect `.sops.yaml` and require narrow `encrypted_regex`, `encrypted_suffix`, or `unencrypted_regex` rules before running `sops -e -i`.
-PREFERRED: Keep operational metadata plaintext and encrypt only narrow secret subtrees such as `secrets`, `data`, or `stringData`.
-
-REQUIRED: Keep age private identities out of tracked repo docs/code; provide identities through caller environment, ignored local config, or CI secret surfaces.
-REQUIRED: Use SOPS read/edit/encrypt workflows for writes; never hand-edit `ENC[...]` ciphertext or copy plaintext over encrypted files.
-
-## Operating Workflow
-
-1. Read the nearest `.sops.yaml` before editing encrypted files.
-2. Confirm the path matches a `creation_rules.path_regex` entry.
-3. Confirm the rule encrypts only the intended secret keys.
-4. Edit through SOPS, then verify the diff keeps non-secret metadata readable.
-5. For single-secret reads, prefer `sops -d --extract` over decrypting the whole file into logs or shell history.
+1. Read the nearest `.sops.yaml` before editing encrypted files, and confirm the path matches a `creation_rules.path_regex` entry.
+2. Before `sops -e -i`, confirm a narrow `encrypted_regex`, `encrypted_suffix` or `unencrypted_regex` rule limits encryption to secret keys such as `secrets`, `data` or `stringData`, and keep operational metadata plaintext.
+3. Write only through SOPS read, edit and encrypt commands.
+4. Verify the diff keeps non-secret metadata readable and shows no broad ciphertext churn outside the intended secret subtree.
+5. Read a single secret with `sops -d --extract`, which keeps the rest of the file out of logs and shell history.
+6. Fix a MAC mismatch by re-saving the final plaintext through SOPS.
+7. Keep `.sops.yaml` tracked with public recipients and path rules, and supply age identities through the caller environment, ignored local config, or CI secret surfaces. Age identity paths live only there.
 
 ## Commands
 
@@ -31,13 +23,5 @@ REQUIRED: Use SOPS read/edit/encrypt workflows for writes; never hand-edit `ENC[
 sops -d --extract '["secrets"]["KEY"]' path/to/file.yml
 sops path/to/file.yml
 sops -e -i path/to/file.yml
-sops updatekeys path/to/file.yml
+sops updatekeys path/to/file.yml   # rotate recipients after a `.sops.yaml` recipient change
 ```
-
-## Review Checklist
-
-- `.sops.yaml` is committed with public recipients and path rules.
-- Private age identity paths are not tracked in repo code, docs, or examples.
-- Structured config keeps non-secret keys reviewable.
-- The diff does not introduce broad ciphertext churn outside the intended secret subtree.
-- MAC mismatch fixes re-save the final plaintext state through SOPS instead of editing encrypted payloads manually.

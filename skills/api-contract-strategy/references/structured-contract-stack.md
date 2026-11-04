@@ -11,7 +11,7 @@ Keep one maintained source for each truth kind:
 | Environment lifecycle | Existing project-owned lifecycle glue | Process, database, fixture, restart, readiness, and cleanup orchestration |
 | Non-HTTP domain behavior | Owning code and stable domain docs | Focused tests and links |
 
-Keep these roles non-overlapping. Arazzo may define sequencing, value chaining, runtime inputs, and success criteria, but it must not restate OpenAPI request or response schemas.
+Keep these roles non-overlapping. Arazzo defines sequencing, value chaining, runtime inputs, and success criteria; request and response schemas stay in OpenAPI.
 
 ## Authoring Source
 
@@ -21,7 +21,7 @@ Prefer typed declarative code-first when one provider framework can export the c
 
 Use annotation- or comment-first generation only when annotations cover every operation and schema, the output is complete and deterministic, and missing or stale output fails a project-owned check.
 
-For a legacy API, characterize registered routes and real protocol behavior, identify stable semantic truth, and adjudicate conflicts. Do not silently assume that either handwritten documentation or current implementation is correct.
+For a legacy API, characterize registered routes and real protocol behavior, identify stable semantic truth, and adjudicate conflicts. Treat handwritten documentation and current implementation as equally unverified until adjudicated.
 
 ## Source Layout And Bundle
 
@@ -32,21 +32,19 @@ Provide one pinned project-owned command that resolves references, lints, and cr
 - commit it with stale-output protection when portability, review, or agent context requires it
 - otherwise write it to an ignored build root and regenerate it in every owning workflow
 
-Do not maintain both fragments and a hand-edited bundle.
+Edit the fragments and regenerate the bundle.
 
 ## Generated Projections
 
-Generate only the provider and consumer wire boundary needed to remove duplication. Prefer models or types before a full runtime client when consumer adapters own authentication, cookies, retries, offline behavior, error mapping, or platform transport policy.
+Generate only the provider and consumer wire boundary needed to remove duplication. Choose the projection size using Generated Client Scope in [Contract Lifecycle](contract-lifecycle.md). Keep domain models, persistence types, retry policy, UI state, and other non-wire behavior hand-written by default.
 
-Do not generate domain models, persistence types, retry policy, UI state, or other non-wire behavior by default.
-
-Generate human reference documentation from OpenAPI. Do not maintain an endpoint-by-endpoint Markdown API catalog as a coequal contract source.
+Generate human reference documentation from OpenAPI as the only API catalog.
 
 ## Workflows, Runner, And Lifecycle Glue
 
 Use Arazzo for a small number of outcomes that require multiple operations, chained values, or state transitions. Keep workflow count proportional to business journeys, reference stable OpenAPI operation IDs, pass secrets as masked runtime inputs, and use synthetic examples.
 
-Select a CLI/CI runner with the OpenAPI reference resolution, response verification, runtime input, server override, and deterministic exit capabilities described in [Tool Selection](tool-selection.md). Pin the executable revision; do not require Redocly hosted services.
+Select a CLI/CI runner with the OpenAPI reference resolution, response verification, runtime input, server override, and deterministic exit capabilities described in [Tool Selection](tool-selection.md). Pin the executable revision; hosted services stay optional.
 
 Retain Python or Shell only as lifecycle glue when it owns dynamic process, database, fixture, restart, readiness, or cleanup orchestration. After runner equivalence is proven, remove duplicated business HTTP steps from that glue.
 
@@ -54,6 +52,6 @@ Retain Python or Shell only as lifecycle glue when it owns dynamic process, data
 
 Use generated HTML for human review or external reference when a publication owner and audience exist. Agents do not require a hosted documentation site.
 
-Use Restish, curl, or a disposable single-operation Arazzo workflow for ad hoc exploration. Do not commit a second operation catalog for this use.
+Use Restish, curl, or a disposable single-operation Arazzo workflow for ad hoc exploration, and keep those artifacts uncommitted.
 
 Add Bruno, Postman, Yaak, or another GUI collection only when a named GUI collaboration requirement justifies a generated or synchronized projection. Keep OpenAPI and Arazzo upstream; never treat the GUI collection as contract truth.

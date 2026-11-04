@@ -1,6 +1,6 @@
 # Python Tooling And Environments
 
-Use this reference when configuring project tooling, running dependency-bearing one-offs, or diagnosing a test environment. The environment and toolchain policy remains in [Python Guidelines](../SKILL.md).
+Use this reference when configuring project tooling, running dependency-bearing one-offs, or diagnosing a test environment. Policy is in [Python Guidelines](../SKILL.md); this reference carries details.
 
 ## Project Environments And Caches
 
@@ -17,9 +17,9 @@ These are examples of the owning project or host's declared roots, not overrides
 | `RUFF_CACHE_DIR` | `<cache-root>/ruff` | Reusable lint cache; a shared external location is suitable unless the project requires isolation. |
 | pytest `cache_dir` | `<project-test-state-root>/<project>` | Per-project mutable test state (`lastfailed`, `--lf`); give each project its own directory and do not treat it as a shared cache. |
 
-`uv venv` can honor `UV_PROJECT_ENVIRONMENT` at the project root; an explicit target is preferable when creating an environment from another directory. Check the installed uv's behavior when it matters. Existing virtual environments can be replaced by creation commands, so inspect ownership and compatibility before creating one; normal `uv run` or `uv sync` use is not a reason to recreate a project environment. Only a genuinely one-shot throwaway environment is task-owned, and it is removed after verification.
+`uv venv` can honor `UV_PROJECT_ENVIRONMENT` at the project root; an explicit target is preferable when creating an environment from another directory. Check the installed uv's behavior when it matters. Creation commands can replace an existing virtual environment, so inspect ownership and compatibility before creating one; `uv run` and `uv sync` reuse the environment. Only a genuinely one-shot throwaway environment is task-owned, and it is removed after verification.
 
-For project-owned tooling, use the pinned tool from the owning environment. For a deliberately independent Ruff diagnostic with no project-pinned tool available, an explicit cache setup can accompany `uv tool run ruff`; do not present that fallback as the project's authoritative gate.
+For project-owned tooling, use the pinned tool from the owning environment. For a deliberately independent Ruff diagnostic with no project-pinned tool available, an explicit cache setup can accompany `uv tool run ruff`; report that fallback as diagnostic and keep the project's pinned tool as the authoritative gate.
 
 ## pytest Setup
 
@@ -34,13 +34,13 @@ cache_dir = "<project-test-state-root>/<project>"
 uv run pytest -o "cache_dir=<project-test-state-root>/<project>"
 ```
 
-If using `PYTEST_ADDOPTS`, remember that it can override project options; do not share one pytest cache across projects, since state such as `--lf` can cross-contaminate results.
+`PYTEST_ADDOPTS` can override project options. Each project keeps its own pytest cache, since state such as `--lf` can cross-contaminate results across projects.
 
 Before a test run, inspect the owning project's configuration and dependencies. Resolve whether configured `addopts` need plugins such as `pytest-cov`; do not assume a repository-root environment owns every subproject. Prefer the owning environment for project tests. A one-off `uvx --with pytest --with pytest-cov pytest ...` can support a narrow diagnostic; disabling addopts with `-o addopts=''` is also diagnostic, not a substitute for a required coverage or plugin-enabled gate.
 
 ## One-Off Dependencies
 
-Plain `python3` may assume only the standard library. Do not rely on third-party packages being present in system Python or mise-managed Python, and do not install packages globally to make an agent command work.
+Plain `python3` may assume only the standard library. Declare third-party packages through the owning environment or `uvx`, and keep system and mise-managed Python unmodified.
 
 - Run project-owned code through the owning project environment.
 - For a one-off requiring packages, use `uvx --with <package> python3 ...` or `uv run --no-project --with <package> python3 ...`. These are not a reason to create an environment or metadata in the source project.

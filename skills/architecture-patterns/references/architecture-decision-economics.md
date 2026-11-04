@@ -27,7 +27,7 @@ Prefer reversible staged investment when the first increment captures most of th
 
 Treat architecture work as consuming scarce delivery, review, operational, and learning capacity. State which user outcome, reliability repair, debt reduction, or alternative experiment will be delayed by the chosen investment.
 
-Always compare at least:
+Compare, for a persisted boundary decision:
 
 - `status quo`: preserve the existing boundary and accept its current constraint
 - `smallest sufficient`: make the least expensive reversible change that meets the approved goal
@@ -45,9 +45,8 @@ Watch for incentive failures:
 - service autonomy that externalizes compatibility and incident cost to other teams
 - feature flags, abstractions, or compatibility paths that are cheap to add but have no removal owner
 - plan templates that reward field completion instead of decision quality
-- executable oracles that can be weakened or gamed to make a change appear complete
 
-Align authority, cost, and accountability for continuing responsibilities. A shipped transitional mechanism needs an owner, an observable outcome, and a retirement or replacement condition. Bounded disposable investigation inside authorized work needs ordinary scope and cleanup, not a separate lifecycle record or experimental approval.
+Align authority, cost, and accountability for continuing responsibilities. A shipped transitional mechanism needs an owner, an observable outcome, and a retirement or replacement condition.
 
 ## Comparative Advantage
 
@@ -59,9 +58,9 @@ Record the hard constraint or ecosystem advantage when selecting an option that 
 
 ## Decision Horizon And Mature Ownership
 
-The smallest current patch is not necessarily the smallest lifetime responsibility. For open material choices, verify what the project, host, and mature ecosystem already own before implementing a parallel mechanism. Count replacement glue and dependency maintenance as well as local code. A mature framework can be appropriate for a user-declared long-lived project even while only its present features are used.
+The smallest current patch is not necessarily the smallest lifetime responsibility. Count replacement glue and dependency maintenance as well as local code. A mature framework can be appropriate for a user-declared long-lived project even while only its present features are used. Apply the reuse check in `design-change` and `development-standards` before implementing a parallel mechanism; research ends when the relevant decision is supported.
 
-Settled choices are not rescored each round. An explicit structural-reassessment request can compare a one-time refactor or rewrite against future maintenance without defending sunk cost; ordinary implementation does not activate that inquiry. Research ends when the relevant decision is supported, not after every candidate has been exhausted.
+Settled choices follow `design-change` (Related Decisions). An explicit structural-reassessment request can compare a one-time refactor or rewrite against future maintenance without defending sunk cost.
 
 ## Supply And Demand
 
@@ -104,13 +103,13 @@ architecture_economics:
   recovery_and_oracle: <safe exit plus executable evidence>
 ```
 
-Do not turn uncertain inputs into a weighted score. Avoid false precision because it hides assumptions and encourages agents or reviewers to optimize the score instead of the system outcome.
+Decide with causal evidence and explicit discard reasons; a weighted score hides assumptions and invites optimizing the score instead of the system outcome.
 
 ## Planning Handoff
 
 Pass the approved decision to planning by reference. Break structural investment into reversible increments that buy information early, preserve an exit path, and delay irreversible cost until evidence requires it.
 
-Plan tasks may implement, verify, or stage the choice. They must not silently rescore the approved tradeoff. Report concrete changed demand, ownership, hard constraints, or upgrade triggers to the decision owner; do not automatically reopen design from implementation. The owner can explicitly request a structural reassessment without treating previous investment as a reason to retain the old choice.
+Plan tasks implement, verify, or stage the choice at the approved tradeoff. Report concrete changed demand, ownership, hard constraints, or upgrade triggers to the decision owner as `needs-decision: design` (`implement-change`, One-Way Execution). The owner can explicitly request a structural reassessment without treating previous investment as a reason to retain the old choice.
 
 ## Failure Modes
 
@@ -119,7 +118,6 @@ Plan tasks may implement, verify, or stage the choice. They must not silently re
 - **Cost externalization:** giving one caller or team local convenience while transferring coordination, incident, or migration cost to others.
 - **Sunk-cost defense:** continuing an architecture because of prior investment when the next increment no longer pays.
 - **Template gaming:** completing every field or adding every oracle to satisfy a process rather than protect an outcome.
-- **Security tradeoff misuse:** treating mandatory security, compliance, or data-integrity constraints as optional benefits that can lose a cost comparison.
 - **Demand fiction:** using an unsupported growth forecast instead of current evidence, lead time, and an observable upgrade trigger.
 
 ## Short Examples

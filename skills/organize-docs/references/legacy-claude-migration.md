@@ -16,4 +16,4 @@ Inspect both paths without following symlinks before mutation. Do not overwrite 
 
 Removing a symlink does not create `AGENTS.md`. If it is still absent after cleanup, create it from current repository evidence and authorized guidance, not by blindly copying an arbitrary link target. If valid guidance cannot be established, report that remaining gap instead of inventing instructions.
 
-Verify that a valid `AGENTS.md` exists and that `CLAUDE.md` does not exist as a file, symlink, or dangling symlink. Preserve unrelated guidance and files. Never remove a regular legacy file before its retained guidance is safely owned elsewhere; never recreate the compatibility link.
+Verify that a valid `AGENTS.md` exists and that `CLAUDE.md` does not exist as a file, symlink, or dangling symlink. Preserve unrelated guidance and files.

@@ -1,6 +1,6 @@
 # Language And Values
 
-Use the current MikroTik [Scripting manual](https://manual.mikrotik.com/docs/developer-guides/scripting/) as the syntax authority.
+Syntax authority is the current MikroTik Scripting manual named in `SKILL.md`.
 
 ## Lines And Scopes
 

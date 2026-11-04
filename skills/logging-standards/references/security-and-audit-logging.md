@@ -29,7 +29,7 @@ Carry the minimum stable correlation needed across the audited path: request, tr
 
 ## Retention And Access
 
-- Derive retention from investigation windows, legal or contractual policy, storage risk, and deletion obligations; do not choose a universal duration.
+- Derive retention from investigation windows, legal or contractual policy, storage risk, and deletion obligations.
 - Restrict log read, export, search, and deletion privileges separately from application administration when the evidence warrants it.
 - Record access to sensitive audit evidence when required, and protect exports under the same or stronger classification.
 - Assign archive, legal hold, deletion, and restoration to named owners and test the required retrieval path.

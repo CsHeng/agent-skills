@@ -18,7 +18,7 @@ cd "$REPO_ROOT"
 bash "$SKILL_DIR/scripts/check-doc-boundaries.sh"
 ```
 
-The checker also calls the bundled normalizer in `check` mode. Required boundary checks retain their declared scan scope; a smaller repair scope is not permission to hide findings or remove assertions.
+The checker also calls the bundled normalizer in `check` mode. Required boundary checks retain their declared scan scope; a smaller repair scope never narrows them or removes assertions.
 
 For a repository with a machine-readable documentation manifest:
 
@@ -28,8 +28,8 @@ python3 "$SKILL_DIR/scripts/check-documentation-layout.py" --root "$REPO_ROOT" -
 
 - The manifest declares roots and material classes, required indexes, stage and archive shapes, link scope, relocation manifests, and named exceptions. Use the repository's actual manifest path. Relocation checks verify old/new path relationships and created-file existence; they do not pin document contents.
 - Capabilities are `declared-roots`, `stage-shape`, `archive-shape`, `root-shape`, `index-closure`, `link-resolution`, and `migration-conservation`; the manifest maps them to its gate identifiers.
-- This check is advisory. Keep the manifest as declaration data, do not wire the checker into repository tasks, tests, or tool dependencies, and do not vendor a checker copy.
-- Repair violations or declare a justified exception. Do not hide findings by narrowing the check. Unresolved links in archived and staged scopes are named exemptions; useful historical bodies need not be rewritten to satisfy a gate, and obsolete material may be removed within the authorized cleanup.
+- This check is advisory: keep the manifest as declaration data, and run the checker from the installed Skill rather than wiring it into repository tasks, tests, or tool dependencies or vendoring a copy.
+- Repair violations or declare a justified exception. Unresolved links in archived and staged scopes are named exemptions; useful historical bodies need not be rewritten to satisfy a gate, and obsolete material may be removed within the authorized cleanup.
 - Exit status is `0` on pass, `1` on undeclared violations, and `2` on an unusable manifest or missing checker.
 
 ## Repairing Existing Prose Wrapping
@@ -53,4 +53,4 @@ python3 "$SKILL_DIR/scripts/normalize-markdown-prose.py" --root "$REPO_ROOT" "${
 
 `write` removes continuation newlines and aborts if non-whitespace prose content or Markdown structure changes. `check` detects remaining wrapped paragraphs, list items, or blockquotes. The normalizer preserves fenced and indented code, frontmatter, tables, headings, reference definitions, HTML-only lines, thematic breaks, and intentional hard breaks. If a joined line contains unrelated claims, split it into real paragraphs or list items at semantic boundaries, not at a fixed column width.
 
-Use path exclusions to leave retained originals outside a mechanical prose repair. No content digest or immutable-document manifest is needed.
+Use path exclusions to leave retained originals outside a mechanical prose repair; no content digest or immutable-document manifest is needed.

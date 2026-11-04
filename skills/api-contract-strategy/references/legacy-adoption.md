@@ -4,7 +4,7 @@
 
 Introduce the minimum missing verification layer while preserving useful current evidence.
 
-Do not rewrite all tests, replace stable adapters, or declare a partial schema complete.
+Keep existing tests and stable adapters, and label a partial schema as partial.
 
 ## Migration Order
 
@@ -31,22 +31,18 @@ Do not rewrite all tests, replace stable adapters, or declare a partial schema c
 
 - Reuse real-router and integration fixtures where they already exist.
 - Add a shared conformance helper rather than duplicating one test suite per tool.
-- Do not broadly relax schemas when provider evidence conflicts with the baseline.
 - Record which operations have response conformance and which only have route completeness.
 
 ## Consumer Rules
 
-- Start with the smallest projection that removes current drift.
 - Keep view models and local form state manual when they are not wire DTOs.
 - Share contract-validated examples with constrained firmware clients before considering generated C++ or Lua SDKs.
-- Keep platform behavior in the owning consumer tests.
 
 ## Workflow Rules
 
 - Preserve valuable smoke and regression journeys.
-- Add workflows for cross-operation behavior, not contract-shaped endpoint catalogs.
+- Write workflows for cross-operation behavior only.
 - Move stable multi-operation HTTP semantics and lifecycle glue according to [Structured Contract Stack](structured-contract-stack.md) when runner support fits.
-- Treat browser tests as evidence only for browser-owned behavior.
 
 ## CDC Decision
 
@@ -61,5 +57,5 @@ Pact adds a broker, version lifecycle, provider states, publishing, and a verifi
 - provider implementation and stable semantic truth conflict
 - compatibility base cannot be resolved deterministically
 - generation would replace consumer policy outside the approved scope
-- required evidence needs live credentials, hardware, or production authority
+- required evidence needs live credentials, hardware, or production authority (report `blocked` with the missing access)
 - the proposed layer duplicates an existing oracle without closing a named gap

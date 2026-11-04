@@ -5,171 +5,57 @@ description: "Apply Shell policy to persisted scripts, CI or automation, constra
 
 # Shell Guidelines
 
-## Purpose
-
-Define the Shell language-policy overlay for persisted or correctness-sensitive Shell code. The primary workflow owns the task lifecycle; non-trivial ad hoc tool selection and command composition use only `references/tool-selection.md` in `skills-routing`. Do not load this skill merely because a routine read-only command runs through a shell.
-
-## Scope
-
-In-scope:
-- Non-trivial Shell fragments whose quoting, expansion, interpreter, pipeline, or failure behavior affects correctness
-- Editing or creating shell scripts (`.sh`, bash/zsh scripts)
-- CI and local automation scripts
-- Shell for an explicitly constrained native runtime such as OpenWrt BusyBox ash or a target contract fixed to POSIX `sh`
-- Shell that must affect the invoking shell, such as a sourced environment, profile, or launcher
-- Code review and syntax audit for shell files
-
-Out-of-scope:
-- Routine single-layer commands such as a bounded `rg`, file read, or `git status` when no Shell policy decision is present
-- Agent ad hoc tool choice, command composition, and progressive search (read `references/tool-selection.md` in `skills-routing`)
-- Language selection (read `references/language-selection.md` in `skills-routing`)
+Apply these rules to persisted or correctness-sensitive Shell: scripts (`.sh`, bash, zsh), CI and local automation, fragments whose quoting, expansion, interpreter, pipeline or failure behavior affects correctness, Shell for a constrained native runtime such as OpenWrt BusyBox ash or a target fixed to POSIX `sh`, Shell that must affect the invoking shell (sourced environments, profiles, launchers), and review or syntax audit of shell files. Ad hoc tool choice and command composition read `references/tool-selection.md` in `skills-routing`; language selection reads `references/language-selection.md` there.
 
 ## Progressive Disclosure
 
-- Script development patterns: `references/script-patterns.md`
-- Language-specific read-only review checks: `references/review-checklist.md`
+- Script structure, diagnostics and error-handling examples (the `ERR` trap, input validation): `references/script-patterns.md`
+- A script targeting macOS or Homebrew `PATH`, needing Bash 4+, or an option behaving unexpectedly: `references/macos-homebrew.md`
+- Read-only review checks: `references/review-checklist.md`
 
-## Deterministic Steps
+## Rules
 
-1. Choose the shell for the target environment
-   - POSIX or BusyBox ash: `#!/bin/sh`; for ash stay within the ash/POSIX subset and do not introduce Python or Go when the target contract is fixed to that constrained runtime
-   - CI/Linux bash: `#!/usr/bin/env bash`
-   - zsh scripts: `#!/usr/bin/env zsh`
-   - macOS: `/bin/bash` is typically 3.2; if you rely on Bash 4+ features (e.g. `mapfile/readarray`, associative arrays), ensure Homebrew Bash is used via `PATH` or use the host-appropriate absolute shebang (`/opt/homebrew/bin/bash` on Apple Silicon, `/usr/local/bin/bash` on Intel) for internal scripts.
-2. Enable strict mode for shell entrypoints
-   - Use `set -euo pipefail` for Bash and zsh entrypoints.
-   - Use `set -eu` for POSIX `sh` entrypoints because `pipefail` is not portable.
-   - For Bash entrypoints that install an `ERR` trap, use `set -Eeuo pipefail` so the trap is inherited by functions, command substitutions, and subshells.
-3. Quote and validate inputs
-   - Quote all variable expansions unless intentionally relying on splitting/globbing.
-   - Validate the launcher's own inputs: argument presence and shape, environment variables it dereferences, and paths it resolves.
-   - Leave domain parsing and state validation to the main implementation the launcher starts.
-   - Avoid `eval` and executing untrusted input.
-4. Prefer simple, readable structure
-   - Keep scripts small and linear where possible.
-   - Put functions above the main execution flow.
-   - Return early to reduce nesting.
-5. Use linting and syntax checks
-   - Run `shellcheck` for bash/sh where available.
-   - Run interpreter syntax checks: `bash -n`, `sh -n`, `zsh -n`.
+### Interpreter
 
-## Rules (Hard Constraints)
+- Use `#!/bin/sh` and the ash/POSIX subset for BusyBox ash or a target contract fixed to POSIX `sh`; that constrained runtime keeps its native shell. An incidental minimal base image does not establish the constraint. In POSIX `sh`, use `[ ]` and avoid `[[ ]]` and arrays.
+- Use `#!/usr/bin/env bash` for CI and Linux bash, and `#!/usr/bin/env zsh` for zsh scripts. Keep zsh-only features in zsh scripts.
+- Require Bash 4+ explicitly (shebang or runtime) or provide a compatibility fallback when a script uses `mapfile`/`readarray` or associative arrays; macOS `/bin/bash` is 3.2.
 
-### Variable Naming
-PROHIBITED: In any shell, declare or assign variables named `path`, `status`, `pipestatus`, `argv`, `commands`, `functions`, `options`, or `parameters`.
+### Strict Mode And Failure
 
-### Security
-PROHIBITED: Use `eval` or `exec` with untrusted user input.
-PROHIBITED: Hardcode secrets or credentials in shell scripts.
-REQUIRED: Validate inputs before processing; reject unexpected values early.
+- Start Bash and zsh entrypoints with `set -euo pipefail`, and POSIX `sh` entrypoints with `set -eu` (`pipefail` is not portable).
+- Give a Bash entrypoint with an `ERR` trap `set -Eeuo pipefail` and a minimal trap such as `trap 'echo "Error on line $LINENO" >&2' ERR`. In POSIX `sh`, check each command's status explicitly; the `ERR` trap is Bash and zsh only.
+- Check the exit status of every external command, through `set -e` or an explicit test.
+- Under `set -e`, increment counters with `((i+=1))` or `((++i))`; `((i++))` returns status 1 when the counter is 0.
 
-### Error Handling
-REQUIRED: Use strict mode for Bash and zsh entrypoints: `set -euo pipefail`.
-REQUIRED: Use strict mode for POSIX `sh` entrypoints: `set -eu`.
-PREFERRED: Under `set -e`, avoid `((i++))`/`((i--))` when counters can start at 0 (exit status becomes 1); prefer `((i+=1))` / `((++i))` for counters.
-PROHIBITED: Ignore return codes from external commands.
-PREFERRED: For Bash entrypoints, add a minimal failure trap for debugging context and enable errtrace so it propagates: `set -E; trap 'echo "Error on line $LINENO" >&2' ERR`.
-PREFERRED: Do not emulate this pattern in POSIX `sh`; it has no portable `ERR` trap or errtrace equivalent.
+### Inputs And Quoting
 
-### Portability
-REQUIRED: If the target is POSIX `sh`, use only POSIX syntax (`[ ]`, no `[[ ]]`, no arrays).
-REQUIRED: Preserve an explicitly constrained native target's BusyBox ash or POSIX `sh` contract; a language preference is not permission to introduce Python or Go. An incidental minimal base image does not itself establish that constraint.
-PREFERRED: Do not assume macOS `/bin/bash` supports modern bash features; if you use bash-4+ features (e.g. `mapfile/readarray`, associative arrays), require bash 4+ explicitly (shebang/runtime) or provide a compatibility fallback.
-PROHIBITED: Use zsh-only features in scripts intended for bash/sh environments.
+- Quote every variable expansion unless splitting or globbing is intended and documented.
+- Validate the launcher's own inputs (argument presence and shape, environment variables it dereferences, paths it resolves) and reject unexpected values early. Domain parsing and state validation belong to the implementation the launcher starts.
+- Treat user input as data: expand it quoted and pass it as arguments to a fixed command.
+- Supply secrets and credentials through the environment or the project's secret mechanism.
+- Use descriptive variable names such as `file_path` or `exit_status` in place of `path`, `status`, `pipestatus`, `argv`, `commands`, `functions`, `options` and `parameters` in any shell.
+- Name script files in kebab-case: `my-script.sh`.
 
-### Data Handling
-REQUIRED: Quote variables to prevent word splitting and glob expansion.
-PREFERRED: Use an existing structured-data tool or a clear higher-level fragment when Shell parsing would be fragile. Short embedded Python may use the standard library on a compatible interpreter already provided by the target; pass data through arguments, stdin, or files rather than interpolating it into source. Move a fragment to a named script when that improves readability or reuse, without automatically changing its language. Adding a third-party Python environment is a language-selection decision, not a routine way to simplify a fragment.
+### Structure
 
-### Persisted Script Escalation
-PREFERRED: Read `references/language-selection.md` in `skills-routing` when actual parsing, state, recovery, concurrency, or distribution complexity makes the current implementation costly or unreliable. Compare total implementation, verification, deployment, and maintenance cost before an authorized rewrite.
-PREFERRED: Keep Shell when the script is simple, affects the invoking shell, or runs on a constrained native runtime (BusyBox ash or POSIX `sh`). Length, state, or embedded Python alone does not justify escalation.
-PREFERRED: For a one-shot remote action, reuse the controller's built-in module, local rendering, thin transported Shell, or a short Python fragment on an available runtime rather than creating a new product.
-PREFERRED: Preserve an existing working Shell implementation unless the request or approved design authorizes its migration. A long-lived tool may benefit from Go's compiled delivery, but that benefit must outweigh the new build, compatibility, and maintenance cost.
-PREFERRED: Preserve the complete entrypoint and its normal delivery/update workflow when combining Shell with Python or a binary. Locating a co-delivered implementation can be a sufficient responsibility for an existing Shell entrypoint; keep business rules in the implementation that owns them. Read the language-selection reference for the whole-tool cost comparison.
-PROHIBITED: Split one reusable business rule across Shell and another implementation language.
+- Keep scripts small and linear, with functions above the main flow, early returns, and each external mutation visible.
+- Use an existing structured-data tool or a short embedded standard-library Python fragment when Shell parsing would be fragile; pass data through arguments, stdin or files rather than interpolating it into source. A named script is a readability choice, not a language change.
+- Keep each reusable business rule in one implementation, in the language that owns it. A Shell entrypoint may locate and start a co-delivered implementation, and its normal delivery and update workflow stays intact.
+- Keep an existing working Shell implementation, a simple script, a parent-shell effect, or a constrained native runtime in Shell. When parsing, state, recovery, concurrency or distribution cost makes it unreliable, read `references/language-selection.md` in `skills-routing` before proposing a rewrite.
 
-### Temporary Directories
-REQUIRED: For general-purpose temporary files, use a native temporary-file mechanism such as `mktemp` that respects `TMPDIR`; setting `TMPDIR` does not redirect a literal `mkdir /tmp/...` or an explicit `/tmp` template. Keep legitimate fixed target-system paths unchanged.
-PREFERRED: Let the development environment select and create a disk-backed project-group `TMPDIR`; portable scripts may retain their platform temporary-directory fallback when it is unset. Do not hardcode `$HOME/tmp` into shipped runtime behavior merely to match the developer's environment. Preserve tool-specific cache and output settings and clean only task-owned temporary paths.
+### Temporary Files And Scope
 
-### Environment Scope
-PREFERRED: Let common environment scope follow `development-standards`; this section adds only the Shell-specific mapping.
-REQUIRED: Resolve script-owned resources from the script location or an explicit owning root, using the declared interpreter's facilities. Distinguish those paths from a CLI's intentionally caller-selected working directory; do not accidentally interpret a caller's project as the script's own repository.
-PREFERRED: Treat `cd`, invoking a version manager such as `mise`, or starting a subshell as changing context, not as clearing inherited variables. Reset or replace only the variables the script owns, and reserve a fully clean environment for the untrusted or hermetic boundary that requires one.
+- Create temporary files with `mktemp` or another native mechanism that respects `TMPDIR`, and clean only task-owned paths. Environment scope and temporary storage follow `development-standards`.
+- Resolve script-owned resources from the script location or an explicit owning root, and keep them distinct from a CLI's intentionally caller-selected working directory.
 
-### File Naming
-REQUIRED: Name shell script files using hyphen style (kebab-case): `my-script.sh`, not `my_script.sh`
+## Checks
 
-## macOS / Homebrew Notes (Agents + Non-Interactive)
-
-- `#!/usr/bin/env bash` resolves via `PATH`; on macOS the default is often `/bin/bash` (3.2). If you need Bash 4+ features, require Homebrew Bash on `PATH` or use the host-appropriate absolute shebang (`/opt/homebrew/bin/bash` on Apple Silicon, `/usr/local/bin/bash` on Intel) for internal scripts.
-- macOS login `zsh` runs `path_helper` (via `/etc/zprofile`), which can override PATH changes from `.zshenv`. For tasks explicitly testing `zsh -lc`, put the final Homebrew PATH setup in `.zprofile` after `path_helper`, using the host's `brew shellenv`.
-- Homebrew `curl` is commonly keg-only; prefer `export PATH="$(brew --prefix curl)/bin:$PATH"` when you need modern curl/TLS features.
-- Non-interactive bash sources `$BASH_ENV`; set it to a file that exports the PATH you expect (including Homebrew) if your automation runs `bash` non-interactively.
-- A resolved command's dialect can differ from the host OS when Homebrew `*/libexec/gnubin` directories shadow system commands; `references/tool-selection.md` in `skills-routing` covers ad hoc diagnostic handling. For persisted scripts that depend on a specific command dialect, run this skill's bundled `scripts/audit-homebrew-command-shadowing.py` when an option behaves unexpectedly.
-- Debug quickly: `command -v bash; /usr/bin/env bash --version | head -n1; type -a bash; command -v curl; curl --version | head -n1`.
-
-### Homebrew Command Shadow Audit
-
-The audit is read-only and emits deterministic JSON containing effective providers, duplicate providers, macOS system shadows, and gnubin-only commands:
+Run `shellcheck` for bash and sh where available, and the interpreter's syntax check (`bash -n`, `sh -n`, `zsh -n`):
 
 ```bash
-SKILL_DIR="$(cd "$(dirname "<path to this SKILL.md>")" && pwd)"
-python3 "$SKILL_DIR/scripts/audit-homebrew-command-shadowing.py"
-```
-
-Use `--path` for a synthetic or remote PATH snapshot, repeat `--system-dir` to replace the default macOS system directories, and add `--compact` for JSONL-oriented tooling.
-
-
-## Operational Checks (Examples)
-
-```bash
-# Syntax
 bash -n path/to/script.sh
-
-# Lint
 shellcheck path/to/script.sh
 ```
 
-## Checklist
-
-- Shell script files named with hyphen style (kebab-case): `my-script.sh`
-- Correct shebang for target environment
-- Strict mode enabled for Bash/zsh (`set -euo pipefail`) or POSIX `sh` (`set -eu`) entrypoints
-- No declarations or assignments using prohibited Shell variable names
-- No `eval`/unsafe execution of user input
-- Variables quoted; inputs validated
-- constrained native targets stay on their native shell and introduce no new runtime
-- simple or parent-shell-affecting scripts remain Shell without an approved language change
-- `shellcheck` clean (when available)
-
-## Error Handling Examples
-
-For generic error handling patterns (resilience, resource management, monitoring), see the `error-patterns` skill.
-
-### Trap-Based Error Handler
-```bash
-#!/usr/bin/env bash
-set -Eeuo pipefail
-
-handle_error() {
-    local exit_code=$?
-    local line_number=$1
-    echo "ERROR: Script failed on line $line_number with exit code $exit_code" >&2
-    exit $exit_code
-}
-
-trap 'handle_error $LINENO' ERR
-```
-
-### Bash/zsh Input Validation Function
-```bash
-validate_input() {
-    local input="$1"
-    if [[ -z "$input" ]]; then
-        echo "ERROR: Input parameter is required" >&2
-        exit 1
-    fi
-}
-```
+For generic error-handling patterns (resilience, resource management, monitoring), see `error-patterns`.

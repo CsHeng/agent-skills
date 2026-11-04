@@ -19,7 +19,7 @@ Use the smallest structure that keeps responsibilities clear:
 - external adapters own databases, filesystems, queues, subprocesses, and remote APIs
 - domain types describe stable business data without depending on HTTP framework types
 
-Do not require handlers, services, repositories, and interfaces as four packages for every API. Add a boundary only when it separates behavior, ownership, testing, or replacement concerns. Define interfaces at the consuming package and keep them narrow.
+Add a boundary when it separates behavior, ownership, testing, or replacement concerns. Define interfaces at the consuming package and keep them narrow.
 
 ## Server Lifecycle
 

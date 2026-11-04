@@ -37,7 +37,7 @@ Typical evidence:
 - stable error envelopes
 - examples and deprecation metadata
 
-Schema compatibility detects structural changes. semantic compatibility covers meaning that a schema cannot prove, such as units, retry policy, ordering, consistency, migration behavior, and status semantics.
+Schema compatibility detects structural changes. Semantic compatibility covers meaning that a schema cannot prove, such as units, retry policy, ordering, consistency, migration behavior, and status semantics.
 
 ## Provider Conformance
 
@@ -45,7 +45,7 @@ Question: Does the provider implement the contract?
 
 Exercise the real HTTP or protocol boundary with the real router, middleware, authentication path, deterministic data store, and isolated fixtures. Validate request acceptance, response status, headers, content type, schema, and errors.
 
-Do not replace this layer with service-method or handler-function calls that bypass the boundary under contract.
+Reach this layer through the boundary under contract; service-method or handler-function calls bypass it and belong to lower layers.
 
 ## Consumer Adapter
 
@@ -69,7 +69,16 @@ Question: Can a user complete behavior owned by the browser, app, or device UI?
 
 Keep this layer narrow: authentication, payment, high-value workflows, and behavior that cannot be proven below the UI.
 
-Do not use UI tests to discover schema, serialization, or provider-contract failures that should fail in earlier layers.
+Let schema, serialization, and provider-contract failures fail in earlier layers; UI tests cover UI-owned behavior.
+
+## Claims By Evidence
+
+Claim each level only from evidence at its own boundary:
+
+- schema diff supports structural compatibility
+- semantic review supports semantic compatibility
+- a real protocol request supports provider conformance
+- consumer adapter evidence supports consumer conformance; compiling generated code supports only the generator contract
 
 ## Duplication Smells
 

@@ -5,174 +5,78 @@ description: "Use during design, planning, implementation, and review as the sha
 
 # Development Standards
 
-Deliver the user's outcome with the least total implementation, testing, deployment, and maintenance burden over the intended lifetime, including the cost of delaying useful feedback and delivery. Start by deciding what is necessary. YAGNI comes before DRY: delete an unnecessary responsibility before extracting shared machinery, and reuse an existing adequate capability rather than generalizing a new framework. Durable does not mean speculative or maximally defensive.
+Deliver the user's outcome with the least total implementation, testing, deployment, and maintenance burden over the intended lifetime, counting the cost of delayed feedback and delivery. Decide what is necessary first: YAGNI before DRY, so an unnecessary responsibility is deleted before shared machinery is extracted, and an existing adequate capability is reused before a new framework is generalized. Durable means maintainable over the declared horizon, not maximally defensive.
 
-Across languages, prefer suitable mature libraries and platform capabilities over building general-purpose machinery. Spend custom code on the business rules and necessary integration. Apparent simplicity in today's inputs is not evidence that a homegrown utility is cheaper to own.
+This Skill is the baseline the lifecycle workflow applies from the first design choice through review. It produces no report of its own; the owning workflow keeps the response.
 
-Apply this baseline from the first design choice through planning, implementation, and review. Before adding or retaining a mechanism, compatibility promise, or verification gate, consider removing it. Name the required result or actual boundary that would fail without it, and the evidence for that claim. If the goal remains adequately supported without the mechanism, omit it. If that cannot yet be decided, use the cheapest targeted investigation that resolves the material uncertainty. This is a counterfactual engineering judgment, not an obligatory ablation experiment, scorecard, or checklist, and not a mandatory invocation of the simplification method in `skills-routing`. Preventing unnecessary work is preferable to building it and removing it later.
+## The Necessity Test
 
-Keep the appropriate workflow as the primary owner; this overlay produces no independent report. Apply detailed implementation sections only when their boundary is relevant.
+Before adding or keeping a mechanism, compatibility promise, verification gate, guard, or task, name the required result or real boundary that fails without it and the evidence for that claim. When the goal stays adequately supported without it, omit it. When that cannot yet be decided, run the cheapest targeted investigation that resolves the uncertainty. This is an engineering judgment made in passing, not an ablation experiment, scorecard, or checklist.
+
+Ask of a proposed constraint: if a capable implementer chose a different reasonable path that still met the user's goals and safety boundaries, would this constraint stop them? A constraint that would needs a concrete protected interest.
 
 ## Business Feedback Before Supporting Machinery
 
-Prefer a thin real path from a relevant input to the required user-visible result. Build only the setup and safeguards that this next step actually depends on; checks required before delivery are not automatically prerequisites for starting implementation. A tracer slice is useful behavior with feedback, not a separate probe framework or empty scaffold. Complete remaining required behavior and verification before claiming delivery, and put protection before the operation that actually threatens protected state.
+Build a thin real path from a relevant input to the required user-visible result, with only the setup and safeguards that this next step depends on. Checks required before delivery are prerequisites for delivery, not for starting. Protection goes before the operation that threatens protected state. When preparation grows without producing useful behavior or resolving a material uncertainty, simplify, defer, or remove that branch and return to the business path.
 
-Invest judgment in the business rules that distinguish the product. Keep simple use cases, generic support work, and local glue direct when richer modeling would not clarify a real invariant. Spend supporting effort only where it enables the result or protects an actual boundary. When preparation grows without producing useful behavior or resolving a material uncertainty, simplify, defer, or remove the unnecessary branch and return to the business path. Do not replace it with a mandatory time quota, scoring exercise, progress ledger, or another review stage.
+Spend judgment on the business rules that distinguish the product; keep simple use cases, generic support work, and local glue direct.
 
-## Precedence And Composition
+## Precedence
 
-1. Follow the user's current goals, explicit choices, and real repository and safety boundaries. Designs and plans record those decisions; model-invented methods do not become user requirements merely through inclusion or general plan approval.
-2. Apply this skill's necessity and maintenance baseline before choosing methods, breaking work into tasks, or defining verification.
-3. Compose the matching language, security, error-handling, architecture, testing, or domain skill only when its boundary is active.
-4. Let the lifecycle workflow own mutation, review, repair, continuation, and close decisions.
+1. The user's current goals, explicit choices, and real repository and safety boundaries. Designs and plans record those decisions; a model-invented method becomes a requirement only when the user fixes it, not through inclusion or general plan approval.
+2. This necessity and maintenance baseline, applied before methods, task splits, or verification are chosen.
+3. The matching language, security, error-handling, architecture, testing, or domain Skill when its boundary is active.
+4. The lifecycle workflow, which owns mutation, review, repair, continuation, and close.
 
 ## Goals, Discretion, And Risk
 
-- Deliver the main goal, its necessary conditions, user-fixed technical choices, and applicable inviolable boundaries.
-- Judge supporting code, tests, documents, and tooling by how they serve that outcome. Task completion, language uniformity, line counts, and exhaustive equivalence are not substitute outcomes.
-- Prefer direct behavior and existing capabilities. Add an abstraction, compatibility layer, guard, or gate only for a current need; hypothetical future consumers, concurrency, or accidental edits are not sufficient reasons.
-- Authorized best-effort secondary outcomes may be substituted, degraded, or dropped during implementation. Record the discretion and its effect. The design does not need to enumerate every feature that might fail.
-- Discretion comes from the current request, approved design, or applicable project convention. Do not grant it after the fact to pass review, silently weaken a required outcome, or drop a named secondary capability that the main goal actually depends on.
-- Ordinary bugs, one failed attempt, or unknown feasibility do not by themselves make a requirement unsupported. Investigate enough to explain a tradeoff; do not exhaust every alternative.
-- Calibrate protective effort to actual exposure, expected loss, and control cost; `security-guardrails` owns security-control calibration and `infrastructure-triage` owns operational recovery calibration. Do not require a scoring system or a zero-risk proof.
-- Environment wording alone — remote hosts, multi-repository work, Ansible, deploy language — does not make the target production; use trusted project facts and the minimum check needed when the environment is unclear. Authorized rebuildable development state may be updated, rebuilt, or replaced with fix-forward recovery; protect unique data, credentials, shared hosts, and production commitments, and get narrow authorization before an action would exceed approved production goals, commitments, risk, or authority. In-scope adaptations and already-authorized deployments continue without renewed approval.
+- Deliver the main goal, its necessary conditions, user-fixed technical choices, and applicable inviolable boundaries. Judge supporting code, tests, documents, and tooling by how they serve that outcome; task completion, language uniformity, line counts, and exhaustive equivalence are proxies, not outcomes.
+- Add an abstraction, compatibility layer, guard, or gate for a current need. Hypothetical future consumers, hypothetical concurrency, or accidental edits are reasons to note, not to build.
+- Authorized best-effort secondary outcomes may be substituted, degraded, or dropped during implementation; record the discretion and its effect. Discretion comes from the current request, approved design, or applicable project convention, and a required result keeps its oracle.
+- Ordinary bugs, one failed attempt, or unknown feasibility leave a requirement supported; investigate enough to explain a tradeoff.
+- Calibrate protective effort to actual exposure, expected loss, and control cost. `security-guardrails` owns security-control calibration; `infrastructure-triage` owns operational recovery calibration.
+- Classify the environment from trusted project facts: a target that serves real users or holds retained data is production; otherwise treat it as rebuildable development state that may be updated, rebuilt, or replaced with fix-forward recovery. When the facts are unknown, check the smallest fact that decides it or ask one question. Remote hosts, Ansible, multi-repository work, and deploy wording are not classification facts. Unique data, credentials, shared hosts, and production commitments keep their protections in every class; an action that would exceed approved production goals, commitments, risk, or authority needs narrow authorization first, and in-scope adaptations and already-authorized deployments continue without it.
+- Read [Replacement And Cutover](references/replacement-and-cutover.md) when a change replaces a running implementation, version, configuration, or service, or when a proving environment, dual-running period, or rollback path is being considered.
 
 ## Evidence Without Extra Machinery
 
-- Ordinary local development does not need hashes, checksums, digest manifests, provenance chains, or immutable receipts to establish consistency. Do not introduce them into implementation, tests, fixtures, designs, plans, or handoffs unless explicitly requested or necessary for an actual functional or trust boundary.
-- Evidence needs relevant behavior, inputs, conditions, and an honest result. Read the current change and rerun affected checks when those facts change; do not require byte identity or replace hashes with mandatory revision bookkeeping.
-- Existing cryptographic protocols, artifact integrity across a real trust boundary, and other current functional requirements can need digests. Their presence elsewhere, a mutable file, or a desire for stronger-looking proof does not justify another mechanism.
-- When simplification is authorized, reassess inherited guards and their tests against current needs. A historical plan, test, or implementation is evidence of what exists, not proof it must continue to exist.
+Ordinary local development establishes consistency by reading the current change and rerunning affected checks when relevant facts change. Hashes, checksums, digest manifests, provenance chains, and immutable receipts belong to an actual functional or trust boundary: an existing cryptographic protocol, artifact integrity across a real trust boundary, or a current functional requirement. Evidence is judged by the behavior, inputs, and conditions it covers and an honest result. When simplification is authorized, inherited guards and their tests are reassessed against current needs; a historical plan, test, or implementation shows what exists, not what must continue.
 
 ## Scoped Implementation
 
-- Implement only requested behavior and approved supporting work.
-- Keep changes tied to the requested outcome, necessary verification, and obsolete material created by this change; do not create a line-by-line traceability ledger.
-- Do not refactor adjacent code, reformat unrelated files, remove pre-existing dead code, or add features that were not requested.
-- Match established repository structure, naming, style, and ownership unless the approved change explicitly replaces them.
-- Avoid single-use abstractions, speculative configuration, hypothetical extension points, and defensive branches for impossible states.
-- Fail closed on errors that the main goal, a required contract, or a hard boundary depends on. A missing required case is an explicit failure, not a recovery.
-- Do not add silent fallback, guessed defaults, or undeclared degraded success for required behavior. Authorized best-effort secondary degradation does not need every fallback named in the design.
-- Do not swallow errors or keep a legacy path "just in case". Prefer a clean break over dual-running old and new behavior. Route classified fallback or degraded mode through `error-patterns` when that boundary is active.
-- Remove imports, variables, helpers, configuration, and documentation made obsolete by the current change.
-- Reuse genuinely shared behavior where it reduces maintenance. A little straightforward duplication can cost less than a new framework; do not generalize unnecessary guards or accidental compatibility merely to satisfy DRY.
+- Implement requested behavior, approved supporting work, necessary verification, and removal of material made obsolete by this change. Adjacent refactors, unrelated reformatting, pre-existing dead code, and unrequested features stay out.
+- Match established repository structure, naming, style, and ownership unless the approved change replaces them.
+- Fail closed on errors that the main goal, a required contract, or a hard boundary depends on; a missing required case is an explicit failure. Required behavior has no silent fallback, guessed default, or undeclared degraded success; classified fallback or degraded mode for a secondary outcome is designed through `error-patterns` when that boundary is active.
+- Prefer a clean break over dual-running old and new behavior, and remove imports, variables, helpers, configuration, and documentation the change made obsolete.
+- Reuse genuinely shared behavior where it reduces maintenance; a little straightforward duplication can cost less than a new framework.
 
-## Durability And Temporary Mechanisms
+## Durability And Experiments
 
-- Prefer a solution that meets current commitments and can be maintained over the declared decision horizon. Possible future replacement does not itself justify a framework now; knowingly failing that horizon is not an acceptable shortcut.
-- A bounded, disposable reproducer or local experiment inside already-authorized work is a normal implementation method. It needs no separate experimental phase or approval merely because it is temporary; real access, side-effect, and data boundaries still apply.
-- A temporary mechanism that ships, affects users, or creates a continuing maintenance obligation needs an owner and a concrete retirement or replacement condition. Do not require lifecycle paperwork for every scratch script.
-- Distinguish learning evidence from delivered behavior. Discard unsafe experimental shortcuts before delivery, and do not claim a prototype satisfies requirements it did not exercise. Resolve an actual change to user-fixed architecture or scope with its owner, rather than reopening design for ordinary local experimentation.
-
-## Compatibility And Migration
-
-- Do not add or preserve compatibility behavior unless a current public or persisted contract, interoperability requirement, approved migration policy, or retained-state need requires it.
-- Preserve required consumer behavior rather than every incidental property of the previous implementation. A library's default help wrapping, numeric representation, object identity, or undocumented parsing quirk is not automatically a public promise. Establish actual consumers and requirements before reproducing it in another language.
-- Authorized disposable development state may rebuild or replace rather than preserve in-place compatibility.
-- Retained existing data still needs corresponding migration evidence even when the runtime may be rebuilt.
-- Distinguish internal implementation freedom from caller-visible APIs, stored data, wire formats, automation entry points, and generated compatibility surfaces.
-- When compatibility is required, name its owner, supported versions, evidence, retirement condition, and migration path.
-- Remove obsolete compatibility paths when their approved retirement condition is met; update affected producers, consumers, tests, generated surfaces, and stable docs together.
-
-## Local Dependency Selection
-
-This Skill owns the local implementation dependency decision, not the material open design choice or the architecture-boundary comparison; apply the shared reuse principle to the smallest owned behavior.
-
-- Understand the business requirement, actual consumers and relevant current code before choosing a solution. Look for suitable project capabilities, standard-library or platform APIs, and mature ecosystem libraries before writing general-purpose code. A repository helper is a candidate, not a reason to preserve an unnecessary homegrown implementation.
-- Prefer a suitable maintained library for a capability it already owns. "The current case is simple," fewer imports, avoiding all dependencies, familiarity or a shorter first patch do not by themselves justify recreating that capability. Apply this to ordinary development and authorized repair as well as migrations, across languages.
-- Judge suitability by required behavior, compatibility, runtime and delivery fit, maintenance and security response, transitive surface, licensing and update cost. Choose an adequate existing capability without turning ordinary selection into an exhaustive dependency survey or scorecard. Do not replace an approved suitable library merely because a standard-library alternative exists.
-- Keep small domain rules and necessary adapters local when a library does not own them. Implement a general mechanism yourself only when available capabilities fail a concrete requirement or impose a demonstrated disproportionate burden; keep the scope narrow. Neither line count nor a hypothetical dependency risk establishes that exception, and this guidance does not require a package for every trivial expression.
-- Runtime and language constraints still apply. If the appropriate ecosystem library changes the runtime or delivery boundary, resolve that choice through language selection rather than silently adding an environment or rebuilding the library to preserve an earlier language assignment.
-- In an authorized refactor, compare custom file/path utilities, parsers, transport, serialization and other support code with the capabilities now available. Replace redundant mechanics and retire their unsupported compatibility tests together; preserve domain tests, real consumer contracts and data protections. Renaming a helper or putting the same custom implementation behind a library-shaped interface does not reduce its maintenance responsibility.
-- Do not build custom cryptography, authentication protocols, parsers for complex standards, or concurrency primitives when a suitable maintained implementation exists.
-- When the user or approved design specifies a library for a goal, that library is a boundary. Choose glue, helpers, and local algorithms; do not swap the specified library from preference, and do not require the user to design each glue function.
+Choose a solution that meets current commitments and can be maintained over the declared decision horizon. A bounded, disposable reproducer or local experiment inside authorized work is a normal implementation method with no separate phase or approval, subject to the real access, side-effect, and data boundaries. Learning evidence is distinct from delivered behavior: discard unsafe experimental shortcuts before delivery, and report what a prototype exercised rather than what it implies. A shipped temporary mechanism follows [Compatibility And Migration](references/compatibility-and-migration.md).
 
 ## Maintainability
 
-- Use names and module boundaries that reveal behavior and ownership.
-- Keep functions and modules cohesive; split by responsibility, authority, state, or failure boundary rather than arbitrary line limits.
-- Create interfaces for proven variation or caller-visible contracts, not hypothetical substitution.
-- Comment why a non-obvious constraint exists; do not narrate obvious code, intermediate attempts, or session history. Apply the same rule to skill prose and `AGENTS.md`.
-- Write persisted prose for the current repository state. A reader at current HEAD must be able to resolve its internal references and verify its claims without an authoring session, review thread, temporary branch, or uncommitted draft.
-- Preserve complete propositions when editing comments, docstrings, prompts, diagnostics, help text, examples, configuration comments, and other durable prose: retain the actor, action, conditions, order, modality, negative guarantees, exceptions, ownership transfers, side effects, failure modes, and consequences that affect behavior.
-- Remove review choreography, dead phase labels, reviewer arguments, and temporary change narration once they no longer explain the current state. Preserve exact durable issues, decisions, still-valid rejected alternatives, standards, and measured evidence at their repository-owned truth location.
-- Code and observed execution establish implemented behavior; documents and diagrams express intent and explain it. Synchronize affected explanations after implementation. Review their meaning directly; do not turn prose, headings, diagram contents, or historical versions into tested interfaces. Actual protocol strings remain code contracts when consumers depend on them.
+- Use names and module boundaries that reveal behavior and ownership. Split by responsibility, authority, state, or failure boundary. Create interfaces for proven variation or caller-visible contracts.
+- Name repository assets for stable domain concepts or verified behavior from the first write, in files, modules, functions, tests, fixtures, scripts, configuration keys, and environment variables; plan task IDs, stage codes, and review rounds stay in plans and progress records. Genuine domain phases and protocol terms are valid names, and existing compatibility-bound names change only under a scoped migration.
+- Comment why a non-obvious constraint exists. Write persisted prose for the current repository state so a reader at `HEAD` can resolve its references and verify its claims; remove review choreography, dead phase labels, and change narration once they no longer explain the current state, and keep durable decisions, still-valid rejected alternatives, and measured evidence at their owned truth location.
+- Code and observed execution establish implemented behavior; documents and diagrams express intent and explain it. Synchronize affected explanations after implementation and review their meaning directly rather than turning prose, headings, or diagram contents into tested interfaces. Actual protocol strings remain code contracts when consumers depend on them.
 - Update authored sources before generated projections and regenerate through the repository-owned workflow.
-- Validate external input at the owned boundary and handle failures that can occur under the declared runtime contract.
-- Measure before optimizing and keep performance work tied to an observed bottleneck or explicit objective.
-
-## Plan-Independent Naming
-
-- Name repository implementation assets for stable domain concepts, responsibilities, or verified behavior from the first write, not the current plan's task IDs, stage codes, or review rounds. This includes files, directories, modules, functions, types, variables, tests, fixtures, helper scripts, build targets, configuration keys, and environment variables; calling repository code temporary does not exempt it.
-- Keep plan identifiers in plans, progress records, and acceptance mappings rather than implementation names. One-shot experiments outside the repository may use them, but rename plan-derived implementation identifiers before promoting that code into the repository.
-- Ask whether a name would still explain its responsibility if the current plan disappeared or its tasks were reordered. For example, prefer `autofallback_recovery_test.go` and `servingRecoveryBudget` over `g0_recovery_test.go` and `g0ServingRecoveryBudget`.
-- Judge meaning, not spelling: genuine domain phases and protocol terms are valid names even when they resemble plan labels. Preserve existing compatibility-bound names unless a scoped migration is authorized; identify the compatibility reason rather than silently renaming an interface.
-- Apply this rule to newly introduced or changed implementation names within the approved scope. It does not authorize repository-wide cleanup of historical names or a lexical ban on strings such as `g0` or `phase`.
-
-## Environment Scope
-
-- Classify a tool or project environment input by ownership, shareability, and lifetime before choosing its location; a language, tool, or variable prefix does not decide its scope. The mutable state belongs to the project, subproject, or checkout that owns it, even when a shared cache also participates.
-- Distinguish a shareable cache from mutable project state. Downloaded packages, compiled module caches, and bytecode caches may be shared or user-global; dependency environments, test state, generated artifacts, and coverage data stay with the owning project, subproject, or checkout.
-- Enter the owning project context before running project commands. Resolve the nearest owning project or subproject and run from its root or through an explicit project selector; an interpreter or tool found on `PATH` does not make the current directory or a global environment the owner.
-- A user-global tool configuration, such as a personal tool-version or cache configuration, may provide reusable caches and developer preferences. A project must not require a personal global for correctness or reproducibility; project-owned configuration overrides or encapsulates those defaults.
-- Apply run or task overrides after project defaults so they change only the current run's disposable state. An override that redirects retained project state is a deliberate, task-owned choice rather than a routine setup step.
-- Changing directory, invoking a launcher or version manager, or starting a subshell does not by itself clear arbitrary inherited environment variables. Reset or replace only the variables the new context actually owns; do not assume a launcher produced a clean environment.
-- Keep reproducible project defaults in project-owned committed configuration, with local overrides under the project's declared ownership rules. Instruction files such as `AGENTS.md` navigate to the owning settings and are not a second copy of environment configuration.
-- Keep credentials, secrets, and per-user preferences with the user or host; do not commit them into project configuration or place them in shared caches.
-
-Language, tool, and workflow guidance adds only concrete mappings and exceptions to these principles; `Temporary Storage` below owns where disposable scratch lives.
-
-## Temporary Storage
-
-- Treat `TMPDIR` as the standard temporary-directory root consumed by `mktemp` and supporting tools, not as a new cache or artifact protocol. A development environment may set it per repository group to an absolute disk-backed path such as `$HOME/tmp/<group>` through mise; without a declared root, agent-owned ad hoc scratch falls back to `$HOME/tmp`. Create the root before use and use unique task directories beneath it.
-- Honor explicit repository output locations and language/tool-specific directory settings. Python environments, Go build and module caches, and other reusable caches retain their own semantics; setting `TMPDIR` does not relocate them all. Setting only a final build output path does not relocate intermediate files either.
-- Keep large clones, downloads, extraction, build intermediates, and test data on verified disk-backed storage rather than assuming a system temporary directory is safe: `/tmp` may be tmpfs and consume RAM. Portable project tools should respect `TMPDIR` through their native temporary-file API and may retain the platform default when it is unset; do not hardcode a developer's home path into runtime code or rewrite legitimate target-system `/tmp` paths.
-- Keep task scratch, reusable caches, and retained evidence distinguishable beneath their declared roots. Clean only owned inactive scratch; do not delete a shared root or another running task's files. Environment changes affect newly launched consumers, not existing processes, and controller settings do not automatically propagate through SSH, sudo, containers, or services.
-
-## Repository-Owned Quality Gates
-
-- Select repository checks that cover the affected behavior and honor actual delivery requirements. Available entrypoints are not a requirement to run every suite after each edit. In an authorized gate or suite simplification, retain checks for required behavior and remove unnecessary obligations.
-- Select a new lint, complexity, duplication, coverage, or debt gate only when it protects a named boundary, has a baseline, an accountable owner, a failure response, and an adoption or migration path.
-- Do not impose universal numeric thresholds across repositories or languages. A metric is evidence for a goal, not the goal itself.
-- Let `testing-strategy` own executable test evidence, suite boundaries, fixtures, and CI lanes. Let the matching language guideline own concrete linter, formatter, type-checker, and test-runner configuration.
-- Treat trends and changed-code gates as preferable to arbitrary repository-wide targets when legacy baselines cannot satisfy a justified policy immediately.
-- Record technical debt only when its impact, scope, owner, priority, and retirement evidence are actionable; do not create dashboards or recurring process by default.
-
-## Formatting
-
-- Follow the target repository's owned formatter and configuration. Do not invent numeric column limits or a conflicting pure-format lint gate.
-- Run that formatter on authorized changed files before final read-only checks.
-- Do not rewrite strings, comments, or behavior to satisfy pure line-length style.
-- Do not silently disable an existing explicit project hard rule when the formatter cannot satisfy it; surface a configuration decision once.
-- Markdown no-hard-wrap policy stays with `organize-docs`. Do not hard-wrap Markdown prose to a column width here.
-
-## Custom CLI Conventions
-
-- Follow repository-local command conventions first.
-- Prefer descriptive long options for custom scripts and avoid positional write or delete behavior.
-- Keep third-party CLI invocations in their native syntax.
-- Provide actionable validation errors and stable non-zero exits for invalid input.
+- Validate external input at the owned boundary. Measure before optimizing and tie performance work to an observed bottleneck or explicit objective.
 
 ## Verification And Review
 
-- Select evidence from the changed behavior, affected consumers, and real uncertainty. Non-executable changes may need only inspection, syntax, links, or structural checks; a code edit alone does not require a new test. Parser or existence checks cannot establish a claimed user journey.
-- Use narrow tests, compilation, or reproductions when they guide implementation. Finish related edits before repeating checks that cannot inform intermediate work. The main agent coordinates broader verification and reuses applicable results; a repair invalidates affected evidence, not every prior check.
-- Reproduce bugs or establish equivalent before-state evidence when practical. Classify failed checks before repairing: change-induced defects and demonstrated delivery blockers stay in scope; unrelated existing failures are reported separately. A missing perfect reproducer does not freeze independent authorized work.
-- Do not weaken a required outcome to make implementation pass. When a mechanism is simplified or removed, recompute the verification the remaining outcome needs; an old failure matrix does not transfer automatically. Correct or remove tests that only preserve an unnecessary mechanism or incidental detail when that simplification is in scope; keep evidence for the actual required behavior, including retained-state or recovery evidence when that boundary is real. Authorized secondary tradeoffs are disclosed adapted results, not hidden failures.
-- Review the approved diff, direct dependencies, and executable evidence. Pre-existing or unrelated debt does not expand the current task.
+- Select evidence from the changed behavior, affected consumers, and real uncertainty. A non-executable change may need only inspection, syntax, link, or structural checks; a code edit alone creates no new test obligation, and parser or existence checks cannot establish a claimed user journey.
+- Use narrow tests, compilation, or reproductions when they guide implementation, and finish related edits before repeating checks that cannot inform intermediate work. The main agent coordinates broader verification and reuses applicable results; a repair invalidates affected evidence, not every prior check.
+- Reproduce bugs or establish equivalent before-state evidence when practical. Classify a failed check before repairing: change-induced defects and demonstrated delivery blockers stay in scope, unrelated existing failures are reported separately, and a missing perfect reproducer leaves independent authorized work running.
+- Keep a required outcome and its oracle. When a mechanism is simplified or removed, recompute the verification the remaining outcome needs; tests that only preserved the removed mechanism or an incidental detail go with it when that simplification is in scope, and evidence for real retained-state or recovery boundaries stays. Authorized secondary tradeoffs are disclosed adapted results.
+- Review the approved diff, direct dependencies, and executable evidence; pre-existing or unrelated debt stays outside the current task.
 
-## Progressive Disclosure
+## References
 
-- Local toolchain baseline: `references/toolchain-baseline.md`
-- Skill descriptions, admission boundaries, routers, and activation metadata: the `skill-authoring` Skill
-- Instruction content and reference layout of a Skill or other agent-agnostic workflow surface, including a method-only edit: `references/instruction-content.md` in `skill-authoring`
-
-## Completion Check
-
-- Current approved requirements, main goal, and required contracts are satisfied.
-- Authorized best-effort secondary tradeoffs are disclosed, with evidence, rather than silent.
-- The implementation is the smallest durable option for the declared horizon.
-- Changed lines are request-traceable and unrelated work is untouched.
-- Compatibility and dependencies have current owners and evidence where applicable.
-- Shipped transitional mechanisms have explicit exit conditions; disposable investigation is not reported as delivered functionality.
-- Applicable evidence supports the delivered outcome without weakening a required oracle; material unverified behavior and unrelated check failures are disclosed.
+- [Environment Scope And Temporary Storage](references/environment-and-storage.md): environment inputs, caches, and where disposable scratch lives.
+- [Local Dependency Selection](references/dependency-selection.md): choosing between existing capability, library, and custom code.
+- [Compatibility And Migration](references/compatibility-and-migration.md): public or persisted contracts, retained data, and shipped temporary mechanisms.
+- [Replacement And Cutover](references/replacement-and-cutover.md): the single owner of cutover, proving-environment, and rollback doctrine.
+- [Quality Gates, Formatting, And CLI Conventions](references/quality-gates-and-formatting.md): repository checks, new gates, formatters, and custom command-line interfaces.
+- [Toolchain Baseline](references/toolchain-baseline.md): local toolchain defaults.
+- Skill descriptions, admission boundaries, and instruction layout: `skill-authoring` and its `references/instruction-content.md`.

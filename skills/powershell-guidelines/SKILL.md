@@ -5,165 +5,48 @@ description: "Apply PowerShell 7 policy as a conditional overlay when writing or
 
 # PowerShell Guidelines
 
-## Purpose
-
-Define PowerShell 7 scripting standards for safe, portable, auditable automation, including code review.
-
-## Scope
-
-In-scope:
-- Editing or creating PowerShell scripts (`.ps1`, `.psm1`, `.psd1`)
-- Cross-platform scripts authored on macOS for Windows execution
-- Module manifests and script modules
-- Code review and syntax audit for PowerShell files
-
-Out-of-scope:
-- Language selection (read `references/language-selection.md` in `skills-routing`)
-- Tool selection and progressive search workflow (read `references/tool-selection.md` in `skills-routing`)
-- Windows-only legacy PowerShell 5.1 patterns
+Apply PowerShell 7 standards for safe, portable, auditable automation to `.ps1`, `.psm1` and `.psd1` files, including scripts authored on macOS for Windows execution, and to their review and syntax audit. Language selection reads `references/language-selection.md` in `skills-routing`; ad hoc tool choice reads `references/tool-selection.md` there.
 
 ## Progressive Disclosure
 
-- Language-specific read-only review checks: `references/review-checklist.md`
-- Host-specific operational commands (parser, analyzer, approved verbs): `references/operational-checks.md`
+- Parser, analyzer and approved-verb commands: `references/operational-checks.md`
+- Authoring on macOS for Windows execution, or a case-sensitivity, line-ending or native-command portability question: `references/macos-notes.md`
+- Writing an advanced function with error records, or checking a native command's exit code: `references/error-handling-examples.md`
+- Read-only review checks: `references/review-checklist.md`
 
-## Deterministic Steps
+## Rules
 
-1. Declare version requirement
-   - Add `#Requires -Version 7.0` at the top of every script.
-   - Add module requirements via `#Requires -Modules` when depending on external modules.
-2. Enable strict mode and error preference
-   - Use `Set-StrictMode -Version Latest` in script body.
-   - Set `$ErrorActionPreference = 'Stop'` for fail-fast behavior.
-3. Use approved verbs and PascalCase naming
-   - Functions: `Verb-Noun` with approved verbs (`Get-Verb` to list).
-   - Variables: `$PascalCase` for script-scoped, `$camelCase` for local.
-   - Parameters: PascalCase with `[Parameter()]` attributes.
-4. Use cross-platform path handling
-   - Use `Join-Path` for path construction instead of string concatenation with `\` or `/`.
-   - Use `$PSScriptRoot` for script-relative paths.
-   - Narrow exception: a single `[System.IO.Path]::Combine()` call is allowed only to join three or more trusted literal segments in one expression, and never with a rooted later segment, which silently discards the earlier path.
-5. Validate inputs and handle errors
-   - Use `[CmdletBinding()]` for advanced functions and `[Parameter(Mandatory)]` for required inputs; choose types and validation attributes for the actual input constraints.
-   - Add local error handling where recovery, additional context, or cleanup is needed; otherwise let failures propagate to the caller.
-   - Prefer `$PSCmdlet.ThrowTerminatingError()` over `throw` in advanced functions.
-6. Use linting and syntax checks
-   - Run the parser check in `references/operational-checks.md`; it exits non-zero when `Parser::ParseFile` reports diagnostics.
-   - Run `Invoke-ScriptAnalyzer` with default rules.
+### Script Header
 
-## Rules (Hard Constraints)
-
-### Security
-PROHIBITED: Use `Invoke-Expression` with untrusted input.
-PROHIBITED: Hardcode secrets, credentials, or API keys in scripts.
-PROHIBITED: Use plain-text passwords in parameters (use `[SecureString]` or credential objects).
-REQUIRED: Validate inputs before processing; reject unexpected values early.
-REQUIRED: Use parameter types and validation attributes that express the actual input constraints. Attributes such as `[ValidateSet()]`, `[ValidatePattern()]`, and `[ValidateRange()]` apply only where those constraints are needed.
-
-### Strict Mode
-REQUIRED: Include `#Requires -Version 7.0` at script top.
-REQUIRED: Enable `Set-StrictMode -Version Latest` in script body.
-REQUIRED: Set `$ErrorActionPreference = 'Stop'` for fail-fast behavior.
-PROHIBITED: Use `$ErrorActionPreference = 'SilentlyContinue'` except in explicitly documented exception-handling blocks.
-
-### Cross-Platform
-REQUIRED: Use `Join-Path` for all path construction, subject only to the narrow `[System.IO.Path]::Combine()` exception in Deterministic Steps 4.
-REQUIRED: Use `$PSScriptRoot` for script-relative paths.
-PROHIBITED: Hardcode Windows-style paths (`C:\...`) without platform guards.
-PROHIBITED: Use backslash `\` or forward slash `/` as a path separator in string literals; construct paths with `Join-Path` (or the narrow `[IO.Path]::Combine()` exception).
-PREFERRED: Test scripts with `pwsh` on macOS before deploying to Windows.
+- Start every script with `#Requires -Version 7.0`, adding `#Requires -Modules` for external module dependencies.
+- Follow it with `Set-StrictMode -Version Latest` and `$ErrorActionPreference = 'Stop'`. Use `'SilentlyContinue'` only inside a documented exception-handling block.
 
 ### Naming
-REQUIRED: Use approved verbs for function names (`Get-Verb` to validate).
-REQUIRED: Use PascalCase for function names, parameters, and script-scoped variables.
-REQUIRED: Use `Verb-Noun` naming pattern for all functions.
-REQUIRED: Name script files using PascalCase: `Get-UserReport.ps1`, not `get_user_report.ps1`.
-PROHIBITED: Use cmdlet aliases in scripts (`ls`, `cat`, `%`, `?`); use full cmdlet names.
-PROHIBITED: Use global variables (`$global:*`); pass data via parameters and return values.
 
-### Error Handling
-REQUIRED: Propagate failures unless the owning boundary handles them. Use `try/catch` for needed recovery or context, and `finally` when cleanup must run on both success and failure.
-REQUIRED: Include context in error messages (variable values, operation attempted).
-PROHIBITED: Ignore errors from external commands; check `$LASTEXITCODE` after native commands.
-PREFERRED: Use `$PSCmdlet.ThrowTerminatingError()` in advanced functions for proper error record creation.
+- Name functions `Verb-Noun` with an approved verb (`Get-Verb` lists them).
+- Use PascalCase for functions, parameters and script-scoped variables, and `$camelCase` for locals.
+- Name script files in PascalCase: `Get-UserReport.ps1`.
+- Write full cmdlet names in scripts (`Get-ChildItem`, not `ls`).
+- Pass data through parameters and return values.
 
-## macOS + Cross-Platform Notes
+### Paths
 
-- PowerShell 7 on macOS: installed via Homebrew (`brew install powershell`), invoked as `pwsh`.
-- macOS [APFS](https://developer.apple.com/documentation/technologyoverviews/files-and-directories) is case-insensitive by default and also supports case-sensitive volumes. Check the target volume's behavior instead of inferring case sensitivity from the OS; test path handling accordingly.
-- Line endings: macOS uses LF; Windows expects CRLF for some tools. Use `.gitattributes` with `*.ps1 text eol=crlf` when targeting Windows.
-- Environment variables: `$env:HOME` on macOS vs `$env:USERPROFILE` on Windows. Use `$HOME` (PowerShell automatic variable) for portability.
-- Native commands: `grep`, `sed`, `awk` are available on macOS but not Windows. Use PowerShell cmdlets (`Select-String`, `-replace`, `ForEach-Object`) for portable scripts.
-- Module paths differ: use `$env:PSModulePath` and `Join-Path` for portable module references.
+- Build every path with `Join-Path` and `$PSScriptRoot`, and guard any platform-specific literal (such as `C:\...`) with a platform check.
+- A single `[System.IO.Path]::Combine()` call may join three or more trusted literal segments in one expression, when no later segment is rooted (a rooted segment discards the earlier path).
 
-## Operational Checks
+### Inputs And Security
 
-Validate syntax, linting, and approved verbs with the host-specific commands in `references/operational-checks.md`; the parser check exits non-zero when diagnostics are present.
+- Use `[CmdletBinding()]` for advanced functions and `[Parameter(Mandatory)]` for required inputs. Choose parameter types and validation attributes (`[ValidateSet()]`, `[ValidatePattern()]`, `[ValidateRange()]`) for the actual input constraints, and reject unexpected values early.
+- Pass untrusted input as parameters or typed values.
+- Supply secrets, credentials and API keys through the environment or a secret mechanism, and accept passwords as `[SecureString]` or credential objects.
 
-## Checklist
+### Errors
 
-- `#Requires -Version 7.0` present at script top
-- `Set-StrictMode -Version Latest` enabled
-- `$ErrorActionPreference = 'Stop'` set
-- No cmdlet aliases used; full cmdlet names only
-- No global variables; data passed via parameters
-- Approved verbs used for all functions
-- PascalCase naming for functions, parameters, script-scoped variables
-- Cross-platform paths via `Join-Path` / `$PSScriptRoot`
-- No hardcoded secrets or plain-text passwords
-- PSScriptAnalyzer clean (Warning+ severity)
-- Failures propagate or receive needed recovery/context; cleanup runs on success and failure; `$LASTEXITCODE` checked after native commands
+- Let failures propagate to the owning boundary. Add `try/catch` where recovery or context is needed, and `finally` where cleanup must run on success and failure. Include the operation attempted and relevant values in error messages.
+- Use `$PSCmdlet.ThrowTerminatingError()` in advanced functions.
+- Check `$LASTEXITCODE` after every native command.
+- For generic error-handling patterns, see `error-patterns`.
 
-## Error Handling Examples
+## Checks
 
-For generic error handling patterns (resilience, resource management, monitoring), see the `error-patterns` skill.
-
-### Strict Mode + Error Preference Setup
-```powershell
-#Requires -Version 7.0
-
-Set-StrictMode -Version Latest
-$ErrorActionPreference = 'Stop'
-```
-
-### Advanced Function with Proper Error Handling
-```powershell
-function Get-ConfigValue {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$ConfigPath,
-
-        [Parameter(Mandatory)]
-        [string]$Key
-    )
-
-    try {
-        if (-not (Test-Path -Path $ConfigPath)) {
-            $PSCmdlet.ThrowTerminatingError(
-                [System.Management.Automation.ErrorRecord]::new(
-                    [System.IO.FileNotFoundException]::new("Config file not found: $ConfigPath"),
-                    'ConfigFileNotFound',
-                    [System.Management.Automation.ErrorCategory]::ObjectNotFound,
-                    $ConfigPath
-                )
-            )
-        }
-        $config = Get-Content -Path $ConfigPath -Raw | ConvertFrom-Json
-        return $config.$Key
-    }
-    catch {
-        Write-Error "ERROR: Failed to read key '$Key' from '$ConfigPath': $_"
-        throw
-    }
-}
-```
-
-### Native Command Exit Code Check
-```powershell
-& git status
-if ($LASTEXITCODE -ne 0) {
-    throw "ERROR: git status failed with exit code $LASTEXITCODE"
-}
-```
+Run the parser check and `Invoke-ScriptAnalyzer` (Warning and Error severity) from `references/operational-checks.md`; the parser check exits non-zero when `Parser::ParseFile` reports diagnostics. Test scripts with `pwsh` on macOS before deploying to Windows.

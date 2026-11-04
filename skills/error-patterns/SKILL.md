@@ -5,24 +5,24 @@ description: "Use for resilience and recovery decisions: failure classification,
 
 # Resilience And Recovery
 
-Choose failure behavior that preserves correctness, bounds amplification, and makes recovery observable. Apply this skill to a known application or dependency boundary; let the primary workflow own planning, mutation, review, and close.
+Choose failure behavior that preserves correctness, bounds amplification, and makes recovery observable for a known application or dependency boundary.
 
 ## Scope
 
 Use this skill for:
 
 - classifying failures by cause, permanence, caller action, and recovery path
-- deciding whether retries, circuit breaking, fallback, degradation, or fail-fast behavior fit a boundary
+- deciding whether retries, circuit breaking, fallback, degradation, or immediate rejection fit a boundary
 - defining cleanup, cancellation, timeout, idempotency, and resource recovery
 - defining health, readiness, and recovery evidence
 
-Do not use it to own:
+Hand off to the matching owner:
 
-- infrastructure incident triage before the failing state owner and data path are known; use `infrastructure-triage`
-- application, security, or audit log design; use `logging-standards`
-- input validation and exploit prevention; use `security-guardrails`
-- test-layer and CI design; use `testing-strategy`
-- lifecycle recovery routing, rollback authorization, or completion judgment
+- infrastructure incident triage before the failing state owner and data path are known: `infrastructure-triage`
+- application, security, or audit log design: `logging-standards`
+- input validation and exploit prevention: `security-guardrails`
+- test-layer and CI design: `testing-strategy`
+- rollback authorization and completion judgment: the primary workflow (`implement-change`, Recovery)
 
 ## Decision Workflow
 
@@ -31,9 +31,9 @@ Do not use it to own:
 3. Decide which actor can safely recover and which state must be preserved or cleaned up.
 4. Select the smallest behavior that prevents invalid state and avoids failure amplification.
 5. Define observable success, exhaustion, degraded state, and recovery evidence.
-6. Verify the failure and recovery paths with the smallest realistic executable oracle. A missing perfect agent-runnable reproducer does not freeze unrelated authorized work.
+6. Verify the failure and recovery paths with the smallest realistic executable oracle: exercise the transient, permanent, timeout, cancellation, partial, and cleanup paths the boundary declares, and prove retry budgets, idempotency, resource release, degraded markers, and health-state transitions where they apply.
 
-When a reproducible code or performance failure needs a tighter evidence loop, read `references/debugging-tight-loop.md`. That reference helps establish the oracle; it does not make this skill the incident or lifecycle owner.
+When a reproducible code or performance failure needs a tighter evidence loop, read `references/debugging-tight-loop.md`.
 
 ## Failure Classification
 
@@ -42,40 +42,31 @@ Classify enough to drive caller behavior. Useful distinctions include:
 - invalid input or violated precondition: reject without retry
 - authentication or authorization failure: fail closed and expose only safe reason information
 - conflict or stale state: return the concurrency or reconciliation action the caller can take
-- transient dependency or transport failure: retry only inside the remaining deadline and idempotency boundary
+- transient dependency or transport failure: retry per Bounded Retry
 - permanent dependency or configuration failure: stop amplification and route actionable evidence to the owner
-- cancellation or timeout: preserve caller intent and do not disguise it as a generic internal error
+- cancellation or timeout: preserve caller intent and report it as cancellation or timeout
 - resource exhaustion or corruption risk: contain work, protect state, and make recovery ownership explicit
 
-Use typed or structured errors when callers need stable branching. Preserve the original cause while adding boundary context; do not leak secrets or internal details into user-facing errors.
+Use typed or structured errors when callers need stable branching. Preserve the original cause while adding boundary context, and keep secrets and internal details out of user-facing errors.
 
 ## Pattern Selection
 
 ### Bounded Retry
 
-Retry only a classified transient operation that is idempotent or protected by an idempotency mechanism. Bound attempts by deadline and budget, apply backoff and jitter where concurrency could synchronize, and surface final exhaustion. Do not layer independent retries at every hop.
-
-### Circuit Breaking And Load Shedding
-
-Use a circuit breaker when repeated dependency calls demonstrably amplify latency or resource exhaustion and the caller has meaningful open, half-open, and recovery behavior. Prefer concurrency limits, queues, or load shedding when the actual constraint is local capacity rather than dependency health.
+Retry a classified transient operation that is idempotent or protected by an idempotency mechanism, inside the remaining deadline. Bound attempts by deadline and budget, apply backoff and jitter where concurrency could synchronize, and surface final exhaustion. Retry at one owning layer per call chain.
 
 ### Fallback And Degraded Behavior
 
-Use fallback only when stale, partial, cached, or read-only behavior is valid for the caller contract. Mark degraded results and define freshness, consistency, and exit conditions. Never turn a required failure into silent success.
+Use fallback when stale, partial, cached, or read-only behavior is valid for the caller contract. Mark degraded results and define freshness, consistency, and exit conditions. Return a required failure to the caller as a failure.
 
 ### Cleanup And Resource Recovery
 
-Acquire and release files, locks, connections, transactions, processes, and temporary state under one visible ownership boundary. Cleanup must run on error, cancellation, and timeout without deleting evidence or state required for safe recovery. Make cleanup idempotent when it can be retried.
+Acquire and release files, locks, connections, transactions, processes, and temporary state under one visible ownership boundary. Cleanup runs on error, cancellation, and timeout while keeping the evidence and state required for safe recovery, and it is idempotent when it can be retried.
 
-### Health And Readiness Evidence
+### Circuit Breaking, Load Shedding, And Health
 
-Health checks should answer an actor's decision. Liveness proves the process can make progress; readiness proves it can safely receive the declared work; dependency health and degraded-state evidence should be separate when their recovery actions differ. Avoid checks that merely test a port while hiding an unusable dependency or exhausted resource.
+When the boundary calls a remote dependency or declares health or readiness endpoints, read `references/patterns.md`.
 
-## Verification And Handoff
+## Handoff
 
-- Exercise representative transient, permanent, timeout, cancellation, partial, and cleanup paths that the boundary declares.
-- Prove retry budgets, idempotency, resource release, degraded markers, and health-state transitions where they apply.
-- Do not define effort by a fixed hypothesis or test count.
-- Reuse still-valid recovery evidence; re-verify affected paths when recovery implementation or retained-state conditions changed.
-- Route concrete logging fields to `logging-standards` and test placement to `testing-strategy`.
-- Return recovery evidence and unresolved risk to the owning workflow. Do not independently choose rollback, widen the plan, or declare the change complete.
+Reuse of recovery evidence follows `references/oracle-selection.md` in `skills-routing`. Return recovery evidence and unresolved risk to the owning workflow, which decides rollback, scope, and completion.

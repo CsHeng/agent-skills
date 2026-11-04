@@ -5,24 +5,22 @@ description: "Select and compose skills when coding-task ownership is unclear or
 
 # Skills Routing
 
-Resolve the question that is actually open. A request that explicitly names or confidently matches another skill goes directly to it; `skills-routing` is not a mandatory entry, a lifecycle, or a runtime/model dispatcher. Settled language and verification choices, routine commands, and ordinary cleanup stay with the current task.
+Resolve the question that is actually open. A request that explicitly names or confidently matches another skill goes directly to it; this skill is a method library and a tie-breaker, not a mandatory entry, lifecycle, or runtime dispatcher. Settled language and verification choices, routine commands, and ordinary cleanup stay with the current task.
 
 ## Read Only The Relevant Branch
 
-Read the reference that answers the current question, not every branch. A workflow may read a method reference directly without reselecting its primary skill or loading skill-selection and session guidance.
+A workflow may read a method reference directly without reselecting its primary skill.
 
-| Open question | Read when needed |
+| Open question | Read |
 | --- | --- |
 | Which skill owns an ambiguous request, or how should skills compose? | [Skill Selection](references/routing.md) and [Scope Contracts](references/routing.toml). |
-| What unnecessary responsibility can disappear from code, tests, documents, or supporting mechanisms? | [Simplification](references/simplification.md). |
+| What unnecessary responsibility can disappear from code, tests, documents, or supporting mechanisms, or should a bespoke mechanism be replaced? | [Simplification](references/simplification.md). |
 | Which language fits new persisted code or an authorized migration? | [Language Selection](references/language-selection.md). |
-| Which ad hoc CLI or command composition fits a non-trivial task? | [Tool Selection](references/tool-selection.md). |
+| Which ad hoc CLI or command composition fits a non-trivial task? | [Tool Selection](references/tool-selection.md); nested interpreters and mutation safety in [Ad Hoc Command Composition](references/adhoc-command-composition.md). |
 | What executable evidence would establish the required outcome? | [Oracle Selection](references/oracle-selection.md). |
-| How should recalled facts, compaction, or a handoff preserve the current task? | [Memory And Recovery](references/memory-boundary.md); [Phase Boundaries](references/phase-boundary-decision-tree.md) only when choosing context transfer after a completed phase. |
-| Does an ambiguity require clarification, or how does an explicit preference apply? | [Interaction And Decision Boundaries](references/preference-contract.md). |
+| How should recalled facts, compaction, or a handoff preserve the current task? | [Memory And Recovery](references/memory-boundary.md); [Phase Boundaries](references/phase-boundary-decision-tree.md) when choosing context transfer after a completed phase. |
+| Does an ambiguity need clarification, or how does an explicit preference apply? | `references/goal-alignment.md` in `design-change`. |
 
 ## Keep The Current Owner And Authority
 
-Keep one primary response owner, using the composition guidance in `output-styles`. Method references contribute the decisions and evidence that owner needs; their output lists do not impose extra formats, broaden the requested investigation, or create a second report, mandatory phase, or approval gate. A simplification audit stays read-only; sufficiently bounded authorized application continues through `implement-change`. Review enters through `review-change` when requested or otherwise applicable.
-
-Recovery reconciles actual changes, the current goal and approval baseline, unadjudicated reports, and any still-valid executor. It does not restart skill selection, redispatch completed work, accept an unverified candidate, or invent authority. Persistent recovery preferences remain harness-global; project records preserve task-specific decisions. Host capability governs continuation, and raw sessions are not a way around workspace or permission checks.
+One primary skill owns the response order and conclusion, composed under `output-styles`; method references contribute decisions and evidence without a second report, extra phase, or approval gate. A simplification audit stays read-only, and bounded authorized application continues through `implement-change`. Recovery reconciles actual changes, the current goal and approval baseline, unadjudicated reports, and any still-valid executor; it neither restarts skill selection nor invents authority, and raw sessions are not a way around workspace or permission checks.

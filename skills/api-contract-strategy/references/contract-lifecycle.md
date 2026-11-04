@@ -29,7 +29,7 @@ PROJECT_IOS_DIR
 PROJECT_API_SPEC
 ```
 
-Do not infer `../backend` or other sibling paths. Workspace layout, CI checkouts, agent context, and multiple clones vary.
+Resolve sibling repositories through these variables; paths such as `../backend` vary with workspace layout, CI checkouts, agent context, and multiple clones.
 
 The workspace contract is a development input, not a production dependency.
 
@@ -61,7 +61,7 @@ contract version -> pinned generator -> versioned artifact -> pinned consumer de
 
 Record contract version, generator version, and generation metadata. Possible artifacts include npm, Maven, Swift Package, or an internal versioned Git artifact.
 
-Do not publish an SDK artifact until a consumer needs an independent dependency lifecycle.
+Publish an SDK artifact when a consumer needs an independent dependency lifecycle.
 
 ## Generated Client Scope
 

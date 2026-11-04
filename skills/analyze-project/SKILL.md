@@ -5,31 +5,26 @@ description: "Answer read-only project-state questions from current repository t
 
 # Analyze Project
 
-Answer the actual project question from sufficient current evidence, without turning every local query into a full audit.
+Answer the actual project question from sufficient current evidence, scaling both the investigation and the answer to the scope asked.
 
 ## Select The Scope
 
-- For a local fact, identify the relevant `project`, follow applicable scoped instructions, and read the stable owner that can answer the question. Verify the specific claim from code, configuration, or commands when needed. Do not automatically inventory all terminology or read every root document.
-- If ownership is unclear, stable sources conflict, or evidence is insufficient, expand only along that gap: inspect the relevant repository maps, README/AGENTS, ignore rules, or implementation. State uncertainty rather than guessing. Poor documentation may justify code reconstruction, but does not itself authorize a full-project report.
-- For explicitly requested broad orientation or a full truth audit, map the relevant stable truth and search boundaries before drawing conclusions. Use [Full Project Truth Audit](references/full-audit-output.md) for the comprehensive branch, not for routine local questions.
+- For a local fact, identify the relevant `project`, follow applicable scoped instructions, read the stable owner that can answer the question, and verify the specific claim from code, configuration, or commands when needed.
+- When ownership is unclear, stable sources conflict, or evidence is insufficient, expand along that gap: inspect the relevant repository maps, README/AGENTS, ignore rules, or implementation, and state uncertainty rather than guessing. When documentation is poor, reconstruct from code for the asked question only.
+- For explicitly requested broad orientation or a full truth audit, map the relevant stable truth and search boundaries before drawing conclusions, and use [Full Project Truth Audit](references/full-audit-output.md).
 
-A request to implement, reorganize docs, or review a change belongs to its matching Skill. For runtime/infrastructure/security or another domain diagnosis, contribute bounded project-truth evidence to that primary owner rather than emitting a second report. A requested assessment of whether existing code, tests, documents, or mechanisms are necessary uses the simplification method in `skills-routing`; a reproducible code, test, or performance failure whose cause needs a repeatable evidence loop uses `references/debugging-tight-loop.md` in `error-patterns`.
+When another Skill owns the response (implementation, docs reorganization, change review, or a runtime, infrastructure, security, or other domain diagnosis), contribute only project facts, confidence, and drift evidence.
 
 ## Investigate And Answer
 
-1. Bound the question and the project. Honor the most specific applicable project instructions; use `docs/AGENTS.md`, `AGENTS.md`, `docs/README.md`, and `README.md` as needed to locate the truth owner, not as a fixed reading list for every query.
-2. Separate stable truth from stage history before searching. Observe applicable ignore/search policy; a default search miss does not prove hidden, generated, or ignored material absent.
-3. Read enough stable evidence to support the answer and perform targeted read-only verification. Escalate investigation when contradictions or missing facts actually prevent a reliable conclusion.
-4. When document health or drift affects confidence or is requested, read [Document Health And Drift](references/doc-health-and-drift.md). Classify health and verification basis for that affected scope; do not require a whole-repository classification for an unrelated local fact.
-5. Give the conclusion, relevant evidence, and any material limitation once. Use `output-styles`; read [Output Contract](references/output-contract.md) when reporting a broader truth map, drift, or a requested audit. A direct local answer needs no extra report template.
-6. Stop after answering. Document reorganization or other mutation requires its own authorized request; this Skill remains read-only.
+1. Bound the question and the project. Honor the most specific applicable project instructions, and use `docs/AGENTS.md`, `AGENTS.md`, `docs/README.md`, and `README.md` to locate the truth owner.
+2. Separate stable truth from stage history before searching. Search stage history when requested or when a gap stable truth cannot answer needs it, and say so when used. Check ignore rules and generated or ignored paths before concluding something is absent.
+3. Read enough stable evidence to support the answer and verify targeted claims read-only. Escalate when contradictions or missing facts prevent a reliable conclusion.
+4. When document health or drift affects confidence or is requested, read [Document Health And Drift](references/doc-health-and-drift.md) and classify the affected scope.
+5. Give the conclusion, relevant evidence, and any material limitation once. Read [Output Contract](references/output-contract.md) when reporting a broader truth map, drift, or a requested audit.
 
-## Protected Boundaries
+## Boundaries
 
-- Use `project`, not `workspace`, as the analysis unit. Keep terminology repository-local unless an applicable stable owner defines a wider convention.
-- Keep stable truth and stage artifacts distinct. Search stage history only when explicitly requested or needed to resolve a gap that stable truth cannot answer; make that use visible rather than silently promoting history to current truth.
-- Preserve the subject and limits of each claim. File existence, documented intent, current implementation, observed runtime behavior, and inferred cause are different evidence.
-- Use `fact`, `inferred`, `judgment`, and `uncertain` when confidence matters. Give evidence provenance (`documented`, `code`, `runtime`, or `external`) only when useful.
-- Prefer project-relative references with exact starting lines. Use external paths when the evidence necessarily lives outside the project; do not imply those external files apply to every project.
-- Keep references and output proportional to the question. Internal investigation as well as final rendering must scale with scope; do not do an unrequested full audit and merely shorten its answer.
-- If another primary Skill owns the response, contribute only relevant project facts, confidence, and drift evidence. Do not concatenate report templates or take mutation authority from that composition.
+- Use `project` as the analysis unit, and keep terminology repository-local unless an applicable stable owner defines a wider convention.
+- Preserve the subject and limits of each claim: file existence, documented intent, current implementation, observed runtime behavior, and inferred cause are different evidence.
+- Keep this Skill read-only; document reorganization or other mutation needs its own authorized request.

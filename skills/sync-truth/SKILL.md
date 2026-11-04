@@ -9,26 +9,20 @@ Update long-lived project truth from verified change evidence.
 
 ## Use This Skill When
 
-- a verified change has real truth impact
+- a verified change has real truth impact and the user request or approved change scope authorizes the documentation mutation
 - stable documentation or durable operational facts no longer match the implementation
 
-Do not use it for read-only project explanation (`analyze-project`), a change with no truth impact, implementation review (`review-change`), closure without truth updates (`close-change`), or a requested restructuring of documentation ownership, layout, or search boundaries (`organize-docs`).
+Read-only project explanation goes to `analyze-project`, implementation review to `review-change`, closure without truth updates to `close-change`, and restructuring of documentation ownership, layout, or search boundaries to `organize-docs`.
 
 ## Workflow
 
-1. Confirm the user request or approved change scope authorizes the documentation mutation.
-2. Identify the smallest stable truth roots affected by verified behavior.
-3. Distinguish long-lived truth from stage artifacts, generated output, and historical notes.
-4. Update only the stable facts supported by current implementation and verification evidence.
-5. Compose `organize-docs` only when ownership, truth roots, search boundaries, stage placement, canonical terminology, or prose structure materially need adjustment.
-6. Verify links, commands, generated references, terminology, and repository-specific documentation checks.
-7. Report updated truth, evidence, and any remaining mismatch.
+1. Identify the smallest stable truth roots affected by verified behavior, separating long-lived truth from stage artifacts, generated output, and historical notes.
+2. Start from the verified change evidence and update the stable facts that current implementation and verification support; keep stage artifacts as history.
+3. Compose `organize-docs` when ownership, truth roots, search boundaries, stage placement, canonical terminology, or prose structure need adjustment, or when stable decision truth is created, promoted, superseded, compacted, or retired.
+4. Verify links, commands, generated references, terminology, and repository documentation checks, then state the updated truth, its evidence, and any remaining mismatch.
 
-## Operating Rules
+## Rules
 
-- `analyze-project` remains the read-only truth query entry.
-- Truth sync does not rediscover the project from zero or reinterpret unverified implementation claims.
-- Stage artifacts do not become stable truth merely because they are detailed.
-- Verified evidence updates factual truth, but it does not by itself change goals, discretion, or boundaries: those change only through the user decision or approved change scope that owns them. Record a verified mismatch between effective goals and the implementation as a finding for that owning decision; do not self-authorize a goal, discretion, or boundary update from evidence. Superseded gates and exemption history stay in stage records rather than becoming a runtime contract.
-- External paths, secrets, settings contents, or transient machine state do not enter stable project truth unless the user explicitly chose them as a durable public contract.
-- Documentation scope never widens implementation authority.
+- Update facts from evidence, and record a goal, discretion, or boundary mismatch as a finding for the decision that owns it (`development-standards` Goals, Discretion, And Risk).
+- Record external paths, secrets, settings contents, or transient machine state only when the user named them a durable public contract.
+- Documentation authority covers documentation only.

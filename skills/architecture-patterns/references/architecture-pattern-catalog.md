@@ -105,8 +105,6 @@ Fit a proven external boundary that needs centralized routing, authentication en
 
 ## Security Patterns
 
-Treat mandatory security and compliance requirements as constraints before economic comparison.
-
 - Apply least privilege and explicit trust boundaries.
 - Use strong service identity and mTLS when the threat model, environment, or policy requires it.
 - Use JWT/OIDC only with explicit issuer, audience, validation, expiry, key-rotation, and revocation boundaries.
@@ -170,13 +168,4 @@ Use executable dependency, schema, performance, security, or operability checks 
 
 ## Pattern Decision Card
 
-For each selected pattern, record only material fields:
-
-- protected boundary and owner
-- current demand or hard constraint
-- smallest rejected alternative and discard reason
-- lifecycle costs and cost bearer
-- state, data, dependency, and failure ownership
-- executable oracle
-- rollout and recovery boundary
-- observable upgrade or retirement trigger
+Record the material fields from Compact Decision Evidence in `architecture-decision-economics.md`, adding state, data, dependency, and failure ownership and the rollout and recovery boundary where the selected pattern needs them.

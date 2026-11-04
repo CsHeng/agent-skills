@@ -5,14 +5,9 @@ description: "Use for goal-driven application, observability, security, and audi
 
 # Logging Standards
 
-Design logs from the operational, diagnostic, security, or audit question they must answer. Do not impose one timestamp, line format, field set, backend, or retention period on every service.
+Design logs from the operational, diagnostic, security, or audit question they must answer. Choose timestamp, format, fields, backend, and retention from the consumer's decision and the repository's owned schema.
 
-## Ownership Boundary
-
-- This skill owns application, access, observability, security, and audit log event design.
-- `security-guardrails` owns prevention and enforcement controls such as input validation, injection prevention, CORS, TLS, uploads, authorization, and container hardening.
-- `error-patterns` owns failure classification and recovery behavior. Logging records the evidence but does not replace the recovery policy.
-- A lifecycle workflow remains the primary owner when logging is one part of a larger implementation or review.
+Logging records evidence; `security-guardrails` owns prevention controls and `error-patterns` owns failure classification and recovery policy.
 
 ## Design Workflow
 
@@ -26,17 +21,16 @@ Design logs from the operational, diagnostic, security, or audit question they m
 ## Event And Level Rules
 
 - Log state transitions, boundary outcomes, and actionable failures rather than narrating every function call.
-- Use levels according to the service's operational response. `ERROR` should normally mean an owner must investigate or a declared operation failed; expected client rejection is not automatically an error.
+- Use levels according to the service's operational response: reserve `ERROR` for failures an owner must investigate or a declared operation failed, and give expected client rejection the level its operational response needs.
 - Keep access logs, application events, and immutable audit records distinct when their consumers, schemas, access, or retention differ.
-- Avoid duplicate emission at every layer. Record an error where useful context and response ownership meet.
+- Record an error where useful context and response ownership meet.
 
 ## Structured Context
 
-- Prefer stable machine-queryable event names and fields with consistent types.
-- Include request, operation, trace, span, job, or business correlation only when it is available and needed by the consumer.
+- Use stable machine-queryable event names and fields with consistent types; put queryable meaning in fields, with message text as supporting context.
+- Include request, operation, trace, span, job, or business correlation when it is available and needed by the consumer.
 - Keep high-cardinality or unbounded values out of indexed fields unless the backend and query need justify them.
-- Treat message text as supporting context, not the only schema.
-- Follow repository or platform schemas such as OpenTelemetry or ECS when they are already owned; do not add a standard merely for uniformity.
+- Follow repository or platform schemas such as OpenTelemetry or ECS where the repository already owns them.
 
 ## Security And Audit Profile
 
@@ -44,11 +38,8 @@ Read `references/security-and-audit-logging.md` when the request concerns authen
 
 ## Operations
 
-- Bound local storage and define rotation or backpressure before logs can exhaust a runtime.
-- Make transport failure behavior explicit: drop, buffer, retry, block, or fail closed only according to the event's requirement.
-- Assign aggregation, archive, retention, and deletion to named infrastructure or compliance owners.
-- Test queries and alerts with representative events. A log that cannot be retrieved or correlated does not satisfy its goal.
+When log volume, transport, or storage bounds are in scope, read `references/operations.md`.
 
 ## Result
 
-When this skill owns the response, lead with the logging goal and selected event contract. Report only the decision-relevant event classes, fields, sensitive data handling, delivery and retention ownership, and executable evidence. Do not emit a second report when another lifecycle or domain skill owns the task.
+When this skill owns the response, lead with the logging goal and selected event contract, then report the decision-relevant event classes, fields, sensitive data handling, delivery and retention ownership, and executable evidence.

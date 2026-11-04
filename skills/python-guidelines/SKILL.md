@@ -5,63 +5,51 @@ description: "Apply Python policy as a conditional overlay when writing or revie
 
 # Python Guidelines
 
-Apply Python coding and tooling policy to Python files, scripts, CLIs, services and reviews. The primary workflow owns scope, mutation and delivery. For an unsettled language or ad hoc tool choice, read only `references/language-selection.md` or `references/tool-selection.md` in `skills-routing`, respectively.
-
-Environment tooling below supports Python that is already justified; it does not justify selecting Python or adding dependencies. When a standard-library script would acquire third-party runtime packages, apply language selection before expanding its environment: the exception requires a business-matched capability or framework integration available only through Python. Keep that production decision separate from existing verification tooling.
+Apply Python coding and tooling policy to Python files, scripts, CLIs, services and reviews. An unsettled language or ad hoc tool choice reads `references/language-selection.md` or `references/tool-selection.md` in `skills-routing`. A standard-library script that would acquire third-party runtime packages applies language selection before its environment expands.
 
 ## Toolchain And Environment
 
-Common environment-scope principles stay in `development-standards`; the mappings below are the Python-specific application. Scope follows ownership and lifetime, not the `uv`/`python` prefix.
+Apply the environment-scope rules in `development-standards`; these are the Python mappings.
 
-- For a Python project with managed dependencies, use `uv` for dependencies and tool execution, `pyproject.toml` for configuration, project-pinned Ruff for formatting and linting, and pytest for tests. Prefer `ty`; use mypy or pyright when the project requires it.
-- A standard-library-only script or short embedded fragment may use an available interpreter directly. Do not create a project environment, package, or service merely to run it; keep inputs separate from source and honor the host's runtime contract.
-- For code owned by a Python project, resolve the nearest owner, including in multi-project repositories. Run project commands through that environment with `uv run --project <project-root> ...` or from the owning project root.
-- Set `UV_PROJECT_ENVIRONMENT` to the owning project's or subproject's mutable environment path outside the source tree, following the project or host's storage contract. It is project-scoped and reused across runs, not a shared cache and not recreated per task; do not let project operations fall back to an in-tree `.venv` or inherit another project's environment.
-- Environment creation is separate from use. Create a missing project environment when needed and reuse a compatible existing one; a deliberately one-shot environment stays task-owned. Creation can replace an existing environment, so it is not a routine preflight before each check. An explicit `uv venv "$UV_PROJECT_ENVIRONMENT"` target avoids working-directory ambiguity, and an existing project environment must not be moved, recreated or deleted merely to apply this guidance.
-- Keep reusable caches and bytecode outside the source tree, and keep them distinct from the project environment. `UV_CACHE_DIR` is uv's shareable package/build cache, not the project environment; `RUFF_CACHE_DIR` and `PYTHONPYCACHEPREFIX` are reusable caches. Use `PYTHONDONTWRITEBYTECODE=1` defensively. pytest's `cache_dir` is per-project mutable test state, including `--lf`/`lastfailed`, so give each owning project its own directory rather than sharing one across projects.
-- Caches and environments outside the tree do not by themselves protect the checkout: coverage data, test writes, and ad-hoc scratch can still appear as untracked or ignored files. After verification, inspect `git status --ignored` for task-owned contamination and remove owned scratch and per-run state.
+- A Python project with managed dependencies uses `uv` for dependencies and tool execution, `pyproject.toml` for configuration, project-pinned Ruff for formatting and linting, and pytest for tests. Type-check with the checker the project configures (`mypy` or `pyright`), and with `ty` when the project declares none.
+- A standard-library-only script or short embedded fragment runs directly on the available interpreter; keep inputs separate from source and honor the host's runtime contract.
+- Resolve the nearest owning project, including in multi-project repositories, and run its commands with `uv run --project <project-root> ...` or from the owning project root.
+- Point every project operation at the owning project's external `UV_PROJECT_ENVIRONMENT`, following the project or host's storage contract. The environment is project-scoped and reused across runs. Create it only when it is missing, and reuse a compatible existing one.
+- Keep reusable caches and bytecode outside the source tree, distinct from the project environment, and give each owning project its own pytest `cache_dir`.
 
-For cache configuration, one-off dependencies and pytest preflight, read [Tooling And Environments](references/tooling-and-environments.md). That reference supplies setup details, not a second environment policy.
+Read [Tooling And Environments](references/tooling-and-environments.md) for cache variables, pytest setup, one-off dependencies, and the post-verification check for untracked or ignored files.
 
-## Controller And Remote Execution
-
-A configuration-management controller's temporary module execution, such as the Python module Ansible writes and runs on a managed host, belongs to the controller. Preserve Python modules, plugins, and collections where the framework owns that ecosystem; do not vendor, reimplement, or treat framework execution as a language-migration target.
-
-- For a one-shot remote action, reuse the controller's built-in modules, local rendering, thin transported Shell, or a short Python fragment on the existing target runtime. Select by clarity and actual dependency cost; do not create a package, service, or binary only to carry that invocation.
-- For an approved Go replacement of a persistent remote tool, build on the controller or CI for the target OS and architecture and distribute the binary or image; do not compile on the managed target. A retained Python application may use its declared managed interpreter/environment or a prebuilt image. Do not introduce Python into an explicitly constrained native target.
-- When Python crosses a host or controller boundary, state the runtime and output contract explicitly: interpreter and dependency source, invocation, stdout result, and exit behavior.
+Read [Controller And Remote Execution](references/controller-and-remote.md) when Python crosses a host or controller boundary, such as an Ansible module or a remote action.
 
 ## Coding Requirements
 
 ### Types And Constants
 
-- Add type hints for all function parameters and return values, not only public APIs. Prefer `X | None` when the runtime supports it. Use `typing.Any` only for a hard constraint and document why it is necessary.
-- Replace magic numbers with named constants. Use `UPPER_SNAKE_CASE` and include units where relevant, such as `TIMEOUT_SECONDS`.
-- Do not use mutable default arguments.
+- Add type hints for all function parameters and return values. Use `X | None` when the runtime supports it, and `typing.Any` only for a hard constraint, with the reason documented.
+- Replace magic numbers with named `UPPER_SNAKE_CASE` constants that include units where relevant, such as `TIMEOUT_SECONDS`.
+- Default a mutable argument to `None` and build the value inside the function.
 
 ### Errors And Security
 
-- Validate inputs early; catch specific exceptions and give actionable errors with context. Do not use bare `except:` in production code.
-- Catch generic exceptions only at boundaries with specific handling, structured logging and re-raise or wrapping. Keep error classification and recovery choices with `error-patterns` when those decisions arise.
-- Define domain-specific exception classes for domain errors, inheriting from appropriate base classes. Include useful context in exception messages without leaking sensitive values.
-- Do not hardcode secrets, credentials or configuration values. Redact tokens, passwords and keys in logs.
+- Validate inputs early and raise actionable errors with context. Catch a specific exception type.
+- Catch generic exceptions only at boundaries, with specific handling, structured logging and re-raise or wrapping. Error classification and recovery choices follow `error-patterns`.
+- Define domain-specific exception classes inheriting from appropriate base classes, with useful context and without sensitive values in messages.
+- Load secrets, credentials and configuration values from the environment or project configuration, and redact tokens, passwords and keys in logs.
 
 ### Formatting And Linting
 
-- Use the owning project's pinned Ruff through `uv run ruff`, with configuration in `pyproject.toml`; do not replace it with an unpinned tool invocation.
-- Keep safe fixes (`ruff check --fix --no-unsafe-fixes`) separate from formatting (`ruff format`). Do not enable unsafe fixes through flags or configuration.
-- Do not chain `ruff check --fix && ruff format`: exit 1 means residual diagnostics and must not skip formatting. Continue after that exit, but stop on a tool error; keep every final lint, format and type failure unsuppressed.
-- Limit changes to authorized files. Do not invent a numeric line-length gate that fights the formatter, or rewrite strings, comments or behavior only to satisfy pure line length.
+- Use the owning project's pinned Ruff through `uv run ruff`, configured in `pyproject.toml`.
+- Run `ruff check --fix --no-unsafe-fixes`, then `ruff format`, as separate commands; continue after exit 1 (residual diagnostics) and stop on any other non-zero exit. Resolve every final lint, format and type failure rather than suppressing it.
+- Limit changes to authorized files, and let the formatter own line length.
 
 ### Tests And Documentation
 
 - Use pytest by default, testing core behavior directly and keeping CLI plumbing thin. Cover happy and failure paths for critical logic.
-- Choose the verification language independently of the production language. Retain useful Python tests and fixture generators for a Go or Shell product when their controller or CI runtime is affordable; removing Python from production targets does not require removing it from verification.
-- Use docstrings for public modules, classes and functions. Prefer Google-style docstrings for public APIs, including usage expectations when they help maintainability.
+- Use docstrings for public modules, classes and functions, in Google style for public APIs.
 
 ## Operational Commands (Examples)
 
-Prefer the owning project's versioned command entrypoint. This Bash example assumes an existing uv lockfile and runs from the owning project root; replace the `<project>` and root placeholders with the owning project's declared environment and cache location, and the file list with the authorized files. The environment exports select an environment for use; they do not recreate it. Exit 1 from the initial fix pass does not make the final result acceptable, and other tool errors stop execution.
+Prefer the owning project's versioned command entrypoint. This Bash example runs from the owning project root with an existing uv lockfile; replace the placeholders with the project's declared environment and cache locations and the file list with the authorized files. The exports select an environment for use.
 
 ```bash
 set -euo pipefail
@@ -87,5 +75,5 @@ uv run --locked pytest -q -o "cache_dir=<project-test-state-root>/<project>"
 ## Task-Specific References
 
 - Read [Script And CLI Patterns](references/script-patterns.md) for interfaces, invocation and script structure.
-- Read [Service Patterns](references/service-patterns.md) for service boundaries and tests.
-- Read [Review Checks](references/review-checklist.md) for read-only language review evidence. The calling review owner retains the report and verdict.
+- Read [Service Patterns](references/service-patterns.md) for Python service conventions.
+- Read [Review Checks](references/review-checklist.md) for read-only language review evidence.

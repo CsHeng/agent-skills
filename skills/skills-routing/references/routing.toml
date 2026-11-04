@@ -11,12 +11,12 @@ owner = "plan-change"
 instead_of = ["design-change"]
 
 [[clusters.handoffs]]
-when = "Implement an authorized bounded change or approved plan whose material decisions are settled, even when it touches architecture or stable truth."
+when = "Implement an authorized bounded change or approved plan whose material design and coordination decisions are settled, even when it spans multiple files or repositories, regenerates derived artifacts, sequences established operational procedures, or touches architecture or stable truth."
 owner = "implement-change"
 instead_of = ["design-change", "plan-change"]
 
 [[clusters.handoffs]]
-when = "Plan a change whose scope or execution order is not yet resolved."
+when = "Resolve genuinely open execution ordering, cross-actor coordination, oracle strategy, or authority gates when existing contracts and runbooks do not already settle them, or produce a requested or policy-required plan."
 owner = "plan-change"
 instead_of = ["implement-change"]
 

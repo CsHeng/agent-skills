@@ -2,7 +2,34 @@
 
 These modes extend the current-repository parser invocation in `SKILL.md`. Resolve `SKILL_DIR` from that file first; every command here is read-only. Read only the mode the task requires.
 
-Source-home selection (`--codex-home`, `--claude-home`, `--grok-home`, `--pi-home`), output format (`--format`), and history scope (`--scope`) are independent controls. Adding homes or selecting JSON output does not widen history scope; scope stays `current` unless `--scope all` is passed explicitly, and scope matching is identical in every output format.
+Source-home selection (`--codex-home`, `--claude-home`, `--grok-home`, `--pi-home`), output format (`--format`), and history scope (`--scope`) are independent controls. Adding homes or selecting JSON output does not widen history scope; scope stays `current` unless `--scope all` is passed explicitly, and scope matching is identical in every output format. Default sources include `grok` and `pi`, and `--pi-home` defaults to `~/.pi/agent`.
+
+## Source Locations
+
+Read these sources under each home when available; the default scope is still the current repository, and cross-repo Pi history needs `--scope all`.
+
+- Codex sessions: `~/.codex/sessions/**/*.jsonl`
+- Codex memory: `~/.codex/memories/MEMORY.md`
+- Claude sessions: `~/.claude/projects/**/*.jsonl`
+- Claude memory: `~/.claude/projects/**/memory/*.md` and other `~/.claude/**/memory/*.md`
+- Grok sessions: `~/.grok/sessions/<urlencoded-workspace>/prompt_history.jsonl` and per-session `events.jsonl`; the workspace directories are URL-encoded absolute paths, and scope `current` matches the decoded paths to `--repo-root`
+- Pi sessions: `~/.pi/agent/sessions/**/*.jsonl`
+- Project context docs: tracked `AGENTS.md` and `README.md` files under the target repo; symlinks that resolve to an already scanned document are deduplicated
+
+Additional homes use the same directory shapes under their own Codex, Claude, Grok, or Pi home roots.
+
+## Pi Evidence Interpretation
+
+Interpret session evidence before treating it as intent:
+
+- Interpret Pi v3 JSONL files on the last determinable recorded `id`/`parentId` branch and report that selection; it is not the UI current branch, and exclusive branches are not concatenated.
+- Mine raw tree messages rather than compaction summaries or `retainedTail` copies.
+- Disclose version 1/2 and other unsupported or malformed files as incomplete evidence rather than counting them as complete sessions, and surface partial Pi evidence instead of reporting a silently complete count.
+- Follow `parentSession` only within the selected files; unrecognized forks are limitations, not unique-task claims.
+- Strip injected `<skill ...>...</skill>` blocks and keep the remaining user tail as intent; skill injection is not an explicit user invocation.
+- Count assistant `stop`, `toolUse`, `error`, `aborted`, and `length` separately from model-change events and from the assistant's actual model.
+- Count assistant `stop` as a neutral event; treat a following continue or approval prompt only as a candidate relationship.
+- Pi samples are categorical summaries that omit thinking, images, and raw tool payloads.
 
 ## All Local History
 

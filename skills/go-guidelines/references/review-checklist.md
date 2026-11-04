@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Apply Go-specific evidence to a bounded implementation review. The primary review workflow owns findings, causality, verdict, and repair authority.
+Apply Go-specific evidence to a bounded implementation review under `review-change`.
 
 ## Profile Selection
 
@@ -13,7 +13,7 @@ Identify the changed Go archetype before reviewing architecture:
 - library or small package: apply only the shared `go-guidelines` baseline
 - mixed approved application: read both purpose profiles, but apply each only to its owned surface
 
-Do not require service packages in a CLI, Cobra in an API service, or either profile in a small library.
+Apply service packages to API services, Cobra to CLIs, and neither profile to a small library.
 
 ## Deterministic Evidence
 
@@ -26,7 +26,7 @@ go vet ./...
 project-configured analyzers when configured
 ```
 
-Add `go test -race ./...` only when concurrent behavior or shared state is in the review slice. Add `govulncheck ./...` when dependency or release risk makes it a declared oracle. Do not assume a workstation-global analyzer version when the module owns a tool directive or other pinning mechanism.
+Add `go test -race ./...` only when concurrent behavior or shared state is in the review slice. Add `govulncheck ./...` when dependency or release risk makes it a declared oracle. Use the module's tool directive or other pinning mechanism for the analyzer version.
 
 ## Shared Review Concerns
 
@@ -58,4 +58,4 @@ Add `go test -race ./...` only when concurrent behavior or shared state is in th
 
 ## Finding Boundary
 
-Report only evidence causally linked to the reviewed diff and its approved oracle. Treat pre-existing architecture, unrelated package debt, optional framework preferences, and unconfigured analyzers as non-blocking unless the current change activates them. Reviewers return candidate findings only; the calling implementing agent owns repair.
+Report evidence causally linked to the reviewed diff and its approved oracle. Pre-existing architecture, unrelated package debt, optional framework preferences, and unconfigured analyzers become findings when the current change activates them.

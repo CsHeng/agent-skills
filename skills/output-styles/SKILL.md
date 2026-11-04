@@ -5,32 +5,25 @@ description: "Shared plain-language baseline for coding responses, with detail a
 
 # Output Styles
 
-Make the answer easy to understand and use. Follow the user's presentation preferences and use the detail the decision needs. Persistent preferences belong in always-loaded user or host instructions; this task-loaded Skill supplies writing methods, not their only retention mechanism.
+Make the answer easy to understand and use. Follow the user's presentation preferences and use the detail the decision needs. Persistent preferences live in always-loaded user or host instructions; this Skill supplies writing methods.
 
-Follow the user's requested format and the target artifact's repository conventions; preserve schemas that an actual consumer requires. Otherwise, the primary skill organizes one response around the requested outcome. Supporting skills and their references contribute relevant decisions, evidence, and limits without imposing their own headings, tables, reports, or verdicts on that response.
+Follow the user's requested format and the target artifact's repository conventions, and keep schemas that an actual consumer requires. Otherwise, the primary skill organizes one response around the requested outcome. Supporting skills and their references contribute relevant decisions, evidence, and limits within the primary response's own structure.
 
-Treat skill output lists as content guidance, not cumulative templates or reasons to expand the investigation. When a request includes several deliverables, such as a design and a plan, give each its own useful content and synthesize one final response; do not concatenate every skill's closing report. Preserve material evidence, uncertainty, and real completion conditions regardless of presentation.
+Use each skill's output list as content for the one primary response, within the requested investigation. When a request includes several deliverables, such as a design and a plan, give each its own useful content and synthesize one final response. Keep material evidence, uncertainty, and real completion conditions in whatever presentation you choose.
 
 ## Write Clearly
 
 - Lead with the answer, recommendation, finding, or actual state. Explain mechanisms, tradeoffs, or alternatives when they help the user understand or decide.
-- Match the user's language; preserve file-local language and terminology when editing files.
+- Match the user's language; keep file-local language and terminology when editing files.
 - Use direct sentences, usually with one main point each. Name the actor when responsibility matters, and put conditions and warnings before the actions they constrain.
-- Use the same project term for the same concept. Explain unfamiliar terms when needed; preserve precise technical meanings, code, commands, identifiers, quotations, and evidence references.
-- Distinguish observed facts, inference, recommendations, and uncertainty when the difference matters. Say what failed, remains incomplete, or was not verified; explicit labels are optional.
-- Remove filler, praise, repeated caveats, and unnecessary restatement, not decision-relevant conditions or evidence. Stop after the useful content.
+- Use the same project term for the same concept. Explain unfamiliar terms when needed, and keep precise technical meanings, code, commands, identifiers, quotations, and evidence references intact.
+- Distinguish observed facts, inference, recommendations, and uncertainty when the difference matters, and say what failed, remains incomplete, or was not verified. Explicit labels are optional.
+- Keep decision-relevant conditions and evidence; cut filler, praise, repeated caveats, and restatement; end when the useful content is done.
 
 ## Choose Useful Presentation
 
-- Prefer plain paragraphs or compact lists. Use headings for real sections, not bold pseudo-headings, decorative separators, or repeated labels.
-- Use emphasis sparingly for a distinction the reader might otherwise miss. Ordinary prose and supporting detail do not need numbering.
-- Use a table, diagram, or other explanatory artifact when it makes the subject easier to understand than prose. Do not generate richer media merely because the capability exists.
-- Borrow plain-language principles across languages, including Simplified Technical English where useful. Do not impose its English vocabulary on other languages, reproduce an entire writing standard, or claim standards compliance without the requested validation.
-
-## Make Items Easy To Refer To
-
-Use plain bullets for ordinary parallel points. When the user needs to reply to or track items individually, print a short complete ASCII ID beside each item. Preserve the user's established references when updating or summarizing those items; explain a changed mapping if needed. This does not require a session-wide numbering ledger.
-
-For example, under an existing item `5`, write `- 5.1 Update project configuration` and `- 5.2 Check the affected entrypoint`, rather than restarting an ordered list at `1.` and `2.`. The full reference is text on the item, independent of headings, indentation, color, or automatic Markdown numbering.
-
-Before sending, check that a quoted ID identifies the intended item without reconstructing its address from the layout. Keep ordinary explanations and authored document structure as simple as their purpose permits.
+- Use plain paragraphs or compact lists, with headings for real sections and plain text elsewhere.
+- Use emphasis sparingly, for a distinction the reader might otherwise miss.
+- Add a table, diagram, or other explanatory artifact when it explains the subject better than prose.
+- Apply plain-language principles (Simplified Technical English where the user asks for it) in the user's language; claim standards compliance only after requested validation.
+- When the user needs to reply to or track items individually, print a short complete ASCII ID on each item, such as `- 5.1 Update project configuration` under existing item `5`, and keep the user's established references when updating those items. The user's global instructions own the full item-ID preference.

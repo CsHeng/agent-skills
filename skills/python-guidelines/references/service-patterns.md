@@ -1,39 +1,15 @@
 # Python Service Patterns
 
-## Purpose
-
-Create a Python service with predictable structure and clean layering.
-
-## Dependencies
-
-- Python 3.13+ (or project standard)
-- uv for dependency management
-- ruff for formatting and linting
-
-## Structure
-
-Align with clean-boundary principles:
-
-- handlers: transport adapters
-- services: business rules
-- repositories: persistence/IO
-- models: domain entities
+Read this when creating or changing a Python service. Service boundaries, layering and dependency direction follow `architecture-patterns`; apply its smallest-sufficient-structure rule to the service's actual size.
 
 ## Conventions
 
-1. Add an application entrypoint under `cmd/` (thin).
-2. Configure logging once at startup; use structured context fields.
-3. Add a minimal health endpoint.
+- Use the project's Python version (3.13+ for a new project), `uv` for dependencies, and Ruff for formatting and linting under `python-guidelines`.
+- Keep the application entrypoint thin.
+- Configure logging once at startup, with structured context fields.
+- Add a minimal health endpoint.
 
 ## Testing
 
-- unit tests for services
-- integration tests for repositories when needed
-
-## Checklist
-
-- Handlers contain no business logic
-- Services contain no framework-specific imports
-- Repository interfaces are defined at the service boundary
-- `ruff format` and `ruff check` pass
-- Tests cover service behavior
+- Unit-test business rules directly.
+- Add integration tests for persistence and external IO where fakes cannot protect the real boundary.

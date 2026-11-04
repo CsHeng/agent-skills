@@ -1,12 +1,6 @@
 # Analyze Project Output Contract
 
-Read this reference when the requested truth map, audit, or material drift needs reporting guidance. A direct local fact answer does not require it. Use `output-styles` as the shared rendering baseline; this contract adds project-analysis semantics without a second conversational style system.
-
-## Output Ownership
-
-- When the user's primary intent is broad project orientation or truth mapping, `analyze-project` owns the domain order and conclusion.
-- When the primary intent is runtime, infrastructure, security, language, or another domain diagnosis, return project-truth evidence to that primary skill and do not render a standalone project report.
-- Never concatenate independent report templates from multiple matched skills.
+Read this reference when the requested truth map, audit, or material drift needs reporting guidance. Use `output-styles` as the shared rendering baseline; this contract adds project-analysis semantics. When the user's primary intent is broad project orientation or truth mapping, `analyze-project` owns the domain order and conclusion.
 
 ## Answer The Requested Scope
 
@@ -14,43 +8,27 @@ Answer the requested question directly, with enough detail to explain the eviden
 
 1. Lead with one conclusion that answers the user's actual question.
 2. Emit only the relevant facts, boundaries, status, operating guidance, or gaps.
-3. Include a compact scope, document-health, or verification-basis line only when it changes how the conclusion should be trusted.
-4. Include drift signals only when drift exists and affects the answer or warrants a follow-up.
+3. Include a compact scope, document-health, or verification-basis line when it changes how the conclusion should be trusted.
+4. Include drift signals when drift exists and affects the answer or warrants a follow-up.
 5. Stop after the last useful action, risk, or unresolved point.
 
-Choose only the analysis concerns the question or evidence gap needs: project scope, truth roots, terminology, search boundaries, architecture, operations, status, and drift are available concerns, not a mandatory full reading or analysis checklist. Do not investigate unrelated axes merely to omit them from the final answer.
-
-## Comprehensive Audits
-
-Expand to comprehensive project orientation, a complete truth map, or an audit covering most analysis axes only when the user requests that scope. A degraded or untrusted document-health result does not by itself authorize a long report.
-
-Read [Full Project Truth Audit](full-audit-output.md) for the audit's semantic sections. Apply the shared `output-styles` baseline without adding a second report.
+Choose the analysis concerns the question or evidence gap needs: project scope, truth roots, terminology, search boundaries, architecture, operations, status, and drift are available concerns. A comprehensive project orientation, complete truth map, or audit covering most axes is for an explicit user request; read [Full Project Truth Audit](full-audit-output.md) for its semantic sections.
 
 ## Evidence
 
-- Distinguish directly observed evidence from derived interpretations, recommendations, and unresolved behavior when the difference affects the answer. Explain the distinction in prose; use labels only when they help the reader.
-- Distinguish evidence provenance as `documented`, `code`, `runtime`, or `external` only when it affects confidence or conflict resolution.
-- Use paths relative to the selected project root unless the user explicitly requests absolute paths or the evidence necessarily lives outside that project.
+- Distinguish directly observed evidence from derived interpretations, recommendations, and unresolved behavior when the difference affects the answer. Explain the distinction in prose, or use the labels `fact`, `inferred`, `judgment`, and `uncertain` when they help the reader.
+- Give evidence provenance as `documented`, `code`, `runtime`, or `external` when it affects confidence or conflict resolution.
+- Use paths relative to the selected project root, with external paths only when the evidence necessarily lives outside that project or the user requests absolute paths; mark external files as not necessarily applying to every project.
 - Give file references an exact start line in `path:line` form.
-- Keep one or two short references with the claim or in one compact evidence bullet. Use a nested reference list for larger evidence sets.
-- Do not repeat the conclusion to create a closing summary.
+- Keep one or two short references with the claim or in one compact evidence bullet, and use a nested reference list for larger evidence sets.
 
 ## Drift Signals
 
-Emit no drift section when no drift exists. When drift exists, assign stable labels such as `D1`, `D2`, and preserve:
+Report drift only when it exists. Give each finding a short stable label such as `D1`, `D2`, and cover its type, severity, summary, stable-source evidence, verification evidence, and recommended action, using the labels in `doc-health-and-drift.md`. Stable labels support follow-up and are not a numbering scheme for the whole answer.
 
-- type
-- severity
-- summary
-- stable-source evidence
-- verification evidence
-- recommended action
-
-A compact rendering is acceptable:
+A compact rendering:
 
 ```md
-- `D1` · `medium` · `doc_code_mismatch`: the operating guide names the retired command, while code and tests use the current entrypoint. → `run-organize-docs`
+- `D1` · `medium` · `doc-code-mismatch`: the operating guide names the retired command, while code and tests use the current entrypoint. → `run-organize-docs`
   - evidence: `docs/operations.md:18`; `scripts/run-current.sh:9`; `tests/test_entrypoint.py:21`
 ```
-
-Allowed drift values and actions remain defined in `references/doc-health-and-drift.md`.

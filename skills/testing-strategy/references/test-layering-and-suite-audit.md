@@ -97,7 +97,7 @@ Weak or tautological patterns include:
 - freezing source layout, diagram content, fixture hashes, or incidental library behavior without a consumer requirement
 - accepting any error, broad status range, or non-empty output when exact behavior matters
 
-Use `replace` when the protected invariant is valuable but the current oracle is not independent. Use `delete` when no requirement supports the assertion or another owned oracle already proves the behavior at equal or stronger fidelity. A historical test or model-written plan does not turn an incidental implementation choice into required compatibility. Ordinary local evidence needs no separate source, fixture, or result hash to certify itself.
+Use `replace` when the protected invariant is valuable but the current oracle is not independent. Use `delete` when no requirement supports the assertion or another owned oracle already proves the behavior at equal or stronger fidelity. A historical test or model-written plan does not turn an incidental implementation choice into required compatibility.
 
 ## Suite Cohesion And Size
 
@@ -122,7 +122,7 @@ For a single long test, prefer a readable scenario or table over an arbitrary on
 
 ## Subprocess Environment Isolation
 
-Build subprocess environments from an empty mapping and add only the variables required by the scenario. Typical non-secret inputs include an explicit executable search path, a stable locale, a temporary home or cache, and the test-owned contract paths.
+When a subprocess test needs a clean boundary (untrusted execution, credential exposure, an environment-sensitive contract, or a hermetic-test policy), build the subprocess environment from an empty mapping and add only the variables the scenario requires. Ordinary trusted repository checks reuse the project's working environment. Typical non-secret inputs include an explicit executable search path, a stable locale, a temporary home or cache, and the test-owned contract paths.
 
 ```python
 env = {
@@ -160,7 +160,7 @@ Use syntax checks, structured task parsing where syntax is the contract, isolate
 
 ### Documentation And Skills
 
-Code and observed runtime behavior establish implementation truth; documents and diagrams convey intent and explanation and should be synchronized after changes. Use applicable link, syntax, build, or generator checks for their tooling boundaries. Do not test document wording, headings, diagram nodes/edges, or preferred layout as production contracts, including when an LLM reads them. Test executable examples and real machine-consumed structured fields through the actual interface; do not invent such a field just to enforce an unnecessary documentation rule.
+Read [Documentation Verification](documentation-verification.md): verify documents and skills through their real consumers (link, syntax, build, or generator checks, executable examples, machine-consumed structured fields).
 
 ### Cross-Repository Contracts
 

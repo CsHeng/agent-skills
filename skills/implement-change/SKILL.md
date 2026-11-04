@@ -1,142 +1,76 @@
 ---
 name: implement-change
-description: "Implement an explicit bounded repository change or approved plan through mutation, verification, conditional review, accepted repair, and an evidence-backed outcome."
+description: "Implement an authorized bounded change—including multi-file, multi-repository, or operational updates under settled contracts—or an approved plan through mutation, proportionate verification, conditional review, and bounded repair. Undecided goals or boundaries belong to design-change; unresolved execution ordering or coordination belongs to plan-change."
 ---
 
 # Implement Change
 
-Complete the user's authorized outcome with the smallest durable change. Preserve required behavior and authority; use the plan to organize work without turning incidental methods, tests, or bookkeeping into additional requirements. Apply `development-standards` for necessity, compatibility, and proportionate evidence.
+Complete the user's authorized outcome with the smallest durable change. The plan organizes the work; the user's goals, fixed choices, and real boundaries bind it. `development-standards` is the baseline for necessity and proportionate evidence.
 
 ## Use This Skill When
 
 - an explicit bounded user request or approved plan authorizes repository mutation
 - implementation, verification, conditional review adjudication, and bounded repair need one semantic owner
 
-Do not use it when a necessary scope, design, execution-order, prerequisite, or authority decision remains unresolved (`design-change` or `plan-change`), or when the request is only analysis (`analyze-project`), review (`review-change`), truth sync (`sync-truth`), or closure (`close-change`). A separate design or plan artifact is not required for an otherwise sufficient bounded request; ordinary code investigation and local technical choices remain implementation work.
+A bounded request is sufficient on its own; it needs no separate design or plan artifact. Undecided goals, boundaries, or acceptance go to `design-change`; unresolved ordering, cross-actor coordination, or authority gates go to `plan-change`.
 
 ## Preconditions
 
-- Confirm the authorized objective, any approved task order, repository ownership, allowed surfaces, protected behavior, acceptance evidence, applicable recovery policy, and known user changes. Use the approved plan when present; otherwise use the bounded request and applicable project contracts. Do not manufacture a plan, oracle-selection phase, delegation profiles, or review budget merely to begin local implementation.
-- Inspect `git status --short` and preserve existing work. Default to the current checkout under Checkout And Concurrent Work below; dirty state alone is not a reason to create a worktree, clone, or branch.
-- Treat task membership, authority, and capability as separate facts. Commit, push, publication, deployment, destructive history changes, and external mutation need matching authority, not merely implementation approval. Consume existing trusted permission for the same requested target and side effects without re-asking; standing permission does not add work to a design-only or otherwise narrower request. A push includes its entire outgoing history and triggered CI/CD, not just this task's tip commit.
-- Report the specific owner decision needed before exceeding a real goal, hard constraint, or authority boundary. `replan` and `redesign` describe that unresolved conflict; they are not commands to activate upstream stages. Do not automatically call design, planning, or structural simplification to rejustify an approved implementation.
+- Confirm the authorized objective, approved order, repository ownership, allowed surfaces, protected behavior, acceptance evidence, recovery policy, and known user changes from the approved plan or, without one, from the request and applicable project contracts.
+- Inspect `git status --short` and preserve existing work.
+- Treat task membership, authority, and capability as separate facts. Commit, push, publication, deployment, destructive history changes, and external mutation each need matching authority beyond implementation approval. Consume existing trusted permission for the same target and side effects without re-asking; standing permission adds no work to a narrower request, and a design-only or source-only request keeps its scope until the user adds the delivery work. A push carries its entire outgoing history and the CI/CD it triggers.
+- When an action would exceed a real goal, hard constraint, commitment, risk, or permission, obtain the narrow decision for that impact first and continue independent authorized work meanwhile.
 
-## One-Way Execution
+## Execute The Settled Change
 
-Implement the settled goals and selected technology; do not automatically reopen design/plan or conduct an architecture replacement audit. Local investigation, glue, ordinary tests, same-task repair, and newly discovered in-goal files are implementation work. An initial write inventory is not a permanent approval whitelist. Coordinate actual ownership changes through the supported host path without renewed user approval when existing authority covers them. Only evidence of a real incompatible goal, hard constraint, or missing authority pauses the affected action for an owner decision; independent authorized work continues.
+Implement the settled goals with the selected technology. Local investigation, glue, ordinary tests, same-task repair, and files the change causally requires are implementation work; an initial write inventory is context, not a whitelist. A `needs-decision` result describes an unresolved conflict for its owner; it does not reopen design or planning on its own.
 
-## Early Business Feedback
+Build a thin real path with useful local feedback first. For a replacement, follow `references/replacement-and-cutover.md` in `development-standards`: necessary prechecks, cutover, real-path verification, fix-forward repair. When supporting work grows without advancing useful behavior, reconsider the mechanism before assigning more workers or repairing every defect it creates; move non-prerequisite verification after cutover within existing authority. A known defect still gets a disposition against the actual outcome and risk.
 
-Use the current environment and existing tools to implement a thin real path with useful local feedback. For an authorized replacement with bounded, repairable impact, proceed through necessary prechecks to cutover, real-path verification, and fix-forward repair; a separate proving environment is not the default. Preserve explicit pre-cutover requirements and protections for credentials, retained state, unrelated services, continuity commitments, and repair access before the affected operation. Remaining acceptance work is not automatically a deployment blocker, and switching is not proof of success.
+## Goals And Discretion
 
-When supporting work grows without advancing useful behavior, reconsider whether it is needed before assigning more workers or repairing every defect it creates. Remove unnecessary mechanisms or move non-prerequisite verification after cutover within existing authority. Do not manufacture qualification receipts, permanent activation blocks, or complete recovery and observability systems merely because rollout is unverified. A known defect still needs disposition against the actual outcome and risk; defer timing, not required final acceptance.
+Main goals, necessary conditions, user-fixed technical choices, exclusions, explicit user-fixed checks, and inviolable boundaries bind. Plan approval binds required outcome and boundary acceptance at the delivery endpoint; model-inferred task granularity, dependencies, ordering, guards, compatibility assumptions, and local proof methods stay revisable within that intent, and are corrected without new approval when the required outcome and real boundaries hold. Authorized best-effort secondary work is adapted or omitted on evidence while the main goal continues, with the discretion and its effect recorded; a required result keeps its label and its oracle.
 
-## Goals, Discretion, And Continuation
+Investigate facts and generate execution products rather than asking for them. After the user answers a blocking question, resume the original authorized work. When a later user instruction changes task authority, reconcile it with the current objective and endpoint and, where the record update is authorized, rewrite the authorization block as one current account as described in `plan-change`'s delivery reference.
 
-Main goals, necessary conditions, user-fixed technical choices, and inviolable boundaries remain binding. Model-inferred task granularity, dependency edges, ordering, guards, compatibility assumptions, and verification methods remain revisable within that intent, including after general plan approval. Correct them without new approval when required outcomes and real boundaries stay intact. During long tasks and handoffs, retain the user's purpose and remaining outcomes rather than letting the growing task list replace them.
+Continue until the authorized outcome is delivered or a named boundary stops it; verification is complete when the evidence covers the changed behavior, affected consumers, and stated acceptance. Host interruption, user cancellation, and explicit invocation budgets end work as `blocked` with the remainder named.
 
-Already-authorized best-effort secondary work may be adapted or omitted based on evidence while the main goal continues. Do not self-grant that discretion, relabel a required result, or weaken an oracle to pass.
-
-Investigate facts and generate execution products rather than asking for them, and after the user answers a blocking question, resume the original authorized work rather than terminating on confirmation.
-
-When a later user instruction changes task authority, reconcile it with the current objective, scope, and endpoint. When that record update is authorized, rewrite the whole authorization block in the existing plan or approval summary as a concise current account: permitted actions and targets, accepted risks, remaining exclusions, and unresolved decisions. Merge still-valid permissions and constraints, remove superseded ones, and update affected delivery dependencies. Summarize decisions rather than copying user prompts or appending approval history, paraphrased addenda, or overrides to stale text. Leave chronology and original wording in existing conversation or version history, retaining only a minimal source reference when needed. Continue without asking permission merely to record the change.
-
-Do not alter the meaning of unrelated approved constraints, expand beyond the user's actual authorization, treat document annotation or review success as authority, or waive required verification. Recorded permission does not establish verification success. Naming a delivery endpoint or a planning-only proposal does not create operational permission; standing permission does not add delivery work to a narrower request, and an explicit source-only or design-only request stays inside its scope until the user explicitly adds the delivery work and matching authority.
-
-A final-sounding response, a completed subtask, elapsed time, or the model's estimate of remaining context is not a stopping condition. Continue while an evidence-backed step can advance an authorized obligation, including independent work when another path is blocked.
-
-Honor actual host interruption, user cancellation, and explicit invocation budgets, and report their uncompleted remainder as interrupted or blocked rather than success or proof that the goal is impossible. Do not invent a budget or require repeated checks merely to avoid stopping.
-
-Credentials, tools, and review success are not operational permission; specified libraries bind and glue, helpers, and local algorithms stay with the implementer. Before an action would leave the approved boundary in goals, hard constraints, commitments, risk, or permissions, obtain narrow authorization for that impact, including before production or protected-state actions.
-
-## Progress Through Long Tasks
-
-Keep the objective, current result, remaining work, real blockers, and effective authority recoverable at useful milestones and handoffs. Use the conversation, existing project records, or available task tracking as appropriate to the task. Revise model-derived steps when a simpler route preserves the user's intent; continue useful authorized work until the requested outcome is delivered or a real boundary prevents it.
-
-The main agent judges completion from the actual result and applicable evidence, independently of any task engine. Tracking helps retain context; its availability, fields, or completion status add no business acceptance, tests, or review requirements. Handle a tracking failure separately from the business work already performed.
+During long tasks keep the objective, current result, remaining work, real blockers, and effective authority recoverable at milestones and handoffs. `plan.md` is an authorization, boundary, and handoff record; transient step tracking lives in working context or the host's passive task list, and `plan.md` changes only to reconcile an explicit authority, scope, or decision change or to record a handoff or terminal summary. Completion is the main agent's judgment from the actual result and evidence; task tracking adds no acceptance, test, or review obligation.
 
 ## Checkout And Concurrent Work
 
-- Continue in the current checkout when the only uncommitted files are this task's design, plan, implementation, or evidence. Unrelated non-overlapping changes are also acceptable; preserve them and keep them outside this task's edits and any authorized commit. Committing task documents is optional and requires commit authority, not a prerequisite or a concurrency safeguard.
-- If existing edits overlap the intended write set, inspect their content and ownership. Continue when they can safely be retained; otherwise resolve that specific conflict before writing. Do not reset, stash, overwrite, or isolate automatically merely to obtain a clean status.
-- Keep the parent in its current checkout unless a concrete reason requires otherwise.
-   - Independently executing write tasks should use host-managed isolated workspaces that retain their separate results, and a task workspace should be reused across its worker/review/repair lifecycle.
-   - Host-provided isolation does not grant new Git mutation authority and needs no separate worktree procedure. When this task needs its own Git worktree, such as for an explicit request, an applicable repository rule, a required branch state, or a concrete conflict the current checkout cannot absorb, read [Worktree Isolation](references/worktree-isolation.md) for creation, context transfer, integration, and cleanup. A new checkout never inherits uncommitted context, and isolation never settles semantic integration or shared-resource conflicts.
-- Judge concurrency from the user's statement, already available host task evidence tied to the same checkout and writes, or unexpected changes observed during this task. Assess shared generated output, Git index/ref operations, and other shared resources as well as file overlap; multiple agents with disjoint safe operations do not automatically need worktrees. An agent process, dirty file, or recent modification timestamp alone is not proof of an active conflicting writer, and do not scan the whole workstation or build a coordination system to rule out hypothetical concurrency.
-- Record the initial state, check the relevant current contents before edits, and reconcile the final diff against owned changes.
-   - A plan's observed files and environment are context, not an immutable goal or permission boundary unless explicitly designated as one. Recording a revision is not a default prerequisite.
-   - When drift appears, stop stale writes long enough to read and reconcile it, then continue under the existing goals and authority: preserve other work, merge compatible changes, and reverify affected behavior. Do not ask for new permission merely because a file or revision changed.
-   - Pause only the affected path when ownership or a conflict cannot be resolved safely, or when an actual hard boundary changes.
-   - Host exact-write capabilities and candidate apply checks remain binding: refresh or redispatch through the supported parent path, never bypass a conflict check. These checks detect some conflicts, not mutual exclusion, and absence of visible activity does not prove there is no other writer.
+- Continue in the current checkout when uncommitted files are this task's own material or unrelated non-overlapping changes; preserve the latter and keep them out of this task's edits and any authorized commit.
+- When existing edits overlap the intended write set, inspect their content and ownership, continue when they can be retained safely, and otherwise resolve that specific conflict before writing. A reset, stash, or overwrite is a resolution only when its owner agrees.
+- Judge concurrency from the user's statement, host task evidence tied to the same checkout, or unexpected changes observed during this task, covering shared generated output and Git index or ref operations as well as file overlap. When drift appears, read and reconcile it, then continue under the existing goals and authority. Host exact-write and candidate-apply checks stay binding; refresh or redispatch through the supported parent path.
+- Read [Worktree Isolation](references/worktree-isolation.md) when this task needs its own Git worktree: an explicit request, an applicable repository rule, a required branch state, or a concrete conflict the current checkout cannot absorb. Host-managed isolation for delegated tasks needs no separate worktree procedure and grants no new Git mutation authority.
 
 ## Implement And Verify
 
-1. Inspect the smallest current surface needed for the next ready task. For a bug fix touching shared behavior:
-   - Trace the symptom through the relevant entry point, shared function and affected callers to the contract that owns the violated invariant.
-   - Use symbol, reference, configuration and test evidence as appropriate, including public, generated, dynamic or external callers. Text-search silence does not prove that all consumers are known. Keep inspection proportional rather than scanning the whole repository by default.
-   - Choose a shared fix only when the affected callers share the invariant. Keep caller-specific product rules at their owning boundary and preserve intentionally different validation or error behavior; fewer guards or lines do not justify hoisting policy into a common helper.
-   - If an unresolved caller contract prevents a safe bounded fix, state the evidence gap and use the `blocked`, `replan`, `redesign` or `needs-authority` outcome that fits. Do not broaden the repair into a simplification audit.
-2. Prefer a narrow reproducer or red-green oracle for non-trivial behavior. For shared-behavior fixes, select focused regression evidence for affected sibling paths and protected caller behavior as needed, without requiring one test per caller or prescribing a framework.
-3. Make the smallest cohesive change that advances required behavior within the approved scope, and preserve unrelated user changes. Smallest means the least total responsibility and maintenance burden, not the fewest edited lines or another patch around an unnecessary mechanism.
-4. Complete all approved in-scope tasks whose dependencies can be satisfied; a task boundary is progress, not an automatic stopping point.
-   - Actively consider useful ready independent work for parallel execution through available host capabilities. Read `references/delegated-execution.md` before choosing slices; do not add a sizing or explorer phase, and do not treat the whole plan or repository as the automatic worker unit.
-   - Preserve repository ownership, shared resources, isolation, convergence ownership, and applicable execution or thinking profiles.
-   - Encode a hard predecessor only for approved factual order with no intervening parent synthesis, authority, cross-task coordination, finding adjudication, final acceptance, or continuation decision. A verification command is not itself a parent decision.
-5. Check the changed surfaces against the user's goal, acceptance, authority, and explicitly fixed boundaries. Admit discovered issues when they are caused by the change or demonstrably block the authorized outcome; report unrelated existing failures without absorbing their repair. Reassess a growing mechanism and its maintenance cost before treating every resulting defect as another goal. Preserve necessary correctness, safety, and retained-state protections while removing work the outcome does not need.
-6. Remove unnecessary abstractions, guards, compatibility emulation, tests, fixtures, and documents introduced by this slice. Their appearance in a plan or review does not make them required. This is ordinary implementation cleanup; a broader requested audit uses only `references/simplification.md` in `skills-routing`. A real product tradeoff needs the corresponding owner decision, while removal of an unneeded method stays inside the current task.
-7. Coordinate one verification strategy for the change. Select checks from affected behavior, consumers, and uncertainty; use local tests or compilation for useful feedback, and finish related edits before repeating checks that cannot inform intermediate work. The main agent selects and times integration, E2E, and full-suite checks at useful joins, delegating execution when helpful. Use a full suite for relevant broad impact, an explicit delivery requirement, or uncertainty narrower evidence cannot resolve. Reuse applicable worker results and verify uncovered combinations. Earlier model-declared breadth may be revised within the actual requirements.
-8. Obtain independent review when explicitly requested, required by an applicable rule, or justified by concrete risk or uncertainty. Supply one bounded `review-change` target with the objective, diff, and current evidence; adjudicate material candidates under Review Adjudication.
-9. Diagnose in-scope failures and repair accepted defects using [Focused Implementation Repair](references/repair-loop.md). Rerun evidence invalidated by the repair and cover any newly affected behavior; retain still-applicable results. Target rereview to a changed premise or unresolved independent question.
-10. Complete when the authorized objective, delivery endpoint, necessary verification, and accepted findings are satisfied. Report the actual delivered result, applicable evidence, and any authorized secondary tradeoff or unverified remainder. Missing downstream permission or capability blocks that step, not independent work. Stop checking once sufficient evidence supports delivery; partial completion remains distinct from success.
+1. Inspect the smallest current surface needed for the next ready task. For a bug fix in shared behavior, trace the symptom through the entry point, shared function, and affected callers to the contract that owns the invariant, using symbol, reference, configuration, and test evidence; choose a shared fix when the affected callers share the invariant and keep caller-specific rules at their owning boundary. When an unresolved caller contract prevents a safe bounded fix, state the gap and return the fitting outcome.
+2. Prefer a narrow reproducer or red-green oracle for non-trivial behavior, with focused regression evidence for affected sibling paths.
+3. Make the smallest cohesive change that advances required behavior within the approved scope: least total responsibility and maintenance burden, not fewest lines.
+4. Complete all approved in-scope tasks whose dependencies can be satisfied; a task boundary is progress, not a stopping point. Read [Delegated Execution](references/delegated-execution.md) before choosing delegation slices and when dispatching or continuing a worker, interpreting a result, or recovering a failed invocation.
+5. Check changed surfaces against the user's goal, acceptance, authority, and fixed boundaries. Admit a discovered issue when the change caused it or it demonstrably blocks the authorized outcome; report unrelated existing failures without absorbing them. Reassess a growing mechanism before treating each resulting defect as a new goal.
+6. Remove abstractions, guards, compatibility emulation, tests, fixtures, and documents this slice introduced that the outcome does not need, including ones named in a plan or review. A requested broader audit uses `references/simplification.md` in `skills-routing`.
+7. Run one verification strategy for the change. Required outcome acceptance, exclusions, and explicit user-fixed checks bind; choose the lowest-cost sufficient local proof for the actual diff from affected behavior, consumers, and uncertainty, and skip intermediate simulations a plan proposed when deterministic unit or schema checks plus authorized real-path verification already prove the boundary. Finish related edits before repeating checks that cannot inform intermediate work. The main agent selects and times integration, E2E, and full-suite checks at useful joins, uses a full suite for relevant broad impact, an explicit delivery requirement, or uncertainty narrower evidence cannot resolve, and reuses applicable worker results.
+8. Obtain independent review under the conditions `review-change` owns; when it runs, supply one bounded target with the objective, diff, and current evidence.
+9. Adjudicate findings and repair accepted defects with [Focused Implementation Repair](references/repair-loop.md), rerunning the evidence the repair invalidated and retaining the rest.
+10. Complete when the authorized objective, delivery endpoint, necessary verification, and accepted findings are satisfied. Report the delivered result, its evidence, authorized secondary tradeoffs, and any unverified remainder; missing downstream permission or capability blocks that step only.
 
 ## Delegation And Profiles
 
-Optional execution and thinking profiles are provider-neutral semantic hints, not authority, provider bindings, models, roles, thinking levels, or host configuration. Their absence or an unavailable host mapping does not block implementation: use a compatible default or retain the task in the active agent. When the user explicitly selects a concrete execution or thinking choice, preserve that choice through ephemeral task parameters when the compatible host supports them; the explicit user choice overrides semantic defaults for that invocation. Never mutate durable route configuration as a one-invocation workaround unless the user separately authorizes a persistent default change.
-
-Delegation does not transfer scope control, invocation and continuation decisions, cross-task synthesis, review adjudication, final acceptance, or the final response. It can transfer bounded investigation, implementation, verification execution, diagnosis, and authorized repair labor when the host and applicable policy permit them.
-
-Read `references/delegated-execution.md` before choosing slices and when dispatching or continuing a worker, interpreting a delegated result, or recovering a failed invocation. A cohesive slice includes its local feedback loop; prefer the same valid worker for in-scope follow-up when the host supports continuation. A completed subset can be consumed and followed by nonconflicting work while other tasks are still running; when no independent runnable work remains, end the turn unfinished and rely on the supported completion notification rather than a default join of the whole submission. Keep trivial, tightly coupled, or unsupported work local rather than padding calls, and do not silently replace an explicitly required delegation method. Task tracking remains optional context and does not accept results, block execution, or replace parent verification.
-
-## Review Adjudication
-
-Use one disposition for each material candidate:
-
-- `accepted`
-- `rejected_no_causal_link`
-- `rejected_pre_existing`
-- `rejected_out_of_scope`
-- `rejected_insufficient_evidence`
-- `deferred_followup`
-- `needs_plan_change`
-
-The reviewer is read-only. The implementing parent adjudicates candidate findings and authorizes accepted repairs; a worker may execute the resulting bounded repair and its local checks, and routine worker diagnosis within its existing brief does not require parent approval for every red-green iteration. These detailed reason categories refine the broad caller dispositions — accepted, rejected with a reason, deferred, or escalated to a design or plan decision — used by other calling workflows for the same judgment; they are distinct from the evaluator's return category, from the reviewer's overall verdict, and from this workflow's own outcome labels, and no level converts automatically into another. Severity or reviewer preference does not widen scope. Reuse prior dispositions only while their evidence applies to the current version; a different reviewer alone is not new evidence. Do not reopen a settled candidate without new evidence or overlook a new regression because an earlier version passed review.
-
-## Acceptance Integrity
-
-The approved objective, non-goals, real unmet dependencies, authority, protected contracts, and acceptance conditions remain the baseline throughout repair; a model-inferred task split, dependency edge, or ordering may be corrected inside that baseline without overriding an explicitly user-fixed restriction. Updating progress or adding execution evidence does not authorize rewriting these requirements to match the current implementation. Distinguish a listed capability, permission to run its gate, and evidence required for this delivery: none implies the others.
-
-Before treating an unavailable gate as a completion blocker, identify the approved outcome or changed behavior that needs it. Prepare obtainable prerequisites within existing authority, retain genuine required capability gaps, and never relabel required positive evidence as optional or satisfied by a negative preflight.
-
-An authorized best-effort secondary adaptation recorded with evidence is an allowed result and does not rewrite the main-goal baseline. Treating a required result as optional, or deleting its oracle to manufacture a pass, remains forbidden, and ordinary failure or unknown feasibility is not itself proof that a required result is unsupported.
-
-A mistaken or over-specified test may be corrected or removed within the authorized scope when the user's required behavior and consumer evidence establish what actually needs protection. Verify that behavior independently of the removed mechanism; do not preserve a self-invented requirement merely because its test fails. Changing a genuinely required result remains a scope or design decision, and deleting its oracle to manufacture a pass remains forbidden.
+Optional execution and thinking profiles are provider-neutral hints; an absent or unmapped profile means a compatible default or keeping the task local. An explicit user choice of model or thinking level is preserved through ephemeral task parameters for that invocation; durable route configuration changes only under separate authority. Delegation transfers bounded investigation, implementation, verification execution, diagnosis, and authorized repair labor; scope control, continuation decisions, cross-task synthesis, finding adjudication, final acceptance, and the final response stay with the parent. When no independent runnable work remains while workers run, end the turn and act on the completion notification.
 
 ## Recovery
 
-- `fix_forward` is the default: preserve evidence, diagnose the observed failure, repair within scope, and rerun the owning oracle.
-- `stop_and_diagnose` preserves current state and stops further mutation.
-- `guarded_rollback` requires an approved exact trigger, target, and rollback verification, plus evidence that rollback is safer than forward repair.
-
-Never synthesize rollback or treat repeated failure as authority to redesign.
+- `fix-forward` is the default: preserve evidence, diagnose the observed failure, repair within scope, and rerun the owning oracle.
+- `stop-and-diagnose` preserves current state and stops further mutation when continued mutation would compound uncertainty.
+- `guarded-rollback` runs only under an approved exact trigger, target, and rollback verification, with evidence that rollback is safer than forward repair; repeated failure is not that evidence and does not reopen design.
 
 ## Outcomes
 
-- `pass`: implementation and required verification pass; no accepted finding from any required review remains. Disclosed authorized secondary tradeoffs may remain when the main goal and approved acceptance are met; do not also claim every secondary feature completed. A requested production endpoint that was not performed is not end-to-end success.
-- `replan`: the approved scope, order, or verification is insufficient
-- `redesign`: evidence invalidates an approved design boundary
-- `needs-authority`: completion needs new user or external authority
-- `guarded-rollback`: the approved rollback condition is met and its safe path is ready
-- `non-convergent`: diagnosis yields no new evidence and no reasonable in-scope path remains; report what was tried, excluded, and still missing rather than a failure count
-- `blocked`: required evidence or a prerequisite is unavailable, or work stopped on user cancellation or an explicit invocation time, call, or resource budget; name the actual reason and remaining work, not a claim that the objective is impossible
+- `ready`: implementation and required verification pass and no accepted finding remains. Disclosed authorized secondary tradeoffs may remain when the main goal and approved acceptance hold; a requested production endpoint that was not performed is reported as not performed.
+- `needs-decision`: qualified as `plan` when the approved scope, order, or verification is insufficient, `design` when evidence invalidates an approved design boundary, or `authority` when completion needs new user or external authority.
+- `blocked`: required evidence, a prerequisite, or capability is unavailable, diagnosis yields no new evidence and no in-scope path remains, or work stopped on cancellation or an explicit budget. Name the actual reason, what was tried, and the remaining work.
 
-Explain what changed, the evidence supporting it, and material limits or unfinished work. Include review or repair conclusions when they affect acceptance. Report only actions actually performed; completion of the main goal does not imply every secondary feature was delivered.
+Report what changed, the evidence, and material limits or unfinished work; include review or repair conclusions when they affect acceptance, and report only actions actually performed.

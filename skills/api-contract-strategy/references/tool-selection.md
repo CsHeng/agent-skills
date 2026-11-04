@@ -25,7 +25,7 @@ Needed capabilities:
 
 Possible tools include vacuum, Redocly, Spectral, and project-specific validators. Select one compatible with the existing toolchain and pin it.
 
-Do not add a custom validator when a maintained project-owned CLI closes the same gap.
+Use a maintained project-owned CLI when it closes the gap; add a custom validator only for a remaining gap.
 
 When one repository needs linting, reference resolution, deterministic bundling, Arazzo execution, and generated documentation, prefer the integrated Redocly CLI surface if its runtime and supported dialects fit. This does not require Redocly hosted services.
 
@@ -36,7 +36,6 @@ Needed capabilities:
 - compare explicit base and head contracts
 - classify removed operations, required input, response narrowing, types, enums, status, and security changes
 - configure severity for repository policy
-- distinguish first introduction from missing evidence
 
 Possible tools include oasdiff and equivalent structural diff engines. Schema compatibility still requires a semantic compatibility review owner.
 
@@ -48,9 +47,7 @@ Schemathesis or generative tools become attractive after a stable baseline exist
 
 ## Generated Client
 
-Choose types before a full runtime client when the consumer already owns valuable policy. Pin the generator, commit or deterministically regenerate output, compile it, and fail stale-output checks.
-
-Do not extensively test generated client internals. Test the generator/version contract and consumer-owned adapter behavior.
+Choose the projection size using Generated Client Scope in [Contract Lifecycle](contract-lifecycle.md). Pin the generator, commit or deterministically regenerate output, compile it, and fail stale-output checks. Test the generator/version contract and consumer-owned adapter behavior, and trust generated client internals.
 
 ## Workflow Runner
 
@@ -60,7 +57,7 @@ Retain an existing workflow runner when it already exercises the important scena
 
 ## CDC / Pact
 
-Do not automatically recommend Pact. The selection conditions and lifecycle cost are owned by [Legacy Adoption](legacy-adoption.md); price broker operation, provider states, publishing, version selection, and matrix growth before recommending it.
+Recommend Pact through the CDC Decision in [Legacy Adoption](legacy-adoption.md), after pricing broker operation, provider states, publishing, version selection, and matrix growth.
 
 ## Common Rejections
 

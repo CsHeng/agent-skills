@@ -5,19 +5,13 @@ description: "Read-only evaluator for one bounded design brief. Return evidence-
 
 # Review Design
 
-Evaluate only the design target and review scope supplied by the caller: the requested artifact or diff, its goals, non-goals, acceptance conditions, and explicitly justified supporting documents. Do not search the repository for additional requirements, mutate the design, delegate recursively, invoke another workflow, or authorize repair. Final adjudication, repair authorization, and continuation decisions stay with the calling agent; this evaluator only returns candidate findings.
+Evaluate only the supplied design target and brief under the finding rules, causal scope, and verdict in `review-change`. For a whole-design target, defects anywhere in the artifact are in scope; for a diff-scoped target, a blocking candidate is caused or newly activated by that diff.
 
-For a whole-design target, defects anywhere in the supplied artifact are in scope, regardless of whether they predate the current change. For an explicitly diff-scoped target, a blocking candidate must be caused or newly activated by that diff; supporting context does not expand the target to unrelated pre-existing defects.
+## Design-Specific Checks
 
-## Check
-
-- Scope and ownership: confirm the design covers one bounded change surface with a named architecture owner, a sane dependency direction, and durable truth boundaries that do not silently move. Flag material rollout or recovery risk that the design does not own.
-- Decisions versus means: distinguish the desired outcome and approved constraints from replaceable means. Judge whether a proposed mechanism or acceptance condition is necessary before improving its internal completeness, and recommend removal through the existing finding categories when the outcome remains supported without it. Flag a material unresolved decision, or an omitted main goal, necessary condition, specified technical choice, or inviolable boundary. Leave local choices an executor can investigate to that executor. A real retained-state or recovery boundary still needs its corresponding evidence; deployment wording alone does not require a restoration platform.
-- Acceptance and cutover: check that success can be verified without turning every acceptance condition into a prerequisite for switching. For bounded, repairable replacements, direct cutover and real-path verification are valid; coexistence, qualification environments, rollback systems, and observation windows need a concrete protected interest. Preserve explicit prerequisites, retained-state and credential protections, continuity commitments, and repair access.
-- Delivery intent: keep delivery intent, existing authority, and actual capability separate. Check that known facts material to feasibility, protected boundaries or necessary execution are preserved in the design or an accessible owner record. Flag missing input sources or unsupported readiness claims at the design's level; do not demand duplicated operational parameters or search private conversation history. Distinguish supplied facts from assumptions and pending verification. Investigable facts and generatable products are not user decisions.
-- Secondary space: when authorized best-effort secondary work exists, require it recorded without an exhaustive feature-failure catalog; absence of that catalog is not a defect. Flag overstrong commitments that would force item-by-item reapproval of secondary adaptations.
-- Architecture tradeoff: assess the actual demand, constraints, ownership, and practical evidence. Require recovery or reconsideration detail only where a concrete risk or unsettled premise needs it, not as a universal architecture checklist.
-
-## Return
-
-Return `pass`, `candidate-findings`, or `manual-decision-required`. Each candidate includes location, evidence, impact, causal class, violated requirement, confidence, smallest in-scope fix, and recommended disposition. Omit unrelated, future-phase, speculative, and low-confidence observations unless a critical security or data-loss concern requires a manual decision.
+- Scope and ownership: one bounded change surface with a named owner, a sane dependency direction, and durable truth boundaries that stay put; material rollout or recovery risk the design does not own.
+- Decisions versus means: a material unresolved decision, or an omitted main goal, necessary condition, specified technical choice, or inviolable boundary. Local choices an executor can investigate stay with the executor.
+- Acceptance and cutover: success is verifiable without turning every acceptance condition into a prerequisite for switching; coexistence, qualification environments, rollback systems, and observation windows cite a concrete protected interest, per the replacement-and-cutover reference in `development-standards`.
+- Delivery intent: delivery intent, existing authority, and actual capability stay separate; facts material to feasibility or protected boundaries are preserved in the design or an accessible owner record, with supplied facts distinct from assumptions.
+- Secondary space: authorized best-effort secondary work is recorded without an exhaustive failure catalog; commitments that would force item-by-item reapproval are flagged.
+- Architecture tradeoff: demand, constraints, ownership, and practical evidence support the choice; recovery or reconsideration detail appears where a concrete risk or unsettled premise needs it.

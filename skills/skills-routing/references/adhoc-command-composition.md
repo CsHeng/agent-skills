@@ -1,46 +1,33 @@
 # Ad Hoc Command Composition
 
-## Purpose
-
-Keep agent ad hoc execution easy to review, mechanically predictable, and bounded when a command fails. This reference governs temporary task execution, not the language of persisted repository tools.
+Read this for temporary task execution that nests interpreters, needs procedural logic, or mutates state; the language of persisted repository tools belongs to `shell-guidelines` and language selection.
 
 ## Preference Order
 
 1. Run one purpose-built command directly.
 2. Use a structured tool such as `rg`, `fd`, `jq`, `yq`, or `ast-grep`.
-3. Use a small single-layer Shell pipeline when its data flow remains visible.
+3. Use a small single-layer Shell pipeline whose data flow stays visible.
 4. Put procedural logic in a repo-external scratch script, review and syntax-check it, then invoke it directly.
-5. Use nested interpreters only when the preceding forms are materially worse for the bounded task.
+5. Use a nested interpreter only when the preceding forms are materially worse for the bounded task and the exact command, inputs, and effects stay reviewable.
 
-## Nested Interpreter Guidance
+A scratch script is the right form when logic needs loops, exception handling, several data structures, non-trivial regular expressions, or more than one quoting layer. Place it in a unique task directory under the declared scratch root or `$TMPDIR` (falling back to `$HOME/tmp` for agent-owned work), write it with the environment's file-editing capability rather than Shell interpolation, run the language syntax check, and remove owned scratch after the task.
 
-AVOID nesting `bash -c` around `python -c`, embedding Python in a Shell heredoc, or generating source code through interpolated command strings. These forms combine multiple parsers, make quoting failures harder to diagnose, and can obscure which layer owns an error or mutation.
+## Safety
 
-This is avoid-by-default guidance, not a blanket ban. An agent may use a nested interpreter when it remains the smallest bounded option and the exact command, inputs, and effects are still reviewable.
-
-Prefer an external scratch script when logic needs loops, exception handling, multiple data structures, non-trivial regular expressions, or more than one quoting layer. Place it in a unique task directory under the declared scratch root or `$TMPDIR`, falling back to `$HOME/tmp` for agent-owned ad hoc work when neither is set. Create the root before use, use the environment's file-editing capability rather than generating source through Shell interpolation, run the language syntax check, and remove owned scratch after the task. For large temporary data, verify that the effective root is disk-backed; do not assume `/tmp` is backed by disk.
-
-## Hard Safety Boundaries
-
-REQUIRED: Ad hoc commands containing Shell code must comply with the `shell-guidelines` language constraints.
-
-PROHIBITED: Interpolate untrusted input into a Shell, Python, or other executable source string.
-
-PROHIBITED: Use opaque nested code for an irreversible or state-changing operation before COUNT and PREVIEW establish the exact target set, expected mutation, and recovery boundary.
-
-AVOID splitting one mutation across nested language layers when failure in an inner layer can leave the outer layer continuing with partial or unvalidated state. If this shape is still the smallest bounded option, make failure propagation and post-mutation verification explicit.
-
-Pass variable data through arguments, standard input, environment variables, or structured files. Keep code static and data separate.
+- Ad hoc Shell complies with the `shell-guidelines` language constraints.
+- Pass variable data through arguments, standard input, environment variables, or structured files; keep code static and data separate, so untrusted input never becomes part of an executable source string.
+- Destructive operations (mass edits, deletes, resets) run under matching authority with an understood, scoped impact; a sufficient current request or approved plan supplies that scope.
+- When one mutation must span nested language layers, make inner-layer failure propagate to the outer layer and verify the post-mutation state explicitly.
 
 ## Mutation Workflow
 
-For multi-file, remote, destructive, or otherwise irreversible operations:
+For a multi-file, remote, destructive, or otherwise irreversible operation, establish the target set and recovery boundary before executing; a read or a clearly bounded single-file edit needs none of this.
 
-1. COUNT the candidate set without mutation.
-2. PREVIEW representative and boundary cases.
+1. Count the candidate set without mutation.
+2. Preview representative and boundary cases.
 3. Validate the active repository, host, and path.
-4. Identify backup, idempotency, and recovery behavior; name guarded rollback only when explicitly authorized.
-5. EXECUTE with the simplest reviewable command shape.
+4. Identify backup, idempotency, and recovery behavior; guarded rollback applies only when explicitly authorized.
+5. Execute with the simplest reviewable command shape.
 6. Verify the resulting state independently.
 
-If the target set or recovery path cannot be made explicit, stop instead of hiding uncertainty inside a more elaborate command string.
+When the target set or recovery path cannot be made explicit, stop rather than hiding the uncertainty inside a more elaborate command string.

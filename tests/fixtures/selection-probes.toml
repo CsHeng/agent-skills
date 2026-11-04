@@ -34,6 +34,13 @@ counterexample = "The design is approved; break it into ordered tasks with verif
 counterexample_primary = "plan-change"
 
 [[probes]]
+id = "contract-conforming-multirepo-change"
+request = "Rotate the service endpoint across the API config, Ansible inventory, and derived client manifest using our established rollout contract and owner checks."
+primary = "implement-change"
+counterexample = "We need to migrate three repositories to a new auth token format, and we have not yet settled cutover ordering, authority gates, or compatibility verification; write the execution plan."
+counterexample_primary = "plan-change"
+
+[[probes]]
 id = "design-stress-test"
 request = "Grill my design doc and challenge every assumption before we commit to it."
 primary = "design-change:stress-test-mode"

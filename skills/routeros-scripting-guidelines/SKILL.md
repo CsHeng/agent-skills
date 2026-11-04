@@ -5,7 +5,7 @@ description: "Apply RouterOS v7 scripting language guidance when writing, review
 
 # RouterOS Scripting Guidelines
 
-Apply RouterOS language and execution semantics inside the active primary workflow. Use the current [MikroTik Scripting manual](https://manual.mikrotik.com/docs/developer-guides/scripting/) as the authority for syntax and version-specific behavior; repository examples may show useful patterns but do not override the manual or become universal rules.
+Apply RouterOS language and execution semantics inside the active primary workflow. Verify syntax and version-specific behavior against the current [MikroTik Scripting manual](https://manual.mikrotik.com/docs/developer-guides/scripting/) and the target version's actual execution context; repository examples show patterns and defer to the manual.
 
 ## References
 
@@ -18,14 +18,6 @@ Read only the references needed for the current task:
 ## Working Method
 
 1. Identify the RouterOS version and exact execution context before choosing syntax, built-in variables, or permission assumptions.
-2. Declare data in the narrowest useful scope and select RouterOS objects by stable properties rather than display order.
-3. Separate expected absence or no-op state from a runtime failure, then make the caller-owned failure policy explicit.
-4. Prefer read-before-write convergence for reusable configuration scripts and bounded error handling for genuinely fallible operations.
-5. Validate with the narrowest safe oracle available, escalating from source inspection to import dry-run or live execution only when the primary workflow authorizes it.
-
-## Operating Rules
-
-- Do not copy secrets into scripts, logs, examples, or evidence.
-- Do not treat `dont-require-permissions` as a default fix for permission errors.
-- Do not invent a generic live-device apply path, backup policy, rollback rule, or network design. The primary workflow and repository owner retain those decisions.
-- When current RouterOS behavior differs from remembered syntax or an example, verify the target version against the official manual and the actual execution context.
+2. Separate expected absence or no-op state from a runtime failure, then make the caller-owned failure policy explicit.
+3. Validate with the narrowest safe oracle available, escalating from source inspection to import dry-run or live execution when the primary workflow authorizes it. Take the live-device apply path, backup and rollback policy from the primary workflow and repository owner.
+4. Keep secrets in the repository or runtime secret mechanism, and diagnose permission errors by caller, invocation form and policy sets first.
