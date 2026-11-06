@@ -1,6 +1,0 @@
-interface:
-  display_name: "Infrastructure Triage"
-  short_description: "Diagnose operational failures and risky state changes."
-  default_prompt: "Use infrastructure triage for the unresolved operational failure or state boundary; keep settled configuration edits with their current workflow."
-policy:
-  allow_implicit_invocation: true

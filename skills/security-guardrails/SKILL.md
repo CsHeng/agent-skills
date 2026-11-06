@@ -11,7 +11,7 @@ Select controls that protect the current goal from actual exposure, exploitabili
 
 ## Risk Calibration
 
-Apply the environment classification in `development-standards` and the recovery calibration in `infrastructure-triage`. Clearly exploitable harm is not waived by a "dev" label; protect real secrets, shared-host boundaries, and production in every environment.
+Apply the environment classification in `development-standards` and the recovery calibration in `runtime-diagnosis`. Clearly exploitable harm is not waived by a "dev" label; protect real secrets, shared-host boundaries, and production in every environment.
 
 ## Credential Management
 

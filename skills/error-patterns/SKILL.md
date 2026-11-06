@@ -18,7 +18,7 @@ Use this skill for:
 
 Hand off to the matching owner:
 
-- infrastructure incident triage before the failing state owner and data path are known: `infrastructure-triage`
+- cross-component operational diagnosis before the failing state owner and data path are known: `runtime-diagnosis`
 - application, security, or audit log design: `logging-standards`
 - input validation and exploit prevention: `security-guardrails`
 - test-layer and CI design: `testing-strategy`

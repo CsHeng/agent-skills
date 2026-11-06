@@ -107,7 +107,7 @@ default_role = "primary"
 may_mutate_repo = false
 may_spawn_agent = false
 
-[skills.infrastructure-triage]
+[skills.runtime-diagnosis]
 category = "discipline"
 activation_mode = "native"
 default_role = "primary"

@@ -8,7 +8,7 @@ Classify the target with the environment rule in `development-standards`, then t
 
 - Authorized rebuildable state (development hosts, disposable containers, regenerable artifacts): apply the change, verify on the real path, and repair forward. A separate proving environment, rehearsal, or rollback plan is not part of this branch.
 - A slice holding retained state, credentials, or a shared host: take a targeted export or backup of that slice before the mutating step, then follow the rebuildable branch for everything else. The protection covers the slice, not the whole process.
-- Production destructive change: before the operation, hold a named goal and impact, matching authorization, and a tested rollback (trigger, target, and verification exercised) alongside the recovery evidence this specific change requires. Executing that rollback is a separate decision, taken when an explicit observed hazard makes it safer than forward repair; `infrastructure-triage` lists the hazard classes.
+- Production destructive change: before the operation, hold a named goal and impact, matching authorization, and a tested rollback (trigger, target, and verification exercised) alongside the recovery evidence this specific change requires. Executing that rollback is a separate decision, taken when an explicit observed hazard makes it safer than forward repair; `runtime-diagnosis` lists the hazard classes.
 
 Design the target state rather than a coexistence period. Dual-running, compatibility layers, and observation windows are added only for a concrete consumer, retained-state, availability, or safety reason named in the design or request.
 

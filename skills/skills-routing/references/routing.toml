@@ -61,34 +61,34 @@ owner = "analyze-project"
 instead_of = ["organize-docs", "sync-truth"]
 
 [[clusters.handoffs]]
-when = "Diagnose a live infrastructure incident whose runtime data path is the primary question."
-owner = "infrastructure-triage"
+when = "Diagnose a live cross-component incident whose runtime data path or state boundary is the primary question."
+owner = "runtime-diagnosis"
 instead_of = ["analyze-project"]
 
 [[clusters]]
 id = "runtime-and-safety"
-members = ["infrastructure-triage", "error-patterns", "logging-standards", "security-guardrails", "sops-age-guardrails", "docker-multiarch-build"]
-question = "Is the owner of an operational state still unknown, or is the decision a recovery policy for a known failure boundary, log events, preventive security controls, SOPS rules, or multi-architecture images?"
+members = ["runtime-diagnosis", "error-patterns", "logging-standards", "security-guardrails", "sops-age-guardrails", "docker-multiarch-build"]
+question = "Is the cross-component operational failure still undiagnosed, or is the decision a recovery policy for a known failure boundary, log events, preventive security controls, SOPS rules, or multi-architecture images?"
 
 [[clusters.handoffs]]
-when = "Diagnose an operational incident whose state owner is unknown, including a container runtime failure unrelated to image architecture."
-owner = "infrastructure-triage"
+when = "Diagnose a cross-component operational incident whose state owner is unknown, including a container runtime failure unrelated to image architecture."
+owner = "runtime-diagnosis"
 instead_of = ["error-patterns", "docker-multiarch-build"]
 
 [[clusters.handoffs]]
 when = "Design in-process error handling or retry behavior for a known failure boundary."
 owner = "error-patterns"
-instead_of = ["infrastructure-triage", "logging-standards"]
+instead_of = ["runtime-diagnosis", "logging-standards"]
 
 [[clusters.handoffs]]
 when = "Build a repeatable feedback loop for a reproducible code, test, or performance failure."
 owner = "error-patterns:debugging-tight-loop"
-instead_of = ["infrastructure-triage", "analyze-project"]
+instead_of = ["runtime-diagnosis", "analyze-project"]
 
 [[clusters.handoffs]]
 when = "Apply a routine Ansible, container, or deployment configuration edit whose approach and authority are settled."
 owner = "implement-change"
-instead_of = ["infrastructure-triage"]
+instead_of = ["runtime-diagnosis"]
 
 [[clusters.handoffs]]
 when = "Choose log fields, audit events, redaction, retention, or tamper evidence."
@@ -206,9 +206,14 @@ owner = "implement-change"
 instead_of = ["lua-guidelines"]
 
 [[clusters.handoffs]]
-when = "Design RouterOS network policy or diagnose a live device without script source or event-body work."
-owner = "infrastructure-triage"
+when = "Diagnose a live RouterOS device failure without script source or event-body work."
+owner = "runtime-diagnosis"
 instead_of = ["routeros-scripting-guidelines"]
+
+[[clusters.handoffs]]
+when = "Design RouterOS network policy or VLAN layout."
+owner = "design-change"
+instead_of = ["runtime-diagnosis", "routeros-scripting-guidelines"]
 
 [[clusters]]
 id = "git-and-handoff"

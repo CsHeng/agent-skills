@@ -15,7 +15,7 @@ The decision-tree methods are currently references under `skills-routing`, not n
 | [Select only the missing evidence](#oracle-selection) | [skills/skills-routing/references/oracle-selection.md](../../skills/skills-routing/references/oracle-selection.md), [skills/testing-strategy/SKILL.md](../../skills/testing-strategy/SKILL.md) | Start from the claim and the missing failure evidence. Choose an adequate small check before adding models, fault injection, or a new fixture framework. |
 | [Simplify a responsibility, not just its implementation](#simplification) | [skills/skills-routing/references/simplification.md](../../skills/skills-routing/references/simplification.md), [skills/development-standards/SKILL.md](../../skills/development-standards/SKILL.md) | Necessity precedes implementation quality. A targeted experiment is an option for uncertainty, not a required ablation stage. An audit does not grant mutation authority. |
 | [Context transfer at a completed phase](#phase-boundary) | [skills/skills-routing/references/phase-boundary-decision-tree.md](../../skills/skills-routing/references/phase-boundary-decision-tree.md) | Preserves the existing PB1-PB5 order. Same-task repair and compaction are not new completed phases; an unavailable branch does not grant a new capability. |
-| [Operational triage and proportionate recovery](#operational-recovery) | [skills/infrastructure-triage/SKILL.md](../../skills/infrastructure-triage/SKILL.md), [skills/testing-strategy/SKILL.md](../../skills/testing-strategy/SKILL.md) | Investigate the observed mismatch rather than every infrastructure axis. Protect actual data, access and shared resources; remote/deploy wording alone does not schedule a restore drill. |
+| [Operational diagnosis and proportionate recovery](#operational-recovery) | [skills/runtime-diagnosis/SKILL.md](../../skills/runtime-diagnosis/SKILL.md), [skills/testing-strategy/SKILL.md](../../skills/testing-strategy/SKILL.md) | Investigate the observed mismatch rather than every infrastructure axis. Protect actual data, access and shared resources; remote/deploy wording alone does not schedule a restore drill. |
 | [Select the smallest sufficient architecture](#architecture-selection) | [skills/architecture-patterns/SKILL.md](../../skills/architecture-patterns/SKILL.md), [skills/design-change/SKILL.md](../../skills/design-change/SKILL.md) | Compare reuse, a local solution, and warranted structural investment by current commitments and total cost, including delayed feedback. A missing hard requirement is not permission to ship less. |
 | [Review the route to the outcome](#review-and-progress) | [skills/review-plan/SKILL.md](../../skills/review-plan/SKILL.md), [skills/plan-change/SKILL.md](../../skills/plan-change/SKILL.md), [skills/design-change/SKILL.md](../../skills/design-change/SKILL.md) | Includes unnecessary preparation in review judgment without creating another review stage. Parent adjudication, required acceptance and actual authority remain distinct. |
 
@@ -91,11 +91,11 @@ Preserves the existing PB1-PB5 order. Same-task repair and compaction are not ne
 
 ## Operational Recovery
 
-Operational triage and proportionate recovery
+Operational diagnosis and proportionate recovery
 
 Investigate the observed mismatch rather than every infrastructure axis. Protect actual data, access and shared resources; remote/deploy wording alone does not schedule a restore drill.
 
-![Operational triage and proportionate recovery](generated/decisions/operational-recovery.svg)
+![Operational diagnosis and proportionate recovery](generated/decisions/operational-recovery.svg)
 
 [Editable DOT source](diagrams/decisions/operational-recovery.dot)
 

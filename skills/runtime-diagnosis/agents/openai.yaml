@@ -1,0 +1,6 @@
+interface:
+  display_name: "Runtime Diagnosis"
+  short_description: "Diagnose cross-boundary operational failures."
+  default_prompt: "Use runtime diagnosis for the unresolved cross-component operational failure; keep settled configuration edits and new infrastructure design with their current workflow."
+policy:
+  allow_implicit_invocation: true

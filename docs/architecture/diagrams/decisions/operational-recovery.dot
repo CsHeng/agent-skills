@@ -1,9 +1,9 @@
 digraph decision {
-graph [rankdir=TB, bgcolor="white", pad="0.3", nodesep="0.3", ranksep="0.45", splines=polyline, fontname="Arial", fontsize=18, labelloc=t, label=<<B>Operational triage and proportionate recovery</B><BR/><FONT POINT-SIZE="12">Remote, deploy, or non-commercial are not substitutes for actual state and authority.</FONT>>];
+graph [rankdir=TB, bgcolor="white", pad="0.3", nodesep="0.3", ranksep="0.45", splines=polyline, fontname="Arial", fontsize=18, labelloc=t, label=<<B>Operational diagnosis and proportionate recovery</B><BR/><FONT POINT-SIZE="12">Remote, deploy, or non-commercial are not substitutes for actual state and authority.</FONT>>];
 node [shape=box, style="rounded,filled", fillcolor="#F2F5F8", color="#9BAFC1", fontname="Arial", fontsize=12, margin="0.15,0.10", penwidth=1.2];
 edge [color="#64748B", fontname="Arial", fontsize=11, arrowsize=0.7];
-  s [label="Operational mismatch, cross-\nboundary failure,\nor relevant infrastructure design\nis unresolved?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
-  direct [label="Keep a settled routine edit with its\ncurrent owner.\nNo infrastructure audit by keyword.", fillcolor="#E7F3ED", color="#659F85"];
+  s [label="Operational mismatch or\ncross-boundary failure\nis unresolved?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
+  direct [label="Keep a settled routine edit with its\ncurrent owner.\nNew infrastructure design uses design-change.", fillcolor="#E7F3ED", color="#659F85"];
   investigate [label="Trace only boundaries that can explain the\nissue.\nUse existing observation points where\nadequate.", shape="oval", fillcolor="#16324B", fontcolor="white", color="#16324B"];
   risk [label="Does the next action affect\naccess,\nprotected state, shared hosts, or\ncommitments?", shape="diamond", style="filled", fillcolor="#E8EFF7", color="#65829C", margin="0.05,0.02"];
   local [label="Perform the authorized fix and affected\ncheck.\nNo unrelated backup or restore exercise.", fillcolor="#E7F3ED", color="#659F85"];
