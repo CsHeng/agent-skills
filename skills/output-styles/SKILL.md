@@ -20,6 +20,7 @@ Write each reply so the user can find the answer, trust its details, and stop re
 - Keep nesting to three levels. When a level needs more, split the topic or move detail to a reference the user can open.
 - A single conclusion with its reasons is a short paragraph, not a list. Steps the user will execute are an ordered list with one action per item and the result of the action in the next sentence.
 - Give an ID to each item the user may reply to or track, and keep the user's established IDs when the conversation continues. Options for a decision are children of the item they decide, with the recommended option first and marked. Explanatory prose carries no numbers. The user's global instructions own the ID format and session-wide uniqueness.
+- Write an ID as literal text, never as a Markdown ordered-list marker: a renderer renumbers `7.` from its position, and `- 7.` parses as a nested ordered list that pushes the item's table or paragraph outside it. A top-level item is a bold line such as `**7 Conclusion**`; its children are `- 7.1 ...` at the left margin, and a child's own table, paragraph, or deeper items are indented to that child's content column. A reference the user types must match the ID the reply shows.
 - Use headings only for sections a long reply genuinely has. Use emphasis for a distinction the reader might otherwise miss.
 
 ## Sentences
