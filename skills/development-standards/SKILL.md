@@ -34,7 +34,7 @@ Spend judgment on the business rules that distinguish the product; keep simple u
 - Add an abstraction, compatibility layer, guard, or gate for a current need. Hypothetical future consumers, hypothetical concurrency, or accidental edits are reasons to note, not to build.
 - Authorized best-effort secondary outcomes may be substituted, degraded, or dropped during implementation; record the discretion and its effect. Discretion comes from the current request, approved design, or applicable project convention, and a required result keeps its oracle.
 - Ordinary bugs, one failed attempt, or unknown feasibility leave a requirement supported; investigate enough to explain a tradeoff.
-- Calibrate protective effort to actual exposure, expected loss, and control cost. `security-guardrails` owns security-control calibration; `infrastructure-triage` owns operational recovery calibration.
+- Calibrate protective effort to actual exposure, expected loss, and control cost. `security-guardrails` owns security-control calibration; `runtime-diagnosis` owns operational recovery calibration.
 - Classify the environment from trusted project facts: a target that serves real users or holds retained data is production; otherwise treat it as rebuildable development state that may be updated, rebuilt, or replaced with fix-forward recovery. When the facts are unknown, check the smallest fact that decides it or ask one question. Remote hosts, Ansible, multi-repository work, and deploy wording are not classification facts. Unique data, credentials, shared hosts, and production commitments keep their protections in every class; an action that would exceed approved production goals, commitments, risk, or authority needs narrow authorization first, and in-scope adaptations and already-authorized deployments continue without it.
 - Read [Replacement And Cutover](references/replacement-and-cutover.md) when a change replaces a running implementation, version, configuration, or service, or when a proving environment, dual-running period, or rollback path is being considered.
 
@@ -73,7 +73,7 @@ Choose a solution that meets current commitments and can be maintained over the 
 
 ## References
 
-- [Environment Scope And Temporary Storage](references/environment-and-storage.md): environment inputs, caches, and where disposable scratch lives.
+- [Environment Scope And Temporary Storage](references/environment-and-storage.md): environment inputs, caches, where disposable scratch lives, and the reuse, isolation, builder, and cleanup method for development services a task starts.
 - [Local Dependency Selection](references/dependency-selection.md): choosing between existing capability, library, and custom code.
 - [Compatibility And Migration](references/compatibility-and-migration.md): public or persisted contracts, retained data, and shipped temporary mechanisms.
 - [Replacement And Cutover](references/replacement-and-cutover.md): the single owner of cutover, proving-environment, and rollback doctrine.

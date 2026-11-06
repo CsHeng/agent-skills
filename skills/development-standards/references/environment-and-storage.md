@@ -1,6 +1,6 @@
 # Environment Scope And Temporary Storage
 
-Read this when a change touches tool or project environment inputs, caches, disposable scratch, or where a task's temporary files live. Language, tool, and workflow guidance adds only concrete mappings and exceptions to these rules.
+Read this when a change touches tool or project environment inputs, caches, disposable scratch, where a task's temporary files live, or development services, containers and builders that a task starts or reuses. Language, tool, and workflow guidance adds only concrete mappings and exceptions to these rules.
 
 ## Environment Scope
 
@@ -19,3 +19,14 @@ Read this when a change touches tool or project environment inputs, caches, disp
 - Honor explicit repository output locations and language- or tool-specific directory settings. Python environments, Go build and module caches, and other reusable caches keep their own semantics; `TMPDIR` relocates neither them nor intermediate build files.
 - Keep large clones, downloads, extraction, build intermediates, and test data on verified disk-backed storage; `/tmp` may be tmpfs and consume RAM. Portable project tools respect `TMPDIR` through their native temporary-file API and may keep the platform default when it is unset; runtime code keeps no developer home path, and legitimate target-system `/tmp` paths stay as written.
 - Keep task scratch, reusable caches, and retained evidence distinguishable beneath their declared roots. Clean only owned inactive scratch. Environment changes reach newly launched consumers only, and controller settings do not propagate through SSH, sudo, containers, or services by themselves.
+
+## Development Services And Resources
+
+User or host instructions state the facts of the machine, such as whether it is a development workstation and who owns a started service; this section owns the method those facts constrain.
+
+- Decide which tests the change requires, whether changed environment inputs or the oracle require a rebuild, and which resources must be released. A small edit does not automatically require full bootstrap or full teardown, and reuse does not justify indefinite retention.
+- Reuse compatible warm services during a bounded active development session, but isolate and clean each test run's databases, queues, files, and temporary resources. Return to the declared reusable baseline between iterations instead of rebuilding everything or leaving test state behind.
+- Before starting a service, inspect the intended namespace, ports, current owner, and compatibility. Reuse a compatible environment with its owner's agreement, or close an inactive environment the task owns. Deliberate parallel isolation needs explicit ownership, isolation, and cleanup; otherwise coordinate with the other owner rather than stopping an unrelated process or silently choosing another port, container, or Compose project.
+- Leaving a service running past the session requires an explicit continuing need, a named owner accepting the handoff, and an expiry. Preserve only explicitly retained data and bounded caches; one-shot environments are removed, and always-on startup or restart is not enabled by default.
+- Select builders explicitly instead of changing or inheriting another project's default builder. Stopped containers and cached images still need an owner, a retention purpose, and a bounded expiry or size policy; historical hashes or successful test receipts are not reasons to retain an entire environment.
+- At completion, verify per-run and per-session cleanup and port release, and report a cleanup failure or an explicitly transferred live environment instead of claiming a clean finish. Uncatchable termination needs bounded owner-scoped orphan recovery, never global pruning by assumption.
