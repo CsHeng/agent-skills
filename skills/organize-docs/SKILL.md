@@ -1,6 +1,6 @@
 ---
 name: organize-docs
-description: "Use for docs organization: README/AGENTS ownership, one-way legacy CLAUDE.md cleanup into AGENTS.md, stable truth roots, docs layout, docs/.ignore, stage artifacts, canonical terminology, search boundaries, and clear Markdown written in its intended form. Recording already verified behavior without restructuring belongs to sync-truth."
+description: "Use for docs organization: README/AGENTS ownership, one-way legacy CLAUDE.md cleanup into AGENTS.md, stable truth roots, docs layout, docs/.ignore, stage artifacts, canonical terminology, search boundaries, and clear Markdown and diagrams written in their intended form. Recording already verified behavior without restructuring belongs to sync-truth."
 ---
 
 # Organize Docs

@@ -10,7 +10,7 @@ Apply `development-standards` Maintainability for writing persisted prose from t
 
 Use the intended structure and prose conventions while drafting and revising, rather than relying on a routine restyling pass afterward. Follow repository conventions and the shared `output-styles` baseline for clear language and restrained Markdown.
 
-- Use a relationship, flow, or state diagram when it explains ownership, transitions, or dependencies more clearly than procedural prose, and keep the accompanying text to purpose, important constraints, and exceptions. A diagram is an explanation, not a second executable contract or a required artifact for every change.
+- Use a relationship, flow, or state diagram when it explains ownership, transitions, or dependencies more clearly than procedural prose, and keep the accompanying text to purpose, important constraints, and exceptions. A diagram is an explanation, not a second executable contract or a required artifact for every change. When a PlantUML diagram is crowded or its rendered output is hard to read, read [PlantUML Layout](plantuml-layout.md).
 - Use headings, paragraphs, lists, tables, and code examples for the information that is clearer in those forms.
 - Write each natural paragraph or list item on one physical line, splitting at semantic boundaries. This is a searchability rule: `rg` and `grep` must match a complete statement without reconstructing adjacent lines.
 - When a line becomes unwieldy, split into separate paragraphs, bullets, numbered steps, headings, or table rows at real semantic boundaries, preserving conditions, exceptions, rationale, failure modes, and consequences. Markdown syntax, tables, code blocks, frontmatter, and intentional hard breaks may need separate lines.
