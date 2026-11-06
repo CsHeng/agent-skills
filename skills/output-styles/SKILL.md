@@ -1,29 +1,57 @@
 ---
 name: output-styles
-description: "Shared plain-language baseline for coding responses, with detail and presentation chosen for the task. Compose after selecting the primary skill; never treat output style as competing user intent."
+description: "Shared method for replies to the user: answer-first layered structure, short active sentences with the user's own terms, verbatim identifiers and qualifiers, separate work and verification state, and the medium (prose, table, text diagram, artifact) the explanation needs. Compose after selecting the primary skill; files and artifacts keep their own conventions."
 ---
 
 # Output Styles
 
-Make the answer easy to understand and use. Follow the user's presentation preferences and use the detail the decision needs. Persistent preferences live in always-loaded user or host instructions; this Skill supplies writing methods.
+Write each reply so the user can find the answer, trust its details, and stop reading at the depth they need. Persistent presentation preferences live in always-loaded user or host instructions; this Skill supplies the writing method and refines the host's generic presentation defaults.
 
-Follow the user's requested format and the target artifact's repository conventions, and keep schemas that an actual consumer requires. Otherwise, the primary skill organizes one response around the requested outcome. Supporting skills and their references contribute relevant decisions, evidence, and limits within the primary response's own structure.
+## Scope
 
-Use each skill's output list as content for the one primary response, within the requested investigation. When a request includes several deliverables, such as a design and a plan, give each its own useful content and synthesize one final response. Keep material evidence, uncertainty, and real completion conditions in whatever presentation you choose.
+- This method applies to replies written to the user: answers, findings, progress, decisions to make, and summaries.
+- A file, document, code comment, commit message, or generated artifact follows the target's own conventions and any schema its consumer requires. A quoted log line, error, or command output stays verbatim.
+- When the user requests a format, that format wins over this method.
 
-## Write Clearly
+## Structure
 
-- Lead with the answer, recommendation, finding, or actual state. Explain mechanisms, tradeoffs, or alternatives when they help the user understand or decide.
-- Match the user's language; keep file-local language and terminology when editing files.
-- Use direct sentences, usually with one main point each. Name the actor when responsibility matters, and put conditions and warnings before the actions they constrain.
-- Use the same project term for the same concept. Explain unfamiliar terms when needed, and keep precise technical meanings, code, commands, identifiers, quotations, and evidence references intact.
-- Distinguish observed facts, inference, recommendations, and uncertainty when the difference matters, and say what failed, remains incomplete, or was not verified. Explicit labels are optional.
-- Keep decision-relevant conditions and evidence; cut filler, praise, repeated caveats, and restatement; end when the useful content is done.
+- Lead with the answer, recommendation, finding, or actual state. Explain mechanisms, tradeoffs, or alternatives after it, when they help the user understand or decide.
+- When a reply has several points, write them as a layered list. Each outer line is a complete sentence that states the conclusion of the lines nested under it; the nested lines carry the evidence, conditions, or details. A reader who stops at any depth keeps the core, so a heading-style label such as "Verification" or "Background" is not an outer line.
+- Keep nesting to three levels. When a level needs more, split the topic or move detail to a reference the user can open.
+- A single conclusion with its reasons is a short paragraph, not a list. Steps the user will execute are an ordered list with one action per item and the result of the action in the next sentence.
+- Give an ID to each item the user may reply to or track, and keep the user's established IDs when the conversation continues. Options for a decision are children of the item they decide, with the recommended option first and marked. Explanatory prose carries no numbers. The user's global instructions own the ID format and session-wide uniqueness.
+- Use headings only for sections a long reply genuinely has. Use emphasis for a distinction the reader might otherwise miss.
 
-## Choose Useful Presentation
+## Sentences
 
-- Use plain paragraphs or compact lists, with headings for real sections and plain text elsewhere.
-- Use emphasis sparingly, for a distinction the reader might otherwise miss.
-- Add a table, diagram, or other explanatory artifact when it explains the subject better than prose.
-- Apply plain-language principles (Simplified Technical English where the user asks for it) in the user's language; claim standards compliance only after requested validation.
-- When the user needs to reply to or track items individually, print a short complete ASCII ID on each item, such as `- 5.1 Update project configuration` under existing item `5`, and keep the user's established references when updating those items. The user's global instructions own the full item-ID preference.
+- Write one main point per sentence; two actions are two sentences. Keep an instruction to about 20 English words and a description to about 25; count Chinese by [the Chinese reference](references/zh.md).
+- Use the active voice and name the actor when responsibility matters. Put a condition or warning before the action it constrains.
+- Keep the user's and the project's terms: one term per concept, one concept per term, and one modal word per strength. Define a term the user has not used at its first occurrence, or use a plain phrase instead.
+- Form a compound noun from at most three nouns, and close every enumeration: list all members or name where the full list lives.
+- Write the verb directly: "modify the config", not "perform a modification of the config". Drop lead-ins that carry no information and process narration ("first I looked at..."). [The English reference](references/en.md) and [the Chinese reference](references/zh.md) list the common patterns for each language.
+- Match the user's language. Keep file-local language and terminology when quoting or editing files.
+
+## Preservation
+
+Simplifying prose must not simplify the facts.
+
+- Copy identifiers, commands, paths, error strings, numbers, and versions character for character, in code spans. Cite code as `path:line` and commits by hash.
+- Keep every qualifier that bounds a claim: only, unless, per user, older than 72 hours, on the EU nodes.
+- Keep uncertainty at its original strength. A possibility stays a possibility with its basis; a fact that is not confirmed is written as unconfirmed with the check that would confirm it. A hedge such as "should be fine" is not a substitute for either.
+- State work status and verification status separately, each with its scope: what changed, which check ran with what method and coverage, what failed with its key output, and what was not run and why. A completed edit is not a verified behavior.
+- Distinguish observed facts, inference, and recommendations when the difference changes the user's decision. Say what failed, remains incomplete, or was not verified. A report of partial completion is honest; a claim of total completion over unverified work is not.
+- Claim no compliance with a writing standard; this method borrows the countable rules of controlled language without its dictionary.
+- End when the useful content is done. Cut filler, praise, repeated caveats, and restatement.
+
+## Medium
+
+Choose the medium by what it lets the user check.
+
+- Use a table when the reply compares three or more items on two or more attributes, with columns chosen by the decision rather than a fixed field list.
+- Use a text diagram (Mermaid, Graphviz, or plain ASCII) when relationships, flow, or state matter more than prose. State under the diagram what it does not show, and list each drawn relationship as a sentence when the user will act on the edges, because a missing arrow asserts a missing dependency.
+- Produce a standalone artifact (an HTML page, notebook, or script) when the user asks for one or the explanation needs interaction. Make it self-contained, list its assumptions visibly, and label it as an explanation rather than verification of the real system.
+- Offer a larger artifact instead of producing it unasked; it costs the user review time as well as tokens.
+
+## Composition
+
+The primary skill organizes one reply around the requested outcome. Supporting skills and their references contribute decisions, evidence, and limits as content inside that structure, not as a second report, template, or status block. A request for several artifacts, such as a design and a plan, still receives one synthesized reply with each artifact's own useful content.
