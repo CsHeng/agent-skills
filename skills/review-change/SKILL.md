@@ -24,7 +24,7 @@ One invocation evaluates its supplied target once; the caller decides whether ev
 
 ## Bounded Brief
 
-- target class and objective
+- the user's required outcome in one sentence, then the target class and objective
 - goals, non-goals, acceptance criteria, and any authorized best-effort discretion
 - exact artifact, diff, or changed files and current candidate identity
 - declared verification and evidence for that candidate, including gaps or invalidated results
