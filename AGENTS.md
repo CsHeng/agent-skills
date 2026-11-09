@@ -39,7 +39,7 @@ This repository authors and distributes the `coding` collection of portable Agen
 - Store only real semantic dependencies in `semantic_requires`; do not add executable workflow contracts, artifact validators, task graph compilers, mutable ledgers, replay logic, provider adapters, or prompt-space lifecycle gates.
 - Keep the public inventory in `contracts/skills.toml`; change IDs only as part of an authorized rename, consolidation, or retirement, updating discovery, the scope contract, probes, and references together, and report installed copies or host global entries that still name the old ID. Maintain portable resource closure within each Skill directory.
 - Use an existing installation manager, preferably `npx skills`, for cross-platform installation and explicit refresh. Preserve unrelated installed Skills, verify ownership before replacing existing paths, and remove retired owned IDs explicitly; preserve the shared discovery root and unrelated entries.
-- Use `apply_patch` for source edits and preserve unrelated working-tree changes.
+- Preserve unrelated working-tree changes when editing source.
 
 ## Validation
 
