@@ -32,7 +32,7 @@ internal/client         external API adapters
 internal/output         JSON, YAML, and table renderers
 ```
 
-Use command constructors instead of package-global command values and `init()` registration. Inject dependencies through constructors. A Cobra `RunE` adapter should validate CLI inputs, construct a typed request, call an application use case, and return its error; it should not own the business workflow.
+Use command constructors for command creation and registration. Inject dependencies through constructors. A Cobra `RunE` adapter should validate CLI inputs, construct a typed request, call an application use case, and return its error; the application use case owns the business workflow.
 
 A small command keeps the same separation through functions and injected IO.
 
@@ -45,7 +45,7 @@ A small command keeps the same separation through functions and injected IO.
 - Offer explicit output modes such as `--output=json`, `--output=yaml`, or `--output=table` when automation consumes results.
 - Keep state-changing semantics identical whether or not a TTY is present.
 
-Use `log/slog` for structured diagnostic logging unless the existing project owns another logger. Avoid writing the same error as both a log entry and a returned error at multiple layers.
+Use `log/slog` for structured diagnostic logging unless the existing project owns another logger. Log an error once at the boundary that owns presentation or recovery.
 
 ## Configuration And Credentials
 
@@ -55,7 +55,7 @@ Keep secrets out of command arguments when shell history would expose them. Pref
 
 ## Completion
 
-When the CLI requires completion, use its parser's support for the shells the project owns. Reuse the same typed data source for execution and dynamic completion so command behavior and suggestions do not drift. Completion must be bounded, side-effect free, and fast enough for interactive use.
+When the CLI requires completion, use its parser's support for the shells the project owns. Reuse the same typed data source for execution and dynamic completion to keep command behavior and suggestions aligned. Completion must be bounded, side-effect free, and fast enough for interactive use.
 
 ## State-Changing Safety
 
@@ -65,13 +65,13 @@ When the CLI requires completion, use its parser's support for the shells the pr
 - Preserve idempotency where the domain allows it.
 - Define partial-failure, recovery policy, retry, and exit-code behavior before adding concurrency.
 - Use `context.Context` for cancellation of network, filesystem, and subprocess work.
-- When calling external programs, use `os/exec` with argument slices rather than constructing a Shell command string.
+- When calling external programs, use `os/exec` with argument slices.
 
 ## Testing
 
-Test core use cases directly with typed requests and injected dependencies. Test CLI adapters through explicit argument slices and injected stdin, stdout, and stderr rather than mutating global process state.
+Test core use cases directly with typed requests and injected dependencies. Test CLI adapters through explicit argument slices and injected stdin, stdout, and stderr.
 
-Use golden tests when the text or exact bytes are part of the required output contract. For structured output consumed by value, compare parsed meaning instead of freezing a previous language's spacing, key order, or number formatting. Test help or completion behavior at the granularity its users need. Use a subprocess or testscript-style integration test when process behavior, environment, exit status, or multi-command filesystem effects are the contract under test. Existing verification in another language may continue to exercise those boundaries.
+Use golden tests when the text or exact bytes are part of the required output contract. For structured output consumed by value, compare parsed meaning. Test help or completion behavior at the granularity its users need. Use a subprocess or testscript-style integration test when process behavior, environment, exit status, or multi-command filesystem effects are the contract under test. Existing verification in another language may continue to exercise those boundaries.
 
 ## Build And Delivery
 

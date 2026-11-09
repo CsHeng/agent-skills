@@ -1,6 +1,6 @@
 # Architecture Pattern Catalog
 
-Use this catalog only after identifying the protected boundary, demand evidence, constrained resource, and hard requirements. A pattern is a candidate with adoption and lifecycle costs, not a default package.
+Use this catalog only after identifying the protected boundary, demand evidence, constrained resource, and hard requirements. Treat each pattern as a candidate with adoption and lifecycle costs.
 
 ## Contents
 
@@ -25,17 +25,17 @@ Fit:
 
 Costs and cautions:
 
-- pass-through layers and speculative interfaces add navigation and change cost without isolating real volatility
+- pass-through layers and speculative interfaces add navigation and change cost while leaving real volatility coupled
 - generic repository or service interfaces can hide useful domain language
 
-Adopt when behavior, ownership, framework volatility, or test boundaries differ. Apply the deletion test from `interface-and-domain-language.md`: if deleting an abstraction removes only forwarding, it does not carry enough complexity.
+Adopt when behavior, ownership, framework volatility, or test boundaries differ. Apply the deletion test from `interface-and-domain-language.md`: an abstraction merits its cost when deleting it removes more than forwarding.
 
 ### Modular Monolith
 
 Fit:
 
 - one deployment and operational owner remain efficient
-- domain or module boundaries need enforcement without distributed coordination
+- domain or module boundaries need local enforcement
 - local transactions and simple failure semantics are valuable
 
 Costs and cautions:
@@ -57,7 +57,7 @@ Costs and cautions:
 - network failure, versioned contracts, tracing, deployment coordination, incident response, and data consistency become mandatory work
 - service count can exceed team and operator supply
 
-Adopt a split only for the boundary whose measured scaling, release, security, or ownership constraint exceeds those costs. Keep each service cohesive, give it clear data ownership, and avoid shared databases that erase the boundary.
+Adopt a split only for the boundary whose measured scaling, release, security, or ownership constraint exceeds those costs. Keep each service cohesive, give it clear data ownership, with database boundaries that preserve service ownership.
 
 ## Communication And Consistency Patterns
 
@@ -65,13 +65,13 @@ Adopt a split only for the boundary whose measured scaling, release, security, o
 
 Fit critical operations that benefit from immediate outcome and simple failure propagation. Define timeouts, cancellation, idempotency where retries are possible, and explicit error semantics.
 
-Avoid deep synchronous chains when partial availability or latency multiplication is the controlling constraint.
+Choose a shallower or asynchronous path when partial availability or latency multiplication is the controlling constraint.
 
 ### Event-Driven Or Asynchronous Messaging
 
 Fit buffering, decoupled availability, independent consumption, or workflows that naturally represent immutable business facts.
 
-Pay explicitly for message schemas and versioning, idempotency, ordering assumptions, correlation IDs, retry policy, dead-letter handling, backpressure, and processing observability. Do not add a broker merely to avoid defining a direct caller contract.
+Pay explicitly for message schemas and versioning, idempotency, ordering assumptions, correlation IDs, retry policy, dead-letter handling, backpressure, and processing observability. Define the caller contract and justify a broker by the coordination need.
 
 ### Local Transaction
 
@@ -79,13 +79,13 @@ Prefer local transactional consistency while one data owner can satisfy the inva
 
 ### Saga Or Eventual Consistency
 
-Use when independently owned state must coordinate without a global transaction and the domain can define compensations, intermediate states, and recovery ownership. Avoid when partial states are unacceptable or compensations are undefined.
+Use when independently owned state must coordinate outside a global transaction and the domain accepts partial states and can define compensations, intermediate states, and recovery ownership.
 
 ### CQRS And Event Sourcing
 
 Use CQRS when read and write models have proven, materially different constraints. Use event sourcing when an event log is itself the required source of truth and replay, audit, versioning, and correction semantics are owned.
 
-Avoid both for ordinary CRUD or speculative flexibility; they add model duplication, migration, debugging, storage, and operator costs.
+For ordinary CRUD or speculative flexibility, use a simpler model; CQRS and event sourcing add model duplication, migration, debugging, storage, and operator costs.
 
 ## API And Integration Patterns
 
@@ -97,11 +97,11 @@ Fit resource-oriented public or service boundaries with standard HTTP semantics.
 
 Fit multiple clients with materially different graph-shaped read demand and an owner able to govern schema evolution, field authorization, query cost, N+1 prevention, and observability.
 
-Avoid when a small stable resource API is sufficient or query flexibility would transfer unbounded cost to the service.
+Use a small stable resource API when it is sufficient or query flexibility would transfer unbounded cost to the service.
 
 ### API Gateway
 
-Fit a proven external boundary that needs centralized routing, authentication enforcement, throttling, or protocol transformation. Avoid using a gateway to conceal unclear service ownership or duplicate business behavior.
+Fit a proven external boundary that needs centralized routing, authentication enforcement, throttling, or protocol transformation. Clarify service ownership and keep business behavior with its owner.
 
 ## Security Patterns
 
@@ -110,7 +110,7 @@ Fit a proven external boundary that needs centralized routing, authentication en
 - Use JWT/OIDC only with explicit issuer, audience, validation, expiry, key-rotation, and revocation boundaries.
 - Add throttling, WAF, intrusion detection, security audit logs, or SIEM integration when exposure, abuse evidence, or regulation justifies their operational supply.
 
-Do not copy an enterprise security stack into a low-exposure system without a threat or policy owner, but never trade away a proven security invariant for convenience.
+Choose security controls with a threat or policy owner for the system's exposure. Preserve proven security invariants when choosing for convenience.
 
 ## Scaling Patterns
 
@@ -128,7 +128,7 @@ Use when measured read load constrains the primary and consumers can tolerate re
 
 ### Sharding
 
-Use only when a single data owner cannot meet proven capacity or locality demand within the decision horizon. Shard keys, rebalancing, cross-shard operations, hotspots, and recovery are permanent ownership costs.
+Use when proven capacity or locality demand exceeds what a single data owner can meet within the decision horizon. Shard keys, rebalancing, cross-shard operations, hotspots, and recovery are permanent ownership costs.
 
 ### Multi-Region
 
@@ -142,7 +142,7 @@ Define health, readiness, dependency health, degraded modes, backup, restore, an
 
 ### Retry And Circuit Breaker
 
-Use retries only for classified transient failures with bounded attempts, backoff, jitter, deadlines, and idempotency. Use circuit breakers when repeated calls amplify a proven cascading-failure risk. Avoid adding them as decoration around unclassified errors.
+Use retries only for classified transient failures with bounded attempts, backoff, jitter, deadlines, and idempotency. Use circuit breakers when repeated calls amplify a proven cascading-failure risk. Classify errors before choosing these controls.
 
 ### Fault Injection And Chaos
 
@@ -152,7 +152,7 @@ Use when recovery, blast-radius controls, hypotheses, runtime observability, and
 
 ### Adapter Or Anti-Corruption Boundary
 
-Use when an external or legacy model is volatile enough that isolating translation protects stable domain behavior. Avoid pass-through wrappers with no translation, policy, or ownership value.
+Use when an external or legacy model is volatile enough that isolating translation protects stable domain behavior. Give wrappers translation, policy, or ownership value.
 
 ### Feature Flag
 
@@ -164,7 +164,7 @@ Use when incremental replacement lowers cutover risk and each slice has explicit
 
 ### Architecture Fitness Function
 
-Use executable dependency, schema, performance, security, or operability checks for boundaries whose drift has material consequences. Do not create a metric merely because it is measurable.
+Use executable dependency, schema, performance, security, or operability checks for boundaries whose drift has material consequences. Tie each metric to a material boundary and consequence.
 
 ## Pattern Decision Card
 

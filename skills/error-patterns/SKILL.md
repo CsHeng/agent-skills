@@ -1,6 +1,6 @@
 ---
 name: error-patterns
-description: "Use for resilience and recovery decisions: failure classification, bounded retries, circuit breaking, cleanup, degraded behavior, health evidence, and resource recovery. Do not use as the lifecycle owner or for general incident triage."
+description: "Use for resilience and recovery decisions: failure classification, bounded retries, circuit breaking, cleanup, degraded behavior, health evidence, and resource recovery. Lifecycle ownership belongs to the primary workflow; general incident triage belongs to the relevant operational owner."
 ---
 
 # Resilience And Recovery
@@ -27,7 +27,7 @@ Hand off to the matching owner:
 ## Decision Workflow
 
 1. Name the protected operation, caller contract, owned state, failure boundary, deadline, and irreversible effects.
-2. Classify the failure using evidence rather than message text alone.
+2. Classify the failure using evidence across the affected boundary.
 3. Decide which actor can safely recover and which state must be preserved or cleaned up.
 4. Select the smallest behavior that prevents invalid state and avoids failure amplification.
 5. Define observable success, exhaustion, degraded state, and recovery evidence.
@@ -39,7 +39,7 @@ When a reproducible code or performance failure needs a tighter evidence loop, r
 
 Classify enough to drive caller behavior. Useful distinctions include:
 
-- invalid input or violated precondition: reject without retry
+- invalid input or violated precondition: reject immediately and reserve retries for classified transient operations
 - authentication or authorization failure: fail closed and expose only safe reason information
 - conflict or stale state: return the concurrency or reconciliation action the caller can take
 - transient dependency or transport failure: retry per Bounded Retry

@@ -20,9 +20,9 @@ Discovering a missing review, truth sync, or authority at closure produces the m
 2. Check implementation outcome, verification, the implementation review when one was required, accepted-repair evidence, truth-sync status, and any explicitly requested external action.
 3. Separate completed work from actions not authorized or not performed (commit, push, publication, deployment, merge, destructive cleanup). Name the delivered version, any authorized secondary tradeoff with its reason and impact, and what was not verified.
 4. Treat task membership, covered authority, and current capability as independent facts: an action outside this task stays out even under standing permission; an in-task action without covered authority returns `needs-decision`; authority without capability or evidence returns `blocked`. Consume already covered permission for the same target and side effects without re-asking, and pause only the increment whose goal, side effects, protected state, or permission changed.
-5. Return `closed` only when all evidence required for the purpose is current for the specified version and endpoint; otherwise name the smallest owning gap. Disclosed authorized secondary tradeoffs do not block `closed` when the main goal and approved acceptance hold; an affected production action that was not performed leaves that endpoint incomplete.
+5. Return `closed` only when all evidence required for the purpose is current for the specified version and endpoint; otherwise name the smallest owning gap. Allow `closed` with disclosed authorized secondary tradeoffs when the main goal and approved acceptance hold; an affected production action that was not performed leaves that endpoint incomplete.
 
-Judge delivery by current evidence for the specified version at the requested endpoint rather than local checks or a delegated summary. A push carries every still-unpushed commit and the CI/CD it triggers; name that gap when it is outside covered authority.
+Judge delivery by current evidence for the specified version at the requested endpoint. A push carries every still-unpushed commit and the CI/CD it triggers; name that gap when it is outside covered authority.
 
 Account for active delegated work, unintegrated results, pending review or repair, and task workspaces still needed; mark owned execution resources as reclaimed, retained for a stated need, or unresolved. The implementation owner performs cleanup of resources it owns; closure gains no mutation authority over user branches or other workspaces.
 
@@ -35,4 +35,4 @@ Account for active delegated work, unintegrated results, pending review or repai
 - `needs-decision`: the requested close action needs user or external authority
 - `blocked`: required evidence or capability is unavailable
 
-Closure is a judgment, not permission to merge, release, delete, commit, push, publish, or deploy.
+Closure is a judgment; merging, releasing, deleting, committing, pushing, publishing, and deploying require their own covered authority.

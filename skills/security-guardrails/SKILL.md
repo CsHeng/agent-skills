@@ -11,7 +11,7 @@ Select controls that protect the current goal from actual exposure, exploitabili
 
 ## Risk Calibration
 
-Apply the environment classification in `development-standards` and the recovery calibration in `runtime-diagnosis`. Clearly exploitable harm is not waived by a "dev" label; protect real secrets, shared-host boundaries, and production in every environment.
+Apply the environment classification in `development-standards` and the recovery calibration in `runtime-diagnosis`. Protect real secrets, shared-host boundaries, and production against clearly exploitable harm in every environment, including development.
 
 ## Credential Management
 
@@ -28,7 +28,7 @@ When the service exposes TLS, CORS, or response headers, or the change builds or
 
 ## Input Validation
 
-Validate untrusted input at the owned boundary for the types, lengths, and semantic rules the operation needs. Reject invalid required input rather than guessing.
+Validate untrusted input at the owned boundary for the types, lengths, and semantic rules the operation needs. Reject invalid required input.
 
 ### Injection
 
@@ -47,12 +47,12 @@ When the product accepts files, read `references/file-uploads.md`.
 ## Authentication And Abuse Controls
 
 - Require multi-factor authentication, account lockout, rate limiting, or step-up verification when the threat model or policy justifies the control.
-- Keep thresholds, recovery, bypass, and support ownership configurable and testable rather than embedding universal values.
+- Keep thresholds, recovery, bypass, and support ownership configurable and testable for the applicable threat model.
 - Store authentication factors and recovery material through the owned secret boundary; keep them out of logging side effects.
 
 ## Security Evidence Handoff
 
-Define which control outcome must be observable without recording secrets or unnecessary personal data, and route security and audit event selection, redaction, correlation, retention, access, alert evidence, and tamper evidence to `logging-standards`. Prevention, validation, authorization enforcement, and response behavior stay here; logs are evidence of the control.
+Define which control outcome must be observable while keeping secrets and unnecessary personal data out of records, and route security and audit event selection, redaction, correlation, retention, access, alert evidence, and tamper evidence to `logging-standards`. Prevention, validation, authorization enforcement, and response behavior stay here; logs are evidence of the control.
 
 ## References
 

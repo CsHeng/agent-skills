@@ -11,7 +11,7 @@ Diagnose operational systems by separating desired state, actual state, data pat
 
 - live system behavior diverges from expected state and the cause is unknown
 - the failure crosses component boundaries (network, containers, GitOps/IaC, secrets, automation)
-- existing domain skills do not own the narrow cause
+- the narrow cause falls outside the ownership of existing domain skills
 
 New infrastructure design or access control design belongs to `design-change`. Routine configuration edits with a settled owner use `implement-change`. In-process error handling uses `error-patterns`.
 
@@ -27,7 +27,7 @@ New infrastructure design or access control design belongs to `design-change`. R
 Calibrate recovery to state value, blast radius, recoverability, and control cost. Environment classification, direct cutover, and protection of retained slices follow `references/replacement-and-cutover.md` in `development-standards`; reuse of recovery evidence follows `references/oracle-selection.md` in `skills-routing`; recovery modes and authority follow `implement-change` (Recovery).
 
 - Use backup, retained state, an HA peer, VRRP, or an old release as recovery surfaces; rollback needs the guarded-rollback criteria below.
-- Use `stop-and-diagnose` when continued mutation could compound uncertainty but restoring old state is not proven safer.
+- Use `stop-and-diagnose` when continued mutation could compound uncertainty and the safety of restoring old state remains unproven.
 - Use `guarded-rollback` for an explicit, observed hazard where rollback is safer than forward repair and its target and verification are already tested. Hazard classes: management-connectivity loss, a routing or control-plane cycle, writer or quorum exclusivity loss, irreversible data-safety risk.
 - Move to planning or design when evidence shows an unresolved goal, boundary, or ordering decision.
 

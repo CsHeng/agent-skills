@@ -1,6 +1,6 @@
 ---
 name: go-guidelines
-description: "Apply Go-specific policy to existing or approved Go modules, CLI tools, API services, tests, and reviews: module hygiene, standard toolchain checks, explicit errors and context, purpose-specific architecture, and delivery. Use as a language overlay; do not own language selection or lifecycle control."
+description: "Apply Go-specific policy to existing or approved Go modules, CLI tools, API services, tests, and reviews: module hygiene, standard toolchain checks, explicit errors and context, purpose-specific architecture, and delivery. Use as a language overlay; language selection belongs to `skills-routing` and lifecycle control belongs to the primary workflow."
 ---
 
 # Go Guidelines

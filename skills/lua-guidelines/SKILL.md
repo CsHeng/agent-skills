@@ -14,11 +14,11 @@ Apply these standards to `.lua` files, including those in configuration ecosyste
 
 ## Rules
 
-- Use `local` for variables and functions, and keep state in `local` variables. Return a module table instead of writing to `_G`.
+- Use `local` for variables and functions, and keep state in `local` variables. Return a module table and keep module state local.
 - Structure modules as `local M = {}` ... `return M`.
 - Scope `pcall` to a declared-optional import with an explicit fallback, such as `pcall(require, "mod")`.
-- Format with `stylua` when available, with its `syntax` set to the target Lua version; formatting is not runtime validation.
+- Format with `stylua` when available, with its `syntax` set to the target Lua version; validate runtime compatibility separately.
 - Validate with a checker that matches the declared target runtime, and state which version ran: `lua-language-server --check` when available, `luac -p path/to/file.lua` or `lua -e 'assert(loadfile("path/to/file.lua"))'` when that Lua matches the target.
-- Claim compatibility only for hosts whose Lua version you ran. A pass from workstation Lua against a LuaJIT or older host does not show that the host accepts the file.
+- Claim compatibility only for hosts whose Lua version you ran. Validate against the actual LuaJIT or older host before claiming its compatibility.
 - Lint with `selene` when available, configured per repository with the target Lua version.
 - For generic error-handling patterns, see `error-patterns`.

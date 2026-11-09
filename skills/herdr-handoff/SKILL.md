@@ -10,13 +10,13 @@ Transfer an established plan to another main coding-agent session: main A is the
 ## Inputs And Defaults
 
 - Target: a new session in an adjacent pane, or an existing agent or pane the user names.
-- Agent, model, and thinking level: when the user names none, inherit A's own combination, the same CLI, provider and model, and thinking level. Resolve A's actual current values from the host rather than from configuration defaults, and report a value that cannot be resolved instead of guessing. An explicit agent, model, or thinking choice replaces only that part; resolve it through the selected CLI's current options and report an unsupported request instead of substituting another model or changing persistent client settings. These settings describe B's main invocation only; B's native subagents keep their configured routing unless the user selects otherwise for them.
+- Agent, model, and thinking level: when the user names none, inherit A's own combination, the same CLI, provider and model, and thinking level. Resolve A's actual current values from the host, and report any value that cannot be resolved. An explicit agent, model, or thinking choice replaces only that part; resolve it through the selected CLI's current options and report an unsupported request; persistent client settings remain unchanged. These settings describe B's main invocation only; B's native subagents keep their configured routing unless the user selects otherwise for them.
 - Plan: the current conversation's established plan unless the user supplies another.
 - Permissions: use the selected CLI's native skip-permission or allow-all mode. Requesting a handoff authorizes direct execution of the established task, so no plan-approval exchange is added; project-specific gate instructions travel with the plan.
 
 ## Make The Records Self-Contained
 
-B must be able to finish from accessible records alone, because a one-way handoff has no return path for clarification. Before handing off, write into the plan, design, or another accessible project record whatever B needs that lives only in this conversation: decisions and their rationale, user-fixed constraints, essential facts discovered so far, and the current authority for commit, push, publication, or other gated actions. Follow the fresh-main handoff guidance in `references/delivery-and-delegation.md` of `plan-change`. An inaccessible path or an unrecorded conversation decision is not a supplied plan.
+B must be able to finish from accessible records alone, because a one-way handoff has no return path for clarification. Before handing off, write into the plan, design, or another accessible project record whatever B needs that lives only in this conversation: decisions and their rationale, user-fixed constraints, essential facts discovered so far, and the current authority for commit, push, publication, or other gated actions. Follow the fresh-main handoff guidance in `references/delivery-and-delegation.md` of `plan-change`. The supplied plan must be accessible and contain the decisions needed for execution.
 
 ## Prepare Main B
 
@@ -38,4 +38,4 @@ Confirm that B accepted the prompt and started working. A blocked startup or an 
 
 ## Finish
 
-Report the target pane and agent name, B's session identity where the CLI exposes one, the agent, model, and thinking level used and whether each was inherited, and the plan reference. A one-way handoff ends here: A does not wait for B, subscribe to its completion, or review its result, and B's pane stays open for the user. No commit, worktree deletion, or installation is needed to complete the handoff.
+Report the target pane and agent name, B's session identity where the CLI exposes one, the agent, model, and thinking level used and whether each was inherited, and the plan reference. A one-way handoff ends here: B owns completion and review, and B's pane stays open for the user. Commit, worktree deletion, and installation follow their respective user authorization boundaries.

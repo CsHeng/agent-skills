@@ -17,15 +17,15 @@ The Wire Contract should fan out into two independently owned branches:
                        Critical UI / E2E
 ```
 
-Provider and consumer evidence join at Business Workflow verification. Neither branch substitutes for the other.
+Provider and consumer evidence independently join at Business Workflow verification.
 
-Runtime probes, canaries, synthetic checks, and SLOs observe deployed behavior across this topology. They are orthogonal runtime evidence, not a later test rung and not a substitute for pre-merge correctness.
+Runtime probes, canaries, synthetic checks, and SLOs observe deployed behavior across this topology. They provide orthogonal runtime evidence alongside pre-merge correctness checks.
 
 ## Wire Contract
 
 Question: What communication is structurally allowed?
 
-Maintain HTTP operation and wire shape in OpenAPI or a mechanically complete source that deterministically exports it. Treat resolved bundles, generated code, fixtures, and human documentation as projections rather than independent truth.
+Maintain HTTP operation and wire shape in OpenAPI or a mechanically complete source that deterministically exports it. Treat resolved bundles, generated code, fixtures, and human documentation as projections of the maintained source.
 
 Typical evidence:
 
@@ -53,7 +53,7 @@ Question: Does each consumer correctly use the contract?
 
 Own this evidence in the consumer repository or domain. Cover serialization, decoding, DTO mapping, authentication, token refresh, error mapping, retries, offline behavior, persistence, and platform-specific transport.
 
-Generated types or clients reduce duplication but do not prove consumer policy. Trust generated internals through pinned generator versions, deterministic generation checks, compilation, and a few boundary fixtures.
+Generated types or clients reduce duplication; consumer adapter evidence proves consumer policy. Trust generated internals through pinned generator versions, deterministic generation checks, compilation, and a few boundary fixtures.
 
 ## Business Workflow
 
@@ -83,7 +83,7 @@ Claim each level only from evidence at its own boundary:
 ## Duplication Smells
 
 - the same schema is maintained manually in provider, web, mobile, and fixtures
-- workflow collections mirror every operation instead of business journeys
+- workflow collections mirror every operation while business journeys lack focused coverage
 - E2E tests diagnose wire-shape failures
 - unit tests mock away the real provider or consumer boundary
 - generated-client internals receive broad handwritten test duplication

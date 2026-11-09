@@ -27,7 +27,7 @@ Possible tools include vacuum, Redocly, Spectral, and project-specific validator
 
 Use a maintained project-owned CLI when it closes the gap; add a custom validator only for a remaining gap.
 
-When one repository needs linting, reference resolution, deterministic bundling, Arazzo execution, and generated documentation, prefer the integrated Redocly CLI surface if its runtime and supported dialects fit. This does not require Redocly hosted services.
+When one repository needs linting, reference resolution, deterministic bundling, Arazzo execution, and generated documentation, prefer the integrated Redocly CLI surface if its runtime and supported dialects fit. Hosted services remain optional.
 
 ## Compatibility
 
@@ -43,7 +43,7 @@ Possible tools include oasdiff and equivalent structural diff engines. Schema co
 
 Prefer a library or runner that matches real protocol operations and validates actual requests and responses. Reuse the provider language and existing integration harness when practical.
 
-Schemathesis or generative tools become attractive after a stable baseline exists and broad input exploration targets a named residual risk. They are not a prerequisite for basic conformance.
+Schemathesis or generative tools become attractive after a stable baseline exists and broad input exploration targets a named residual risk. Basic conformance can start with the provider's existing integration harness.
 
 ## Generated Client
 
@@ -68,4 +68,4 @@ Recommend Pact through the CDC Decision in [Legacy Adoption](legacy-adoption.md)
 - runtime probes as the first compatibility gate
 - coverage thresholds without a protected boundary and diagnosis owner
 
-Every rejected option should include an upgrade trigger rather than a permanent prohibition.
+For every rejected option, record an observable upgrade trigger.

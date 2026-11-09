@@ -13,7 +13,7 @@ Use an independent contract repository only when evidence shows one or more of:
 - multiple teams require stable governance or access boundaries
 - external consumers need a separately versioned contract product
 
-Multiple clients alone are not an upgrade trigger.
+Move to an independent contract repository when contract ownership demonstrably separates from the provider; client count remains a sizing fact.
 
 ## Repository Architecture
 
@@ -31,7 +31,7 @@ PROJECT_API_SPEC
 
 Resolve sibling repositories through these variables; paths such as `../backend` vary with workspace layout, CI checkouts, agent context, and multiple clones.
 
-The workspace contract is a development input, not a production dependency.
+The workspace contract supplies development inputs; production dependency choices follow the consumer's delivery contract.
 
 ## Authoring And Bundle Lifecycle
 

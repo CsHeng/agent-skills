@@ -18,7 +18,7 @@ Read [Parser Modes](references/parser-modes.md) for source locations when scope 
 ## Workflow
 
 1. Confirm the requested scope: current repo, named repo, or all local Codex/Claude/Grok/Pi history.
-2. Run the bundled parser for structured signals instead of raw-scanning large JSONL files.
+2. Run the bundled parser for structured signals from large JSONL files.
 3. Separate evidence into:
    - command failures and tool errors
    - interrupted, compacted, or rolled-back turns
@@ -31,7 +31,7 @@ Read [Parser Modes](references/parser-modes.md) for source locations when scope 
    - add or update a repo-local skill when the pattern depends on repository topology, runtime inventory, local hostnames, or domain-specific operational truth
    - add or update scoped repo docs or code truth for stable operational facts
    - mark extracted memory for cleanup
-   - do not promote, which covers one-time runtime snapshots that serve only as evidence
+   - retain one-time runtime snapshots as evidence only
 5. Name a repo doc, repo-local skill, code, or generic skill as the durable owner of each recommendation. Recommend concrete target files and validation commands.
 
 ## Memory

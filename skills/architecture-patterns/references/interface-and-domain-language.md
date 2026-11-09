@@ -4,7 +4,7 @@ Use this reference when shaping module boundaries, test seams, domain terminolog
 
 ## Interface Contract
 
-Treat an interface as every fact a caller must know, not only the type signature:
+Treat an interface as every fact a caller must know, including the type signature:
 
 - inputs and outputs
 - invariants
@@ -14,9 +14,9 @@ Treat an interface as every fact a caller must know, not only the type signature
 - performance characteristics
 - ownership of side effects and state
 
-A good module puts meaningful behavior behind a small interface. Before adding a new abstraction, apply the deletion test: if deleting it only removes a pass-through layer, it is not carrying enough complexity.
+A good module puts meaningful behavior behind a small interface. Before adding a new abstraction, apply the deletion test: it merits its cost when deleting it removes more than a pass-through layer.
 
-Create a seam when behavior actually varies across adapters or when tests need to exercise behavior through the same contract callers use. Avoid speculative seams.
+Create a seam when behavior actually varies across adapters or when tests need to exercise behavior through the same contract callers use.
 
 ## Domain Language
 

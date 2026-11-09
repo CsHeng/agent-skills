@@ -21,16 +21,16 @@ Keep existing tests and stable adapters, and label a partial schema as partial.
 
 ## Baseline Rules
 
-- Derive scope from registered routes or protocol definitions, not documentation alone.
+- Derive scope from registered routes or protocol definitions and reconcile the documentation with that scope.
 - Give every excluded operation a reviewed reason.
 - Distinguish the first baseline from an unavailable required comparison base.
 - Use synthetic public examples and prevent secrets or private data from entering fixtures.
-- Keep semantic behavior in stable owning documentation instead of forcing it into schema extensions.
+- Keep semantic behavior in stable owning documentation.
 
 ## Provider Rules
 
 - Reuse real-router and integration fixtures where they already exist.
-- Add a shared conformance helper rather than duplicating one test suite per tool.
+- Add a shared conformance helper for the tools.
 - Record which operations have response conformance and which only have route completeness.
 
 ## Consumer Rules
@@ -48,7 +48,7 @@ Keep existing tests and stable adapters, and label a partial schema as partial.
 
 Use consumer-driven contracts when consumers release independently, providers cannot execute consumer evidence, hidden assumptions repeatedly escape, or many long-lived API versions coexist.
 
-Avoid CDC when one team owns a small set of visible first-party consumers and provider-owned schema plus consumer adapter evidence closes the known gap.
+Use provider-owned schema plus consumer adapter evidence when one team owns a small set of visible first-party consumers and that evidence closes the known gap.
 
 Pact adds a broker, version lifecycle, provider states, publishing, and a verification matrix. Demand evidence must justify that cost.
 

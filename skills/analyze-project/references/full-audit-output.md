@@ -4,7 +4,7 @@ Use this reference when the user requests comprehensive project orientation or a
 
 ## Audit Concerns
 
-Choose the concerns relevant to the requested audit and cover them once. These are information responsibilities, not mandatory headings or a fixed presentation order:
+Choose the concerns relevant to the requested audit and cover them once. Present these information responsibilities in an order and structure suited to the answer:
 
 - Project purpose, scope, current conclusion and the facts that define it.
 - Stable truth roots, stage artifact roots, root reference files, document health and verification basis (labels in [Document Health And Drift](doc-health-and-drift.md)).

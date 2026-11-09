@@ -8,7 +8,7 @@ Return relevant evidence and unverified areas to the `review-change` caller as p
 
 - Resolve the Python version, owning project and dependency manifest. Use the toolchain and coding requirements in `python-guidelines`.
 - Validate syntax with `ast.parse` or the target interpreter's syntax check. If using compilation, keep its bytecode outside the source tree; report a missing interpreter or an unrun check as unverified.
-- Run the project-pinned Ruff check. Formatter and safe-fix diagnostics belong to Ruff; name the applicable command and relevant diagnostic rather than hand-writing style, formatter or safe-fix patches.
+- Run the project-pinned Ruff check. Formatter and safe-fix diagnostics belong to Ruff; name the applicable command and relevant diagnostic.
 - Run the appropriate type checker with the owning project's dependencies. Check type hints, unsafe defaults, exception boundaries, input validation and other applicable Python semantics.
 - Inspect custom CLI argument definitions against the owning project's declared parameter rules below. Third-party tool invocations are outside that rule.
 - Anchor material findings to location, evidence, impact and the smallest semantic correction. Candidate semantic diffs are optional, read-only, and preserve valid Python and the authorized scope.
@@ -33,5 +33,5 @@ Apply the owning project's CLI convention, and the alias rule the project declar
 
 - When the project declares a short-alias or help-flag convention, check `argparse.add_argument()` against that convention and report only a violated repository rule.
 - An established alias already shipped by the tool, such as a documented `app ls` subcommand or an existing short flag, is that project's interface.
-- The `ArgumentParser(add_help=False)` plus explicit `add_argument("--help", action="help")` pattern is one way to avoid an unintended automatic `-h`; mention it as an optional observation when the project has no established help convention.
+- The `ArgumentParser(add_help=False)` plus explicit `add_argument("--help", action="help")` pattern provides explicit help handling; mention it as an optional observation when the project has no established help convention.
 - Report a violated project-declared parameter rule with its location and effect. It contributes to the single review.

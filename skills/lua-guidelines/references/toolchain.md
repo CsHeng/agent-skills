@@ -15,4 +15,4 @@ stylua = "latest"
 
 The `cargo:selene` backend needs a Rust toolchain; mise can provide it (`mise use cargo-binstall@latest`).
 
-The mise-managed `lua`/`luac`, `selene` and `stylua` are workstation tools, not the target runtime. Set each checker's Lua version to the declared host (for example `stylua`'s `syntax` setting and `selene`'s configured Lua version), and claim compatibility only for a host whose runtime you ran.
+The mise-managed `lua`/`luac`, `selene` and `stylua` are workstation tools; the declared host owns the target runtime. Set each checker's Lua version to the declared host (for example `stylua`'s `syntax` setting and `selene`'s configured Lua version), and claim compatibility only for a host whose runtime you ran.

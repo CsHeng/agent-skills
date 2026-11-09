@@ -17,11 +17,11 @@ docker buildx inspect multiarch-local >/dev/null 2>&1 \
   || docker buildx create --name multiarch-local --driver docker-container
 ```
 
-Let the `buildx create` exit status propagate. Scope later commands with `--builder multiarch-local` instead of `docker buildx use`, so other projects keep their default builder. When you switch deliberately with `--use`, record the current default from `docker buildx ls` and restore it with `docker buildx use <original>` when done.
+Let the `buildx create` exit status propagate. Scope later commands with `--builder multiarch-local`, so other projects keep their default builder. When you switch deliberately with `--use`, record the current default from `docker buildx ls` and restore it with `docker buildx use <original>` when done.
 
 ## Build Locally
 
-Build both architectures to a local artifact; this step issues no push or publication, though it may pull base or BuildKit images from their registries. The OCI tarball is an artifact, not a runnable image.
+Build both architectures to a local artifact; this step issues no push or publication, though it may pull base or BuildKit images from their registries. The OCI tarball is an artifact; load a single-platform image to run it.
 
 ```bash
 docker buildx build \

@@ -24,7 +24,7 @@ Choose the analysis concerns the question or evidence gap needs: project scope, 
 
 ## Drift Signals
 
-Report drift only when it exists. Give each finding a short stable label such as `D1`, `D2`, and cover its type, severity, summary, stable-source evidence, verification evidence, and recommended action, using the labels in `doc-health-and-drift.md`. Stable labels support follow-up and are not a numbering scheme for the whole answer.
+Report drift only when it exists. Give each finding a short stable label such as `D1`, `D2`, and cover its type, severity, summary, stable-source evidence, verification evidence, and recommended action, using the labels in `doc-health-and-drift.md`. Stable labels support follow-up within the findings.
 
 A compact rendering:
 

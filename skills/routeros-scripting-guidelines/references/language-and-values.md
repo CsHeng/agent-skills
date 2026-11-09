@@ -11,30 +11,30 @@ Syntax authority is the current MikroTik Scripting manual named in `SKILL.md`.
 
 ## Variable Names
 
-Follow the official definition rather than adding a project naming law:
+Follow the official definition:
 
 - Ordinary unquoted variable names contain letters and digits. A name containing another character must be quoted according to RouterOS syntax.
 - Names are case-sensitive.
 - Built-in RouterOS property names are reserved and can conflict with user variables; choose a distinct name.
-- The manual commonly uses names such as `myVar`. camelCase is a readable ordinary choice, not a universal requirement.
+- The manual commonly uses names such as `myVar`. camelCase is a readable ordinary choice.
 
 ## Types And Values
 
 - RouterOS values include `num`, `bool`, `str`, `ip`, `ip-prefix`, `ip6`, `ip6-prefix`, internal `id`, `time`, `array`, and `nil`.
 - An uninitialized variable has type `nil`. Use `:typeof` when behavior depends on the actual runtime type and use explicit conversion commands when input shape is uncertain.
-- Preserve IP and prefix types when using membership, bitwise, or routing expressions; do not assume every printed value is a plain string.
+- Preserve IP and prefix types when using membership, bitwise, or routing expressions; interpret printed values using their actual runtime types.
 - Quote strings deliberately and account for RouterOS escape and interpolation rules. Use concatenation or expression substitution when interpolation would be ambiguous.
 
 ## Arrays And Functions
 
-- Arrays can be positional or keyed. Read keyed members with `->`, and do not assume printed ordering is a stable identity.
+- Arrays can be positional or keyed. Read keyed members with `->`, and use stable properties for identity.
 - `print as-value` returns structured parameter arrays and is generally safer for programmatic reads than parsing aligned terminal text.
-- RouterOS functions are values produced by `:parse` or local/global declarations whose body uses `:return`. Declare function parameters in the function's local scope and avoid hidden global dependencies.
+- RouterOS functions are values produced by `:parse` or local/global declarations whose body uses `:return`. Declare function parameters in the function's local scope and make global dependencies explicit.
 - Use `:serialize` and supported conversion commands when structured output is required; verify availability on the target RouterOS version.
 
 ## Commands And Object Selection
 
 - Use explicit menu paths when the surrounding context would otherwise make a relative command ambiguous. Nested menu commands may use their inherited path when that improves clarity without changing meaning.
-- Select mutable objects by stable properties such as a unique name, comment, address, or other repository-owned identifier. Do not use print row numbers or assumed ordering as durable identity.
+- Select mutable objects by stable properties such as a unique name, comment, address, or other repository-owned identifier. Use the object's stable properties as its durable identity.
 - Check the cardinality of `find` results before `get`, `set`, `remove`, or `move` when zero or multiple matches would change behavior.
 - Keep expression grouping explicit around arithmetic, concatenation, and nested command substitution when RouterOS could parse the token as an address, path, or another command form.

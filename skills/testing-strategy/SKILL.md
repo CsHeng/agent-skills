@@ -7,7 +7,7 @@ description: "Design or revise verification coverage, suite placement, fixtures,
 
 ## Purpose
 
-Turn a selected executable oracle into the smallest concrete verification set that protects the user's intended outcome and actual consumer requirements. Existing tests and implementation behavior are evidence to assess, not requirements by themselves.
+Turn a selected executable oracle into the smallest concrete verification set that protects the user's intended outcome and actual consumer requirements. Assess existing tests and implementation behavior as evidence against those requirements.
 
 When supporting design, planning, simplification, implementation, or review, contribute only the testing decisions and evidence that task needs.
 
@@ -45,7 +45,7 @@ For API systems, keep schema compatibility and semantic compatibility separate: 
 ## Red-Green Verification
 
 - For behavior changes and bug fixes, identify the failing consumer outcome and an independent expected result, then write or identify a failing test or narrow reproducer before implementation when a correct seam exists. A post-change regression test is useful when it closes a real behavior gap.
-- Confirm the oracle fails for the expected reason, not a typo or environment error.
+- Confirm the oracle fails for the expected reason and distinguish typos or environment errors.
 - Implement the smallest change that makes the reproducer pass.
 - Rerun the affected oracle after the repair and retain results that still cover unchanged behavior, inputs, and conditions.
 - For config-only changes, use parser, schema, or real-consumer validation.
@@ -70,7 +70,7 @@ Review the suite and instructions the bounded change touches.
 
 ## Oracle Integrity
 
-- Protect the underlying requirement, not the existence of a test. Within authorized edits, remove or replace tests and agent-added guards that have no requirement or consumer basis, including incidental library behavior and arbitrary source or fixture bytes; an existing test, a passing review, or a model-written plan does not establish that basis. Exact wire bytes, cryptographic vectors, and explicitly required output remain valid oracles where they carry the contract. Revise an earlier model-declared test plan when the required outcome stays protected.
+- Protect the underlying requirement. Within authorized edits, remove or replace tests and agent-added guards that have no requirement or consumer basis, including incidental library behavior and arbitrary source or fixture bytes; establish that basis from actual requirements and consumers. Exact wire bytes, cryptographic vectors, and explicitly required output remain valid oracles where they carry the contract. Revise an earlier model-declared test plan when the required outcome stays protected.
 - Keep an oracle that protects a real requirement and make the implementation satisfy it (`implement-change`, Acceptance Integrity); removing a self-imposed constraint while preserving required behavior is a correction.
 - Record the oracle type for non-trivial changes: example, scenario, contract, property, model, current-behavior snapshot, meta-oracle, or runtime oracle.
 - Judge test additions and removals by the protection gained or lost and their maintenance cost.

@@ -1,6 +1,6 @@
 # Goal Alignment
 
-Read this for a concrete goal-means mismatch, acceptance ambiguity, material tradeoff, authority gap, or a clarification question. An already bounded task needs no interview.
+Read this for a concrete goal-means mismatch, acceptance ambiguity, material tradeoff, authority gap, or a clarification question. Proceed directly on an already bounded task.
 
 ## Preserve The Outcome; Reconsider The Means
 
@@ -20,4 +20,4 @@ Align the delivery endpoint with the request: a proposal may describe later rele
 
 ## Record And Resume
 
-Keep the material decision and rationale in the existing source of truth, distinguishing user choices from assumptions, findings, and agent-owned work. When a user choice should bind later changes, mark it as durable intent so `sync-truth` carries it into stable truth with the delivered behavior. End clarification when the next authorized step can proceed; after the user answers, resume the original work. A different model, reviewer, or implementation tactic does not reopen settled user decisions. Pause only the affected action when proceeding would exceed the user's goal, explicit choice, authority, or a real protected-state boundary; independent authorized work continues.
+Keep the material decision and rationale in the existing source of truth, distinguishing user choices from assumptions, findings, and agent-owned work. When a user choice should bind later changes, mark it as durable intent so `sync-truth` carries it into stable truth with the delivered behavior. End clarification when the next authorized step can proceed; after the user answers, resume the original work. Revisit settled user decisions when new evidence changes their material premise. Pause only the affected action when proceeding would exceed the user's goal, explicit choice, authority, or a real protected-state boundary; independent authorized work continues.

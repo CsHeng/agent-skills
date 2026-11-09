@@ -8,7 +8,7 @@ Build Go HTTP and network services with explicit transport boundaries, bounded l
 
 Prefer `net/http` for new services when its router and middleware capabilities satisfy the API contract. Add a lightweight router or framework only for concrete routing, binding, middleware, or project-consistency benefits.
 
-Preserve the existing framework in an established service unless an approved redesign justifies migration. Gin, Chi, gRPC, or another existing framework is a project boundary, not an automatic defect. Keep application logic independent from framework-specific request and response types.
+Preserve the existing framework in an established service unless an approved redesign justifies migration. Treat Gin, Chi, gRPC, or another existing framework as a project boundary. Keep application logic independent from framework-specific request and response types.
 
 ## Boundaries
 
@@ -17,7 +17,7 @@ Use the smallest structure that keeps responsibilities clear:
 - transport adapters decode requests, authenticate and authorize, call an application operation, and encode responses
 - application operations own use-case sequencing and domain decisions
 - external adapters own databases, filesystems, queues, subprocesses, and remote APIs
-- domain types describe stable business data without depending on HTTP framework types
+- domain types describe stable business data independently of HTTP framework types
 
 Add a boundary when it separates behavior, ownership, testing, or replacement concerns. Define interfaces at the consuming package and keep them narrow.
 
@@ -33,24 +33,24 @@ Add a boundary when it separates behavior, ownership, testing, or replacement co
 ## HTTP Contract
 
 - Validate inputs at the transport boundary and return stable status and error shapes.
-- Keep error classification separate from internal error text; do not expose stack or credential details.
+- Keep error classification separate from internal error text; protect stack and credential details from exposure.
 - Make idempotency and retry safety explicit for state-changing endpoints.
 - Apply authentication, authorization, CORS, rate limiting, and request-size policy according to the service's actual exposure.
-- Use middleware for cross-cutting transport concerns, not hidden business control flow.
+- Use middleware for cross-cutting transport concerns; application operations own business control flow.
 
 ## Health And Observability
 
-Expose health and readiness separately when startup or dependency state makes the distinction meaningful. Liveness should prove the process can serve; readiness should prove it may receive traffic. Do not make health checks perform unbounded or state-changing work.
+Expose health and readiness separately when startup or dependency state makes the distinction meaningful. Liveness should prove the process can serve; readiness should prove it may receive traffic. Keep health checks bounded and side-effect free.
 
 Use structured logs with request or correlation identifiers where the surrounding platform supports them. Emit metrics and traces for decision-relevant latency, errors, saturation, and external dependency behavior. Redact tokens, credentials, authorization headers, and sensitive payload fields.
 
 ## Configuration And Secrets
 
-Load typed configuration explicitly, validate it before serving, and make precedence deterministic. Prefer environment or project-owned secret providers for credentials. Do not log the complete environment or configuration. Keep runtime configuration separate from image build inputs.
+Load typed configuration explicitly, validate it before serving, and make precedence deterministic. Prefer environment or project-owned secret providers for credentials. Log only selected, redacted configuration fields. Keep runtime configuration separate from image build inputs.
 
 ## Testing
 
-- Test application operations without starting a network listener when the transport is not the behavior under test.
+- Test application operations directly when the transport is outside the test scope.
 - Use `httptest` for handlers, middleware, status codes, headers, bodies, cancellation, and error mapping.
 - Use contract or integration tests for databases, queues, and external APIs when fakes cannot protect the real boundary.
 - Cover shutdown, timeout, malformed input, authorization denial, dependency failure, and partial-response behavior when material.
@@ -58,12 +58,12 @@ Load typed configuration explicitly, validate it before serving, and make preced
 
 ## Delivery
 
-Build an explicit binary or runtime-neutral container image. Use a minimal runtime image only when it still provides required certificates, timezone data, user identity, and debugging or health behavior. Run as a non-root user when the service does not require elevated privileges. Keep immutable image identity and runtime placement with the owning deployment system.
+Build an explicit binary or runtime-neutral container image. Use a minimal runtime image only when it still provides required certificates, timezone data, user identity, and debugging or health behavior. Run as a non-root user when the service can operate with ordinary privileges. Keep immutable image identity and runtime placement with the owning deployment system.
 
 ## Checklist
 
 - framework choice is justified or inherited from the existing service
-- transport types do not leak into application or domain logic
+- transport types stay at the transport boundary
 - server timeouts and graceful shutdown are explicit
 - authentication, authorization, input bounds, and error exposure match the threat boundary
 - health, readiness, logging, metrics, and redaction are operationally meaningful

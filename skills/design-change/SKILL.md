@@ -23,7 +23,7 @@ Design the target state. Replacement, cutover, dual-running, and rollback follow
 ## Design
 
 1. Establish enough current project truth to explain the problem and the useful delivery endpoint. Keep a design-only request design-only.
-2. Choose the depth the decision needs; file count and document length do not set it, and a depth label is not a prerequisite for implementation.
+2. Choose the depth the decision needs; implementation can begin when its actual prerequisites are met.
 3. Compare viable options against the outcome and maintenance burden, including keeping the current implementation or making a smaller change. Check existing project capabilities, host primitives, official tools, and mature implementations before proposing a durable general-purpose mechanism, and stop investigating when the choice is supported. Compose `architecture-patterns` for a material persisted architecture boundary.
 4. State the chosen behavior, material reasons, protected boundaries, ownership, and the evidence that will distinguish success from failure. Describe compatibility or recovery machinery for an actual consumer, state transition, or failure. Leave replaceable implementation details open.
 5. When an artifact is needed, make it reviewable at the level of the decision, in the project's document owner and conventions; a small design may be a few connected paragraphs.
@@ -36,7 +36,7 @@ Make the outcome, current truth, user-fixed constraints, chosen approach and rat
 
 ## Authority And Outcomes
 
-Design describes authority; it does not grant it. Commit, push, publication, installation, deployment, destructive cleanup, and external changes need matching user or project authority, consumed without re-asking when already granted for the same actions and targets. A settled framework choice or maintenance horizon is reconsidered only when new evidence identifies the material premise that changed; a requested broader simplification assessment uses `references/simplification.md` in `skills-routing`.
+Design records authority; user or project approval grants it. Commit, push, publication, installation, deployment, destructive cleanup, and external changes need matching user or project authority, consumed without re-asking when already granted for the same actions and targets. A settled framework choice or maintenance horizon is reconsidered only when new evidence identifies the material premise that changed; a requested broader simplification assessment uses `references/simplification.md` in `skills-routing`.
 
 - `ready`: the requested design and any required review are complete; name an approval only when one is actually outstanding
 - `needs-decision`: qualified as `design` when a material design decision remains unresolved, or `user` when a user or external decision blocks the affected action

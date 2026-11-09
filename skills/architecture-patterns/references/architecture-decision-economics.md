@@ -1,6 +1,6 @@
 # Architecture Decision Economics
 
-Use this reference when a change creates, replaces, decomposes, centralizes, distributes, or materially scales a persisted architecture boundary. Use the concepts as causal decision lenses, not as a mandatory financial worksheet.
+Use this reference when a change creates, replaces, decomposes, centralizes, distributes, or materially scales a persisted architecture boundary. Use the concepts as causal decision lenses.
 
 ## Contents
 
@@ -17,7 +17,7 @@ Use this reference when a change creates, replaces, decomposes, centralizes, dis
 
 ## Marginal Cost
 
-Evaluate the next architecture increment rather than comparing only completed end states.
+Evaluate the next architecture increment alongside completed end states.
 
 Count marginal benefit such as the next reduction in latency, failure coupling, deployment contention, or operator toil. Compare it with the next increment of implementation, migration, coordination, cognitive, runtime, observability, verification, and recovery cost.
 
@@ -43,14 +43,14 @@ Watch for incentive failures:
 
 - a shared platform whose consumers request features while another owner absorbs on-call cost
 - service autonomy that externalizes compatibility and incident cost to other teams
-- feature flags, abstractions, or compatibility paths that are cheap to add but have no removal owner
-- plan templates that reward field completion instead of decision quality
+- feature flags, abstractions, or compatibility paths whose low initial cost leaves removal ownership unclear
+- plan templates that reward field completion over decision quality
 
 Align authority, cost, and accountability for continuing responsibilities. A shipped transitional mechanism needs an owner, an observable outcome, and a retirement or replacement condition.
 
 ## Comparative Advantage
 
-Assign a responsibility to the component, team, runtime, language, provider, or existing platform with the lowest relative opportunity cost, not necessarily the option with the highest abstract capability.
+Assign a responsibility to the component, team, runtime, language, provider, or existing platform with the lowest relative opportunity cost.
 
 Prefer existing ownership and ecosystems when they materially reduce integration and maintenance risk. Preserve clear boundaries: Shell can own thin orchestration, a primary implementation owns validation and state, a provider SDK can own provider-specific behavior, and a shared service should exist only when central ownership is cheaper than repeated local ownership.
 
@@ -58,9 +58,9 @@ Record the hard constraint or ecosystem advantage when selecting an option that 
 
 ## Decision Horizon And Mature Ownership
 
-The smallest current patch is not necessarily the smallest lifetime responsibility. Count replacement glue and dependency maintenance as well as local code. A mature framework can be appropriate for a user-declared long-lived project even while only its present features are used. Apply the reuse check in `design-change` and `development-standards` before implementing a parallel mechanism; research ends when the relevant decision is supported.
+Compare the current patch with its lifetime responsibility. Count replacement glue and dependency maintenance as well as local code. A mature framework can be appropriate for a user-declared long-lived project even while only its present features are used. Apply the reuse check in `design-change` and `development-standards` before implementing a parallel mechanism; research ends when the relevant decision is supported.
 
-Settled choices follow `design-change` (Related Decisions). An explicit structural-reassessment request can compare a one-time refactor or rewrite against future maintenance without defending sunk cost.
+Settled choices follow `design-change` (Related Decisions). An explicit structural-reassessment request can compare a one-time refactor or rewrite against future maintenance on its merits.
 
 ## Supply And Demand
 
@@ -68,7 +68,7 @@ Describe demand with current or observed evidence: request rate, data volume, gr
 
 Describe supply as the capacity available from compute, storage, network, deployment throughput, review bandwidth, operational attention, and team coordination. Find the constrained resource before adding architectural supply.
 
-Provision enough headroom for the decision horizon and the lead time needed to add more. Do not buy distributed coordination, sharding, multi-region operation, or organizational independence merely because demand might appear someday. Record a measurable upgrade_trigger and preserve a migration path that can be exercised before the current supply is exhausted.
+Provision enough headroom for the decision horizon and the lead time needed to add more. Justify distributed coordination, sharding, multi-region operation, or organizational independence with demand evidence within the decision horizon. Record a measurable upgrade_trigger and preserve a migration path that can be exercised before the current supply is exhausted.
 
 ## Decision Sequence
 
@@ -84,7 +84,7 @@ Provision enough headroom for the decision horizon and the lead time needed to a
 
 ## Compact Decision Evidence
 
-Use only fields that materially affect the decision. Keep the record at design level rather than duplicating it on every plan task.
+Use only fields that materially affect the decision. Keep the record at design level and refer to it from plan tasks.
 
 ```yaml
 architecture_economics:
@@ -103,22 +103,22 @@ architecture_economics:
   recovery_and_oracle: <safe exit plus executable evidence>
 ```
 
-Decide with causal evidence and explicit discard reasons; a weighted score hides assumptions and invites optimizing the score instead of the system outcome.
+Decide with causal evidence and explicit discard reasons; make assumptions and the system outcome explicit when using a weighted score.
 
 ## Planning Handoff
 
 Pass the approved decision to planning by reference. Break structural investment into reversible increments that buy information early, preserve an exit path, and delay irreversible cost until evidence requires it.
 
-Plan tasks implement, verify, or stage the choice at the approved tradeoff. Report concrete changed demand, ownership, hard constraints, or upgrade triggers to the decision owner as `needs-decision: design` (`implement-change`, One-Way Execution). The owner can explicitly request a structural reassessment without treating previous investment as a reason to retain the old choice.
+Plan tasks implement, verify, or stage the choice at the approved tradeoff. Report concrete changed demand, ownership, hard constraints, or upgrade triggers to the decision owner as `needs-decision: design` (`implement-change`, One-Way Execution). The owner can explicitly request a structural reassessment based on future costs and benefits.
 
 ## Failure Modes
 
-- **Pattern shopping:** selecting patterns because they are available in the catalog rather than because they relieve a proven constraint.
-- **Future-proofing without a trigger:** paying recurring complexity for an unbounded hypothetical future.
+- **Pattern shopping:** selecting catalog patterns with no proven constraint to relieve.
+- **Future-proofing:** paying recurring complexity for an unbounded hypothetical future with no upgrade trigger.
 - **Cost externalization:** giving one caller or team local convenience while transferring coordination, incident, or migration cost to others.
-- **Sunk-cost defense:** continuing an architecture because of prior investment when the next increment no longer pays.
-- **Template gaming:** completing every field or adding every oracle to satisfy a process rather than protect an outcome.
-- **Demand fiction:** using an unsupported growth forecast instead of current evidence, lead time, and an observable upgrade trigger.
+- **Sunk-cost defense:** continuing an architecture because of prior investment when the next increment costs more than its benefit.
+- **Template gaming:** completing every field or adding every oracle to satisfy a process regardless of the protected outcome.
+- **Demand fiction:** relying on an unsupported growth forecast in place of current evidence, lead time, and an observable upgrade trigger.
 
 ## Short Examples
 

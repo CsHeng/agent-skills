@@ -9,9 +9,9 @@ Build production images that run on both amd64 and arm64, using buildx and multi
 
 ## Steps
 
-1. Use multi-stage builds so the runtime image holds no build toolchain.
+1. Use multi-stage builds and keep the build toolchain in the build stage.
 2. Cross-compile compiled binaries (Go) with the `BUILDPLATFORM`, `TARGETOS` and `TARGETARCH` build args.
 3. Run the container as a non-root user where possible; container hardening follows `security-guardrails`.
 4. Validate per platform that the image starts and passes a simple health check (or document the health check as intentionally omitted). Load and run the native-platform image with `--load`; for the other platform, use a runtime already available and prefer cross-compilation over emulated builds.
-5. Use `docker compose`, and write Compose files without a `version` field.
+5. Use `docker compose`, and omit the `version` field from Compose files.
 6. Run builder selection, local build and push as three separate steps; the commands are in `references/buildx-commands.md`, which applies whenever you run `docker buildx`.

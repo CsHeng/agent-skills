@@ -2,7 +2,7 @@
 
 These modes extend the current-repository parser invocation in `SKILL.md`. Resolve `SKILL_DIR` from that file first; every command here is read-only. Read only the mode the task requires.
 
-Source-home selection (`--codex-home`, `--claude-home`, `--grok-home`, `--pi-home`), output format (`--format`), and history scope (`--scope`) are independent controls. Adding homes or selecting JSON output does not widen history scope; scope stays `current` unless `--scope all` is passed explicitly, and scope matching is identical in every output format. Default sources include `grok` and `pi`, and `--pi-home` defaults to `~/.pi/agent`.
+Source-home selection (`--codex-home`, `--claude-home`, `--grok-home`, `--pi-home`), output format (`--format`), and history scope (`--scope`) are independent controls. Scope stays `current` unless `--scope all` is passed explicitly, and scope matching is identical across homes and output formats. Default sources include `grok` and `pi`, and `--pi-home` defaults to `~/.pi/agent`.
 
 ## Source Locations
 
@@ -22,11 +22,11 @@ Additional homes use the same directory shapes under their own Codex, Claude, Gr
 
 Interpret session evidence before treating it as intent:
 
-- Interpret Pi v3 JSONL files on the last determinable recorded `id`/`parentId` branch and report that selection; it is not the UI current branch, and exclusive branches are not concatenated.
-- Mine raw tree messages rather than compaction summaries or `retainedTail` copies.
-- Disclose version 1/2 and other unsupported or malformed files as incomplete evidence rather than counting them as complete sessions, and surface partial Pi evidence instead of reporting a silently complete count.
-- Follow `parentSession` only within the selected files; unrecognized forks are limitations, not unique-task claims.
-- Strip injected `<skill ...>...</skill>` blocks and keep the remaining user tail as intent; skill injection is not an explicit user invocation.
+- Interpret Pi v3 JSONL files on the last determinable recorded `id`/`parentId` branch and report that selection; identify it separately from the UI current branch and keep exclusive branches separate.
+- Mine raw tree messages as the evidence source.
+- Disclose version 1/2 and other unsupported or malformed files as incomplete evidence, and surface partial Pi evidence in counts.
+- Follow `parentSession` only within the selected files; report unrecognized forks as evidence limitations.
+- Strip injected `<skill ...>...</skill>` blocks and keep the remaining user tail as intent; establish explicit user invocation from the user request.
 - Count assistant `stop`, `toolUse`, `error`, `aborted`, and `length` separately from model-change events and from the assistant's actual model.
 - Count assistant `stop` as a neutral event; treat a following continue or approval prompt only as a candidate relationship.
 - Pi samples are categorical summaries that omit thinking, images, and raw tool payloads.
@@ -57,7 +57,7 @@ python3 "$SKILL_DIR/scripts/extract-session-signals.py" \
 
 ## Machine-Readable Aggregation
 
-`--format json` changes only the output shape; it does not change scope or the selected homes:
+`--format json` selects the output shape; scope and home options select their respective boundaries:
 
 ```bash
 python3 "$SKILL_DIR/scripts/extract-session-signals.py" \
@@ -93,8 +93,8 @@ python3 "$SKILL_DIR/scripts/extract-session-signals.py" \
   --limit 0
 ```
 
-Here too the history scope comes from the explicit `--scope all`; the contract, prefix, and JSON flags do not affect it.
+Here too the history scope comes from the explicit `--scope all`.
 
-Skill usage evidence is separated into explicit `$skill` user requests, assistant references, skill-file loads, and optional tool outputs. A model activation is only a heuristic summary: a skill load without an explicit user request in the same session is inferred activation, while raw records remain an upper bound rather than an exact invocation count. Installed flat paths resolve through exact current-inventory public ID directories; loads that cannot resolve to a current public ID are excluded instead of entering a repository-wide fallback bucket. Injected prompts, instruction blocks, available-skill inventories, and Claude tool-result wrappers do not count as user intent. `--skill-usage-contract` reports declared contract state, Codex source policy/defaults, and Claude frontmatter/default visibility as separate fields.
+Skill usage evidence is separated into explicit `$skill` user requests, assistant references, skill-file loads, and optional tool outputs. A model activation is a heuristic summary: a skill load without an explicit user request in the same session is inferred activation, while raw records supply an upper bound on invocation count. Installed flat paths resolve through exact current-inventory public ID directories; exclude loads that cannot resolve to a current public ID. Determine user intent from user requests after excluding injected prompts, instruction blocks, available-skill inventories, and Claude tool-result wrappers. `--skill-usage-contract` reports declared contract state, Codex source policy/defaults, and Claude frontmatter/default visibility as separate fields.
 
-Skill output is not evidence by default. Use `--skill-usage-include-output` only when tool output itself is evidence; it is off by default because directory listings and inventory dumps can inflate usage counts. For Pi, skill-usage matching uses structured tool names and path-like arguments rather than flattened payloads, and include-output still does not lift the sensitive-content boundary.
+Skill output is not evidence by default. Use `--skill-usage-include-output` only when tool output itself is evidence; it is off by default because directory listings and inventory dumps can inflate usage counts. For Pi, skill-usage matching uses structured tool names and path-like arguments, and include-output remains subject to the sensitive-content boundary.

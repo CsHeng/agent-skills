@@ -1,6 +1,6 @@
 ---
 name: smart-commit
-description: "Use when the user explicitly asks to group current working-tree diffs by business domain or purpose and create focused local commits, including staged and unstaged splits. Do not use for a generic commit request, diff inspection, status reporting, or history cleanup."
+description: "Use when the user explicitly asks to group current working-tree diffs by business domain or purpose and create focused local commits, including staged and unstaged splits. Generic commit requests, diff inspection, status reporting, and history cleanup follow their own workflows."
 ---
 
 # Smart Commit
@@ -11,11 +11,11 @@ Group the current working-tree changes by business purpose and create focused lo
 
 This skill covers change analysis through commit execution. It creates new local commits and commits eligible changes without a confirmation gate; reorganizing or squashing existing commits is a history rewrite that needs the user's explicit rewrite authority.
 
-Push authority comes only from the user's own instruction, and a commit request does not grant it. Run Git with its default safety checks, hooks included.
+Push authority comes only from the user's own instruction. Run Git with its default safety checks, hooks included.
 
 ## Target Repository Binding
 
-Bind the target repository before any Git inspection or write. The target repository is the Git root for the user's invocation working directory, an explicit user-supplied repository path, or a checkout the current task already resolved and verified as its target, such as its own worktree. For an explicit or task-resolved path, resolve `TARGET_REPO` from that path instead of the invocation directory.
+Bind the target repository before any Git inspection or write. The target repository is the Git root for the user's invocation working directory, an explicit user-supplied repository path, or a checkout the current task already resolved and verified as its target, such as its own worktree. For an explicit or task-resolved path, resolve `TARGET_REPO` from that path.
 
 ```bash
 INVOCATION_CWD="$(pwd -P)"
@@ -25,7 +25,6 @@ printf 'Target repository: %s\n' "$TARGET_REPO"
 
 Rules:
 - Run every Git command as `git -C "$TARGET_REPO" ...`.
-- Never use the plugin repository as the implicit target repository just because this skill file is loaded from there.
 - The plugin repository is a valid target only when the invocation working directory resolves to it or the user explicitly selects it.
 - If the resolved `TARGET_REPO` conflicts with the user's stated path, stop before running `git log`, `git diff`, `git add`, or `git commit`.
 

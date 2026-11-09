@@ -1,6 +1,6 @@
 # Security And Audit Logging
 
-Use this profile for security detection, investigation, access evidence, and compliance audit needs. Logging supplies evidence; it does not replace authentication, authorization, validation, rate limiting, or incident response.
+Use this profile for security detection, investigation, access evidence, and compliance audit needs. Logging supplies evidence; authentication, authorization, validation, rate limiting, and incident response own their respective controls.
 
 ## Event Selection
 
@@ -19,8 +19,8 @@ For each event, name the actor, action, target, outcome, policy or reason code, 
 
 - Never log passwords, authentication factors, session secrets, API keys, private keys, raw authorization headers, or secret-bearing URLs.
 - Prefer stable internal identifiers over names, email addresses, full IP addresses, request bodies, or tokens.
-- Omit sensitive values when the investigation can use an identifier or reason code. Hashing is not anonymization when the input space is guessable.
-- Sanitize attacker-controlled values for the sink and bound their length; structured encoding prevents log injection but does not make the data safe to retain.
+- Omit sensitive values when the investigation can use an identifier or reason code. Treat hashes of guessable inputs as identifiable data.
+- Sanitize attacker-controlled values for the sink and bound their length; structured encoding prevents log injection; apply retention classification to the encoded data.
 - Test both representative emission and forbidden-field absence.
 
 ## Correlation
@@ -36,7 +36,7 @@ Carry the minimum stable correlation needed across the audited path: request, tr
 
 ## Tamper Evidence
 
-Use append-only storage, signed batches, hash chains, immutable retention, or an independent collector only when the threat model or policy requires tamper evidence. Define the protected boundary, key owner, verification procedure, clock assumptions, gap detection, and response to failed verification. A hash stored beside a mutable event under the same authority is not independent evidence.
+Use append-only storage, signed batches, hash chains, immutable retention, or an independent collector only when the threat model or policy requires tamper evidence. Define the protected boundary, key owner, verification procedure, clock assumptions, gap detection, and response to failed verification. Keep integrity evidence under an independent authority when independent evidence is required.
 
 ## Verification
 

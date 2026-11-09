@@ -2,7 +2,7 @@
 
 Read this when the executable evidence needed to verify a change is unresolved. An established contract, test strategy, or narrow reproducer already answers that question; running known checks or using TDD needs no selection pass.
 
-Tests, contracts, properties, models, golden files, monitors, canaries, and synthetic probes are ways to observe the user's required outcomes and actual consumer contracts; their presence does not by itself establish what behavior must be preserved. Select product oracles against the executable boundary rather than document wording or diagram content (`development-standards` owns that distinction), and keep link, structure, and generator checks as evidence about their own tooling.
+Tests, contracts, properties, models, golden files, monitors, canaries, and synthetic probes are ways to observe the user's required outcomes and actual consumer contracts; actual requirements and consumers establish what behavior must be preserved. Select product oracles against the executable boundary (`development-standards` owns that distinction), and keep link, structure, and generator checks as evidence about their own tooling.
 
 ```text
 intent / invariant -> executable oracle -> implementation -> observation -> oracle comparison -> regression guard
@@ -36,7 +36,7 @@ Start with the cheapest relevant example, existing check, or real scenario that 
 | Legacy refactor safety | Characterization of consumer-relevant behavior | Current-behavior evidence | It would freeze known bugs or incidental library behavior |
 | Test-suite strength | Mutation testing | Meta-oracle | Suite is slow, flaky, or low risk |
 | Distributed resilience | Targeted dependency-failure checks; live fault injection only for runtime-only claims | Scenario or runtime oracle | The claim is testable more cheaply below, or blast-radius controls are inadequate |
-| Production-only regression | Canary / monitoring / SLO alerts | Runtime oracle | Used instead of pre-merge correctness |
+| Production-only regression | Canary / monitoring / SLO alerts | Runtime oracle | Pre-merge correctness evidence remains missing |
 | Security boundary | Focused allowed/denied cases; properties, fuzzing, or static analysis for the specific exposure | Example, property, or mixed oracle | Tooling adds no relevant protection |
 
 An existing OpenAPI or conformance setup already establishes the method; `api-contract-strategy` owns wire ownership, provider conformance, consumer adapters, generation, and compatibility.
@@ -53,9 +53,9 @@ When necessary evidence is missing or contradictory, name the unresolved oracle,
 
 This section owns retained-state and recovery evidence reuse. Scale persistence and recovery evidence to this change, the value of the affected state, the blast radius, and whether prior evidence still applies to the final candidate; a stage label such as unreleased does not lower protection for unique or irreplaceable data.
 
-- Ordinary logic that leaves persistence and recovery paths untouched needs its behavior checks, not a backup/restore drill.
+- Ordinary logic that leaves persistence and recovery paths untouched needs its behavior checks.
 - A new revision, repair, candidate digest, or template-only change leaves still-valid recovery evidence valid.
-- A change that migrates retained state needs an oracle for upgrading representative pre-migration state, not only empty-store initialization, without touching live data.
+- A change that migrates retained state needs an oracle for upgrading representative pre-migration state, using isolated data.
 - When backup/restore is itself the change, restore behavior is the product behavior under test.
 - Authorized disposable development state may prove recovery by rebuild or replace; retained existing data still needs migration evidence.
 - Re-verify the combinations, state transitions, or checks that later edits invalidated: changed data formats, recovery implementations, or runtime recovery conditions. Applicability is judged from the behavior, inputs, and conditions covered, without hashes or revision bookkeeping, and artifact integrity or exact-version reproduction applies where the protected behavior needs it.
@@ -71,7 +71,7 @@ This section owns retained-state and recovery evidence reuse. Scale persistence 
 | contract, model, or business scenario change | Changed user commitments, compatibility, and state transitions |
 | security oracle change | Actual exposure, exploitability, expected damage, control cost |
 
-Establish first what requirement the assertion protects. Within authorized edits an agent may remove its own unsupported tests, compatibility promises, or guards; an existing test or model-written plan does not freeze code shape, document wording, incidental library behavior, or fixture bytes. Where the assertion protects a real requirement, assess these edits for lost protection: exact assertion to existence-only, specific error to any error, exact status to broad range, exact permission set to partial containment, schema version relaxed without compatibility rationale, negative or boundary tests removed without equivalent protection, snapshots bulk-updated without readable diff review, sleeps or retries added to hide flakiness, integration behavior mocked away to make CI pass. Authorized secondary-capability tradeoffs are recorded adapted results; a main-goal or hard-boundary oracle keeps its strength.
+Establish first what requirement the assertion protects. Within authorized edits an agent may remove its own unsupported tests, compatibility promises, or guards; actual requirements and consumers establish the protected code, documents, behavior, and fixture bytes. Where the assertion protects a real requirement, assess these edits for lost protection: exact assertion to existence-only, specific error to any error, exact status to broad range, exact permission set to partial containment, schema version relaxed without compatibility rationale, negative or boundary tests removed without equivalent protection, snapshots bulk-updated without readable diff review, sleeps or retries added to hide flakiness, integration behavior mocked away to make CI pass. Authorized secondary-capability tradeoffs are recorded adapted results; a main-goal or hard-boundary oracle keeps its strength.
 
 ## Output
 

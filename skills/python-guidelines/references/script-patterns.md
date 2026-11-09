@@ -24,13 +24,13 @@ Use the owning project's environment and tooling policy in [Python Guidelines](.
    - implement the events the task needs
 4. Fail fast with actionable errors:
    - validate inputs before doing work
-5. Add tests for behavior of core functions (not CLI plumbing).
+5. Add tests for behavior of core functions and keep CLI plumbing thin.
 
 ## Diagnostics And Logging
 
 For a small one-shot script, useful stderr diagnostics and an accurate exit code may be sufficient. Keep stdout for the promised result, preserve error propagation, and log a failure once.
 
-For an operational tool that needs logs, use the project's logging mechanism and the event contract selected through `logging-standards`. Python's standard `logging` module can implement that contract; timestamps, field sets, correlation and retention are consumer decisions, not a universal script template. Keep sensitive values out of diagnostics.
+For an operational tool that needs logs, use the project's logging mechanism and the event contract selected through `logging-standards`. Python's standard `logging` module can implement that contract; the consumer decides timestamps, field sets, correlation and retention. Keep sensitive values out of diagnostics.
 
 ## Checklist
 

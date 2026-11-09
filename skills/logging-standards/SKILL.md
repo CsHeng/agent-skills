@@ -12,7 +12,7 @@ Logging records evidence; `security-guardrails` owns prevention controls and `er
 ## Design Workflow
 
 1. State the consumer and decision: debugging, operations, alerting, incident response, access evidence, compliance, or business audit.
-2. Select the smallest event set that answers that decision without duplicating metrics, traces, or domain state.
+2. Select the smallest event set that answers that decision; metrics, traces, and domain state retain their own roles.
 3. Define stable event names, severity semantics, required fields, correlation, cardinality limits, and ownership.
 4. Classify secrets, personal data, regulated data, and attacker-controlled values before choosing redaction or omission.
 5. Define routing, access, retention, deletion, integrity, and failure behavior according to repository and operational policy.
@@ -20,7 +20,7 @@ Logging records evidence; `security-guardrails` owns prevention controls and `er
 
 ## Event And Level Rules
 
-- Log state transitions, boundary outcomes, and actionable failures rather than narrating every function call.
+- Log state transitions, boundary outcomes, and actionable failures.
 - Use levels according to the service's operational response: reserve `ERROR` for failures an owner must investigate or a declared operation failed, and give expected client rejection the level its operational response needs.
 - Keep access logs, application events, and immutable audit records distinct when their consumers, schemas, access, or retention differ.
 - Record an error where useful context and response ownership meet.

@@ -12,4 +12,4 @@ Read this when creating or changing a Python service. Service boundaries, layeri
 ## Testing
 
 - Unit-test business rules directly.
-- Add integration tests for persistence and external IO where fakes cannot protect the real boundary.
+- Add integration tests for persistence and external IO to exercise real boundaries that require them.

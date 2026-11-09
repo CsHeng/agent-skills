@@ -5,7 +5,7 @@ description: "Select and compose skills when coding-task ownership is unclear or
 
 # Skills Routing
 
-Resolve the question that is actually open. A request that explicitly names or confidently matches another skill goes directly to it; this skill is a method library and a tie-breaker, not a mandatory entry, lifecycle, or runtime dispatcher. Settled language and verification choices, routine commands, and ordinary cleanup stay with the current task.
+Resolve the question that is actually open. A request that explicitly names or confidently matches another skill goes directly to it; this skill supplies a method library and a tie-breaker. Settled language and verification choices, routine commands, and ordinary cleanup stay with the current task.
 
 ## Read Only The Relevant Branch
 
@@ -23,4 +23,4 @@ A workflow may read a method reference directly without reselecting its primary 
 
 ## Keep The Current Owner And Authority
 
-Reply composition follows `output-styles`; method references contribute decisions and evidence without an extra phase or approval gate. A simplification audit stays read-only, and bounded authorized application continues through `implement-change`. Recovery reconciles actual changes, the current goal and approval baseline, unadjudicated reports, and any still-valid executor; it neither restarts skill selection nor invents authority, and raw sessions are not a way around workspace or permission checks.
+Reply composition follows `output-styles`; method references contribute decisions and evidence without an extra phase or approval gate. A simplification audit stays read-only, and bounded authorized application continues through `implement-change`. Recovery reconciles actual changes, the current goal and approval baseline, unadjudicated reports, and any still-valid executor; the current workflow and approvals remain in force, and raw sessions remain subject to workspace and permission checks.

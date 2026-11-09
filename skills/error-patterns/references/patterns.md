@@ -4,7 +4,7 @@ Read this when the boundary calls a remote dependency or declares health or read
 
 ## Circuit Breaking And Load Shedding
 
-Use a circuit breaker when repeated dependency calls demonstrably amplify latency or resource exhaustion and the caller has meaningful open, half-open, and recovery behavior. Use concurrency limits, queues, or load shedding when the actual constraint is local capacity rather than dependency health.
+Use a circuit breaker when repeated dependency calls demonstrably amplify latency or resource exhaustion and the caller has meaningful open, half-open, and recovery behavior. Use concurrency limits, queues, or load shedding when the actual constraint is local capacity.
 
 ## Health And Readiness Evidence
 

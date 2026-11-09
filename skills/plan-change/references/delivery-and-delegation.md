@@ -1,12 +1,12 @@
 # Delivery And Delegation
 
-Read this when a plan needs delivery or approval detail, coordination of delegated slices, a later authority change, or a fresh-main handoff. It describes useful information, not a required form.
+Read this when a plan needs delivery or approval detail, coordination of delegated slices, a later authority change, or a fresh-main handoff. It describes useful information for the handoff.
 
 ## Requirements Versus Means
 
 General approval binds the objective, scope, authority, exclusions, and required outcome acceptance at the delivery endpoint. Model-proposed guards, compatibility checks, hashes, dependency edges, intermediate simulation harnesses, duplicate cross-layer assertions, and candidate local commands stay revisable by the executor, who keeps protected behavior, real consumer contracts, and explicit user choices. Observed files, revisions, environment snapshots, and initial write regions help an executor investigate; they become boundaries only when explicitly designated.
 
-Evidence supports a behavior under particular inputs and conditions. A later change invalidates the claims it touches; judge relevance before deciding what to rerun, and do not substitute a digest match for behavior evidence.
+Evidence supports a behavior under particular inputs and conditions. A later change invalidates the claims it touches; judge relevance before deciding what to rerun, and use behavior evidence to support behavior claims.
 
 ## Delivery And Real Prerequisites
 
@@ -18,7 +18,7 @@ When proceeding would change the main goal, a user-fixed choice, material produc
 
 ## Authority Record Updates
 
-When a later user instruction changes task authority, reconcile it with the current objective, scope, and endpoint. Where the record update is authorized, rewrite the authorization block of the plan or approval summary as one current account: permitted actions and targets, accepted risks, remaining exclusions, and unresolved decisions. Merge still-valid permissions and constraints, remove superseded ones, update affected delivery dependencies, and leave chronology and original wording in conversation or version history. Recording the change needs no separate permission.
+When a later user instruction changes task authority, reconcile it with the current objective, scope, and endpoint. Where the record update is authorized, rewrite the authorization block of the plan or approval summary as one current account: permitted actions and targets, accepted risks, remaining exclusions, and unresolved decisions. Merge still-valid permissions and constraints, remove superseded ones, update affected delivery dependencies, and leave chronology and original wording in conversation or version history. The authorized record update includes recording the change without separate permission.
 
 ## User-Facing Decision
 
@@ -28,7 +28,7 @@ When an approval is outstanding, state the outcome and actions the user would au
 
 A plan records acceptable behavior, reasons, ownership, dependencies, known write regions, protected boundaries, and how results join, and leaves undiscovered filenames, local structure, glue, and ordinary investigation to the executor. From known facts, make the first useful local action or the first parallel assignments decidable; later implementation adapts splits to actual state, and only a newly incompatible goal or real boundary reopens planning. Slice selection at execution belongs to `implement-change` and its `references/delegated-execution.md` reference, which owns the cohesion, independence, and continuation rules.
 
-A cohesive worker slice investigates, implements, tests, diagnoses, and repairs its own bounded result. A writable task may cover multiple repositories through one access grant list; capability follows the grants. The parent keeps objective interpretation, authority, cross-task synthesis, finding adjudication, acceptance, and continuation. Represent a predecessor only when its output is a genuine input, and record a join only for a real input, shared resource, or parent integration point; a shared batch, role order, or tool wait is not a dependency. Optional execution and thinking profiles are provider-neutral hints described in `references/delegation-profiles.toml`; a missing mapping does not block implementation.
+A cohesive worker slice investigates, implements, tests, diagnoses, and repairs its own bounded result. A writable task may cover multiple repositories through one access grant list; capability follows the grants. The parent keeps objective interpretation, authority, cross-task synthesis, finding adjudication, acceptance, and continuation. Represent a predecessor only when its output is a genuine input, and record a join only for a real input, shared resource, or parent integration point. Optional execution and thinking profiles are provider-neutral hints described in `references/delegation-profiles.toml`; implementation proceeds when a mapping is missing.
 
 ## Fresh-Main Handoff
 

@@ -58,7 +58,7 @@ Rollback after a runtime failure follows `implement-change` (Recovery). Pre-merg
 
 ## Capability Placement
 
-The table gives a typical earliest lane, not a mechanical mapping:
+The table gives a typical earliest lane; place each check by its evidence and dependencies:
 
 | Evidence capability | Typical earliest lane | Placement rule |
 | --- | --- | --- |
@@ -84,15 +84,15 @@ For generated output, protect the generator, deterministic artifact, compilation
 - wait on readiness with a bounded probe
 - capture diagnostic logs and artifacts
 - clean up in success and failure paths
-- avoid fixed sleeps and order-dependent state
+- use readiness probes and independent test state
 
-A test input needs its own authorization; access to a developer shell, CI secret, cloud profile, agent socket, production credential, or management network does not supply it.
+A test input needs its own authorization, including when a developer shell, CI secret, cloud profile, agent socket, production credential, or management network is accessible.
 
 ## Gate Design
 
-Run narrow affected gates during implementation and, before completion, the aggregate gates that the change's impact or an explicit requirement calls for. Guard critical consumer paths with a few representative workflow or E2E scenarios rather than multiplying cheap assertions or covering every permutation through the most expensive lane. A required lane must fail or report unavailable when its prerequisite is missing; an optional local skip is not passing evidence for that lane.
+Run narrow affected gates during implementation and, before completion, the aggregate gates that the change's impact or an explicit requirement calls for. Guard critical consumer paths with a few representative workflow or E2E scenarios. A required lane must fail or report unavailable when its prerequisite is missing; report an optional local skip separately from passing evidence for that lane.
 
-Order gates by diagnosis value and cost: deterministic static and local evidence first, isolated integration and compatibility next, release-artifact and workflow evidence after that, and runtime-authorized observation last. A higher lane must add evidence unavailable below rather than repeat the same assertion with more infrastructure. For a consequential E2E, retain a bounded, redacted, repeatable proof appropriate to the boundary (such as the invocation, fixture identity and definitive output, or UI recording plus observable assertions). An artifact without an independently established expected result is not an oracle.
+Order gates by diagnosis value and cost: deterministic static and local evidence first, isolated integration and compatibility next, release-artifact and workflow evidence after that, and runtime-authorized observation last. A higher lane must add evidence unavailable below. For a consequential E2E, retain a bounded, redacted, repeatable proof appropriate to the boundary (such as the invocation, fixture identity and definitive output, or UI recording plus observable assertions). Establish an independent expected result before using an artifact as an oracle.
 
 ## Coverage
 
@@ -104,6 +104,6 @@ Add a numeric gate when:
 - the repository has a stable baseline
 - the threshold has an owner and review rationale
 - failure diagnosis is actionable
-- raising the threshold will not incentivize low-semantic tests
+- the threshold rewards meaningful test coverage
 
 Critical paths may justify stronger gates than glue or generated code. Keep dependency pins with their owner; tests reference the owner and carry no second copy of the selected version or checksum.

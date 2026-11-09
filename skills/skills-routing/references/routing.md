@@ -1,10 +1,10 @@
 # Skill Selection
 
-Skills are the durable, agent-agnostic behavior surface. Reusable behavior lives in a skill rather than in agent-specific rules; AGENTS files stay local constraints and thin indexes.
+Skills are the durable, agent-agnostic behavior surface. Reusable behavior lives in a skill; AGENTS files stay local constraints and thin indexes.
 
 ## Contract Ownership
 
-[Scope Contracts](routing.toml) groups neighboring skills into clusters. Each cluster names its members and the question that separates them, and each handoff names a situation, its single receiver, and the candidates that receiver replaces. A receiver is a public skill ID, `<id>:<reference>` for a method reference inside that skill, or `none` when general instructions and repository rules suffice; a separately installed skill whose description matches still applies. The registry defines no lifecycle, phase sequence, review gate, or protocol for another product.
+[Scope Contracts](routing.toml) groups neighboring skills into clusters. Each cluster names its members and the question that separates them, and each handoff names a situation, its single receiver, and the candidates that receiver replaces. A receiver is a public skill ID, `<id>:<reference>` for a method reference inside that skill, or `none` when general instructions and repository rules suffice; a separately installed skill whose description matches still applies. Each skill owns its own workflow and conditions.
 
 ## Decision Rules
 

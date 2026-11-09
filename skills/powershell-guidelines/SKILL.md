@@ -26,7 +26,7 @@ Apply PowerShell 7 standards for safe, portable, auditable automation to `.ps1`,
 - Name functions `Verb-Noun` with an approved verb (`Get-Verb` lists them).
 - Use PascalCase for functions, parameters and script-scoped variables, and `$camelCase` for locals.
 - Name script files in PascalCase: `Get-UserReport.ps1`.
-- Write full cmdlet names in scripts (`Get-ChildItem`, not `ls`).
+- Write full cmdlet names in scripts (for example, `Get-ChildItem`).
 - Pass data through parameters and return values.
 
 ### Paths

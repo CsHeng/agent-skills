@@ -39,7 +39,7 @@ Read [Controller And Remote Execution](references/controller-and-remote.md) when
 ### Formatting And Linting
 
 - Use the owning project's pinned Ruff through `uv run ruff`, configured in `pyproject.toml`.
-- Run `ruff check --fix --no-unsafe-fixes`, then `ruff format`, as separate commands; continue after exit 1 (residual diagnostics) and stop on any other non-zero exit. Resolve every final lint, format and type failure rather than suppressing it.
+- Run `ruff check --fix --no-unsafe-fixes`, then `ruff format`, as separate commands; continue after exit 1 (residual diagnostics) and stop on any other non-zero exit. Resolve the underlying cause of every final lint, format and type failure while keeping diagnostics enabled.
 - Limit changes to authorized files, and let the formatter own line length.
 
 ### Tests And Documentation

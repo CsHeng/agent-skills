@@ -1,6 +1,6 @@
 # Documentation Checks And Repair
 
-Use these commands when the affected documentation boundaries need checking or when existing prose drift needs an authorized mechanical repair. They are not a routine restyling sequence for new or otherwise conforming prose.
+Use these commands when the affected documentation boundaries need checking or when existing prose drift needs an authorized mechanical repair. Draft new and conforming prose in its intended form.
 
 Resolve the installed skill directory and target repository before running the selected check:
 
@@ -18,7 +18,7 @@ cd "$REPO_ROOT"
 bash "$SKILL_DIR/scripts/check-doc-boundaries.sh"
 ```
 
-The checker also calls the bundled normalizer in `check` mode. Required boundary checks retain their declared scan scope; a smaller repair scope never narrows them or removes assertions.
+The checker also calls the bundled normalizer in `check` mode. Required boundary checks retain their declared scan scope; retain that scan scope and all assertions when the repair scope is smaller.
 
 For a repository with a machine-readable documentation manifest:
 
@@ -26,17 +26,17 @@ For a repository with a machine-readable documentation manifest:
 python3 "$SKILL_DIR/scripts/check-documentation-layout.py" --root "$REPO_ROOT" --manifest testing/documentation-layout.json
 ```
 
-- The manifest declares roots and material classes, required indexes, stage and archive shapes, link scope, relocation manifests, and named exceptions. Use the repository's actual manifest path. Relocation checks verify old/new path relationships and created-file existence; they do not pin document contents.
+- The manifest declares roots and material classes, required indexes, stage and archive shapes, link scope, relocation manifests, and named exceptions. Use the repository's actual manifest path. Relocation checks verify old/new path relationships and created-file existence; document content remains editable.
 - Capabilities are `declared-roots`, `stage-shape`, `archive-shape`, `root-shape`, `index-closure`, `link-resolution`, and `migration-conservation`; the manifest maps them to its gate identifiers.
-- This check is advisory: keep the manifest as declaration data, and run the checker from the installed Skill rather than wiring it into repository tasks, tests, or tool dependencies or vendoring a copy.
-- Repair violations or declare a justified exception. Unresolved links in archived and staged scopes are named exemptions; useful historical bodies need not be rewritten to satisfy a gate, and obsolete material may be removed within the authorized cleanup.
+- This check is advisory: keep the manifest as declaration data, and run the checker directly from the installed Skill.
+- Repair violations or declare a justified exception. Unresolved links in archived and staged scopes are named exemptions; keep useful historical bodies as they are, and remove obsolete material within the authorized cleanup.
 - Exit status is `0` on pass, `1` on undeclared violations, and `2` on an unusable manifest or missing checker.
 
 ## Repairing Existing Prose Wrapping
 
-For a few affected lines, edit them directly. For a mechanical cleanup, use `scripts/normalize-markdown-prose.py` rather than writing a temporary parser. It scans Git-visible Markdown, including tracked and untracked files, while excluding ignored/cache material and symlinks.
+For a few affected lines, edit them directly. For a mechanical cleanup, use `scripts/normalize-markdown-prose.py`. It scans Git-visible Markdown, including tracked and untracked files, while excluding ignored/cache material and symlinks.
 
-Set the repair exclusions explicitly. The example below excludes only `archived`; add every unrelated file or subtree needed to bound the repair. Each `--exclude` is a literal repository-relative prefix, not a glob. If exclusions cannot safely express the authorized scope, make targeted edits instead.
+Set the repair exclusions explicitly. The example below excludes only `archived`; add every unrelated file or subtree needed to bound the repair. Each `--exclude` is a literal repository-relative prefix. If exclusions cannot safely express the authorized scope, make targeted edits.
 
 ```bash
 REPAIR_SCOPE=(--exclude archived)
@@ -51,6 +51,6 @@ python3 "$SKILL_DIR/scripts/normalize-markdown-prose.py" --root "$REPO_ROOT" "${
 python3 "$SKILL_DIR/scripts/normalize-markdown-prose.py" --root "$REPO_ROOT" "${REPAIR_SCOPE[@]}" --mode check
 ```
 
-`write` removes continuation newlines and aborts if non-whitespace prose content or Markdown structure changes. `check` detects remaining wrapped paragraphs, list items, or blockquotes. The normalizer preserves fenced and indented code, frontmatter, tables, headings, reference definitions, HTML-only lines, thematic breaks, and intentional hard breaks. If a joined line contains unrelated claims, split it into real paragraphs or list items at semantic boundaries, not at a fixed column width.
+`write` removes continuation newlines and aborts if non-whitespace prose content or Markdown structure changes. `check` detects remaining wrapped paragraphs, list items, or blockquotes. The normalizer preserves fenced and indented code, frontmatter, tables, headings, reference definitions, HTML-only lines, thematic breaks, and intentional hard breaks. If a joined line contains unrelated claims, split it into real paragraphs or list items at semantic boundaries.
 
-Use path exclusions to leave retained originals outside a mechanical prose repair; no content digest or immutable-document manifest is needed.
+Use path exclusions to leave retained originals outside a mechanical prose repair.

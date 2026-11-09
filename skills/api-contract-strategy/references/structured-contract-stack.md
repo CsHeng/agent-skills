@@ -25,7 +25,7 @@ For a legacy API, characterize registered routes and real protocol behavior, ide
 
 ## Source Layout And Bundle
 
-Keep one file for a genuinely small contract. When operation count, schema count, ownership, or merge contention makes that hostile to review, keep one thin root and split maintained source by stable API domain rather than by arbitrary file size.
+Keep one file for a genuinely small contract. When operation count, schema count, ownership, or merge contention makes that hostile to review, keep one thin root and split maintained source by stable API domain.
 
 Provide one pinned project-owned command that resolves references, lints, and creates a deterministic bundle. Treat the bundle as generated:
 
@@ -50,8 +50,8 @@ Retain Python or Shell only as lifecycle glue when it owns dynamic process, data
 
 ## Human, Ad Hoc, And GUI Interaction
 
-Use generated HTML for human review or external reference when a publication owner and audience exist. Agents do not require a hosted documentation site.
+Use generated HTML for human review or external reference when a publication owner and audience exist. Agents can use the contract and generated artifacts directly.
 
 Use Restish, curl, or a disposable single-operation Arazzo workflow for ad hoc exploration, and keep those artifacts uncommitted.
 
-Add Bruno, Postman, Yaak, or another GUI collection only when a named GUI collaboration requirement justifies a generated or synchronized projection. Keep OpenAPI and Arazzo upstream; never treat the GUI collection as contract truth.
+Add Bruno, Postman, Yaak, or another GUI collection only when a named GUI collaboration requirement justifies a generated or synchronized projection. Keep OpenAPI and Arazzo upstream as contract truth; treat the GUI collection as a projection.

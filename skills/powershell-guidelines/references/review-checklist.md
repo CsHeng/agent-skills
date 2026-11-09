@@ -11,7 +11,7 @@ Contribute relevant evidence and verification gaps to the `review-change` caller
 - Run PSScriptAnalyzer with Warning and Error severity. Connect relevant diagnostics to the reviewed scope.
 - Check `Set-StrictMode -Version Latest`, `$ErrorActionPreference = 'Stop'`, approved verbs, explicit error handling and cross-platform path construction with `Join-Path`; `powershell-guidelines` states the narrow `[System.IO.Path]::Combine()` exception.
 - Check for cmdlet aliases and global variables, including the `PSAvoidUsingCmdletAliases` and `PSAvoidGlobalVars` diagnostics.
-- Inspect custom parameters against the rule below. Built-in cmdlet parameter names are not custom aliases.
+- Inspect custom parameters against the rule below. Treat built-in cmdlet parameter names separately from custom aliases.
 - Anchor material findings to their locations, evidence, impact and smallest viable correction. A candidate diff is optional and preserves valid PowerShell and the caller's scope.
 
 ## Custom Parameter Aliases

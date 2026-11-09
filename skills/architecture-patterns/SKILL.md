@@ -22,7 +22,7 @@ Choose the smallest sufficient architecture justified by current demand, a const
 - Prefer an existing boundary or a reversible local extension when it satisfies the approved goal.
 - Require demand or constraint evidence before adding distribution, asynchronous coordination, new infrastructure, speculative seams, or independent operational surfaces.
 - Assign operational cost and decision authority to an explicit owner, place responsibility where the repository, team, runtime, language, or provider ecosystem has the lowest relative opportunity cost, and call out costs shifted to callers, operators, or future maintainers.
-- Treat security, compliance, data-loss, and externally mandated reliability requirements as hard constraints rather than optional benefits in a scorecard.
+- Treat security, compliance, data-loss, and externally mandated reliability requirements as hard constraints in the decision.
 - Decide with causal evidence, explicit discard reasons, and measurable triggers.
 
 ## Interface And Domain Boundaries

@@ -1,6 +1,6 @@
 # Python Testing Examples
 
-These examples use only the Python standard library, so they can be copied into a scratch directory and exercised with `uv run --no-project python -m unittest` or `python3 -m unittest`. They keep each test independent, gate on fixture readiness, release their own temporary directories and child processes, and report cleanup failures instead of hiding them.
+These examples use only the Python standard library, so they can be copied into a scratch directory and exercised with `uv run --no-project python -m unittest` or `python3 -m unittest`. They keep each test independent, gate on fixture readiness, release their own temporary directories and child processes, and report cleanup failures.
 
 ## Runnable Example: Isolated, Readiness-Gated Suite
 
@@ -301,7 +301,7 @@ Point the fixture directory at a nonexistent path to exercise the readiness gate
 CATALOG_FIXTURE_DIR="/nonexistent/catalog-fixtures" uv run --no-project python -m unittest
 ```
 
-Set `CATALOG_WORKER_IGNORES_SIGTERM=1` to start the worker in its non-cooperative mode, where `stop_worker` kills the process and then raises `CleanupError` so unittest reports the cleanup failure instead of swallowing it:
+Set `CATALOG_WORKER_IGNORES_SIGTERM=1` to start the worker in its non-cooperative mode, where `stop_worker` kills the process and then raises `CleanupError` so unittest reports the cleanup failure:
 
 ```bash
 CATALOG_WORKER_IGNORES_SIGTERM=1 uv run --no-project python -m unittest
@@ -309,7 +309,7 @@ CATALOG_WORKER_IGNORES_SIGTERM=1 uv run --no-project python -m unittest
 
 ## How The Suite Embodies The Rules
 
-- Isolation: `setUp` creates a fresh `TemporaryDirectory` and a fresh `CatalogStore` per test, and `start_worker` passes an explicit empty environment, so mutable state and ambient variables never cross test or run boundaries.
-- Readiness: `load_fixture` raises `FixtureNotReadyError` with the missing path, and `wait_for_heartbeat` plus the endpoint loop poll with a bounded deadline instead of sleeping blindly.
+- Isolation: `setUp` creates a fresh `TemporaryDirectory` and a fresh `CatalogStore` per test, and `start_worker` passes an explicit empty environment, keeping mutable state and ambient variables isolated across tests and runs.
+- Readiness: `load_fixture` raises `FixtureNotReadyError` with the missing path, and `wait_for_heartbeat` plus the endpoint loop poll with a bounded deadline.
 - Cleanup: `stop_worker` releases the child process and surfaces an ungraceful shutdown, `_release_temp_dir` lets `TemporaryDirectory.cleanup` raise, and `HealthEndpointTest.tearDownClass` shuts the server down and fails if its thread survives.
 - Explicit error handling: fixture reads distinguish missing files from invalid JSON, invalid quantities raise `ValueError`, and worker start, signal, and kill errors are wrapped with the operation that failed.

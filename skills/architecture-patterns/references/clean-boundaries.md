@@ -1,6 +1,6 @@
 # Clean Boundaries
 
-Use this reference when an architecture decision needs explicit layer responsibilities, dependency direction, interface placement, or cross-boundary tests. Apply it to the repository's actual modules rather than forcing the example layer names onto every system.
+Use this reference when an architecture decision needs explicit layer responsibilities, dependency direction, interface placement, or cross-boundary tests. Apply it to the repository's actual modules and terminology.
 
 ## Boundary Model
 
@@ -11,15 +11,15 @@ A common outer-to-inner arrangement is:
 - repositories and gateways own persistence and external IO
 - domain models own entities, values, invariants, and domain behavior
 
-Choose different names when the repository already has stable terms. The important property is ownership, not the number of layers.
+Choose different names when the repository already has stable terms. Focus on ownership when choosing layers.
 
 ## Dependency Direction
 
-- Dependencies point toward stable domain behavior; inner policy does not import transport, persistence, or framework details.
+- Dependencies point toward stable domain behavior; outer boundaries own transport, persistence, and framework details.
 - Cross-boundary calls use a caller-owned contract when an outward dependency would otherwise reverse dependency direction.
 - Infrastructure implements the contract required by the inner caller.
 - Constructor or explicit parameter injection makes required dependencies and lifetimes visible.
-- Do not add pass-through layers or interfaces that isolate no real variation, ownership boundary, or caller-visible test contract.
+- Add layers or interfaces that isolate real variation, an ownership boundary, or a caller-visible test contract.
 
 ## Interface Placement
 
@@ -27,10 +27,10 @@ Place an interface beside the behavior that consumes it when its purpose is to p
 
 ## Responsibility Checks
 
-- Handlers stay thin and do not own business rules.
-- Services do not depend on framework-specific request or persistence types.
-- Repositories do not decide business policy.
-- Domain models do not perform unowned IO.
+- Handlers stay thin; services or use cases own business rules.
+- Services use contracts independent of framework-specific request or persistence types.
+- Services or use cases own business policy; repositories own persistence.
+- Repositories and gateways own external IO; domain models own domain behavior.
 - Mapping happens at the boundary that owns the external representation.
 
 ## Cross-Boundary Tests
@@ -39,6 +39,6 @@ Place an interface beside the behavior that consumes it when its purpose is to p
 - Test repositories and gateways against realistic integration boundaries.
 - Keep handler tests focused on routing, parsing, authorization handoff, and serialization.
 - Add contract or component tests where independently changing sides need the same executable boundary evidence.
-- Avoid duplicating the same behavior assertion at every layer.
+- Place each behavior assertion at the layer that provides its strongest relevant evidence.
 
 Treat these checks as architecture evidence. Concrete fixture, environment, and CI ownership remains with `testing-strategy`, while language-specific test tooling remains with the matching language guideline.

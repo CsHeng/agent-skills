@@ -10,7 +10,7 @@ Update long-lived project truth from verified change evidence, and keep the user
 ## Use This Skill When
 
 - a verified change has real truth impact and the user request or approved change scope authorizes the documentation mutation
-- stable documentation or durable operational facts no longer match the implementation
+- stable documentation or durable operational facts need alignment with the implementation
 - a delivered change rests on user-fixed intent, preferences, or rejected alternatives that so far live only in a stage record or the conversation
 
 Read-only project explanation goes to `analyze-project`, implementation review to `review-change`, closure without truth updates to `close-change`, and restructuring of documentation ownership, layout, or search boundaries to `organize-docs`.
@@ -26,6 +26,6 @@ Read-only project explanation goes to `analyze-project`, implementation review t
 ## Rules
 
 - Update facts from evidence, and record a goal, discretion, or boundary mismatch as a finding for the decision that owns it (`development-standards` Goals, Discretion, And Risk).
-- Promote only intent the user stated or approved; an inferred preference, a one-change execution detail, or a review exchange is not durable intent.
+- Promote only intent the user stated or approved; keep inferred preferences, one-change execution details, and review exchanges in their appropriate historical context.
 - Record external paths, secrets, settings contents, or transient machine state only when the user named them a durable public contract.
 - Documentation authority covers documentation only.

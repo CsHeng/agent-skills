@@ -10,7 +10,7 @@ The core chain is:
 protected boundary -> independent oracle -> real dependency and authority -> primary evidence class -> execution lane -> diagnosis owner
 ```
 
-The result is not a universal pyramid. Contract, compatibility, security, performance, and runtime evidence answer different questions and do not form one mandatory linear stack.
+Contract, compatibility, security, performance, and runtime evidence answer different questions; choose their placement for the protected boundaries.
 
 ## Contents
 
@@ -39,7 +39,7 @@ Use these independent fields where needed to explain a suite's classification:
 | Cross-cutting tags | Which quality attribute changes the setup or review risk? | Compatibility, security, performance, resilience, migration |
 | Owner | Which suite owns diagnosis and who repairs failure? | Module, component, provider, consumer, workflow, platform, operations |
 
-A check has one primary evidence class and one primary diagnosis owner. Add cross-cutting tags instead of inventing compound labels such as “security-performance-integration-E2E test.”
+A check has one primary evidence class and one primary diagnosis owner. Add cross-cutting tags for quality attributes.
 
 ## Primary Evidence Classes
 
@@ -54,13 +54,13 @@ A check has one primary evidence class and one primary diagnosis owner. Add cros
 | UI or E2E | User-visible behavior that depends on the real browser, device, or application shell | Narrow user journey |
 | Runtime | Behavior observable only after deployment or under production-authorized conditions | Synthetic probe, canary, SLO, runtime invariant |
 
-Choose from the boundary actually exercised. A mocked HTTP client does not make a unit check an integration test, and invoking `pytest` does not make a cross-repository schema check a unit test. Contract evidence is not automatically more expensive than component evidence, and runtime evidence does not replace pre-merge correctness.
+Choose from the boundary actually exercised. Classify a mocked HTTP client by the real boundary exercised and a cross-repository schema check by its contract boundary, regardless of the `pytest` invocation. Compare actual evidence costs and retain pre-merge correctness alongside runtime evidence.
 
-Performance, security, resilience, compatibility, and migration usually modify an evidence class rather than replace it. A property test over an authorization function may be a security-tagged unit test; a load scenario against a deployed service may be a performance-tagged runtime check.
+Performance, security, resilience, compatibility, and migration usually modify an evidence class. A property test over an authorization function may be a security-tagged unit test; a load scenario against a deployed service may be a performance-tagged runtime check.
 
 ## Smallest-Sufficient-Layer Rule
 
-Start by naming the critical consumer outcome and credible ways it can fail. Then use the lowest realistic boundary that can prove each invariant, not the lowest boundary that can produce a green assertion. Keep a small set of risk-representative cross-boundary scenarios for the outcome itself; a trivial happy path chosen only for ease of passing is not sufficient evidence.
+Start by naming the critical consumer outcome and credible ways it can fail. Then use the lowest realistic boundary that can prove each invariant. Keep a small set of risk-representative cross-boundary scenarios for the outcome itself, covering credible failures.
 
 Promote or add evidence only when the higher boundary contributes information unavailable below:
 
@@ -71,7 +71,7 @@ Promote or add evidence only when the higher boundary contributes information un
 - browser, device, kernel, network, scheduler, or controller behavior
 - deployed configuration, traffic, recovery, or SLO conditions
 
-Do not duplicate the same expectation at every layer. Let lower-boundary checks protect detailed rules and let higher-boundary checks assert the smallest cross-boundary outcome. Do not mock away the boundary named by the test.
+Let lower-boundary checks protect detailed rules and let higher-boundary checks assert the smallest cross-boundary outcome. Exercise the real boundary named by the test.
 
 ## Oracle Independence
 
@@ -97,13 +97,13 @@ Weak or tautological patterns include:
 - freezing source layout, diagram content, fixture hashes, or incidental library behavior without a consumer requirement
 - accepting any error, broad status range, or non-empty output when exact behavior matters
 
-Use `replace` when the protected invariant is valuable but the current oracle is not independent. Use `delete` when no requirement supports the assertion or another owned oracle already proves the behavior at equal or stronger fidelity. A historical test or model-written plan does not turn an incidental implementation choice into required compatibility.
+Use `replace` when the protected invariant is valuable but the current oracle is not independent. Use `delete` when no requirement supports the assertion or another owned oracle already proves the behavior at equal or stronger fidelity. Establish required compatibility from consumer needs and explicit requirements.
 
 ## Suite Cohesion And Size
 
 There is no universal maximum file length, test length, test count, assertion count, or fixture size.
 
-Large suites can be reasonable when they contain one cohesive rule matrix, parser or protocol corpus, one component boundary, or reviewed golden cases with localized failures. Long data is often clearer as a table or fixture than as many nearly identical functions. Assess whether each corpus distinction protects real behavior and whether setup or expected output is duplicated: several input encodings can share one expected output, and launcher tests can share a small helper when they exercise the same lifecycle. Avoid a new framework whose maintenance costs more than the duplication it removes.
+Large suites can be reasonable when they contain one cohesive rule matrix, parser or protocol corpus, one component boundary, or reviewed golden cases with localized failures. Long data is often clearer as a table or fixture than as many nearly identical functions. Assess whether each corpus distinction protects real behavior and whether setup or expected output is duplicated: several input encodings can share one expected output, and launcher tests can share a small helper when they exercise the same lifecycle. Choose a framework when its maintenance cost is justified by the duplication it removes.
 
 Consider `split` when one file or test mixes any of:
 
@@ -116,9 +116,9 @@ Consider `split` when one file or test mixes any of:
 - source-text policy snapshots beside executable behavior checks
 - broad shared setup that turns one defect into many cascading failures
 
-Length is a prompt to inspect cohesion, not a disposition. A 1,400-line focused CLI or parser suite may be healthier than a 200-line test that repeats implementation logic or mixes three owners.
+Use length as a prompt to inspect cohesion. A 1,400-line focused CLI or parser suite may be healthier than a 200-line test that repeats implementation logic or mixes three owners.
 
-For a single long test, prefer a readable scenario or table over an arbitrary one-assert rule. Split when it contains independent behaviors or diagnosis paths, not merely because it has many assertions.
+For a single long test, prefer a readable scenario or table over an arbitrary one-assert rule. Split when it contains independent behaviors or diagnosis paths.
 
 ## Subprocess Environment Isolation
 
@@ -134,7 +134,7 @@ env = {
 subprocess.run(command, env=env, check=True)
 ```
 
-Do not copy the complete developer or CI environment into a child process merely for convenience. Ambient credentials, agent sockets, cloud profiles, proxy settings, and unrelated feature flags can change behavior or appear in diagnostics.
+Build a child process environment appropriate to the boundary under test. Ambient credentials, agent sockets, cloud profiles, proxy settings, and unrelated feature flags can change behavior or appear in diagnostics.
 
 Full environment inheritance is justified only when ambient-environment handling is the protected boundary. In that case:
 
@@ -148,15 +148,15 @@ Full environment inheritance is justified only when ambient-environment handling
 
 ### Terraform And Provider Graphs
 
-Prefer formatting and validation, provider schemas, plan JSON invariants, address and migration contracts, and narrowly authorized provider integration. Avoid protecting behavior by matching arbitrary `.tf` prose or repeating the entire resource graph in Python assertions.
+Prefer formatting and validation, provider schemas, plan JSON invariants, address and migration contracts, and narrowly authorized provider integration. Protect behavior with independent contract and provider evidence.
 
 ### Kubernetes And Generated Manifests
 
-Prefer schema validation, deterministic rendering, policy or contract checks, real consumer parsing, and server-side dry-run when authority exists. Assert meaningful ownership, security, storage, identity, and rollout invariants rather than copying every YAML field into tests.
+Prefer schema validation, deterministic rendering, policy or contract checks, real consumer parsing, and server-side dry-run when authority exists. Assert meaningful ownership, security, storage, identity, and rollout invariants.
 
 ### Ansible, Shell, And Operations Wrappers
 
-Use syntax checks, structured task parsing where syntax is the contract, isolated subprocess scenarios, fake tools outside the owned boundary, and narrowly authorized live acceptance. Do not freeze natural-language task names or inherit the full operator environment.
+Use syntax checks, structured task parsing where syntax is the contract, isolated subprocess scenarios, fake tools outside the owned boundary, and narrowly authorized live acceptance. Assert executable contracts and isolate the subprocess environment.
 
 ### Documentation And Skills
 
@@ -164,13 +164,13 @@ Read [Documentation Verification](documentation-verification.md): verify documen
 
 ### Cross-Repository Contracts
 
-Keep the canonical contract oracle with its owner and keep consumer assumptions with each consumer. A cross-repository check may verify reachability or compatibility, but it should not become one god suite that restates every repository's internal desired state and obscures diagnosis ownership.
+Keep the canonical contract oracle with its owner and keep consumer assumptions with each consumer. A cross-repository check may verify reachability or compatibility while preserving each repository's diagnosis ownership.
 
 ## Audit Procedure
 
 1. Establish whether the task needs a focused assessment or a complete audit of a named scope. Inspect the commands, tests, fixtures, generators, comparison bases, and runtime probes relevant to that scope and the decisions it needs.
 2. Group checks with the same protected behavior and assessment. Examine individual tests when their recommendations, boundaries, lanes, or owners differ; a row per discovered entry point is not required.
-3. Establish the user or consumer requirement behind the asserted invariant; do not assume the current test or a model-written plan makes it necessary.
+3. Establish the user or consumer requirement behind the asserted invariant.
 4. Trace how expected results are derived and whether the oracle is independent.
 5. Identify the real dependencies, authority, fixture lifecycle, lane, and diagnosis owner.
 6. Apply the smallest-sufficient-layer rule and choose one primary disposition.
@@ -194,6 +194,6 @@ Choose a primary recommendation for each assessed suite or coherent group. Expla
 
 ## Audit Output
 
-Follow the calling skill's deliverable and `output-styles`. For a standalone audit, lead with the supported recommendations, the suites or groups they concern, the behavior to preserve, and the evidence and limits behind the judgment. Include replacement coverage, placement, ownership, or coordination when the recommendation changes them. A table can help compare several suites; it is optional, and its columns follow the decision rather than a fixed field list.
+Follow the calling skill's deliverable and `output-styles`. For a standalone audit, lead with the supported recommendations, the suites or groups they concern, the behavior to preserve, and the evidence and limits behind the judgment. Include replacement coverage, placement, ownership, or coordination when the recommendation changes them. A table can help compare several suites; it is optional, and its columns follow the decision.
 
-When this analysis supports a design or plan, place the relevant conclusions there without an additional audit report. Distinguish facts, inferences, and unresolved evidence in whichever form is useful. A separate plan, approval, or coordination record follows the user's request and project policy, not this reference. State real producer-consumer and overlapping-write dependencies when they matter; common motivation or another plan's existence is not itself a dependency or a reason for a formal freeze.
+When this analysis supports a design or plan, place the relevant conclusions there without an additional audit report. Distinguish facts, inferences, and unresolved evidence in whichever form is useful. A separate plan, approval, or coordination record follows the user's request and project policy. State real producer-consumer and overlapping-write dependencies when they matter; common motivation or another plan's existence is not itself a dependency or a reason for a formal freeze.

@@ -10,12 +10,12 @@ Read this for temporary task execution that nests interpreters, needs procedural
 4. Put procedural logic in a repo-external scratch script, review and syntax-check it, then invoke it directly.
 5. Use a nested interpreter only when the preceding forms are materially worse for the bounded task and the exact command, inputs, and effects stay reviewable.
 
-A scratch script is the right form when logic needs loops, exception handling, several data structures, non-trivial regular expressions, or more than one quoting layer. Place it in a unique task directory under the declared scratch root or `$TMPDIR` (falling back to `$HOME/tmp` for agent-owned work), write it with the environment's file-editing capability rather than Shell interpolation, run the language syntax check, and remove owned scratch after the task.
+A scratch script is the right form when logic needs loops, exception handling, several data structures, non-trivial regular expressions, or more than one quoting layer. Place it in a unique task directory under the declared scratch root or `$TMPDIR` (falling back to `$HOME/tmp` for agent-owned work), write it with the environment's file-editing capability, run the language syntax check, and remove owned scratch after the task.
 
 ## Safety
 
 - Ad hoc Shell complies with the `shell-guidelines` language constraints.
-- Pass variable data through arguments, standard input, environment variables, or structured files; keep code static and data separate, so untrusted input never becomes part of an executable source string.
+- Pass variable data through arguments, standard input, environment variables, or structured files; keep code static and data separate to preserve the executable source boundary for untrusted input.
 - Destructive operations (mass edits, deletes, resets) run under matching authority with an understood, scoped impact; a sufficient current request or approved plan supplies that scope.
 - When one mutation must span nested language layers, make inner-layer failure propagate to the outer layer and verify the post-mutation state explicitly.
 
@@ -30,4 +30,4 @@ For a multi-file, remote, destructive, or otherwise irreversible operation, esta
 5. Execute with the simplest reviewable command shape.
 6. Verify the resulting state independently.
 
-When the target set or recovery path cannot be made explicit, stop rather than hiding the uncertainty inside a more elaborate command string.
+When the target set or recovery path cannot be made explicit, stop and surface the uncertainty.

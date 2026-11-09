@@ -5,7 +5,7 @@ description: "Use for SOPS/age secret editing and review: .sops.yaml creation_ru
 
 # SOPS Age Guardrails
 
-Edit SOPS-managed files with age recipients so that only secret keys are encrypted and no private identity reaches tracked files.
+Edit SOPS-managed files with age recipients, encrypt only secret keys, and keep private identities exclusively in the caller environment, ignored local config, or CI secret surfaces.
 
 ## Workflow
 

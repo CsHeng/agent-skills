@@ -10,7 +10,7 @@ Answer the actual project question from sufficient current evidence, scaling bot
 ## Select The Scope
 
 - For a local fact, identify the relevant `project`, follow applicable scoped instructions, read the stable owner that can answer the question, and verify the specific claim from code, configuration, or commands when needed.
-- When ownership is unclear, stable sources conflict, or evidence is insufficient, expand along that gap: inspect the relevant repository maps, README/AGENTS, ignore rules, or implementation, and state uncertainty rather than guessing. When documentation is poor, reconstruct from code for the asked question only.
+- When ownership is unclear, stable sources conflict, or evidence is insufficient, expand along that gap: inspect the relevant repository maps, README/AGENTS, ignore rules, or implementation, and state uncertainty. When documentation is poor, reconstruct from code for the asked question only.
 - For explicitly requested broad orientation or a full truth audit, map the relevant stable truth and search boundaries before drawing conclusions, and use [Full Project Truth Audit](references/full-audit-output.md).
 
 When another Skill owns the response (implementation, docs reorganization, change review, or a runtime, infrastructure, security, or other domain diagnosis), contribute only project facts, confidence, and drift evidence.

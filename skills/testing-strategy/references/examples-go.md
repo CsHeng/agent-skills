@@ -1,6 +1,6 @@
 # Go Testing Examples
 
-These examples use only the Go standard library, so they build and run offline with the `testing` package. The package gates the whole run on fixture readiness, gives every test its own `t.TempDir`, releases child processes through `t.Cleanup`, and returns explicit errors instead of ignoring them.
+These examples use only the Go standard library, so they build and run offline with the `testing` package. The package gates the whole run on fixture readiness, gives every test its own `t.TempDir`, releases child processes through `t.Cleanup`, and returns explicit errors.
 
 ## Runnable Example: Readiness Gate, Isolation, And Cleanup
 
@@ -377,7 +377,7 @@ CATALOG_WORKER_IGNORES_INTERRUPT=1 GOFLAGS=-mod=mod GOPROXY=off go test -count=1
 
 ## How The Package Embodies The Rules
 
-- Isolation: `newTestStore` and `TestWorkerIsReadyAndReleased` each call `t.TempDir`, and `startWorker` sets `cmd.Env` to an explicit allowlist, so mutable state and ambient variables never cross test or run boundaries.
-- Readiness: `TestMain` fails the run with an explicit message when the fixture is missing, `newTestStore` returns `ErrFixtureNotReady`, and `waitForHeartbeat` polls with a bounded deadline instead of sleeping a fixed time.
+- Isolation: `newTestStore` and `TestWorkerIsReadyAndReleased` each call `t.TempDir`, and `startWorker` sets `cmd.Env` to an explicit allowlist, keeping mutable state and ambient variables isolated across tests and runs.
+- Readiness: `TestMain` fails the run with an explicit message when the fixture is missing, `newTestStore` returns `ErrFixtureNotReady`, and `waitForHeartbeat` polls with a bounded deadline.
 - Cleanup: `t.Cleanup` stops the child process and reports any ungraceful exit, and the `testing` package removes each `t.TempDir` and fails the test if removal does not succeed.
 - Explicit error handling: `LoadFixture` wraps `ErrFixtureNotReady`, `stopWorker` wraps `ErrCleanup` around signal and kill failures, and every ignored return value would instead be checked with `t.Fatalf` or returned to the caller.

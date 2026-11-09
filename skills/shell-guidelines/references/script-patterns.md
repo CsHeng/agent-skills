@@ -12,7 +12,7 @@ For a one-shot remote action, reuse the controller's built-in module, local rend
 
 ## Diagnostics And Logging
 
-Send diagnostics to stderr and preserve stdout for the intended output. Keep error propagation and accurate exit status even when the script needs no logging framework.
+Send diagnostics to stderr and preserve stdout for the intended output. Keep error propagation and accurate exit status for every script, including one with only stderr diagnostics.
 
 Choose log events and their context through `logging-standards` when the task has an operational, diagnostic, security or audit consumer, and implement that contract with the project's existing mechanism. A one-shot wrapper may need only an actionable failure message. A managed operational tool may need levels, structured fields and correlation; select those for its consumer, emit each error once, and redact sensitive values.
 

@@ -6,8 +6,8 @@ Contribute material findings, relevant diagnostics and verification gaps to the 
 
 ## Review Checks
 
-- Use the resolved interpreter's syntax-only check. A Bash parse does not validate zsh or POSIX sh behavior.
-- For Bash/sh, run ShellCheck with GCC-format diagnostics. Pass `-s <bash|sh>` when the interpreter came from caller context rather than a trusted shebang.
+- Use the resolved interpreter's syntax-only check. Use the target interpreter to validate zsh or POSIX sh syntax.
+- For Bash/sh, run ShellCheck with GCC-format diagnostics. Pass `-s <bash|sh>` when caller context established the interpreter in place of a trusted shebang.
 - For zsh, use `zsh -n` and the manual language audit, and report ShellCheck as bash/sh coverage only.
 - Check the applicable requirements owned by `shell-guidelines`: entrypoint strict mode, quoting, safe variable names, input validation, interpreter portability, failure propagation and trap behavior.
 - Connect findings to location, evidence, impact, scope and the smallest viable correction. Preserve original logic and keep recommendations to the finding.

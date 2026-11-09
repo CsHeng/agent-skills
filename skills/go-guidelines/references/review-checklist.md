@@ -36,23 +36,23 @@ Add `go test -race ./...` only when concurrent behavior or shared state is in th
 - context propagation and cancellation ownership
 - goroutine, channel, timer, and shutdown lifecycle
 - interfaces introduced only at justified consuming boundaries
-- tests that exercise behavior rather than implementation trivia
-- disposable per-run build output, coverage and test scratch staying in declared scratch and cleaned when no longer needed; durable generated source, declared delivery artifacts and bounded retained caches follow their repository ownership policy rather than blanket cleanup
+- tests that exercise behavior
+- disposable per-run build output, coverage and test scratch staying in declared scratch and cleaned after use; durable generated source, declared delivery artifacts and bounded retained caches follow their repository ownership policy
 
 ## CLI Review Concerns
 
 - parser choice matches the approved command shape
-- command adapters do not own business logic
+- application use cases own business logic
 - stdout, stderr, exit codes, and machine output are explicit
 - completion is side-effect free
 - state-changing behavior has preview, confirmation, partial-failure, and recovery semantics
-- subprocess invocation does not construct unsafe Shell strings
+- subprocess invocation uses safe argument slices
 
 ## API Review Concerns
 
-- transport and application boundaries are explicit without ceremonial layers
+- transport and application boundaries are explicit and purposeful
 - server timeouts, input bounds, graceful shutdown, and contexts are correct
-- status and error mapping do not leak sensitive internals
+- status and error mapping protect sensitive internals
 - authentication, authorization, middleware, health, readiness, and observability match the service boundary
 - `httptest` or integration evidence covers the changed contract
 

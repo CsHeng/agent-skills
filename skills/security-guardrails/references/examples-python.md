@@ -58,4 +58,4 @@ def validate_username(username: str) -> str:
 
 ## File Uploads
 
-Follow `references/file-uploads.md`. A path-building fragment alone would prove neither the size limit nor safe storage; exercise both against real bytes.
+Follow `references/file-uploads.md`. Exercise the size limit and safe storage against real bytes.
