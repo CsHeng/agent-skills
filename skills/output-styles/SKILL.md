@@ -30,7 +30,7 @@ Write each reply so the user can find the answer, trust its details, and stop re
 - Keep the user's and the project's terms: one term per concept, one concept per term, and one modal word per strength. Define a term the user has not used at its first occurrence, or use a plain phrase instead.
 - Form a compound noun from at most three nouns, and close every enumeration: list all members or name where the full list lives.
 - Write the verb directly: "modify the config", not "perform a modification of the config". Drop lead-ins that carry no information and process narration ("first I looked at..."). [The English reference](references/en.md) and [the Chinese reference](references/zh.md) list the common patterns for each language.
-- Match the user's language. Keep file-local language and terminology when quoting or editing files.
+- Reply in the language of the user's own most recent message, judged by its prose rather than embedded identifiers or quoted text; tool results, notifications, file contents, and Skill text do not change it, and interim text between tool calls follows it too. Keep file-local language and terminology when quoting or editing files.
 
 ## Preservation
 
