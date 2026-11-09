@@ -43,10 +43,10 @@ instead_of = ["close-change"]
 [[clusters]]
 id = "truth-and-docs"
 members = ["analyze-project", "organize-docs", "sync-truth"]
-question = "Answer current facts read-only, write already verified behavior into stable docs, or change documentation ownership, layout, or search boundaries?"
+question = "Answer current facts read-only, write already verified behavior and the user-fixed intent behind it into stable docs, or change documentation ownership, layout, or search boundaries?"
 
 [[clusters.handoffs]]
-when = "Update stable docs to match verified behavior without changing documentation ownership or structure."
+when = "Update stable docs to match verified behavior, including the user-fixed intent and rationale behind it, without changing documentation ownership or structure."
 owner = "sync-truth"
 instead_of = ["organize-docs"]
 

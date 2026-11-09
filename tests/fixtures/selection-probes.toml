@@ -6,6 +6,13 @@ counterexample = "Reorganize which documents own the architecture summary and mo
 counterexample_primary = "organize-docs"
 
 [[probes]]
+id = "delivered-intent-docs-sync"
+request = "The footer change is verified; record the display preferences and rationale we agreed in conversation in the product architecture doc."
+primary = "sync-truth"
+counterexample = "Create a decision-record directory and move rationale out of the README into it."
+counterexample_primary = "organize-docs"
+
+[[probes]]
 id = "doc-ownership-explanation"
 request = "Explain which rules belong in README versus AGENTS in this repository."
 primary = "analyze-project"
