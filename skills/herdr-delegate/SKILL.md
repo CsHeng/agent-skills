@@ -1,27 +1,22 @@
 ---
-name: herdr-implement
-description: "Use when the user asks to hand an established plan to another main coding agent through Herdr for implementation and return it to the current main for review and repair rounds."
+name: herdr-delegate
+description: "Use when the user asks to hand an established plan to another main coding agent through Herdr for implementation and return it to the current main for review and repair rounds. A one-way handoff that the other main finishes on its own belongs to herdr-handoff."
 ---
 
-# Herdr Implement
+# Herdr Delegate
 
-Manage handoff prompts between two main coding-agent sessions: main A is the current session, main B implements the established plan. Compose `$herdr` for terminal and agent operations, `$implement-change` for B's implementation, and `$review-implementation` for A's review. Each main decides how to use its own native subagents; this Skill manages only the main-to-main exchange.
+Delegate implementation to another main coding-agent session while the current session keeps review and acceptance: main A is the current session, main B implements the established plan. Compose `herdr-handoff` to select or start B, `$implement-change` for B's implementation, and `$review-implementation` for A's review. Each main decides how to use its own native subagents; this Skill manages only the main-to-main exchange.
 
 ## Inputs And Defaults
 
-- The selected coding CLI is `pi`, `codex`, `claude`, `cursor-agent`, `grok`, or Antigravity (`antigravity` / `agy`), resolved through `$herdr`.
-- The plan is the current conversation's established plan unless the user supplies another; include conversation-only decisions and uncommitted context B needs, since an inaccessible path is not a supplied plan.
-- `model` and `thinking` describe B's main invocation only and are optional; resolve explicit overrides through current tool guidance and report an unsupported request instead of substituting a model or changing persistent client settings. A user-requested subagent override applies only to the named subagent scope.
+- Target, agent, model, thinking level, plan, and permission mode follow `herdr-handoff`, including inheriting A's own combination when the user names none.
 - Review defaults on with `rounds` a positive integer, default `3`. One round is B's implementation or repair followed by A's review. The budget limits the Herdr exchange, not completion of the task; internal subagent turns, tests, self-repairs, waits, and clarifications are inside a round. An explicit no-review request uses one implementation return and says review was skipped.
-- Use the selected CLI's native skip-permission or allow-all mode for both mains and their subagents. Requesting this mode authorizes direct execution of the established task, so no plan-approval exchange is added; project-specific gate instructions travel as ordinary handoff context.
 
-## Prepare The Main Sessions
+## Prepare Main B
 
-Read the current `$herdr` Skill and satisfy its environment requirements. It owns Herdr operations and discovery; the selected coding agent's current guidance owns its launch, permission, model, and thinking options.
+Follow `herdr-handoff` to make the records accessible to B and to select or start B, with ownership retained by A: B returns its result for review, and A keeps review, acceptance, the final response, and the plan's gated actions such as commit, push, and publication. Conversation-only context may also travel in the handoff, because B can ask before returning.
 
-Default to the current checkout and alternate implementation with review: while B writes and checks, A leaves those files alone; before A reviews, B settles its writing and write-producing subagents. Use a worktree for an actual isolation need or explicit request through `references/worktree-isolation.md` in `implement-change`.
-
-Use a suitable explicitly named pane or create one adjacent pane through `$herdr`, keeping the caller's focus. Start B in the intended working directory with the selected settings, retain its identity for later handoffs, and record which pane and agent this invocation created. During delegated rounds B owns implementation choices, verification, and internal delegation as a main session; A owns the outer loop, its review, and the final response. Each main's native subagent configuration owns its subagent routing; in Pi, leave task-level `model` and `thinking` unset unless the user selected them for those subagents.
+Default to the current checkout and alternate implementation with review: while B writes and checks, A leaves those files alone; before A reviews, B settles its writing and write-producing subagents. During delegated rounds B owns implementation choices, verification, and internal delegation as a main session; A owns the outer loop, its review, and the final response.
 
 ## Implement, Review And Continue
 

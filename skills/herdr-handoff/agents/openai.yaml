@@ -1,0 +1,6 @@
+interface:
+  display_name: "Herdr Handoff"
+  short_description: "Hand a plan to another main coding agent through Herdr"
+  default_prompt: "Use $herdr-handoff to hand the current plan to a new Pi session that implements it through delivery."
+policy:
+  allow_implicit_invocation: true

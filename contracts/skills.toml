@@ -143,14 +143,23 @@ default_role = "primary"
 may_mutate_repo = false
 may_spawn_agent = false
 
-[skills.herdr-implement]
+[skills.herdr-handoff]
 category = "tool"
 activation_mode = "native"
 default_role = "primary"
 may_mutate_repo = true
 may_spawn_agent = true
 requires_explicit_user_request = true
-semantic_requires = ["implement-change", "review-implementation"]
+semantic_requires = ["implement-change"]
+
+[skills.herdr-delegate]
+category = "tool"
+activation_mode = "native"
+default_role = "primary"
+may_mutate_repo = true
+may_spawn_agent = true
+requires_explicit_user_request = true
+semantic_requires = ["herdr-handoff", "implement-change", "review-implementation"]
 
 [skills.development-standards]
 category = "policy"

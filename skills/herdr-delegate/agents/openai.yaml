@@ -1,0 +1,6 @@
+interface:
+  display_name: "Herdr Delegate"
+  short_description: "Delegate a plan to another main coding agent through Herdr and review its return"
+  default_prompt: "Use $herdr-delegate with agent=codex to implement the current plan and return it for review."
+policy:
+  allow_implicit_invocation: true

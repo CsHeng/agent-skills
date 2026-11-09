@@ -90,11 +90,18 @@ counterexample = "List the worktrees of this repository."
 counterexample_primary = "none"
 
 [[probes]]
-id = "herdr-main-handoff"
+id = "herdr-main-delegate"
 request = "Use Herdr to hand this plan to Pi in another pane and bring the result back for review."
-primary = "herdr-implement"
+primary = "herdr-delegate"
 counterexample = "List the Herdr panes in this workspace."
 counterexample_primary = "none"
+
+[[probes]]
+id = "herdr-main-handoff"
+request = "Hand this plan through Herdr to a new Pi session with the same model and let it finish the work."
+primary = "herdr-handoff"
+counterexample = "Hand this plan through Herdr to Codex and bring the result back for my review."
+counterexample_primary = "herdr-delegate"
 
 [[probes]]
 id = "codex-session-merge"

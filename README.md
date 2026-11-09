@@ -24,7 +24,7 @@ The active coding agent selects one primary response owner and any useful overla
 
 `skills-routing` is the single entry for unresolved Skill, tool, language, verification, and simplification choices, with each method loaded from its own reference only when needed. Clearly matched tasks enter their owning Skill directly.
 
-[herdr-implement](skills/herdr-implement/SKILL.md) handles an explicit request to implement through Herdr: the selected external CLI runs as another main session, implements with `implement-change`, and returns changes for the current session's `review-implementation`. Requests such as “Use herdr-implement with agent=pi to implement this plan” use native Skill discovery. Herdr and its external `herdr` Skill must be installed separately; this collection does not bundle them.
+[herdr-handoff](skills/herdr-handoff/SKILL.md) and [herdr-delegate](skills/herdr-delegate/SKILL.md) handle an explicit request to hand an established plan to another main session through Herdr. With `herdr-handoff`, the other main, by default the same agent, model, and thinking level as the current one, implements with `implement-change` and owns the work through delivery. With `herdr-delegate`, it returns changes for the current session's `review-implementation` in bounded rounds. Requests such as “Use herdr-delegate with agent=codex to implement this plan” use native Skill discovery. Herdr and its external `herdr` Skill must be installed separately; this collection does not bundle them.
 
 ## Maintain And Check
 

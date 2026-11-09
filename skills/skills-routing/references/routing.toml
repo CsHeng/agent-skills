@@ -217,8 +217,8 @@ instead_of = ["runtime-diagnosis", "routeros-scripting-guidelines"]
 
 [[clusters]]
 id = "git-and-handoff"
-members = ["smart-commit", "herdr-implement", "implement-change:worktree-isolation"]
-question = "Group current diffs into focused commits, hand a plan to another main session through Herdr, isolate the current change in its own worktree or remove, prune, or repair an existing one, or perform an ordinary Git or delegation action?"
+members = ["smart-commit", "herdr-handoff", "herdr-delegate", "implement-change:worktree-isolation"]
+question = "Group current diffs into focused commits, hand a plan to another main session through Herdr for it to finish or to return for review, isolate the current change in its own worktree or remove, prune, or repair an existing one, or perform an ordinary Git or delegation action?"
 
 [[clusters.handoffs]]
 when = "Create one ordinary commit without business-domain grouping."
@@ -233,12 +233,22 @@ instead_of = ["smart-commit"]
 [[clusters.handoffs]]
 when = "Implement a change or delegate a managed subagent task without a main-to-main Herdr handoff."
 owner = "implement-change"
-instead_of = ["herdr-implement"]
+instead_of = ["herdr-handoff", "herdr-delegate"]
+
+[[clusters.handoffs]]
+when = "Hand a plan to another main session through Herdr that finishes it on its own, without returning for review."
+owner = "herdr-handoff"
+instead_of = ["herdr-delegate"]
+
+[[clusters.handoffs]]
+when = "Hand a plan to another main session through Herdr and review its returned result in rounds from the current main."
+owner = "herdr-delegate"
+instead_of = ["herdr-handoff"]
 
 [[clusters.handoffs]]
 when = "Inspect or control Herdr panes, tabs, workspaces, or commands without an implementation handoff."
 owner = "none"
-instead_of = ["herdr-implement"]
+instead_of = ["herdr-handoff", "herdr-delegate"]
 
 [[clusters.handoffs]]
 when = "Implement serially in the current checkout without a worktree request, repository rule, branch requirement, or concrete conflict."
