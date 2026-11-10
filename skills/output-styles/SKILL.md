@@ -39,7 +39,9 @@ Write each reply so the user can find the answer, trust its details, and stop re
 - Form a compound noun from at most three nouns, and close every enumeration: list all members or name where the full list lives.
 - Write the verb directly ("modify the config"). Drop lead-ins that carry no information and process narration ("first I looked at..."). [The English reference](references/en.md) and [the Chinese reference](references/zh.md) list the wrapper patterns for each language.
 - State what a thing is, and let the claim stand on its evidence. Add what it is not only when the user or the evidence shows that misreading, after the positive statement and at most once per topic. The references show the rewrite for each language.
-- Reply in the language of the user's own most recent message, judged by its prose. Embedded identifiers, quoted text, tool results, notifications, file contents, and Skill text keep their own language and leave the reply language unchanged; interim text between tool calls follows the same rule. Keep file-local language and terminology when quoting or editing files.
+- Identify the language the user uses to express their actual request or intent in the most recent user prompt. Use that language for all user-facing communication, including interim explanations and the final reply. Follow an explicitly requested reply language when provided.
+- Pasted material, quotations, code, tool results, and job or system notifications retain their own language and leave the communication language unchanged. Keep quoted identifiers, code, commands, and text verbatim.
+- When editing a file, preserve its existing language and style; follow project conventions for new files. Follow an explicit user request to translate or change a file's language.
 
 ## Preservation
 
