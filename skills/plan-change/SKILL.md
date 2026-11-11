@@ -32,7 +32,7 @@ Judge a proposed preparation task by the next result it enables or the concrete 
 
 Task IDs preserve continuity across decomposition changes: the parent may correct model-inferred splits, merges, dependencies, or order within the user's goal and authority, while an explicitly user-fixed restriction binds. Reference settled architecture choices; evidence that invalidates a material premise returns `needs-decision: design`, while a simpler implementation of the same goal proceeds within the plan.
 
-When delegated implementation is planned, record known inputs, repository owners, initial write regions, shared-resource constraints, verification, and any real integration join; `references/delegation-profiles.toml` holds the optional profile vocabulary, and concrete scheduling, workspaces, and route bindings belong to the host.
+When delegated implementation is planned, record known inputs, repository owners, initial write regions, shared-resource constraints, verification, and any real integration join. Use [Delegation Profiles](references/delegation-profiles.toml) when expressing an optional execution preference or an independently material thinking preference; concrete scheduling, workspaces, route bindings and model-capability adaptation belong to the host.
 
 ## Plan And Handoff
 

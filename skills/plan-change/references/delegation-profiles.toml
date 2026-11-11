@@ -1,7 +1,10 @@
 semantic_vocabulary_version = 1
 runtime_contract = false
+# Optional execution preferences: fast favors quick turnaround; balanced weighs cost and quality; deep favors complex work.
 execution_profiles = ["fast", "balanced", "deep"]
-# Optional provider-neutral thinking effort. Not a provider thinking level, model, role, or host configuration.
+# Optional independent thinking effort: light favors low overhead; standard routine reasoning; deep more deliberation.
+# Use an execution preference alone when the host route already provides suitable thinking effort.
+# Hosts own concrete model bindings, provider-level adaptation and fallback; these hints remain portable intent.
 thinking_profiles = ["light", "standard", "deep"]
 delegation_ready_facts = [
   "repository_owner",
