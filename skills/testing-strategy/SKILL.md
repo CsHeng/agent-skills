@@ -32,6 +32,8 @@ boundary -> oracle -> fixture/environment -> owning suite -> CI/release lane -> 
 
 Add a missing verification layer at the lowest boundary that can observe the failure.
 
+When a boundary needs UI, device, browser, or system-level automation machinery, read [Automation Sourcing And Driver Evaluation](references/automation-sourcing.md) before writing driving code: compose existing tools by layer, starting from the selected framework's own testing guidance, and own only scenarios, fixtures, and domain probes.
+
 Start acceptance from the critical consumer outcome and plausible failure modes, then choose the smallest real boundary that can prove each invariant. Keep a few risk-representative cross-boundary scenarios for behavior that isolated tests cannot see; use focused unit or integration checks for detailed logic and diagnosis. A passing scenario with expected results invented from the same implementation is a weak oracle. User-experience goals need corresponding scenarios, such as independent selection across business groups or a first-run initialization source; parser, existence, or golden checks cover other properties.
 
 ## Classification
@@ -104,6 +106,7 @@ For an audit, state the scope actually examined and give supported recommendatio
 ## References
 
 - [Test Layering And Suite Audit](references/test-layering-and-suite-audit.md)
+- [Automation Sourcing And Driver Evaluation](references/automation-sourcing.md)
 - [Documentation Verification](references/documentation-verification.md)
 - [Test Design](references/test-design.md)
 - [Python Testing Examples](references/examples-python.md)
