@@ -30,6 +30,7 @@ Read-only project-state explanation and local git or worktree status go to `anal
 - When an authorized change creates, promotes, supersedes, compacts, or retires durable decision truth, read [Decision Record Lifecycle](references/decision-record-lifecycle.md) and classify current status together with future value.
 - When consolidating plan artifacts, inspect the source roots in scope, keep useful material under the repository's canonical stage layout, and repair references after moves or deletions; an explicitly retained historical original may stay unchanged.
 - When a repository has competing names for one concept, define the canonical term in stable docs, and update docs, paths, tests, and code references together.
+- When a document restates a reference that a self-describing source owns (CLI `--help`, task-runner listings, schemas, generated API references), point to that source and treat the copy as cleanup scope. A reader need the source leaves unmet belongs to the source's owner: revise the help text, task description, or schema itself. Read [Self-Describing Sources](references/writing-stable-docs.md#self-describing-sources).
 - Name intentionally retained historical or reference material `archived`, and compatibility surfaces targeting an older, alternate, or constrained version `compat`.
 - When authoring or revising Markdown prose or diagrams, read [Writing Stable Docs](references/writing-stable-docs.md).
 
