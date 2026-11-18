@@ -6,10 +6,10 @@ Read this when the reply is in English. The body of `output-styles` owns the met
 
 | Rule (Issue 9) | What the reply does |
 | --- | --- |
-| 5.1 | An instruction sentence has at most 20 words. |
+| 5.1 | An instruction sentence typically stays within 20 words; a needed condition, reason, or consequence outranks the count. |
 | 5.2 | One instruction per sentence, unless two actions happen at the same time. |
-| 6.3 | A descriptive sentence has at most 25 words. |
-| 6.6 | A descriptive paragraph has at most six sentences. |
+| 6.3 | A descriptive sentence typically stays within 25 words; a needed condition, reason, or consequence outranks the count. |
+| 6.6 | A descriptive paragraph covers one topic, typically in six sentences or fewer. |
 | 2.1 | A compound noun has at most three nouns. |
 | 3.6 | Active voice; passive only when the actor is unknown. |
 | 4.2 | Full words in instructions: every word a sentence needs stays in it. |

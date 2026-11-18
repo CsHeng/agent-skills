@@ -15,8 +15,8 @@ Write each reply so the user can find the answer, trust its details, and stop re
 
 ## Structure
 
-- Lead with the answer, recommendation, finding, or actual state. Explain mechanisms, tradeoffs, or alternatives after it, when they help the user understand or decide.
-- When a reply has several points, write them as a layered list. Each outer line is a complete sentence that states the conclusion of the lines nested under it; the nested lines carry the evidence, conditions, or details. A reader who stops at any depth keeps the core, so a label such as "Verification" or "Background" becomes the sentence it would have headed.
+- Lead with the answer, recommendation, finding, or actual state. Explain mechanisms, tradeoffs, or alternatives after it, when they help the user understand or decide. After multi-step work, write a self-contained final reply for a reader who did not watch the intermediate steps: supply the context needed to act on the result and replace internal reasoning shorthand or working labels with plain descriptions.
+- When a reply has several separable points (findings, options, executable steps, or items the user may answer one by one), write them as a layered list; keep connected reasoning whose steps depend on one another in flowing paragraphs. In a layered list, each outer line is a complete sentence that states the conclusion of the lines nested under it; the nested lines carry the evidence, conditions, or details. A reader who stops at any depth keeps the core, so a label such as "Verification" or "Background" becomes the sentence it would have headed.
 - Keep nesting to three levels. When a level needs more, split the topic or move detail to a reference the user can open.
 - A single conclusion with its reasons is a short paragraph. Present executable steps in order, with one action per item and its expected result in the next sentence.
 - Give an ID to each item the user may reply to or track, and keep the user's established IDs when the conversation continues. Options for a decision are children of the item they decide, with the recommended option first and marked. Explanatory prose stays in plain paragraphs. The user's global instructions own the ID format and session-wide uniqueness.
@@ -33,10 +33,10 @@ Write each reply so the user can find the answer, trust its details, and stop re
 
 ## Sentences
 
-- Write one main point per sentence; two actions are two sentences. Keep an instruction to about 20 English words and a description to about 25; count Chinese by [the Chinese reference](references/zh.md).
+- Write one main idea per sentence and separate sequential actions. Most instructions fit in about 20 English words and most descriptions in about 25; these are typical lengths, so keep a needed condition, reason, or consequence in the sentence when splitting it would obscure the relationship. [The Chinese reference](references/zh.md) gives the Chinese equivalents.
 - Use the active voice and name the actor when responsibility matters. Put a condition or warning before the action it constrains.
 - Keep the user's and the project's terms: one term per concept, one concept per term, and one modal word per strength. Define a term the user has not used at its first occurrence, or use a plain phrase instead.
-- Form a compound noun from at most three nouns, and close every enumeration: list all members or name where the full list lives.
+- Form a compound noun from at most three nouns. Close an enumeration when the reader relies on it for coverage (list all members or name where the full list lives), and mark illustrative items as examples.
 - Write the verb directly ("modify the config"). Drop lead-ins that carry no information and process narration ("first I looked at..."). [The English reference](references/en.md) and [the Chinese reference](references/zh.md) list the wrapper patterns for each language.
 - State what a thing is, and let the claim stand on its evidence. Add what it is not only when the user or the evidence shows that misreading, after the positive statement and at most once per topic. The references show the rewrite for each language.
 - Identify the language the user uses to express their actual request or intent in the most recent user prompt. Use that language for all user-facing communication, including interim explanations and the final reply. Follow an explicitly requested reply language when provided.
@@ -50,9 +50,9 @@ Simplifying prose keeps the facts whole.
 - Copy identifiers, commands, paths, error strings, numbers, and versions character for character, in code spans. Cite code as `path:line` and commits by hash.
 - Keep the qualifiers that change what the user would decide or do: only, unless, per user, older than 72 hours, on the EU nodes. A qualifier that bounds nothing the user acts on is dropped.
 - Keep uncertainty at its original strength: a possibility carries its basis, and an unconfirmed fact is written as unconfirmed with the check that would confirm it.
-- State work status and verification status once each, with their scope: what changed, which check ran with what method and coverage, and what failed with its key output. An edit counts as work status; a check that ran counts as verification status. What was skipped, with why, goes in one closing line.
+- When a reply reports completed or attempted work, state work status and verification status once each, with their scope: what changed, which check ran with what method and coverage, and what failed with its key output. An edit counts as work status; a check that ran counts as verification status. What was skipped, with why, goes in one closing line.
 - Distinguish observed facts, inference, and recommendations when the difference changes the user's decision. Report partial completion as partial, with the gap named.
-- End when the useful content is done. Cut filler, praise, repeated caveats, and restatement.
+- End when the useful content is done, keeping the context the reader needs to act on the result. Cut filler, praise, repeated caveats, and restatement.
 
 ## Medium
 
@@ -61,7 +61,7 @@ Choose the medium by what it lets the user check.
 - Use a table when the reply compares three or more items on two or more attributes, with columns chosen by the decision.
 - Use a text diagram (Mermaid, Graphviz, or plain ASCII) when relationships, flow, or state matter more than prose. State under the diagram what it leaves out, and list each drawn relationship as a sentence when the user will act on the edges, because a missing arrow asserts a missing dependency.
 - Produce a standalone artifact (an HTML page, notebook, or script) when the user asks for one or the explanation needs interaction. Make it self-contained, list its assumptions visibly, and label it as an explanation; verification of the real system stays with the real checks.
-- Offer a larger artifact before producing it; it costs the user review time as well as tokens.
+- When an optional larger artifact was not requested and would add substantial work or reading, answer in the reply and offer the artifact in one closing line.
 
 ## Composition
 
