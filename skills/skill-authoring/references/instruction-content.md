@@ -10,14 +10,15 @@ Use this reference when writing or revising a Skill's body, references, scripts,
 
 ## Positive Register
 
-Models learn from what the text names, so an instruction corpus states what the reader does, chooses, and owns. Every rule, description sentence, boundary line and `AGENTS.md` item takes the same form: the situation, then the action or the owner.
+Models predict from the concepts and syntax the prompt activates, so an instruction corpus states what the reader does, chooses, and owns. Every rule, description sentence, boundary line, and `AGENTS.md` item takes the same form: the situation, then the action or the owner.
 
-- A negative clause has one of two jobs. It excludes a case from this rule's scope and names where that case goes (a receiver Skill, another rule, the user), or it corrects a misreading observed in practice. Attach it after the positive statement it bounds, at most one per rule.
+- When a model has a strong pre-trained habit (such as adding unrequested tests or refactors, or stopping at a milestone to ask for confirmation), prefer a **positive redirect** or a complete conditional branch ("when C holds, do X; otherwise continue to step Y", or "mention separate cleanup ideas in one closing line") so the model has a concrete target action.
+- A negative clause has one of two jobs. It excludes a case from this rule's scope and names where that case goes (a receiver Skill, another rule, the user), or it caps a misreading observed in practice or a hard safety boundary where positive phrasing alone leaves the pre-trained habit active. Attach it after the positive statement it bounds, at most one per rule.
 - A contrast whose second half is only a foil ("X, not Y", "is not a Z", "rather than W", "does not mean V") becomes the positive statement alone, or names the owner of the other half: "Role selects purpose and routing; access grants own permission."
 - A negative whose excluded case nobody would choose is deleted. A stack of forbidden cases primes those cases and reads as a checklist on instruction-literal routes.
 - Examples of what to avoid, counterexamples, and anti-pattern lists live in a reference, with the body pointing to it.
 
-Review a file against this register by listing its negated sentences and classifying each as exclusion with receiver, observed-misreading correction, foil, or dead case; `skill-composition-evaluation` in the architecture workspace retains the scan method.
+Review a file against this register by listing its negated sentences and classifying each as exclusion with receiver, observed-misreading or safety cap, foil, or dead case. Treat a negation scan as a diagnostic aid to catch foil contrasts and prohibition stacks; keep natural boundary words (`unverified`, `non-blocking`, `without asking`) and targeted safety or misreading caps where rewriting them would blur the boundary.
 
 ## Progressive Disclosure
 
@@ -29,7 +30,7 @@ Review a file against this register by listing its negated sentences and classif
 
 ## Status Vocabulary
 
-All labels are kebab-case and shared across the collection; these tables are the complete set.
+All labels are kebab-case and shared across the collection; these tables are the complete set. A label names an end state the owning workflow has reached for a caller or record to consume, while user-facing prose states what happened in plain words.
 
 | Use | Labels |
 | --- | --- |

@@ -23,7 +23,7 @@ Editing Skill files needs an explicit request. Editing harness-global instructio
 2. Place each fact on the layer that is visible when the model uses it. Read [Discovery Layers](references/discovery-layers.md).
 3. Write the body's admission section, then the description as its summary: the decision the Skill resolves, its trigger, the one or two most confusable exclusions with their receivers, and an explicit or overlay marker when the activation mode needs one.
 4. Where the repository keeps an inventory, activation registry, or scope-contract registry, change that owner first and its summaries and projections after it. Follow the repository's own instructions for exact files, generators, and checks.
-5. Write or revise the body and references with [Instruction Content](references/instruction-content.md).
+5. Write or revise the body and references with [Instruction Content](references/instruction-content.md); read [Model Prompt Guidelines](references/model-prompt-guidelines.md) when shaping completion, stopping, assumption, approval, verification, code-stance, delegation, or output-style rules.
 6. Review layer by layer: each lower layer consistently refines the one above, every exclusion names its receiver, each fact has one owner, and trigger examples, keyword lists, and inventory constants stay in maintenance material. Where the repository keeps selection probes, add or update a pair: one request the Skill should own and a nearby one it should hand off.
 7. Run the repository's structural checks. Run a behavioral comparison only for a concrete behavioral question.
 
