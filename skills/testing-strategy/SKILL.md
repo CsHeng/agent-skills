@@ -11,7 +11,7 @@ Turn a selected executable oracle into the smallest concrete verification set th
 
 When supporting design, planning, simplification, implementation, or review, contribute only the testing decisions and evidence that task needs.
 
-Read `references/oracle-selection.md` in `skills-routing` when the oracle method or protected behavior still needs a decision. Under an established strategy, run known checks and add routine regression tests directly. For multi-client API contract ownership and layer decomposition, use `api-contract-strategy`.
+Read `references/oracle-selection.md` in `skills-routing` when the oracle method or protected behavior still needs a decision. Under an established strategy, run the relevant existing checks directly, and add a regression test when requested, required by repository policy, or needed to catch a failure that existing checks miss. For multi-client API contract ownership and layer decomposition, use `api-contract-strategy`.
 
 Size verification by the protected boundary and its failure modes; add a numeric gate only under the conditions in the Coverage section of `references/ci-config.md`.
 
@@ -30,7 +30,7 @@ boundary -> oracle -> fixture/environment -> owning suite -> CI/release lane -> 
 5. Assign fast, merge, release, or runtime execution.
 6. Define what a failure means and who repairs it.
 
-Add a missing verification layer at the lowest boundary that can observe the failure.
+Use the lowest existing boundary that can observe the failure; add a verification layer when required behavior is observable only at a boundary current checks do not exercise.
 
 When a boundary needs UI, device, browser, or system-level automation machinery, read [Automation Sourcing And Driver Evaluation](references/automation-sourcing.md) before writing driving code: compose existing tools by layer, starting from the selected framework's own testing guidance, and own only scenarios, fixtures, and domain probes.
 
@@ -73,8 +73,8 @@ Review the suite and instructions the bounded change touches.
 ## Oracle Integrity
 
 - Protect the underlying requirement. Within authorized edits, remove or replace tests and agent-added guards that have no requirement or consumer basis, including incidental library behavior and arbitrary source or fixture bytes; establish that basis from actual requirements and consumers. Exact wire bytes, cryptographic vectors, and explicitly required output remain valid oracles where they carry the contract. Revise an earlier model-declared test plan when the required outcome stays protected.
-- Keep an oracle that protects a real requirement and make the implementation satisfy it (`implement-change`, Acceptance Integrity); removing a self-imposed constraint while preserving required behavior is a correction.
-- Record the oracle type for non-trivial changes: example, scenario, contract, property, model, current-behavior snapshot, meta-oracle, or runtime oracle.
+- Keep an oracle that protects a real requirement and make the implementation satisfy it (`implement-change`, Goals And Discretion); removing a self-imposed constraint while preserving required behavior is a correction.
+- Name the oracle type (example, scenario, contract, property, model, current-behavior snapshot, meta-oracle, or runtime oracle) when it clarifies what a check proves or who repairs a failure.
 - Judge test additions and removals by the protection gained or lost and their maintenance cost.
 - Make failures deterministic with readiness probes and exact assertions.
 - Preserve exact negative and boundary behavior where it carries domain meaning.

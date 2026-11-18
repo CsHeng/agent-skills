@@ -33,5 +33,5 @@ Render only the decision-relevant conclusions. When the user explicitly requests
 ## Guardrails
 
 - Treat only deterministic validators and reviewable artifacts as contract authority.
-- Apply `implement-change` Acceptance Integrity when implementation conflicts with a schema, fixture, assertion, or compatibility rule.
+- Apply `implement-change` Goals And Discretion when implementation conflicts with a schema, fixture, assertion, or compatibility rule.
 - Apply the demand test in `architecture-patterns` to operational infrastructure, and record its named owner and upgrade trigger.

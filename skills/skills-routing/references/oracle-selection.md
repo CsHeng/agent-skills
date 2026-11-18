@@ -75,4 +75,4 @@ Establish first what requirement the assertion protects. Within authorized edits
 
 ## Output
 
-Lead with the recommended oracle strategy: protected boundary, behavior status, risk, oracle owner, selected methods with purpose and level, implementation order, concrete validation evidence, and oracle edits that need the calling agent's judgment. When design, planning, review, or implementation owns the response, contribute these as an overlay under `output-styles`.
+Lead with the recommended oracle strategy and its basis. Include the protected boundary, behavior status, risk, oracle owner, selected methods with purpose and level, implementation order, concrete validation evidence, and oracle edits that need the calling agent's judgment where they affect that decision. When design, planning, review, or implementation owns the response, contribute these as an overlay under `output-styles`.
