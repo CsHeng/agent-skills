@@ -5,13 +5,13 @@ description: "Use during design, planning, implementation, and review as the sha
 
 # Development Standards
 
-Deliver the user's outcome with the least total implementation, testing, deployment, and maintenance burden over the intended lifetime, counting the cost of delayed feedback and delivery. Decide what is necessary first: YAGNI before DRY, so an unnecessary responsibility is deleted before shared machinery is extracted, and an existing adequate capability is reused before a new framework is generalized. Durable means maintainable over the declared horizon.
+Deliver the user's outcome with the least total implementation, testing, deployment, context, and maintenance burden over the intended lifetime, counting the cost of delayed feedback and delivery. The user owns the business intent, explicit choices, and authority boundaries; the agent owns technical selection, implementation, and keeping the repository maintainable across sessions. Decide what is necessary first: YAGNI before DRY, so an unnecessary responsibility is deleted before shared machinery is extracted, and a mature existing or ecosystem capability is reused before custom infrastructure is built. Durable means maintainable over the declared horizon.
 
 This Skill is the baseline the lifecycle workflow applies from the first design choice through review. The owning workflow keeps the response.
 
 ## The Necessity Test
 
-Before adding or keeping a mechanism, compatibility promise, verification gate, guard, or task, name the required result or real boundary it supports and the evidence for that claim. Omit it when the goal stays adequately supported otherwise. When the decision remains uncertain, run the cheapest targeted investigation that resolves it. Make this engineering judgment in passing.
+Before adding or keeping a mechanism, compatibility promise, verification gate, guard, or task, identify in passing the required result or real boundary it supports and the evidence for that claim. Omit it when the goal stays adequately supported otherwise. When the decision remains uncertain, run the cheapest targeted investigation that resolves it. Write this judgment out in a reply or artifact only when it changes a decision the user or reviewer weighs.
 
 Ask of a proposed constraint: if a capable implementer chose a different reasonable path that still met the user's goals and safety boundaries, would this constraint stop them? A constraint that would needs a concrete protected interest.
 
@@ -44,11 +44,11 @@ Ordinary local development establishes consistency by reading the current change
 
 ## Scoped Implementation
 
-- Implement requested behavior, approved supporting work, necessary verification, and removal of material made obsolete by this change. Keep the work within that scope.
+- Implement requested behavior, approved supporting work, necessary verification, and removal of material made obsolete by this change. Keep the work within that scope; mention a separate worthwhile structural cleanup at the end only when it helps the user, and apply it when the request, plan, or a repository rule assigns it.
 - Match established repository structure, naming, style, and ownership unless the approved change replaces them.
 - Fail closed on errors that the main goal, a required contract, or a hard boundary depends on; a missing required case is an explicit failure. Make failures of required behavior explicit; classified fallback or degraded mode for a secondary outcome is designed through `error-patterns` when that boundary is active.
 - Prefer a clean break over dual-running old and new behavior, and remove imports, variables, helpers, configuration, and documentation the change made obsolete.
-- Reuse genuinely shared behavior where it reduces maintenance; a little straightforward duplication can cost less than a new framework.
+- Reuse existing repository functions, types, representations, and APIs when they preserve the behavior callers rely on. Extract new shared machinery only for behavior shared today; a few straightforward lines cost less than premature indirection or a new framework.
 
 ## Durability And Experiments
 
@@ -56,7 +56,7 @@ Choose a solution that meets current commitments and can be maintained over the 
 
 ## Maintainability
 
-- Use names and module boundaries that reveal behavior and ownership. Split by responsibility, authority, state, or failure boundary. Create interfaces for proven variation or caller-visible contracts.
+- Use names and module boundaries that reveal behavior and ownership. Split a module where responsibility, authority, state, or failure handling actually diverges, and avoid extracting a new single-caller helper, wrapper, or class unless it names a domain concept or isolates one of those boundaries. Prefer human-readable code—clear names, explicit control flow, and few concepts for a maintainer to hold—over dense one-liners, code-golfed expressions, or extra indirection. Create interfaces for proven variation or caller-visible contracts.
 - Name repository assets for stable domain concepts or verified behavior from the first write, in files, modules, functions, tests, fixtures, scripts, configuration keys, and environment variables; plan task IDs, stage codes, and review rounds stay in plans and progress records. Genuine domain phases and protocol terms are valid names, and existing compatibility-bound names change only under a scoped migration.
 - Comment why a non-obvious constraint exists. Write persisted prose for the current repository state so a reader at `HEAD` can resolve its references and verify its claims; keep current-state explanations and durable decisions, still-valid rejected alternatives, and measured evidence at their owned truth location.
 - Code and observed execution establish implemented behavior; documents and diagrams express intent and explain it. Synchronize affected explanations after implementation and review their meaning directly. Actual protocol strings remain code contracts when consumers depend on them.

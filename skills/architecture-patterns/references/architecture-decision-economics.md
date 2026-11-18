@@ -109,7 +109,7 @@ Decide with causal evidence and explicit discard reasons; make assumptions and t
 
 Pass the approved decision to planning by reference. Break structural investment into reversible increments that buy information early, preserve an exit path, and delay irreversible cost until evidence requires it.
 
-Plan tasks implement, verify, or stage the choice at the approved tradeoff. Report concrete changed demand, ownership, hard constraints, or upgrade triggers to the decision owner as `needs-decision: design` (`implement-change`, One-Way Execution). The owner can explicitly request a structural reassessment based on future costs and benefits.
+Plan tasks implement, verify, or stage the choice at the approved tradeoff. Report concrete changed demand, ownership, hard constraints, or upgrade triggers to the decision owner as `needs-decision: design` (`implement-change`, Goals And Discretion). The owner can explicitly request a structural reassessment based on future costs and benefits.
 
 ## Failure Modes
 
