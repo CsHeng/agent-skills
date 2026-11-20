@@ -39,7 +39,7 @@ The worker implements its slice with necessary local feedback: relevant unit tes
 
 The parent coordinates integration, cutover, and broader verification for the combined change; workers execute those only when assigned. A source-only worker returns usable capability and explicit gaps; the parent owns deployment qualification. Retain product guards only for actual input, authority, or safety boundaries; report live authority and evidence gaps to the parent. The parent judges whether each gap blocks cutover or can be checked afterward, reusing applicable local evidence.
 
-Return the candidate, checks actually performed and their outcomes, known problems, unverified parts, and authorized secondary tradeoffs. A host snapshot or diff identity identifies a candidate; commits require their own authority. The parent decides final acceptance from the integrated result and evidence.
+Return the candidate, checks actually performed and their outcomes, known problems, unverified parts, and authorized secondary tradeoffs. A host snapshot or diff identity identifies a candidate; commits require their own authority. The parent decides final acceptance from the integrated result and evidence. When the assignment ends, the parent owns [release of its worktrees](worktree-isolation.md#clean-up-and-repair).
 
 Evidence must cover the final exported candidate. Verify the exported result using checks whose inputs match that candidate. Later changes can invalidate only part of the evidence; reuse the applicable part and verify affected combinations and missing acceptance. The parent decides evidence sufficiency.
 

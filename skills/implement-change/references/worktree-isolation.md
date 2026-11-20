@@ -138,7 +138,9 @@ Review the resulting status and both staged/unstaged diffs, and run the destinat
 
 ## Clean Up And Repair
 
-A worktree this task created is an execution resource. At closure, reclaim it through this section once its work is integrated or otherwise retained, or report it as retained with its reason. An explicit removal, metadata prune, or link repair request uses the same steps. Use actual paths from the worktree registry or an explicitly identified moved location. Follow this cleanup procedure for existing worktrees.
+Release each worktree this task created once its work is verified in the intended checkout, otherwise preserved as needed, or explicitly abandoned within scope, and no continuation, review, or repair needs it. For a delegated worktree, use the host action that releases working resources (for example, close with `disposition: "discard"`) and preserve session history. Applying a candidate or closing a worker with retention leaves a separate release decision. For a worktree managed directly with Git, use the removal procedure below.
+
+After either release path, verify that each target directory is gone and its owning repository no longer lists it in `git worktree list --porcelain`. If a worktree is still needed or release is partial or unverified, report its path and the reason. An explicit removal, metadata prune, or link repair request uses the actual registered paths or an explicitly identified moved location.
 
 ### Preserve Work Before Removal
 
