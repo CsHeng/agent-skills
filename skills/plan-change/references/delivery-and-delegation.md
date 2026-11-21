@@ -30,6 +30,8 @@ A plan records acceptable behavior, reasons, ownership, dependencies, known writ
 
 A cohesive worker slice investigates, implements, tests, diagnoses, and repairs its own bounded result. A writable task may cover multiple repositories through one access grant list; capability follows the grants. The main agent keeps assignment, overall progress, verification strategy, and final acceptance. Represent a predecessor only when its output is a genuine input, and record a join only for a real input, shared resource, or integration decision. Optional execution and thinking profiles are provider-neutral hints described in `references/delegation-profiles.toml`; implementation proceeds when a mapping is missing.
 
+Execution preferences describe fast turnaround, balanced cost and quality, or deep work; independent thinking effort describes light, standard, or deep reasoning. Use an execution preference alone when the host route already provides suitable thinking effort. Hosts own concrete model bindings, provider adaptation, and fallback. When isolated candidates are used, note any dependency on candidate integration.
+
 When the host supports peer messaging or a shared workspace, record who owns the relevant files and shared resources and which decisions need the assigner, using `references/delegated-execution.md` in `implement-change` for the brief and coordination at dispatch.
 
 ## Fresh-Main Handoff

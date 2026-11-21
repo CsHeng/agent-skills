@@ -23,8 +23,6 @@ The decision-tree methods are references under `skills-routing`, except simplifi
 
 Skill entry and direct-match bypass
 
-An explicit or confident match bypasses the router. Choosing a method reference does not reopen design or planning, and a request that needs no Skill proceeds without one.
-
 ![Skill entry and direct-match bypass](generated/decisions/skill-entry.svg)
 
 [Editable DOT source](diagrams/decisions/skill-entry.dot)
@@ -32,8 +30,6 @@ An explicit or confident match bypasses the router. Choosing a method reference 
 ## Business Feedback
 
 Choose the next useful piece of work
-
-Omit unsupported machinery, reuse adequate capabilities, and distinguish a current prerequisite from a later required check. The first useful slice is not the entire acceptance result.
 
 ![Choose the next useful piece of work](generated/decisions/business-feedback.svg)
 
@@ -43,8 +39,6 @@ Omit unsupported machinery, reuse adequate capabilities, and distinguish a curre
 
 Choose an implementation language
 
-Summarizes the existing language method without changing its policy. Explicit frameworks and actual target constraints come first; the role-specific Shell/Python/Go preferences are not universal rankings.
-
 ![Choose an implementation language](generated/decisions/language-selection.svg)
 
 [Editable DOT source](diagrams/decisions/language-selection.dot)
@@ -52,8 +46,6 @@ Summarizes the existing language method without changing its policy. Explicit fr
 ## Tool Selection
 
 Choose an ad hoc tool
-
-Routine bounded commands run directly. Counting, previewing, and tool discovery are conditional aids, not a mandatory three-step ceremony.
 
 ![Choose an ad hoc tool](generated/decisions/tool-selection.svg)
 
@@ -63,8 +55,6 @@ Routine bounded commands run directly. Counting, previewing, and tool discovery 
 
 Select only the missing evidence
 
-Start from the claim and the missing failure evidence. Choose an adequate small check before adding models, fault injection, or a new fixture framework.
-
 ![Select only the missing evidence](generated/decisions/oracle-selection.svg)
 
 [Editable DOT source](diagrams/decisions/oracle-selection.dot)
@@ -72,8 +62,6 @@ Start from the claim and the missing failure evidence. Choose an adequate small 
 ## Simplification
 
 Simplify a responsibility, not just its implementation
-
-Necessity precedes implementation quality. A targeted experiment is an option for uncertainty, not a required ablation stage. A cleanup request authorizes the supported removals; an audit request stays read-only.
 
 ![Simplify a responsibility, not just its implementation](generated/decisions/simplification.svg)
 
@@ -83,8 +71,6 @@ Necessity precedes implementation quality. A targeted experiment is an option fo
 
 Context transfer at a completed phase
 
-Preserves the existing PB1-PB5 order. Same-task repair and compaction are not new completed phases; an unavailable branch does not grant a new capability.
-
 ![Context transfer at a completed phase](generated/decisions/phase-boundary.svg)
 
 [Editable DOT source](diagrams/decisions/phase-boundary.dot)
@@ -92,8 +78,6 @@ Preserves the existing PB1-PB5 order. Same-task repair and compaction are not ne
 ## Operational Recovery
 
 Operational diagnosis and proportionate recovery
-
-Investigate the observed mismatch rather than every infrastructure axis. Protect actual data, access and shared resources; remote/deploy wording alone does not schedule a restore drill.
 
 ![Operational diagnosis and proportionate recovery](generated/decisions/operational-recovery.svg)
 
@@ -103,8 +87,6 @@ Investigate the observed mismatch rather than every infrastructure axis. Protect
 
 Select the smallest sufficient architecture
 
-Compare reuse, a local solution, and warranted structural investment by current commitments and total cost, including delayed feedback. A missing hard requirement is not permission to ship less.
-
 ![Select the smallest sufficient architecture](generated/decisions/architecture-selection.svg)
 
 [Editable DOT source](diagrams/decisions/architecture-selection.dot)
@@ -112,8 +94,6 @@ Compare reuse, a local solution, and warranted structural investment by current 
 ## Review And Progress
 
 Review the route to the outcome
-
-Includes unnecessary preparation in review judgment without creating another review stage. Parent adjudication, required acceptance and actual authority remain distinct.
 
 ![Review the route to the outcome](generated/decisions/review-and-progress.svg)
 
