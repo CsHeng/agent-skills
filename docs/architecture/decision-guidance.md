@@ -2,7 +2,7 @@
 
 These are reader-facing maps for checking discovery boundaries and conditional decisions. The owning Skill or reference remains the method source. Diagrams neither dispatch agents nor create a new lifecycle, permission, gate, or required report. Read only the map relevant to the question; do not traverse the gallery as a workflow.
 
-The decision-tree methods are currently references under `skills-routing`, not new public Skills. Installed Skills do not depend on these maintenance diagrams.
+The decision-tree methods are references under `skills-routing`, except simplification, which the explicit `simplify` Skill owns. Installed Skills do not depend on these maintenance diagrams.
 
 ## Map Index
 
@@ -13,7 +13,7 @@ The decision-tree methods are currently references under `skills-routing`, not n
 | [Choose an implementation language](#language-selection) | [skills/skills-routing/references/language-selection.md](../../skills/skills-routing/references/language-selection.md) | Summarizes the existing language method without changing its policy. Explicit frameworks and actual target constraints come first; the role-specific Shell/Python/Go preferences are not universal rankings. |
 | [Choose an ad hoc tool](#tool-selection) | [skills/skills-routing/references/tool-selection.md](../../skills/skills-routing/references/tool-selection.md) | Routine bounded commands run directly. Counting, previewing, and tool discovery are conditional aids, not a mandatory three-step ceremony. |
 | [Select only the missing evidence](#oracle-selection) | [skills/skills-routing/references/oracle-selection.md](../../skills/skills-routing/references/oracle-selection.md), [skills/testing-strategy/SKILL.md](../../skills/testing-strategy/SKILL.md) | Start from the claim and the missing failure evidence. Choose an adequate small check before adding models, fault injection, or a new fixture framework. |
-| [Simplify a responsibility, not just its implementation](#simplification) | [skills/skills-routing/references/simplification.md](../../skills/skills-routing/references/simplification.md), [skills/development-standards/SKILL.md](../../skills/development-standards/SKILL.md) | Necessity precedes implementation quality. A targeted experiment is an option for uncertainty, not a required ablation stage. An audit does not grant mutation authority. |
+| [Simplify a responsibility, not just its implementation](#simplification) | [skills/simplify/SKILL.md](../../skills/simplify/SKILL.md), [skills/development-standards/SKILL.md](../../skills/development-standards/SKILL.md) | Necessity precedes implementation quality. A targeted experiment is an option for uncertainty, not a required ablation stage. A cleanup request authorizes the supported removals; an audit request stays read-only. |
 | [Context transfer at a completed phase](#phase-boundary) | [skills/skills-routing/references/phase-boundary-decision-tree.md](../../skills/skills-routing/references/phase-boundary-decision-tree.md) | Preserves the existing PB1-PB5 order. Same-task repair and compaction are not new completed phases; an unavailable branch does not grant a new capability. |
 | [Operational diagnosis and proportionate recovery](#operational-recovery) | [skills/runtime-diagnosis/SKILL.md](../../skills/runtime-diagnosis/SKILL.md), [skills/testing-strategy/SKILL.md](../../skills/testing-strategy/SKILL.md) | Investigate the observed mismatch rather than every infrastructure axis. Protect actual data, access and shared resources; remote/deploy wording alone does not schedule a restore drill. |
 | [Select the smallest sufficient architecture](#architecture-selection) | [skills/architecture-patterns/SKILL.md](../../skills/architecture-patterns/SKILL.md), [skills/design-change/SKILL.md](../../skills/design-change/SKILL.md) | Compare reuse, a local solution, and warranted structural investment by current commitments and total cost, including delayed feedback. A missing hard requirement is not permission to ship less. |
@@ -73,7 +73,7 @@ Start from the claim and the missing failure evidence. Choose an adequate small 
 
 Simplify a responsibility, not just its implementation
 
-Necessity precedes implementation quality. A targeted experiment is an option for uncertainty, not a required ablation stage. An audit does not grant mutation authority.
+Necessity precedes implementation quality. A targeted experiment is an option for uncertainty, not a required ablation stage. A cleanup request authorizes the supported removals; an audit request stays read-only.
 
 ![Simplify a responsibility, not just its implementation](generated/decisions/simplification.svg)
 

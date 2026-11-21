@@ -19,6 +19,7 @@ Use this reference when creating, promoting, superseding, compacting, or retirin
 A stable decision explains the current choice and why it matters. Include the following only where they help future decisions:
 
 - the current decision and status
+- the source of its authority: a choice the user or project owner fixed changes through that owner, and a choice inferred from the existing implementation is marked as inferred and may be revised on later evidence
 - the constraint it resolves
 - material alternatives and discard reasons
 - consequences and compatibility obligations

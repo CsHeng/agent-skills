@@ -10,7 +10,7 @@ Skills are the durable, agent-agnostic behavior surface. Reusable behavior lives
 
 - Match the request against skill descriptions first. When neighboring skills both seem to fit, answer their cluster's question and follow the matching handoff.
 - A skill marked explicit loads only when the user names it or asks for its workflow.
-- An ambiguous multi-stage request or explicit skill-selection question selects the smallest matching workflow skill. An unresolved simplification, language, tool, or oracle question uses its own reference here without a new primary workflow.
+- An ambiguous multi-stage request or explicit skill-selection question selects the smallest matching workflow skill. An unresolved language, tool, or oracle question uses its own reference here without a new primary workflow.
 - The selected primary skill owns its semantic result; session, discipline, policy, tool, and review-component skills contribute rendering, method, policy, tooling, or evidence. Review enters through `review-change`, whose conditions it owns; `review-design`, `review-plan`, and `review-implementation` return candidate evidence only.
 
 ## External Skill Libraries

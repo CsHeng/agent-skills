@@ -36,7 +36,7 @@ Make the outcome, current truth, user-fixed constraints, chosen approach and rat
 
 ## Authority And Outcomes
 
-Design records authority; user or project approval grants it. Commit, push, publication, installation, deployment, destructive cleanup, and external changes need matching user or project authority, consumed without re-asking when already granted for the same actions and targets. A settled framework choice or maintenance horizon is reconsidered only when new evidence identifies the material premise that changed; a requested broader simplification assessment uses `references/simplification.md` in `skills-routing`.
+Design records authority; user or project approval grants it. Commit, push, publication, installation, deployment, destructive cleanup, and external changes need matching user or project authority, consumed without re-asking when already granted for the same actions and targets. A settled framework choice or maintenance horizon is reconsidered only when new evidence identifies the material premise that changed; a requested broader simplification assessment uses `simplify`.
 
 - `ready`: the requested design and any required review are complete; name an approval only when one is actually outstanding
 - `needs-decision`: qualified as `design` when a material design decision remains unresolved, or `user` when a user or external decision blocks the affected action

@@ -169,9 +169,16 @@ counterexample_primary = "error-patterns"
 [[probes]]
 id = "simplification-audit"
 request = "Is this project over-engineered, and which modules could be removed?"
-primary = "skills-routing:simplification"
+primary = "simplify"
 counterexample = "Remove the unused plugin loader we agreed to delete."
 counterexample_primary = "implement-change"
+
+[[probes]]
+id = "simplify-cleanup"
+request = "Run simplify over this repository and clear out comments, tests, and docs nothing depends on."
+primary = "simplify"
+counterexample = "Decide which document should own the deployment instructions and move them there."
+counterexample_primary = "organize-docs"
 
 [[probes]]
 id = "open-oracle"

@@ -25,7 +25,7 @@ Optional Claude and Codex plugins have their own explicit installation and updat
 
 ## Choose A Skill
 
-Use an explicitly named or confidently matched Skill directly. Use `skills-routing` when Skill selection or a tool, language, verification, or simplification choice needs guidance. Read only its relevant method reference; it is not a mandatory first stage.
+Use an explicitly named or confidently matched Skill directly. Use `skills-routing` when Skill selection or a tool, language, or verification choice needs guidance. Read only its relevant method reference; it is not a mandatory first stage. Name `simplify` to clean up or audit existing code, comments, tests, lint rules, and documents.
 
 Select `design-change` when an unresolved persisted boundary needs a decision, `plan-change` when an accepted scope needs execution ordering and oracles, and `implement-change` when an explicit bounded mutation request or approved plan is ready. These capabilities may be used independently when their own preconditions are satisfied.
 

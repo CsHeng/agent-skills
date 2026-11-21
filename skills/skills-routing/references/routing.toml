@@ -142,8 +142,8 @@ instead_of = ["api-contract-strategy"]
 
 [[clusters]]
 id = "architecture-and-methods"
-members = ["architecture-patterns", "skills-routing:simplification", "skills-routing:language-selection", "skills-routing:tool-selection"]
-question = "Is the decision a durable architecture boundary, a requested simplification assessment, the language of a persisted artifact, or the tools for the current ad hoc investigation?"
+members = ["architecture-patterns", "simplify", "skills-routing:language-selection", "skills-routing:tool-selection"]
+question = "Is the decision a durable architecture boundary, an explicitly requested simplification cleanup or audit, the language of a persisted artifact, or the tools for the current ad hoc investigation?"
 
 [[clusters.handoffs]]
 when = "Choose the implementation language for a new persisted component."
@@ -153,17 +153,22 @@ instead_of = ["architecture-patterns", "skills-routing:tool-selection"]
 [[clusters.handoffs]]
 when = "Apply already decided boundaries or perform ordinary cleanup while implementing an approved task."
 owner = "implement-change"
-instead_of = ["architecture-patterns", "skills-routing:simplification"]
+instead_of = ["architecture-patterns", "simplify"]
 
 [[clusters.handoffs]]
-when = "Assess whether existing code, tests, documents, or mechanisms are necessary, or which could be removed, without applying the result."
-owner = "skills-routing:simplification"
-instead_of = ["analyze-project"]
+when = "Remove or assess, at the user's explicit request, unnecessary material across existing code, comments, tests, lint rules, documents, or mechanisms."
+owner = "simplify"
+instead_of = ["analyze-project", "testing-strategy", "organize-docs"]
 
 [[clusters.handoffs]]
 when = "Review only the current diff rather than audit the current repository structure."
 owner = "review-change"
-instead_of = ["skills-routing:simplification"]
+instead_of = ["simplify"]
+
+[[clusters.handoffs]]
+when = "Compare keeping, refactoring, or replacing an existing owned mechanism at the user's request."
+owner = "simplify:structural-alternatives"
+instead_of = ["architecture-patterns"]
 
 [[clusters.handoffs]]
 when = "Choose commands or tools for the agent's current investigation."

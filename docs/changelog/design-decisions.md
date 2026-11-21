@@ -1,5 +1,15 @@
 # Design Decisions
 
+## 2026-11-21 — Explicit Simplify Entry
+
+The simplification method moves from a `skills-routing` reference into the explicit `simplify` Skill, so one named entry owns both the method and a periodic cleanup across code, comments, tests, lint rules, and documents. `skills-routing:simplification` is retired and the router hands the request to `simplify`. One entry serves every artifact kind because a cut follows a responsibility across those kinds, and separate entries would treat each other's material as a reason to keep their own.
+
+Write-time necessity stays with `development-standards`, whose necessity test now names tests, lint rules, comments, and documents; cleanup is the same test applied to existing material. Source comments were the one surface without an owner and get a reference under `simplify`.
+
+An explicit cleanup request authorizes the supported removals, where the earlier method returned every result as a read-only recommendation; a request for an audit, an assessment, or a comparison stays read-only. The user judges business expectations and acceptance, so a cut needs independent evidence and stays unmade without it. Layers are judged top-down (intent, tests, code, lint rules, comments and explanatory documents) so that lower-layer material is evidence of what exists and the layer above decides whether it stays. A reason found only in the implementation is recorded as inferred, which lets later evidence revise it, while a choice the user fixed changes through its owner.
+
+Activation uses the host-neutral `explicit` mode with a description marker and body guard; the shared `disable-model-invocation` frontmatter stays unsupported.
+
 ## 2026-10-17 — Scope Contracts, Selection Probes, And Inventory Consolidation
 
 `skills-routing/references/routing.toml` becomes a version 2 scope contract: clusters of neighboring Skills, each with a distinguishing question, and handoffs that name the receiving Skill, method reference, or no Skill (`none`) instead of the confusable candidates. Trigger cases, positive phrasings, lexical hints, support routes, and the routing and composition tables are removed. Native admission belongs to descriptions and bodies, explicit admission to the activation mode and description, and session selection rules to `routing.md`; body exclusions name the same receivers as the scope contract. Paired selection probes move to the uninstalled `tests/fixtures/selection-probes.toml` maintenance corpus, whose checks cover identifiers and targets only.

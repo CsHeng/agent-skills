@@ -1,6 +1,6 @@
 ---
 name: skills-routing
-description: "Select and compose skills when coding-task ownership is unclear or skill-selection guidance is requested. Also resolve open choices about simplification, implementation language, ad hoc tools, or verification methods, and guide session and recovery boundaries. Established workflows, settled methods, and routine commands proceed directly."
+description: "Select and compose skills when coding-task ownership is unclear or skill-selection guidance is requested. Also resolve open choices about implementation language, ad hoc tools, or verification methods, and guide session and recovery boundaries. Established workflows, settled methods, and routine commands proceed directly."
 ---
 
 # Skills Routing
@@ -14,7 +14,7 @@ A workflow may read a method reference directly without reselecting its primary 
 | Open question | Read |
 | --- | --- |
 | Which skill owns an ambiguous request, or how should skills compose? | [Skill Selection](references/routing.md) and [Scope Contracts](references/routing.toml). |
-| What unnecessary responsibility can disappear from code, tests, documents, or supporting mechanisms, or should a bespoke mechanism be replaced? | [Simplification](references/simplification.md). |
+| Which existing code, comments, tests, lint rules, or documents can disappear, or should a bespoke mechanism be replaced? | `simplify`, an explicit Skill that the user's request for that cleanup or audit selects. |
 | Which language fits new persisted code or an authorized migration? | [Language Selection](references/language-selection.md). |
 | Which ad hoc CLI or command composition fits a non-trivial task? | [Tool Selection](references/tool-selection.md); nested interpreters and mutation safety in [Ad Hoc Command Composition](references/adhoc-command-composition.md). |
 | What executable evidence would establish the required outcome? | [Oracle Selection](references/oracle-selection.md). |
@@ -23,4 +23,4 @@ A workflow may read a method reference directly without reselecting its primary 
 
 ## Keep The Current Owner And Authority
 
-Reply composition follows `output-styles`; method references contribute decisions and evidence without an extra phase or approval gate. A simplification audit stays read-only, and bounded authorized application continues through `implement-change`. Recovery reconciles actual changes, the current goal and approval baseline, unadjudicated reports, and any still-valid executor; the current workflow and approvals remain in force, and raw sessions remain subject to workspace and permission checks.
+Reply composition follows `output-styles`; method references contribute decisions and evidence without an extra phase or approval gate. Recovery reconciles actual changes, the current goal and approval baseline, unadjudicated reports, and any still-valid executor; the current workflow and approvals remain in force, and raw sessions remain subject to workspace and permission checks.

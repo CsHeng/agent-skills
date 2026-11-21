@@ -121,6 +121,15 @@ default_role = "primary"
 may_mutate_repo = false
 may_spawn_agent = false
 
+[skills.simplify]
+category = "discipline"
+activation_mode = "explicit"
+default_role = "primary"
+may_mutate_repo = true
+may_spawn_agent = false
+requires_explicit_user_request = true
+semantic_requires = ["development-standards", "implement-change", "organize-docs", "testing-strategy"]
+
 [skills.testing-strategy]
 category = "discipline"
 activation_mode = "native"

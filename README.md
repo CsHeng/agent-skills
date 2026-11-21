@@ -22,7 +22,7 @@ The collection includes semantic capabilities for repository analysis, change de
 
 The active coding agent selects one primary response owner and any useful overlays. Review is conditional on explicit intent, an applicable repository or approved-scope rule, or evidence-backed risk. A direct review request needs only its supplied bounded target, and review evaluators examine the target read-only.
 
-`skills-routing` is the single entry for unresolved Skill, tool, language, verification, and simplification choices, with each method loaded from its own reference only when needed. Clearly matched tasks enter their owning Skill directly.
+`skills-routing` is the single entry for unresolved Skill, tool, language, and verification choices, with each method loaded from its own reference only when needed. `simplify` is the explicit entry for a requested cleanup or audit of existing code, comments, tests, lint rules, and documents. Clearly matched tasks enter their owning Skill directly.
 
 [herdr-handoff](skills/herdr-handoff/SKILL.md) and [herdr-delegate](skills/herdr-delegate/SKILL.md) handle an explicit request to hand an established plan to another main session through Herdr. With `herdr-handoff`, the other main, by default the same agent, model, and thinking level as the current one, implements with `implement-change` and owns the work through delivery. With `herdr-delegate`, it returns changes for the current session's `review-implementation` in bounded rounds. Requests such as “Use herdr-delegate with agent=codex to implement this plan” use native Skill discovery. Install Herdr and its external `herdr` Skill separately.
 
