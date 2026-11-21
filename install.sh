@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Install coding@csheng plugin
-
 echo "Installing coding@csheng plugin..."
 
 usage() {
@@ -21,7 +19,6 @@ Notes:
 EOF
 }
 
-# Parse args
 SCOPE="user"
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -42,7 +39,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Resolve plugin directory from this script location.
 PLUGIN_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly PLUGIN_DIR
 
@@ -76,21 +72,17 @@ fi
 readonly SETTINGS_FILE
 
 if [[ ! -f "$SETTINGS_FILE" ]]; then
-  # Create a minimal settings file when possible.
   mkdir -p "$(dirname -- "$SETTINGS_FILE")"
   printf '%s\n' '{}' > "$SETTINGS_FILE"
 fi
 
-# Check if marketplace already exists
 if command -v jq >/dev/null 2>&1 && jq -e '.extraKnownMarketplaces["csheng"]' "$SETTINGS_FILE" >/dev/null 2>&1; then
     echo "Marketplace 'csheng' already configured"
 else
     echo "Adding marketplace to settings.json..."
 
-    # Create backup
     cp "$SETTINGS_FILE" "${SETTINGS_FILE}.backup.$(date +%s)"
 
-    # Add marketplace using jq
     if command -v jq >/dev/null 2>&1; then
         tmp_file=$(mktemp)
         jq --arg path "$PLUGIN_DIR" \

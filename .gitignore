@@ -2,10 +2,8 @@
 /.worktrees/
 /.dist/
 
-# macOS
 .DS_Store
 
-# Project-specific
 /.claude/
 /.herdr-runs/
 .mise.local.toml

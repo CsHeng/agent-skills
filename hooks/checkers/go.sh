@@ -4,7 +4,6 @@ set -euo pipefail
 FILE="$1"
 DIR="$(dirname "$FILE")"
 
-# Check if we're in a Go module
 if [[ -f "$DIR/go.mod" ]] || git -C "$DIR" rev-parse --show-toplevel >/dev/null 2>&1; then
   MODULE_ROOT="$(cd "$DIR" && while [[ ! -f go.mod && "$PWD" != "/" ]]; do cd ..; done && pwd)"
   if [[ -f "$MODULE_ROOT/go.mod" ]]; then
@@ -14,5 +13,4 @@ if [[ -f "$DIR/go.mod" ]] || git -C "$DIR" rev-parse --show-toplevel >/dev/null 
   fi
 fi
 
-# Standalone file: basic syntax check
 go vet "$FILE" 2>&1 | head -20 || true

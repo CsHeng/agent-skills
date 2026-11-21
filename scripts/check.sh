@@ -4,9 +4,6 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-# Checkout-specific mutable state stays outside the source tree and matches the mise
-# context; shared uv/ruff caches keep their native defaults. The helper is the single
-# source of truth for both this standalone entrypoint and mise `_.source`.
 # shellcheck source=scripts/checkout-env.sh
 source "$repo_root/scripts/checkout-env.sh"
 

@@ -62,11 +62,9 @@ class GitGroupedCommitRecipeTest(unittest.TestCase):
             git(repo, "add", "--", "alpha.txt", "beta.txt")
             git(repo, "commit", "-qm", "base")
 
-            # Group B is already staged before the recipe runs.
             write(repo, "beta.txt", "beta base\nbeta staged-group-B\n")
             git(repo, "add", "--", "beta.txt")
 
-            # Group A is changed, registered, and committed with a trailing pathspec.
             write(repo, "alpha.txt", "alpha base\nalpha group-A\n")
             git(repo, "add", "--", "alpha.txt")
             git(repo, "commit", "-qm", "group A: alpha", "--", "alpha.txt")
@@ -101,7 +99,6 @@ class GitGroupedCommitRecipeTest(unittest.TestCase):
             self.assertEqual(git(repo, "status", "--porcelain"), "A  beta.txt\n")
 
     def test_pathspec_commit_commits_whole_working_tree_of_a_shared_file(self) -> None:
-        # Honest limitation: a path-scoped commit cannot split one file at hunk level.
         with tempfile.TemporaryDirectory() as temp_dir:
             repo = init_repo(Path(temp_dir) / "repo")
             write(repo, "shared.txt", "l1\nl2\nl3\nl4\n")
@@ -151,16 +148,12 @@ class GitGroupedCommitRecipeTest(unittest.TestCase):
 
 class GitHunkSplitRecipeTest(unittest.TestCase):
     def test_index_commit_separates_hunks_of_a_shared_file(self) -> None:
-        # The documented hunk path: stage exactly one group's hunks (the
-        # scriptable equivalent of `git add -p` is `git apply --cached`),
-        # confirm nothing else is staged, then commit the index.
         with tempfile.TemporaryDirectory() as temp_dir:
             repo = init_repo(Path(temp_dir) / "repo")
             write(repo, "shared.txt", "l1\nl2\nl3\nl4\n")
             git(repo, "add", "--", "shared.txt")
             git(repo, "commit", "-qm", "base")
 
-            # Group A and group B hunks are both present in the working tree.
             write(repo, "shared.txt", "A1\nl2\nl3\nB4\n")
             status = git(repo, "status", "--porcelain")
             self.assertEqual(status, " M shared.txt\n")
@@ -177,9 +170,6 @@ class GitHunkSplitRecipeTest(unittest.TestCase):
             self.assertEqual(git(repo, "status", "--porcelain"), " M shared.txt\n")
 
     def test_partial_staging_then_pathspec_commit_records_working_tree(self) -> None:
-        # Documents why the recipe forbids combining `git add -p` with a
-        # pathspec commit: the pathspec records the whole working tree of the
-        # named path, silently absorbing the other group's unstaged hunks.
         with tempfile.TemporaryDirectory() as temp_dir:
             repo = init_repo(Path(temp_dir) / "repo")
             write(repo, "shared.txt", "l1\nl2\nl3\nl4\n")
@@ -217,12 +207,10 @@ class GitPendingMergeRecipeTest(unittest.TestCase):
             git(repo, "merge", "--no-commit", "--no-ff", "-q", "topic")
             git(repo, "rev-parse", "-q", "--verify", "MERGE_HEAD")
 
-            # The grouped pathspec recipe cannot record part of a pending merge.
             with self.assertRaises(subprocess.CalledProcessError) as raised:
                 git(repo, "commit", "-qm", "group: topic only", "--", "topic.txt")
             self.assertIn("partial commit during a merge", raised.exception.stderr)
 
-            # Committing the whole index preserves the merge topology.
             git(repo, "commit", "-qm", "merge topic")
             parents = git(repo, "rev-list", "--parents", "-n", "1", "HEAD").split()
             self.assertEqual(len(parents), 3)

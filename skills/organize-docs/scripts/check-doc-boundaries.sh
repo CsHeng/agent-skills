@@ -10,8 +10,6 @@ cd "$ROOT_DIR"
 [[ -f "$DOCS_DIR/AGENTS.md" ]] || { echo "missing docs/AGENTS.md" >&2; exit 1; }
 [[ -f "$DOCS_DIR/README.md" ]] || { echo "missing docs/README.md" >&2; exit 1; }
 
-# A project may keep stage material with an external documentation owner.
-# When a local stage tree exists, it must remain tracked and search-suppressed.
 if [[ -d "$DOCS_DIR/plans" ]]; then
   [[ -f "$DOCS_DIR/.ignore" ]] || { echo "missing docs/.ignore" >&2; exit 1; }
   rg -qx 'plans/' "$DOCS_DIR/.ignore"

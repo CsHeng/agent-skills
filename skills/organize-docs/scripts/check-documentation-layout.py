@@ -248,9 +248,6 @@ def declared_exception(
     return None
 
 
-# --------------------------------------------------------------------------
-# Markdown link extraction
-# --------------------------------------------------------------------------
 
 
 def strip_code_fences(text: str) -> str:
@@ -317,9 +314,6 @@ def normalize_target(target: str) -> str:
     return stripped
 
 
-# --------------------------------------------------------------------------
-# Capabilities
-# --------------------------------------------------------------------------
 
 
 def check_declared_roots(
@@ -374,7 +368,6 @@ def check_declared_roots(
                 )
             )
 
-    # Every documentation-bearing directory must be declared or excepted.
     declared_prefixes = sorted(declared, key=len, reverse=True)
     scanned = [str(item) for item in manifest.get("scannedRoots") or []]
     if not scanned:

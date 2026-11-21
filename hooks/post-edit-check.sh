@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# PostToolUse(Edit) dispatcher: run language-specific checks after file edits.
 # Invoked by Claude Code hook with CLAUDE_FILE set to the edited file path.
-
 FILE="${CLAUDE_FILE:-}"
 if [[ -z "$FILE" || ! -f "$FILE" ]]; then
   exit 0

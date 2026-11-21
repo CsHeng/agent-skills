@@ -923,13 +923,11 @@ def iter_grok_workspace_dirs(grok_home: Path) -> list[tuple[Path, str]]:
     for entry in sorted(sessions_root.iterdir()):
         if not entry.is_dir():
             continue
-        # Skip non-workspace helpers if any plain names appear without encoding.
         name = entry.name
         if name in {"cache", "tmp"}:
             continue
         cwd = grok_workspace_cwd(name)
         if not cwd.startswith("/"):
-            # Encoded paths always start with %2F → "/"; keep absolute only.
             continue
         workspaces.append((entry, cwd))
     return workspaces

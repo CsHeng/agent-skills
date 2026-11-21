@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-# Resolve checkout-specific, source-external state for this repository.
-#
-# Sourced by scripts/check.sh and evaluated by mise through `_.source`, so the
-# independent check entrypoint and the mise context agree on the same mutable
-# paths. Shared download caches keep native defaults; Ruff gets an external
-# fallback when no user/global cache is configured.
 set -euo pipefail
 
 checkout_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)

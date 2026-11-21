@@ -310,7 +310,6 @@ class ExtractSessionSignalsCliTest(unittest.TestCase):
                 "--limit",
                 "0",
             ]
-            # Multiple homes plus JSON output must not widen history scope.
             default_json = json.loads(
                 run_extract([*common, "--format", "json"], isolated).stdout
             )
@@ -324,7 +323,6 @@ class ExtractSessionSignalsCliTest(unittest.TestCase):
             self.assertIn("- scope: current", default_markdown)
             self.assertIn("- codex_sessions: 1", default_markdown)
 
-            # All-history requires the explicit scope selection.
             all_scope = json.loads(
                 run_extract(
                     [*common, "--scope", "all", "--format", "json"], isolated

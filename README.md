@@ -12,7 +12,7 @@ This repository authors portable semantic coding Skills in one installable tree.
 - `docs/architecture/`: stable maintenance truth
 - Evolution material is maintained under `$AGENT_ARCHITECTURE_DIR/docs/plans/skills/` and `docs/evaluations/skills/`; inert originals live in that repository's `archived/agent-skills/`. Product checks and installation work independently of that checkout.
 
-The local `mise.toml` declares `AGENT_ARCHITECTURE_DIR`, `AGENT_SKILLS_DIR`, and `PI_EXTENSIONS_DIR`. Use those resolved roots for cross-repository maintenance; `.mise.local.toml.example` documents layout overrides. Shared ownership and vocabulary live at `$AGENT_ARCHITECTURE_DIR/docs/architecture/repository-boundaries.md`.
+The local `mise.toml` declares `AGENT_ARCHITECTURE_DIR`, `AGENT_SKILLS_DIR`, and `PI_EXTENSIONS_DIR`. Use those resolved roots for cross-repository maintenance; copy `.mise.local.toml.example` to the ignored `.mise.local.toml` to override a different local layout. Its optional `TMPDIR` setting overrides the retained runtime/temporary root; see `$AGENT_ARCHITECTURE_DIR/docs/contracts/workspace-and-repository-invariants.md`. Shared ownership and vocabulary live at `$AGENT_ARCHITECTURE_DIR/docs/architecture/repository-boundaries.md`.
 
 Compatible agent environments may use the Skills independently and implement their own mechanics; these authoring contracts remain private to this repository.
 
