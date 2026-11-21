@@ -6,11 +6,12 @@ execution_profiles = ["fast", "balanced", "deep"]
 # Use an execution preference alone when the host route already provides suitable thinking effort.
 # Hosts own concrete model bindings, provider-level adaptation and fallback; these hints remain portable intent.
 thinking_profiles = ["light", "standard", "deep"]
+# Where the host supports peer messaging or a shared workspace, follow `references/delegated-execution.md` in `implement-change` for peer ownership and decision routing.
 delegation_ready_facts = [
   "repository_owner",
   "write_set",
   "resource_locks",
-  "isolation",
+  "isolation", # Where the host uses isolated candidates, note any dependency on candidate integration.
   "convergence_owner",
   "verification",
   "done_when",
